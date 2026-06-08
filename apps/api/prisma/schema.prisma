@@ -1,0 +1,470 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?
+  name          String?
+  role          String    @default("USER") // USER, ADMIN
+  isActive      Boolean   @default(true)
+  verificationToken String?
+  verificationExpires DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  verifiedAt    DateTime?
+  deletedAt     DateTime?
+
+  babyMons          BabyMon[]
+  linkedAccountsAsA LinkedAccount[] @relation("UserA")
+  linkedAccountsAsB LinkedAccount[] @relation("UserB")
+  refreshTokens     RefreshToken[]
+  subscriptions    Subscription[]
+  auditLogs        AuditLog[]
+  milestones       Milestone[]
+  feedLogs         FeedLog[]
+  sleepLogs        SleepLog[]
+  healthRecords   HealthRecord[]
+  proposals        EntryChangeProposal[] @relation("Proposer")
+  linkedBabyMons   LinkedBabyMon[]
+  media           Media[]
+  growthRecords   GrowthRecord[]
+  allergies       Allergy[]
+  medicalTeams    MedicalTeam[]
+  allergyEvents   AllergyEvent[]
+  devices         Device[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Device {
+  id           String   @id @default(uuid())
+  userId       String
+  deviceToken  String   @unique
+  platform     String   // ios, android, web
+  createdAt    DateTime @default(now())
+  lastActiveAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model LinkedAccount {
+  id        String   @id @default(uuid())
+  userAId   String
+  userBId   String
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  linkedAt  DateTime?
+  expiresAt DateTime?
+
+  userA User @relation("UserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB User @relation("UserB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+  @@index([status])
+}
+
+model LinkedBabyMon {
+  id        String   @id @default(uuid())
+  userId    String
+  babymonId String
+  access    String   @default("EDIT")
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  babyMon BabyMon @relation(fields: [babymonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, babymonId])
+  @@index([userId])
+  @@index([babymonId])
+}
+
+model BabyMon {
+  id               String    @id @default(uuid())
+  ownerUserId      String
+  name             String
+  middleName       String?
+  lastName         String?
+  stageStartType   String
+  conceptionDate   DateTime?
+  lmpDate          DateTime?
+  birthDate        DateTime?
+  ideaDate         DateTime?
+  gender           String
+  traits           String[]
+  specialMove      String?
+  biologicalMother String?
+  biologicalFather String?
+  bloodGroup       String?
+  eyeColor         String?
+  currentXp        Int       @default(0)
+  currentStage     Int       @default(1)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  owner        User                  @relation(fields: [ownerUserId], references: [id])
+  milestones   Milestone[]
+  feedLogs    FeedLog[]
+  sleepLogs   SleepLog[]
+  healthRecords HealthRecord[]
+  badges      Badge[]
+  auditLogs   AuditLog[]
+  proposals        EntryChangeProposal[] @relation("BabyMonProposal")
+  journalProposals JournalProposal[]
+  stageContent     StageContent[]
+  linkedUsers LinkedBabyMon[]
+  media       Media[]
+  growthRecords GrowthRecord[]
+  allergies    Allergy[]
+  medicalTeams MedicalTeam[]
+  allergyEvents AllergyEvent[]
+
+  @@index([ownerUserId])
+  @@index([deletedAt])
+}
+
+model Milestone {
+  id              String    @id @default(uuid())
+  babymonId       String
+  authorUserId     String
+  title           String
+  notes           String?
+  happenedAt       DateTime
+  localMediaRefs  String[]
+  isCustom        Boolean   @default(false)
+  syncStatus      String    @default("SYNCED")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  xpAwarded       Int       @default(10)
+
+  babymon BabyMon @relation(fields: [babymonId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorUserId], references: [id])
+
+  @@index([babymonId])
+  @@index([authorUserId])
+  @@index([happenedAt])
+  @@index([deletedAt])
+}
+
+model FeedLog {
+  id              String    @id @default(uuid())
+  babymonId       String
+  authorUserId    String
+  type            String
+  amount          String?
+  unit            String?
+  notes           String?
+  happenedAt      DateTime
+  localMediaRefs  String[]
+  syncStatus      String    @default("SYNCED")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  xpAwarded       Int       @default(5)
+
+  babymon BabyMon @relation(fields: [babymonId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorUserId], references: [id])
+
+  @@index([babymonId])
+  @@index([authorUserId])
+  @@index([happenedAt])
+  @@index([deletedAt])
+}
+
+model HealthRecord {
+  id              String    @id @default(uuid())
+  babymonId       String
+  authorUserId    String
+  category        String
+  title           String
+  notes           String?
+  happenedAt      DateTime
+  localMediaRefs  String[]
+  syncStatus      String    @default("SYNCED")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  xpAwarded       Int       @default(5)
+
+  babymon BabyMon @relation(fields: [babymonId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorUserId], references: [id])
+
+  @@index([babymonId])
+  @@index([authorUserId])
+  @@index([happenedAt])
+  @@index([deletedAt])
+}
+
+model SleepLog {
+  id             String    @id @default(uuid())
+  babymonId      String
+  authorUserId   String
+  type           String
+  startTime      DateTime
+  endTime        DateTime
+  quality        Int?
+  notes          String?
+  happenedAt     DateTime  @default(now())
+  localMediaRefs String[]
+  syncStatus     String    @default("SYNCED")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  xpAwarded      Int       @default(5)
+
+  babymon BabyMon @relation(fields: [babymonId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorUserId], references: [id])
+
+  @@index([babymonId])
+  @@index([authorUserId])
+  @@index([startTime])
+  @@index([deletedAt])
+}
+
+model Badge {
+  id          String   @id @default(uuid())
+  babymonId   String
+  badgeType   String
+  name        String
+  icon        String?
+  description String?
+  xpValue     Int      @default(10)
+  unlockedAt  DateTime @default(now())
+
+  babymon BabyMon @relation(fields: [babymonId], references: [id], onDelete: Cascade)
+
+  @@unique([babymonId, badgeType])
+}
+
+model StageContent {
+  id                String   @id @default(uuid())
+  babymonId        String
+  stageKey         String
+  weekNumber       Int?
+  monthNumber      Int?
+  isPostBirth     Boolean  @default(false)
+  summaryText      String
+  nurturingText    String
+  encouragementText String
+  xpThreshold      Int      @default(0)
+
+  babymon BabyMon @relation(fields: [babymonId], references: [id], onDelete: Cascade)
+
+  @@unique([babymonId, stageKey])
+  @@index([stageKey])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                   String    @id @default(uuid())
+  userId               String
+  tier                 String    @default("CORE")
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripePriceId        String?
+  trialStartDate       DateTime  @default(now())
+  trialEndDate         DateTime
+  currentPeriodStart   DateTime?
+  currentPeriodEnd    DateTime?
+  cancelAtPeriodEnd   Boolean   @default(false)
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  babymonId    String?
+  actorUserId  String
+  eventType    String
+  payloadJson  String
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  babymon BabyMon? @relation(fields: [babymonId], references: [id])
+  actor   User     @relation(fields: [actorUserId], references: [id])
+}
+
+model EntryChangeProposal {
+  id                    String    @id @default(uuid())
+  babymonId             String
+  proposerUserId         String
+  entryType             String
+  entryId              String
+  proposalType          String
+  status                String    @default("PENDING")
+  proposedPayloadJson   String
+  originalPayloadJson  String?
+  responseReason        String?
+  createdAt             DateTime  @default(now())
+  expiresAt             DateTime
+  autoAcceptedAt        DateTime?
+  respondedAt           DateTime?
+
+  babymon  BabyMon @relation("BabyMonProposal", fields: [babymonId], references: [id], onDelete: Cascade)
+  proposer User    @relation("Proposer", fields: [proposerUserId], references: [id])
+}
+
+model StripeEvent {
+  id        String   @id @default(uuid())
+  eventId   String   @unique
+  type      String
+  data      String
+  processed Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Media {
+  id           String   @id @default(uuid())
+  babyMonId    String
+  userId       String
+  fileName     String
+  fileType     String
+  fileSize     Int
+  s3Key        String
+  url          String
+  thumbnailUrl String?
+  createdAt    DateTime @default(now())
+
+  babymon BabyMon @relation(fields: [babyMonId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([babyMonId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum ProposalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model JournalProposal {
+  id            String          @id @default(uuid())
+  babymonId     String
+  journalEntryId String         // Milestone/FeedLog/HealthRecord ID
+  entryType     String          // MILESTONE, FEED_LOG, HEALTH_RECORD
+  proposedById  String          // userId of co-parent who proposed
+  changes       Json            // { field: "notes", oldValue: "...", newValue: "..." }
+  status        ProposalStatus  @default(PENDING)
+  createdAt     DateTime        @default(now())
+  resolvedAt     DateTime?
+  resolvedById   String?
+
+  babymon BabyMon @relation(fields: [babymonId], references: [id], onDelete: Cascade)
+}
+
+model GrowthRecord {
+  id         String   @id @default(uuid())
+  babyMonId  String
+  userId     String
+  type       String   // HEIGHT, WEIGHT, HEAD_CIRCUMFERENCE
+  value      Float
+  unit       String   // cm, kg, in, lb
+  measuredAt DateTime
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  babymon BabyMon @relation(fields: [babyMonId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([babyMonId])
+  @@index([measuredAt])
+}
+
+model Allergy {
+  id         String   @id @default(uuid())
+  babyMonId  String
+  userId     String
+  name       String
+  triggers   String?  // comma-separated triggers
+  severity   String?  // Mild / Moderate / Severe
+  treatment  String?  // EpiPen / Antihistamine / Avoidance / etc.
+  notes      String?
+  status     String   @default("ACTIVE") // ACTIVE, CURED
+  curedAt    DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+
+  babymon BabyMon        @relation(fields: [babyMonId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id])
+  events  AllergyEvent[]
+
+  @@unique([babyMonId, name])
+  @@index([babyMonId])
+}
+
+model AllergyEvent {
+  id         String   @id @default(uuid())
+  allergyId  String
+  babyMonId  String
+  userId     String
+  happenedAt DateTime @default(now())
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  allergy Allergy  @relation(fields: [allergyId], references: [id], onDelete: Cascade)
+  babymon BabyMon @relation(fields: [babyMonId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([allergyId])
+  @@index([babyMonId])
+  @@index([happenedAt])
+}
+
+model MedicalTeam {
+  id         String   @id @default(uuid())
+  babyMonId  String
+  userId     String
+  name       String
+  specialty  String?
+  facility   String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+
+  babymon BabyMon @relation(fields: [babyMonId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([babyMonId, name])
+  @@index([babyMonId])
+  @@index([facility])
+  @@index([specialty])
+}

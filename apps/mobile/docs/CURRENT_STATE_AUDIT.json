@@ -1,0 +1,115 @@
+{
+  "total_files": 59,
+  "categories": {
+    "main": [],
+    "core": [
+      "lib/core/constants/constants.dart",
+      "lib/core/theme/app_theme.dart",
+      "lib/core/utils/validators.dart"
+    ],
+    "features": {
+      "auth": [
+        "lib/features/auth/data/datasources/auth_remote_datasource.dart",
+        "lib/features/auth/data/repositories/auth_repository_impl.dart",
+        "lib/features/auth/domain/entities/user.dart",
+        "lib/features/auth/domain/repositories/auth_repository.dart",
+        "lib/features/auth/presentation/providers/auth_provider.dart",
+        "lib/features/auth/presentation/screens/login_screen.dart",
+        "lib/features/auth/presentation/screens/register_screen.dart",
+        "lib/features/auth/presentation/widgets/auth_text_field.dart"
+      ],
+      "dashboard": [
+        "lib/features/dashboard/data/repositories/dashboard_repository.dart",
+        "lib/features/dashboard/domain/entities/baby_mon_summary.dart",
+        "lib/features/dashboard/domain/entities/dashboard_data.dart",
+        "lib/features/dashboard/presentation/providers/dashboard_provider.dart",
+        "lib/features/dashboard/presentation/screens/dashboard_screen.dart",
+        "lib/features/dashboard/presentation/widgets/baby_mon_card.dart",
+        "lib/features/dashboard/presentation/widgets/badge_showcase.dart",
+        "lib/features/dashboard/presentation/widgets/evolution_visualizer.dart",
+        "lib/features/dashboard/presentation/widgets/xp_progress_bar.dart"
+      ],
+      "feeding": [
+        "lib/features/feeding/data/repositories/feeding_repository.dart",
+        "lib/features/feeding/domain/entities/feed_log.dart",
+        "lib/features/feeding/presentation/providers/feeding_provider.dart",
+        "lib/features/feeding/presentation/screens/feeding_screen.dart",
+        "lib/features/feeding/presentation/widgets/feed_log_card.dart",
+        "lib/features/feeding/presentation/widgets/feed_log_form.dart"
+      ],
+      "health": [
+        "lib/features/health/data/repositories/health_repository.dart",
+        "lib/features/health/domain/entities/health_record.dart",
+        "lib/features/health/presentation/providers/health_provider.dart",
+        "lib/features/health/presentation/screens/health_screen.dart",
+        "lib/features/health/presentation/widgets/health_record_card.dart",
+        "lib/features/health/presentation/widgets/health_record_form.dart"
+      ],
+      "journal": [
+        "lib/features/journal/data/repositories/journal_repository.dart",
+        "lib/features/journal/domain/entities/journal_entry.dart",
+        "lib/features/journal/presentation/providers/journal_provider.dart",
+        "lib/features/journal/presentation/screens/journal_screen.dart"
+      ],
+      "milestones": [
+        "lib/features/milestones/data/repositories/milestones_repository.dart",
+        "lib/features/milestones/domain/entities/milestone.dart",
+        "lib/features/milestones/presentation/providers/milestones_provider.dart",
+        "lib/features/milestones/presentation/screens/milestones_screen.dart",
+        "lib/features/milestones/presentation/widgets/milestone_card.dart",
+        "lib/features/milestones/presentation/widgets/milestone_form.dart"
+      ],
+      "tracking": [],
+      "profile": []
+    },
+    "presentation": {
+      "screens": {
+        "auth": [
+          "lib/presentation/screens/auth/login_screen.dart",
+          "lib/presentation/screens/auth/register_screen.dart"
+        ],
+        "main": [
+          "lib/presentation/screens/main/dashboard/dashboard_screen.dart",
+          "lib/presentation/screens/main/feeding/feeding_screen.dart",
+          "lib/presentation/screens/main/health/health_screen.dart",
+          "lib/presentation/screens/main/journal/journal_screen.dart",
+          "lib/presentation/screens/main/main_screen.dart",
+          "lib/presentation/screens/main/milestones/milestones_screen.dart"
+        ],
+        "onboarding": [
+          "lib/presentation/screens/onboarding/create_baby_mon_screen.dart"
+        ],
+        "splash": [
+          "lib/presentation/screens/splash/splash_screen.dart"
+        ]
+      },
+      "providers": [
+        "lib/presentation/providers/auth_provider.dart"
+      ],
+      "router": [
+        "lib/presentation/router/app_router.dart"
+      ]
+    },
+    "data": {
+      "api": [
+        "lib/data/api_client.dart",
+        "lib/data/services/api_service.dart"
+      ],
+      "local": [
+        "lib/data/local/local_database.dart"
+      ],
+      "services": []
+    }
+  },
+  "key_checks": {
+    "lib/core/constants/app_colors.dart": false,
+    "lib/core/constants/app_strings.dart": false,
+    "lib/core/di/service_locator.dart": false,
+    "lib/core/services/local_storage_service.dart": false,
+    "lib/core/utils/date_utils.dart": false,
+    "lib/features/auth/data/repositories/auth_repository_impl.dart": true,
+    "lib/features/tracking/data/repositories/activity_repository_impl.dart": false,
+    "lib/features/profile/data/repositories/profile_repository_impl.dart": false,
+    "lib/main.dart": true
+  }
+}

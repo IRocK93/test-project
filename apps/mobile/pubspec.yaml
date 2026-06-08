@@ -1,0 +1,50 @@
+name: baby_mon
+description: BabyMon - Smart Evolving Parenting Companion
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.9
+  provider: ^6.0.5
+  get_it: ^7.6.4
+  intl: ^0.18.1
+  local_auth: ^2.3.0
+  dio: ^5.3.3
+  drift: ^2.14.1
+  sqlite3_flutter_libs: ^0.5.18
+  flutter_secure_storage: ^9.0.0
+  go_router: ^13.0.0
+  http: ^1.1.0
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.0
+  shared_preferences: ^2.2.2
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.2
+  flutter_facebook_auth: ^7.0.1
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.10
+  flutter_local_notifications: ^17.2.1
+  pdf: ^3.10.8
+  printing: ^5.12.0
+  share_plus: ^7.2.2
+  path_provider: ^2.1.2
+  fl_chart: ^0.69.0
+  image_picker: ^1.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_secure_storage: ^9.0.0
+  drift_dev: ^2.14.1
+  build_runner: ^2.4.7
+  json_serializable: ^6.7.1
+  json_annotation: ^4.8.1
+
+flutter:
+  uses-material-design: true

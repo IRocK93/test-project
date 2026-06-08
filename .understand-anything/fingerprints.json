@@ -1,0 +1,5905 @@
+{
+  "version": "1.0.0",
+  "gitCommitHash": "3ecdd6fa6dde21a1324a788bc8cce88c6c1149f5",
+  "generatedAt": "2026-05-29T02:26:12.421Z",
+  "files": {
+    "apps/api/.dockerignore": {
+      "filePath": "apps/api/.dockerignore",
+      "contentHash": "49dc8da31c83957ec46f45451c9e642dea80042c8826d92bedc2f0398ef8efc7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 54,
+      "hasStructuralAnalysis": false
+    },
+    "apps/api/Dockerfile": {
+      "filePath": "apps/api/Dockerfile",
+      "contentHash": "12cc2195c7d8f927810b7981992e58cb3e7a8990bc71e0c3a45cc6a3cafc9087",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 42,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/.env": {
+      "filePath": "apps/api/.env",
+      "contentHash": "5373a53c68a2c5a7ef5993ab9ccb2b0dc170ae070ab3511b6eca04b67c9e382b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 8,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/.env.example": {
+      "filePath": "apps/api/.env.example",
+      "contentHash": "7a18dbf11cf25be0bb199154d24bb883a68ec0ca1af6f7bde325d9f476c412f9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 71,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/History.txt": {
+      "filePath": "apps/api/History.txt",
+      "contentHash": "71d7cb878bdda7bfe3c06bb9ee1ecd270ed47eaf19ef4ae275474978777ad70e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 3423,
+      "hasStructuralAnalysis": false
+    },
+    "apps/api/README.md": {
+      "filePath": "apps/api/README.md",
+      "contentHash": "1f574c8b625beb076efcda405ace89e2addfee60bbe8fe8e0a06f1a606079280",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 215,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/jest.config.js": {
+      "filePath": "apps/api/jest.config.js",
+      "contentHash": "044844ee7e8829dfe0d31ae1f204ec00f45d323301a77789d888a2396e4e7663",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 16,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/nest-cli.json": {
+      "filePath": "apps/api/nest-cli.json",
+      "contentHash": "bcb15e3049ff5d131762d2bfe3a6f917c3c64c83ac772467a4073975cd423b5b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 9,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/package-lock.json": {
+      "filePath": "apps/api/package-lock.json",
+      "contentHash": "e44e1aaec461d05748ff3eb65ac3f37207d1e048d632bfe4c2a74aebec346e99",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 13108,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/package.json": {
+      "filePath": "apps/api/package.json",
+      "contentHash": "6326acbe46c4c8f150140f492361fe674d0df4202be3158c947e10f440dbf0d0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 68,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/tsconfig.json": {
+      "filePath": "apps/api/tsconfig.json",
+      "contentHash": "50d497612976555d93009b0dc523e87636af35e495e994b277d3604f488100ed",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 24,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/prisma/migrations/migration_lock.toml": {
+      "filePath": "apps/api/prisma/migrations/migration_lock.toml",
+      "contentHash": "693566b52c49db47a2b0901d12400aa3d710d13a49f4a2a154b80c0505ed737c",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 3,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/prisma/schema.prisma": {
+      "filePath": "apps/api/prisma/schema.prisma",
+      "contentHash": "707a3a5aa6b1b8d5453976b2d1d5819c6a67a9b4351a1d3d8ccfc2a7ddd5514e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 375,
+      "hasStructuralAnalysis": false
+    },
+    "apps/api/prisma/migrations/20260219195413_init/migration.sql": {
+      "filePath": "apps/api/prisma/migrations/20260219195413_init/migration.sql",
+      "contentHash": "74863fddbbd99bb29d629a99bff088a017b4428129f0213f39568503b2c8a8df",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 309,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/prisma/migrations/20260219204704_make_stage_content_optional/migration.sql": {
+      "filePath": "apps/api/prisma/migrations/20260219204704_make_stage_content_optional/migration.sql",
+      "contentHash": "83ca222a0bb92fae39139de43dcb6934c7b864c6ee06fdd739b212b58e11211b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 3,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/app.module.ts": {
+      "filePath": "apps/api/src/app.module.ts",
+      "contentHash": "ac068eb526c452c0bf07c98696b5b25e150fdb827f678e61af66d8c4b659e405",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AppModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "@nestjs/throttler",
+          "specifiers": [
+            "ThrottlerModule",
+            "ThrottlerGuard"
+          ]
+        },
+        {
+          "source": "@nestjs/core",
+          "specifiers": [
+            "APP_GUARD"
+          ]
+        },
+        {
+          "source": "nestjs-pino",
+          "specifiers": [
+            "LoggerModule"
+          ]
+        },
+        {
+          "source": "./prisma/prisma.module",
+          "specifiers": [
+            "PrismaModule"
+          ]
+        },
+        {
+          "source": "./common/audit.service",
+          "specifiers": [
+            "AuditService"
+          ]
+        },
+        {
+          "source": "./auth/auth.module",
+          "specifiers": [
+            "AuthModule"
+          ]
+        },
+        {
+          "source": "./users/users.module",
+          "specifiers": [
+            "UsersModule"
+          ]
+        },
+        {
+          "source": "./baby-mon/baby-mon.module",
+          "specifiers": [
+            "BabyMonModule"
+          ]
+        },
+        {
+          "source": "./milestones/milestones.module",
+          "specifiers": [
+            "MilestonesModule"
+          ]
+        },
+        {
+          "source": "./feed-logs/feed-logs.module",
+          "specifiers": [
+            "FeedLogsModule"
+          ]
+        },
+        {
+          "source": "./health-records/health-records.module",
+          "specifiers": [
+            "HealthRecordsModule"
+          ]
+        },
+        {
+          "source": "./badges/badges.module",
+          "specifiers": [
+            "BadgesModule"
+          ]
+        },
+        {
+          "source": "./evolution/evolution.module",
+          "specifiers": [
+            "EvolutionModule"
+          ]
+        },
+        {
+          "source": "./stage-content/stage-content.module",
+          "specifiers": [
+            "StageContentModule"
+          ]
+        },
+        {
+          "source": "./journal/journal.module",
+          "specifiers": [
+            "JournalModule"
+          ]
+        },
+        {
+          "source": "./export/export.module",
+          "specifiers": [
+            "ExportModule"
+          ]
+        },
+        {
+          "source": "./subscriptions/subscriptions.module",
+          "specifiers": [
+            "SubscriptionsModule"
+          ]
+        },
+        {
+          "source": "./linked-accounts/linked-accounts.module",
+          "specifiers": [
+            "LinkedAccountsModule"
+          ]
+        },
+        {
+          "source": "./stripe/stripe.module",
+          "specifiers": [
+            "StripeModule"
+          ]
+        },
+        {
+          "source": "./s3/s3.module",
+          "specifiers": [
+            "S3Module"
+          ]
+        },
+        {
+          "source": "./health/health.module",
+          "specifiers": [
+            "HealthModule"
+          ]
+        },
+        {
+          "source": "./media/media.module",
+          "specifiers": [
+            "MediaModule"
+          ]
+        },
+        {
+          "source": "./growth/growth.module",
+          "specifiers": [
+            "GrowthModule"
+          ]
+        },
+        {
+          "source": "./notifications/notifications.module",
+          "specifiers": [
+            "NotificationsModule"
+          ]
+        },
+        {
+          "source": "./mail/mail.module",
+          "specifiers": [
+            "MailModule"
+          ]
+        },
+        {
+          "source": "./admin/admin.module",
+          "specifiers": [
+            "AdminModule"
+          ]
+        }
+      ],
+      "exports": [
+        "AppModule"
+      ],
+      "totalLines": 70,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/main.ts": {
+      "filePath": "apps/api/src/main.ts",
+      "contentHash": "2999f6dc30b70695e3fd9dd42c03ee3fb985e7eee36b5277b1eed126cfb67ca2",
+      "functions": [
+        {
+          "name": "bootstrap",
+          "params": [],
+          "exported": false,
+          "lineCount": 78
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@nestjs/core",
+          "specifiers": [
+            "NestFactory"
+          ]
+        },
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "ValidationPipe"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "SwaggerModule",
+            "DocumentBuilder"
+          ]
+        },
+        {
+          "source": "./app.module",
+          "specifiers": [
+            "AppModule"
+          ]
+        },
+        {
+          "source": "nestjs-pino",
+          "specifiers": [
+            "Logger"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 87,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/prisma/seed.ts": {
+      "filePath": "apps/api/prisma/seed.ts",
+      "contentHash": "7c68b4fae6710bbf3b56b2629429f061cbbc009ed645f389f67421053c214650",
+      "functions": [
+        {
+          "name": "main",
+          "params": [],
+          "exported": false,
+          "lineCount": 102
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@prisma/client",
+          "specifiers": [
+            "PrismaClient"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 120,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/admin/admin.module.ts": {
+      "filePath": "apps/api/src/admin/admin.module.ts",
+      "contentHash": "58c23db335d5e0e381b7ae320458751a84e5f16248ef396f445f3313452120d6",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AdminModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./admin.controller",
+          "specifiers": [
+            "AdminController"
+          ]
+        },
+        {
+          "source": "./admin.service",
+          "specifiers": [
+            "AdminService"
+          ]
+        }
+      ],
+      "exports": [
+        "AdminModule"
+      ],
+      "totalLines": 11,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/admin/admin.service.ts": {
+      "filePath": "apps/api/src/admin/admin.service.ts",
+      "contentHash": "98e1e1c1109dfb3d50b629d808489a469063623e373015f14c404e49cbee0284",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AdminService",
+          "methods": [
+            "constructor",
+            "getAllUsers",
+            "getUserById",
+            "updateUserStatus",
+            "updateUserRole",
+            "getAuditLogs",
+            "getSystemStats"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 184
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "ForbiddenException",
+            "NotFoundException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [
+        "AdminService"
+      ],
+      "totalLines": 189,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/admin/admin.controller.ts": {
+      "filePath": "apps/api/src/admin/admin.controller.ts",
+      "contentHash": "c15564eefbfeaf825a1109f1b98bc1c5946447b97a3359b4d71ee0fd25e683da",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AdminController",
+          "methods": [
+            "constructor",
+            "getUsers",
+            "getUser",
+            "updateUserStatus",
+            "updateUserRole",
+            "getAuditLogs",
+            "getStats"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 60
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Patch",
+            "Param",
+            "Query",
+            "UseGuards",
+            "Body"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth"
+          ]
+        },
+        {
+          "source": "./admin.service",
+          "specifiers": [
+            "AdminService"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        },
+        {
+          "source": "../common/decorators/current-user.decorator",
+          "specifiers": [
+            "CurrentUser"
+          ]
+        },
+        {
+          "source": "../common/guards/roles.guard",
+          "specifiers": [
+            "RolesGuard"
+          ]
+        },
+        {
+          "source": "../common/decorators/roles.decorator",
+          "specifiers": [
+            "Roles"
+          ]
+        }
+      ],
+      "exports": [
+        "AdminController"
+      ],
+      "totalLines": 73,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/auth/auth.controller.ts": {
+      "filePath": "apps/api/src/auth/auth.controller.ts",
+      "contentHash": "4f2c09b533c1238016b628d03760ba9fcc8fd9afcdf64f8ff69da5953b72fd54",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AuthController",
+          "methods": [
+            "constructor",
+            "register",
+            "login",
+            "refresh",
+            "forgotPassword",
+            "resetPassword",
+            "verifyEmail",
+            "getProfile",
+            "logout"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 70
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Post",
+            "Get",
+            "Body",
+            "UseGuards",
+            "Request",
+            "HttpCode",
+            "HttpStatus",
+            "Query"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth"
+          ]
+        },
+        {
+          "source": "@nestjs/throttler",
+          "specifiers": [
+            "Throttle",
+            "ThrottlerGuard"
+          ]
+        },
+        {
+          "source": "./auth.service",
+          "specifiers": [
+            "AuthService"
+          ]
+        },
+        {
+          "source": "./dto/auth.dto",
+          "specifiers": [
+            "RegisterDto",
+            "LoginDto",
+            "RefreshTokenDto",
+            "LogoutDto",
+            "ForgotPasswordDto",
+            "ResetPasswordDto"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        },
+        {
+          "source": "../common/decorators/public.decorator",
+          "specifiers": [
+            "Public"
+          ]
+        },
+        {
+          "source": "../common/decorators/current-user.decorator",
+          "specifiers": [
+            "CurrentUser"
+          ]
+        }
+      ],
+      "exports": [
+        "AuthController"
+      ],
+      "totalLines": 83,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/auth/auth.module.ts": {
+      "filePath": "apps/api/src/auth/auth.module.ts",
+      "contentHash": "4a2e93dab4906249d8272f44903edc665adb783a82e631cc94d284110efaf0e1",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AuthModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "@nestjs/jwt",
+          "specifiers": [
+            "JwtModule"
+          ]
+        },
+        {
+          "source": "@nestjs/passport",
+          "specifiers": [
+            "PassportModule"
+          ]
+        },
+        {
+          "source": "./auth.controller",
+          "specifiers": [
+            "AuthController"
+          ]
+        },
+        {
+          "source": "./auth.service",
+          "specifiers": [
+            "AuthService"
+          ]
+        },
+        {
+          "source": "./strategies/jwt.strategy",
+          "specifiers": [
+            "JwtStrategy"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.module",
+          "specifiers": [
+            "PrismaModule"
+          ]
+        },
+        {
+          "source": "../subscriptions/subscriptions.module",
+          "specifiers": [
+            "SubscriptionsModule"
+          ]
+        },
+        {
+          "source": "../mail/mail.module",
+          "specifiers": [
+            "MailModule"
+          ]
+        }
+      ],
+      "exports": [
+        "AuthModule"
+      ],
+      "totalLines": 36,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/auth/auth.service.ts": {
+      "filePath": "apps/api/src/auth/auth.service.ts",
+      "contentHash": "c56f0940fe0c671d716b9bf7648f578aaca69b6d5aa34b3a902d69f55a63a31e",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AuthService",
+          "methods": [
+            "constructor",
+            "register",
+            "login",
+            "refreshTokens",
+            "verifyEmail",
+            "forgotPassword",
+            "resetPassword",
+            "validateUser",
+            "generateTokens",
+            "logout",
+            "getProfile"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 330
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "UnauthorizedException",
+            "ConflictException",
+            "InternalServerErrorException",
+            "BadRequestException"
+          ]
+        },
+        {
+          "source": "@nestjs/jwt",
+          "specifiers": [
+            "JwtService"
+          ]
+        },
+        {
+          "source": "bcrypt",
+          "specifiers": [
+            "* as bcrypt"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        },
+        {
+          "source": "./dto/auth.dto",
+          "specifiers": [
+            "RegisterDto",
+            "LoginDto",
+            "RefreshTokenDto"
+          ]
+        },
+        {
+          "source": "../subscriptions/subscriptions.service",
+          "specifiers": [
+            "SubscriptionsService"
+          ]
+        },
+        {
+          "source": "../mail/mail.service",
+          "specifiers": [
+            "MailService"
+          ]
+        },
+        {
+          "source": "crypto",
+          "specifiers": [
+            "randomBytes"
+          ]
+        }
+      ],
+      "exports": [
+        "AuthService"
+      ],
+      "totalLines": 347,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/auth/strategies/jwt.strategy.ts": {
+      "filePath": "apps/api/src/auth/strategies/jwt.strategy.ts",
+      "contentHash": "0fc8eaea293a6ffb1e6b45a5114c15dfa859b7e24e17a5e1b4c584df0e983b19",
+      "functions": [],
+      "classes": [
+        {
+          "name": "JwtStrategy",
+          "methods": [
+            "constructor",
+            "validate"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "UnauthorizedException"
+          ]
+        },
+        {
+          "source": "@nestjs/passport",
+          "specifiers": [
+            "PassportStrategy"
+          ]
+        },
+        {
+          "source": "passport-jwt",
+          "specifiers": [
+            "ExtractJwt",
+            "Strategy"
+          ]
+        },
+        {
+          "source": "../auth.service",
+          "specifiers": [
+            "AuthService"
+          ]
+        }
+      ],
+      "exports": [
+        "JwtStrategy"
+      ],
+      "totalLines": 30,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/auth/dto/auth.dto.ts": {
+      "filePath": "apps/api/src/auth/dto/auth.dto.ts",
+      "contentHash": "b125499e5455dd69ba8ac1733e779b386511f8957d657bd2398f7e08f4e94d8c",
+      "functions": [],
+      "classes": [
+        {
+          "name": "RegisterDto",
+          "methods": [],
+          "properties": [
+            "email",
+            "password",
+            "name"
+          ],
+          "exported": true,
+          "lineCount": 21
+        },
+        {
+          "name": "LoginDto",
+          "methods": [],
+          "properties": [
+            "email",
+            "password"
+          ],
+          "exported": true,
+          "lineCount": 10
+        },
+        {
+          "name": "RefreshTokenDto",
+          "methods": [],
+          "properties": [
+            "refreshToken"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "LogoutDto",
+          "methods": [],
+          "properties": [
+            "refreshToken"
+          ],
+          "exported": true,
+          "lineCount": 6
+        },
+        {
+          "name": "ForgotPasswordDto",
+          "methods": [],
+          "properties": [
+            "email"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "ResetPasswordDto",
+          "methods": [],
+          "properties": [
+            "token",
+            "password"
+          ],
+          "exported": true,
+          "lineCount": 14
+        }
+      ],
+      "imports": [
+        {
+          "source": "class-validator",
+          "specifiers": [
+            "IsEmail",
+            "IsString",
+            "MinLength",
+            "MaxLength",
+            "Matches",
+            "IsOptional"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiProperty"
+          ]
+        }
+      ],
+      "exports": [
+        "RegisterDto",
+        "LoginDto",
+        "RefreshTokenDto",
+        "LogoutDto",
+        "ForgotPasswordDto",
+        "ResetPasswordDto"
+      ],
+      "totalLines": 70,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/baby-mon/baby-mon.module.ts": {
+      "filePath": "apps/api/src/baby-mon/baby-mon.module.ts",
+      "contentHash": "c7811aeecbcf68bdec73baa8b35ecf36f76b6e4543ba1e605551a15cce23b597",
+      "functions": [],
+      "classes": [
+        {
+          "name": "BabyMonModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./baby-mon.service",
+          "specifiers": [
+            "BabyMonService"
+          ]
+        },
+        {
+          "source": "./baby-mon.controller",
+          "specifiers": [
+            "BabyMonController"
+          ]
+        },
+        {
+          "source": "../common/access-control.service",
+          "specifiers": [
+            "AccessControlService"
+          ]
+        }
+      ],
+      "exports": [
+        "BabyMonModule"
+      ],
+      "totalLines": 12,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/baby-mon/baby-mon.service.ts": {
+      "filePath": "apps/api/src/baby-mon/baby-mon.service.ts",
+      "contentHash": "1c03df70b1e592aa960a3aebb51d89497f8e75a437797e331905a669fc17ff68",
+      "functions": [],
+      "classes": [
+        {
+          "name": "BabyMonService",
+          "methods": [
+            "constructor",
+            "create",
+            "findAll",
+            "findOne",
+            "update",
+            "delete",
+            "calculateCurrentStage"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 221
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "NotFoundException",
+            "ForbiddenException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        },
+        {
+          "source": "./dto/baby-mon.dto",
+          "specifiers": [
+            "CreateBabyMonDto",
+            "UpdateBabyMonDto"
+          ]
+        }
+      ],
+      "exports": [
+        "BabyMonService"
+      ],
+      "totalLines": 227,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/badges/badges.module.ts": {
+      "filePath": "apps/api/src/badges/badges.module.ts",
+      "contentHash": "bb44df4b300ff8da2bb7cfc6f1c81362236a72185f68b387a4f2125b58fd0681",
+      "functions": [],
+      "classes": [
+        {
+          "name": "BadgesModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module",
+            "forwardRef"
+          ]
+        },
+        {
+          "source": "./badges.service",
+          "specifiers": [
+            "BadgesService"
+          ]
+        },
+        {
+          "source": "./badges.controller",
+          "specifiers": [
+            "BadgesController"
+          ]
+        }
+      ],
+      "exports": [
+        "BadgesModule"
+      ],
+      "totalLines": 11,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/badges/badges.service.ts": {
+      "filePath": "apps/api/src/badges/badges.service.ts",
+      "contentHash": "5cd263f67c75b7a434cf121d81d82fe65bf0430b8c8ea23226b7a728b23dd1b0",
+      "functions": [],
+      "classes": [
+        {
+          "name": "BadgesService",
+          "methods": [
+            "constructor",
+            "getBadgeDefinitions",
+            "findAll",
+            "checkAndAwardBadges"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 87
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "ForbiddenException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [
+        "BadgesService"
+      ],
+      "totalLines": 103,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/common/access-control.service.ts": {
+      "filePath": "apps/api/src/common/access-control.service.ts",
+      "contentHash": "c77a19c139300016474a1e3bfd891697b8692fd58c17f198ff3b407668bf6d59",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AccessControlService",
+          "methods": [
+            "constructor",
+            "checkAccess"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 36
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        },
+        {
+          "source": "./access-control.types",
+          "specifiers": [
+            "AccessLevel",
+            "AccessCheckResult"
+          ]
+        }
+      ],
+      "exports": [
+        "AccessControlService"
+      ],
+      "totalLines": 41,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/auth/auth.service.spec.ts": {
+      "filePath": "apps/api/src/auth/auth.service.spec.ts",
+      "contentHash": "821516fe383b27c943afeb5d99fe9e2e1b561bb2e265d8673c664af30b24e881",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@nestjs/testing",
+          "specifiers": [
+            "Test",
+            "TestingModule"
+          ]
+        },
+        {
+          "source": "./auth.service",
+          "specifiers": [
+            "AuthService"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        },
+        {
+          "source": "../subscriptions/subscriptions.service",
+          "specifiers": [
+            "SubscriptionsService"
+          ]
+        },
+        {
+          "source": "@nestjs/jwt",
+          "specifiers": [
+            "JwtService"
+          ]
+        },
+        {
+          "source": "../mail/mail.service",
+          "specifiers": [
+            "MailService"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 82,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/baby-mon/baby-mon.service.spec.ts": {
+      "filePath": "apps/api/src/baby-mon/baby-mon.service.spec.ts",
+      "contentHash": "dbb01788ff59d8a24d2175cae8ba6c0a96e3e3d3ca91dab2cef65b1a8e624898",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@nestjs/testing",
+          "specifiers": [
+            "Test",
+            "TestingModule"
+          ]
+        },
+        {
+          "source": "./baby-mon.service",
+          "specifiers": [
+            "BabyMonService"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 68,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/auth/decorators/public.decorator.ts": {
+      "filePath": "apps/api/src/auth/decorators/public.decorator.ts",
+      "contentHash": "bb149c7568f240afbabb885243d83abe7ec86fe6a27777ba4d028b7fb3b463dc",
+      "functions": [
+        {
+          "name": "Public",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "SetMetadata"
+          ]
+        }
+      ],
+      "exports": [
+        "IS_PUBLIC_KEY",
+        "Public"
+      ],
+      "totalLines": 5,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/badges/badges.controller.ts": {
+      "filePath": "apps/api/src/badges/badges.controller.ts",
+      "contentHash": "e75a1a72a2660c93df8e619c6b09197767ee1cbb8b7aa7c3e7e4dd4fdee2eac1",
+      "functions": [],
+      "classes": [
+        {
+          "name": "BadgesController",
+          "methods": [
+            "constructor",
+            "getDefinitions"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 9
+        },
+        {
+          "name": "BabyMonBadgesController",
+          "methods": [
+            "constructor",
+            "findAll"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 9
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Param",
+            "UseGuards",
+            "Request"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth"
+          ]
+        },
+        {
+          "source": "./badges.service",
+          "specifiers": [
+            "BadgesService"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        }
+      ],
+      "exports": [
+        "BadgesController",
+        "BabyMonBadgesController"
+      ],
+      "totalLines": 31,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/baby-mon/baby-mon.controller.ts": {
+      "filePath": "apps/api/src/baby-mon/baby-mon.controller.ts",
+      "contentHash": "53fbd9dcb23bfb80c5459780222bc4d1534edc023d55b64a1ecf5107587c28c4",
+      "functions": [],
+      "classes": [
+        {
+          "name": "BabyMonController",
+          "methods": [
+            "constructor",
+            "create",
+            "findAll",
+            "findOne",
+            "update",
+            "delete",
+            "getStage"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 52
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Post",
+            "Patch",
+            "Delete",
+            "Body",
+            "Param",
+            "Query",
+            "UseGuards",
+            "Request"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth",
+            "ApiQuery"
+          ]
+        },
+        {
+          "source": "./baby-mon.service",
+          "specifiers": [
+            "BabyMonService"
+          ]
+        },
+        {
+          "source": "./dto/baby-mon.dto",
+          "specifiers": [
+            "CreateBabyMonDto",
+            "UpdateBabyMonDto"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        },
+        {
+          "source": "../common/dto/pagination.dto",
+          "specifiers": [
+            "PaginationDto"
+          ]
+        }
+      ],
+      "exports": [
+        "BabyMonController"
+      ],
+      "totalLines": 64,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/baby-mon/dto/baby-mon.dto.ts": {
+      "filePath": "apps/api/src/baby-mon/dto/baby-mon.dto.ts",
+      "contentHash": "85a8526665f2cff5e21d778cb7d5ecc718c47e19487da61b521cd6f7f04d2c56",
+      "functions": [],
+      "classes": [
+        {
+          "name": "CreateBabyMonDto",
+          "methods": [],
+          "properties": [
+            "name",
+            "middleName",
+            "lastName",
+            "stageStartType",
+            "conceptionDate",
+            "lmpDate",
+            "birthDate",
+            "ideaDate",
+            "gender",
+            "traits",
+            "specialMove",
+            "biologicalMother",
+            "biologicalFather",
+            "bloodGroup",
+            "eyeColor"
+          ],
+          "exported": true,
+          "lineCount": 75
+        },
+        {
+          "name": "UpdateBabyMonDto",
+          "methods": [],
+          "properties": [
+            "name",
+            "middleName",
+            "lastName",
+            "traits",
+            "specialMove",
+            "biologicalMother",
+            "biologicalFather",
+            "bloodGroup",
+            "eyeColor"
+          ],
+          "exported": true,
+          "lineCount": 47
+        }
+      ],
+      "imports": [
+        {
+          "source": "class-validator",
+          "specifiers": [
+            "IsEnum",
+            "IsString",
+            "IsOptional",
+            "IsArray",
+            "IsDateString",
+            "MaxLength",
+            "ValidateIf"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiProperty"
+          ]
+        }
+      ],
+      "exports": [
+        "CreateBabyMonDto",
+        "UpdateBabyMonDto"
+      ],
+      "totalLines": 139,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/common/access-control.types.ts": {
+      "filePath": "apps/api/src/common/access-control.types.ts",
+      "contentHash": "a1d58f245bad89166ef2c37cee300a7b40779cacbd1ca88299dae7bfa51fc270",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 11,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/common/audit-event.enum.ts": {
+      "filePath": "apps/api/src/common/audit-event.enum.ts",
+      "contentHash": "d763a0b1eca5c4e41fa9559d99bcd1434e6698fdc224fc9db27e42edf2a0bf5b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 35,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/common/audit.service.ts": {
+      "filePath": "apps/api/src/common/audit.service.ts",
+      "contentHash": "27dd0889cd32e2f4681aef1177ac1fc324611c28b24e526e6484a28a83500dc8",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AuditService",
+          "methods": [
+            "constructor",
+            "log"
+          ],
+          "properties": [
+            "logger"
+          ],
+          "exported": true,
+          "lineCount": 38
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "Logger"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        },
+        {
+          "source": "./audit-event.enum",
+          "specifiers": [
+            "AuditEvent"
+          ]
+        }
+      ],
+      "exports": [
+        "AuditService"
+      ],
+      "totalLines": 43,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/common/decorators/current-user.decorator.ts": {
+      "filePath": "apps/api/src/common/decorators/current-user.decorator.ts",
+      "contentHash": "2f8127c5ad4d2019b518b82525d9fe51b02aef526b25671954b2624e79017c26",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "createParamDecorator",
+            "ExecutionContext"
+          ]
+        },
+        {
+          "source": "express",
+          "specifiers": [
+            "Request"
+          ]
+        }
+      ],
+      "exports": [
+        "CurrentUser"
+      ],
+      "totalLines": 11,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/common/decorators/public.decorator.ts": {
+      "filePath": "apps/api/src/common/decorators/public.decorator.ts",
+      "contentHash": "bb149c7568f240afbabb885243d83abe7ec86fe6a27777ba4d028b7fb3b463dc",
+      "functions": [
+        {
+          "name": "Public",
+          "params": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "SetMetadata"
+          ]
+        }
+      ],
+      "exports": [
+        "IS_PUBLIC_KEY",
+        "Public"
+      ],
+      "totalLines": 5,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/common/decorators/roles.decorator.ts": {
+      "filePath": "apps/api/src/common/decorators/roles.decorator.ts",
+      "contentHash": "8c07daae55db0b73ef35d67d6d0c212897351d1c3126fd1214dc30689f9432ba",
+      "functions": [
+        {
+          "name": "Roles",
+          "params": [
+            "...roles"
+          ],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "SetMetadata"
+          ]
+        }
+      ],
+      "exports": [
+        "Roles"
+      ],
+      "totalLines": 4,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/common/dto/pagination.dto.ts": {
+      "filePath": "apps/api/src/common/dto/pagination.dto.ts",
+      "contentHash": "9720f0885407df91b9d0d3fc41519219b0feeb1fac3b0a83756adcf6760c26b8",
+      "functions": [],
+      "classes": [
+        {
+          "name": "PaginationDto",
+          "methods": [],
+          "properties": [
+            "skip",
+            "take"
+          ],
+          "exported": true,
+          "lineCount": 16
+        }
+      ],
+      "imports": [
+        {
+          "source": "class-validator",
+          "specifiers": [
+            "IsOptional",
+            "IsInt",
+            "Min",
+            "Max"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiPropertyOptional"
+          ]
+        },
+        {
+          "source": "class-transformer",
+          "specifiers": [
+            "Type"
+          ]
+        }
+      ],
+      "exports": [
+        "PaginationDto"
+      ],
+      "totalLines": 21,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/common/guards/jwt-auth.guard.ts": {
+      "filePath": "apps/api/src/common/guards/jwt-auth.guard.ts",
+      "contentHash": "4f15ae705ef65ebbb10d020f8192d45d92237f6c52afcbe70a4dd48003cf9f0c",
+      "functions": [],
+      "classes": [
+        {
+          "name": "JwtAuthGuard",
+          "methods": [
+            "constructor",
+            "canActivate"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 23
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "CanActivate",
+            "ExecutionContext",
+            "UnauthorizedException"
+          ]
+        },
+        {
+          "source": "@nestjs/core",
+          "specifiers": [
+            "Reflector"
+          ]
+        },
+        {
+          "source": "../decorators/public.decorator",
+          "specifiers": [
+            "IS_PUBLIC_KEY"
+          ]
+        }
+      ],
+      "exports": [
+        "JwtAuthGuard"
+      ],
+      "totalLines": 29,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/common/guards/roles.guard.ts": {
+      "filePath": "apps/api/src/common/guards/roles.guard.ts",
+      "contentHash": "1535321a4afae71971c7e20ad759e6de6fbb82c79a7e23239239317226796c74",
+      "functions": [],
+      "classes": [
+        {
+          "name": "RolesGuard",
+          "methods": [
+            "constructor",
+            "canActivate"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "CanActivate",
+            "ExecutionContext"
+          ]
+        },
+        {
+          "source": "@nestjs/core",
+          "specifiers": [
+            "Reflector"
+          ]
+        }
+      ],
+      "exports": [
+        "RolesGuard"
+      ],
+      "totalLines": 22,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/common/guards/subscription-write.guard.ts": {
+      "filePath": "apps/api/src/common/guards/subscription-write.guard.ts",
+      "contentHash": "1319bb16cedff52af3064378452003caac4ced4ecc650d4b66f72581e1631910",
+      "functions": [],
+      "classes": [
+        {
+          "name": "SubscriptionWriteGuard",
+          "methods": [
+            "constructor",
+            "canActivate"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 36
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "CanActivate",
+            "ExecutionContext",
+            "ForbiddenException"
+          ]
+        },
+        {
+          "source": "@nestjs/core",
+          "specifiers": [
+            "Reflector"
+          ]
+        },
+        {
+          "source": "../decorators/public.decorator",
+          "specifiers": [
+            "IS_PUBLIC_KEY"
+          ]
+        },
+        {
+          "source": "../../subscriptions/subscriptions.service",
+          "specifiers": [
+            "SubscriptionsService"
+          ]
+        }
+      ],
+      "exports": [
+        "SubscriptionWriteGuard"
+      ],
+      "totalLines": 43,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/common/interceptors/audit.interceptor.ts": {
+      "filePath": "apps/api/src/common/interceptors/audit.interceptor.ts",
+      "contentHash": "c3e60a24c64b9e0442e04bc79fa16fed73bba79e1588be54577008d80a81da22",
+      "functions": [],
+      "classes": [
+        {
+          "name": "AuditInterceptor",
+          "methods": [
+            "constructor",
+            "intercept",
+            "determineEvent",
+            "extractBabyMonId",
+            "extractResourceId",
+            "determineResourceType"
+          ],
+          "properties": [
+            "logger"
+          ],
+          "exported": true,
+          "lineCount": 129
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "NestInterceptor",
+            "ExecutionContext",
+            "CallHandler",
+            "Logger",
+            "Inject",
+            "forwardRef"
+          ]
+        },
+        {
+          "source": "rxjs",
+          "specifiers": [
+            "Observable"
+          ]
+        },
+        {
+          "source": "rxjs/operators",
+          "specifiers": [
+            "tap"
+          ]
+        },
+        {
+          "source": "express",
+          "specifiers": [
+            "Request"
+          ]
+        },
+        {
+          "source": "../audit.service",
+          "specifiers": [
+            "AuditService"
+          ]
+        },
+        {
+          "source": "../audit-event.enum",
+          "specifiers": [
+            "AuditEvent"
+          ]
+        }
+      ],
+      "exports": [
+        "AuditInterceptor"
+      ],
+      "totalLines": 137,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/evolution/evolution.controller.ts": {
+      "filePath": "apps/api/src/evolution/evolution.controller.ts",
+      "contentHash": "d06fcb6cd10b3e97846440d0cd4e5ad60f1eaaf842d17c2e09bf0537df769c76",
+      "functions": [],
+      "classes": [
+        {
+          "name": "EvolutionController",
+          "methods": [
+            "constructor",
+            "getEvolution",
+            "getSummary"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 15
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Param",
+            "UseGuards",
+            "Request"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth"
+          ]
+        },
+        {
+          "source": "./evolution.service",
+          "specifiers": [
+            "EvolutionService"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        }
+      ],
+      "exports": [
+        "EvolutionController"
+      ],
+      "totalLines": 25,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/evolution/evolution.module.ts": {
+      "filePath": "apps/api/src/evolution/evolution.module.ts",
+      "contentHash": "a34b6bb1b79e695e8bc99970fcdd52e63bc1de74c1ff9054e136015be25342c3",
+      "functions": [],
+      "classes": [
+        {
+          "name": "EvolutionModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./evolution.service",
+          "specifiers": [
+            "EvolutionService"
+          ]
+        },
+        {
+          "source": "./evolution.controller",
+          "specifiers": [
+            "EvolutionController"
+          ]
+        },
+        {
+          "source": "../baby-mon/baby-mon.module",
+          "specifiers": [
+            "BabyMonModule"
+          ]
+        }
+      ],
+      "exports": [
+        "EvolutionModule"
+      ],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/evolution/evolution.service.ts": {
+      "filePath": "apps/api/src/evolution/evolution.service.ts",
+      "contentHash": "e4ecebbf9ab2a5088eb2dba79201e1d01473a0f90e477c7efa0222708d294b24",
+      "functions": [],
+      "classes": [
+        {
+          "name": "EvolutionService",
+          "methods": [
+            "constructor",
+            "getEvolution",
+            "getEvolutionSummary"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 79
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "NotFoundException",
+            "ForbiddenException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        },
+        {
+          "source": "../baby-mon/baby-mon.service",
+          "specifiers": [
+            "BabyMonService"
+          ]
+        },
+        {
+          "source": "../common/access-control.service",
+          "specifiers": [
+            "AccessControlService"
+          ]
+        }
+      ],
+      "exports": [
+        "EvolutionService"
+      ],
+      "totalLines": 86,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/export/export.controller.ts": {
+      "filePath": "apps/api/src/export/export.controller.ts",
+      "contentHash": "252f800c536670c3c7d636f3e69e8bdae154080bc042390ee7ef307de20d4fd8",
+      "functions": [],
+      "classes": [
+        {
+          "name": "ExportController",
+          "methods": [
+            "constructor",
+            "export"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 17
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Param",
+            "Query",
+            "UseGuards",
+            "Request",
+            "Res"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth"
+          ]
+        },
+        {
+          "source": "./export.service",
+          "specifiers": [
+            "ExportService"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        }
+      ],
+      "exports": [
+        "ExportController"
+      ],
+      "totalLines": 27,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/export/export.module.ts": {
+      "filePath": "apps/api/src/export/export.module.ts",
+      "contentHash": "b6bb47ad4d890e9453a6ae32cc84309d6d906755e3d1933d0e21cbd0ac011db7",
+      "functions": [],
+      "classes": [
+        {
+          "name": "ExportModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./export.service",
+          "specifiers": [
+            "ExportService"
+          ]
+        },
+        {
+          "source": "./export.controller",
+          "specifiers": [
+            "ExportController"
+          ]
+        }
+      ],
+      "exports": [
+        "ExportModule"
+      ],
+      "totalLines": 11,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/export/export.service.ts": {
+      "filePath": "apps/api/src/export/export.service.ts",
+      "contentHash": "87ab66a566ea9088a0e4e2a85b51e8eb5756aa3fdfded87b9e621320aaade5fd",
+      "functions": [],
+      "classes": [
+        {
+          "name": "ExportService",
+          "methods": [
+            "constructor",
+            "getFullBabyMonData",
+            "exportJson",
+            "exportCsv",
+            "exportBabyMon"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 229
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "NotFoundException",
+            "ForbiddenException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [
+        "ExportService"
+      ],
+      "totalLines": 234,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/feed-logs/dto/feed-log.dto.ts": {
+      "filePath": "apps/api/src/feed-logs/dto/feed-log.dto.ts",
+      "contentHash": "a2db720b32fdf74f53494352dba0d71956cd93fa600087d6c72fb0825420c3f2",
+      "functions": [],
+      "classes": [
+        {
+          "name": "CreateFeedLogDto",
+          "methods": [],
+          "properties": [
+            "type",
+            "amount",
+            "unit",
+            "notes",
+            "happenedAt",
+            "localMediaRefs"
+          ],
+          "exported": true,
+          "lineCount": 29
+        },
+        {
+          "name": "UpdateFeedLogDto",
+          "methods": [],
+          "properties": [
+            "type",
+            "amount",
+            "unit",
+            "notes",
+            "happenedAt",
+            "localMediaRefs"
+          ],
+          "exported": true,
+          "lineCount": 31
+        }
+      ],
+      "imports": [
+        {
+          "source": "class-validator",
+          "specifiers": [
+            "IsEnum",
+            "IsString",
+            "IsOptional",
+            "IsArray",
+            "IsDateString"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiProperty"
+          ]
+        }
+      ],
+      "exports": [
+        "CreateFeedLogDto",
+        "UpdateFeedLogDto"
+      ],
+      "totalLines": 71,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/feed-logs/feed-logs.controller.ts": {
+      "filePath": "apps/api/src/feed-logs/feed-logs.controller.ts",
+      "contentHash": "353994dac85ed9e16f8e4fadfa75f3f5fc1a3f2b7d40a642ebbcae743523fa34",
+      "functions": [],
+      "classes": [
+        {
+          "name": "FeedLogsController",
+          "methods": [
+            "constructor",
+            "create",
+            "findAll",
+            "findOne",
+            "update",
+            "delete"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 44
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Post",
+            "Patch",
+            "Delete",
+            "Body",
+            "Param",
+            "Query",
+            "UseGuards",
+            "Request"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth",
+            "ApiQuery"
+          ]
+        },
+        {
+          "source": "./feed-logs.service",
+          "specifiers": [
+            "FeedLogsService"
+          ]
+        },
+        {
+          "source": "./dto/feed-log.dto",
+          "specifiers": [
+            "CreateFeedLogDto",
+            "UpdateFeedLogDto"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        },
+        {
+          "source": "../common/dto/pagination.dto",
+          "specifiers": [
+            "PaginationDto"
+          ]
+        }
+      ],
+      "exports": [
+        "FeedLogsController"
+      ],
+      "totalLines": 56,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/feed-logs/feed-logs.module.ts": {
+      "filePath": "apps/api/src/feed-logs/feed-logs.module.ts",
+      "contentHash": "c4e7336a933b31fcc030665af619f0fa6164adfa37a2baad16513d674c6cd094",
+      "functions": [],
+      "classes": [
+        {
+          "name": "FeedLogsModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./feed-logs.service",
+          "specifiers": [
+            "FeedLogsService"
+          ]
+        },
+        {
+          "source": "./feed-logs.controller",
+          "specifiers": [
+            "FeedLogsController"
+          ]
+        },
+        {
+          "source": "../badges/badges.module",
+          "specifiers": [
+            "BadgesModule"
+          ]
+        },
+        {
+          "source": "../baby-mon/baby-mon.module",
+          "specifiers": [
+            "BabyMonModule"
+          ]
+        }
+      ],
+      "exports": [
+        "FeedLogsModule"
+      ],
+      "totalLines": 14,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/feed-logs/feed-logs.service.ts": {
+      "filePath": "apps/api/src/feed-logs/feed-logs.service.ts",
+      "contentHash": "5fb68cce2a733dad624ceaf9f2caa39664ff0227e60952578142567cc28b69d3",
+      "functions": [],
+      "classes": [
+        {
+          "name": "FeedLogsService",
+          "methods": [
+            "constructor",
+            "create",
+            "findAll",
+            "findOne",
+            "update",
+            "delete",
+            "verifyAccess"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 164
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "NotFoundException",
+            "ForbiddenException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        },
+        {
+          "source": "./dto/feed-log.dto",
+          "specifiers": [
+            "CreateFeedLogDto",
+            "UpdateFeedLogDto"
+          ]
+        },
+        {
+          "source": "../badges/badges.service",
+          "specifiers": [
+            "BadgesService"
+          ]
+        },
+        {
+          "source": "../common/access-control.service",
+          "specifiers": [
+            "AccessControlService"
+          ]
+        }
+      ],
+      "exports": [
+        "FeedLogsService"
+      ],
+      "totalLines": 172,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/growth/growth.controller.ts": {
+      "filePath": "apps/api/src/growth/growth.controller.ts",
+      "contentHash": "7b30f9ed7dd16fb13f436ae578dfda4caa724bcfe95dba66b499279255bbe62e",
+      "functions": [],
+      "classes": [
+        {
+          "name": "GrowthController",
+          "methods": [
+            "constructor",
+            "add",
+            "getAll",
+            "analyze",
+            "delete"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 50
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Post",
+            "Delete",
+            "Body",
+            "Param",
+            "Query",
+            "UseGuards"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth"
+          ]
+        },
+        {
+          "source": "./growth.service",
+          "specifiers": [
+            "GrowthService"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        },
+        {
+          "source": "../common/decorators/current-user.decorator",
+          "specifiers": [
+            "CurrentUser"
+          ]
+        }
+      ],
+      "exports": [
+        "GrowthController"
+      ],
+      "totalLines": 61,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/growth/growth.module.ts": {
+      "filePath": "apps/api/src/growth/growth.module.ts",
+      "contentHash": "7028bc178e72b28d572b0798c4df5e99b04972ea5be36ff756b967e4334ff6fe",
+      "functions": [],
+      "classes": [
+        {
+          "name": "GrowthModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./growth.controller",
+          "specifiers": [
+            "GrowthController"
+          ]
+        },
+        {
+          "source": "./growth.service",
+          "specifiers": [
+            "GrowthService"
+          ]
+        },
+        {
+          "source": "../baby-mon/baby-mon.module",
+          "specifiers": [
+            "BabyMonModule"
+          ]
+        }
+      ],
+      "exports": [
+        "GrowthModule"
+      ],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/growth/growth.service.ts": {
+      "filePath": "apps/api/src/growth/growth.service.ts",
+      "contentHash": "a502efedee6a6d6e72e70390d6303387edd81cff9bb7716d561c07bce94cbe6b",
+      "functions": [],
+      "classes": [
+        {
+          "name": "GrowthService",
+          "methods": [
+            "constructor",
+            "addGrowthRecord",
+            "getGrowthRecords",
+            "getGrowthAnalysis",
+            "deleteGrowthRecord",
+            "verifyAccess",
+            "verifyAccessWithBabyMon",
+            "calculateAgeInMonths",
+            "calculatePercentile",
+            "getPercentileData",
+            "calculateTrend"
+          ],
+          "properties": [
+            "logger"
+          ],
+          "exported": true,
+          "lineCount": 217
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "Logger",
+            "NotFoundException",
+            "ForbiddenException",
+            "BadRequestException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        },
+        {
+          "source": "../common/access-control.service",
+          "specifiers": [
+            "AccessControlService"
+          ]
+        }
+      ],
+      "exports": [
+        "GrowthService"
+      ],
+      "totalLines": 270,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/health-records/dto/health-record.dto.ts": {
+      "filePath": "apps/api/src/health-records/dto/health-record.dto.ts",
+      "contentHash": "539fe8516dd7c2b98232fee492cde9dc3632cc1d3be824e2cb82c973d2beced9",
+      "functions": [],
+      "classes": [
+        {
+          "name": "CreateHealthRecordDto",
+          "methods": [],
+          "properties": [
+            "category",
+            "title",
+            "notes",
+            "happenedAt",
+            "localMediaRefs"
+          ],
+          "exported": true,
+          "lineCount": 23
+        },
+        {
+          "name": "UpdateHealthRecordDto",
+          "methods": [],
+          "properties": [
+            "category",
+            "title",
+            "notes",
+            "happenedAt",
+            "localMediaRefs"
+          ],
+          "exported": true,
+          "lineCount": 26
+        }
+      ],
+      "imports": [
+        {
+          "source": "class-validator",
+          "specifiers": [
+            "IsEnum",
+            "IsString",
+            "IsOptional",
+            "IsArray",
+            "IsDateString"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiProperty"
+          ]
+        }
+      ],
+      "exports": [
+        "CreateHealthRecordDto",
+        "UpdateHealthRecordDto"
+      ],
+      "totalLines": 60,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/health-records/health-records.controller.ts": {
+      "filePath": "apps/api/src/health-records/health-records.controller.ts",
+      "contentHash": "5f60f947d24f9889990c76f3e9fdae403e1ec00c0477bd9e65714ae31fec1f17",
+      "functions": [],
+      "classes": [
+        {
+          "name": "HealthRecordsController",
+          "methods": [
+            "constructor",
+            "create",
+            "findAll",
+            "findOne",
+            "update",
+            "delete"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 44
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Post",
+            "Patch",
+            "Delete",
+            "Body",
+            "Param",
+            "Query",
+            "UseGuards",
+            "Request"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth",
+            "ApiQuery"
+          ]
+        },
+        {
+          "source": "./health-records.service",
+          "specifiers": [
+            "HealthRecordsService"
+          ]
+        },
+        {
+          "source": "./dto/health-record.dto",
+          "specifiers": [
+            "CreateHealthRecordDto",
+            "UpdateHealthRecordDto"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        },
+        {
+          "source": "../common/dto/pagination.dto",
+          "specifiers": [
+            "PaginationDto"
+          ]
+        }
+      ],
+      "exports": [
+        "HealthRecordsController"
+      ],
+      "totalLines": 56,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/health-records/health-records.module.ts": {
+      "filePath": "apps/api/src/health-records/health-records.module.ts",
+      "contentHash": "efc50dd76c6ad91c097990be088ddeb1d1243e2ddbe9c5a319f02260e617743a",
+      "functions": [],
+      "classes": [
+        {
+          "name": "HealthRecordsModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./health-records.service",
+          "specifiers": [
+            "HealthRecordsService"
+          ]
+        },
+        {
+          "source": "./health-records.controller",
+          "specifiers": [
+            "HealthRecordsController"
+          ]
+        },
+        {
+          "source": "../baby-mon/baby-mon.module",
+          "specifiers": [
+            "BabyMonModule"
+          ]
+        }
+      ],
+      "exports": [
+        "HealthRecordsModule"
+      ],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/health-records/health-records.service.ts": {
+      "filePath": "apps/api/src/health-records/health-records.service.ts",
+      "contentHash": "2fd07197f18061ea7f3c850d263380ce988da66d687ae472d5b3c39e157f2222",
+      "functions": [],
+      "classes": [
+        {
+          "name": "HealthRecordsService",
+          "methods": [
+            "constructor",
+            "create",
+            "findAll",
+            "findOne",
+            "update",
+            "delete",
+            "verifyAccess"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 102
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "NotFoundException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        },
+        {
+          "source": "../common/access-control.service",
+          "specifiers": [
+            "AccessControlService"
+          ]
+        },
+        {
+          "source": "./dto/health-record.dto",
+          "specifiers": [
+            "CreateHealthRecordDto",
+            "UpdateHealthRecordDto"
+          ]
+        }
+      ],
+      "exports": [
+        "HealthRecordsService"
+      ],
+      "totalLines": 109,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/health/health.controller.spec.ts": {
+      "filePath": "apps/api/src/health/health.controller.spec.ts",
+      "contentHash": "5ff41f521163596c611d40df860ac52bba17574da2c917838ab3cb7d3c30b8bc",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@nestjs/testing",
+          "specifiers": [
+            "Test",
+            "TestingModule"
+          ]
+        },
+        {
+          "source": "./health.controller",
+          "specifiers": [
+            "HealthController"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 58,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/health/health.controller.ts": {
+      "filePath": "apps/api/src/health/health.controller.ts",
+      "contentHash": "38b9a16a06ed05e0bc392ddd7d6c822e6419d31fb144beb324666691ab3f8e6d",
+      "functions": [],
+      "classes": [
+        {
+          "name": "HealthController",
+          "methods": [
+            "constructor",
+            "check",
+            "live",
+            "ready"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 48
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [
+        "HealthController"
+      ],
+      "totalLines": 55,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/health/health.module.ts": {
+      "filePath": "apps/api/src/health/health.module.ts",
+      "contentHash": "8e6fe50b38d87d28ed07af3285935f9496908c98eabd92c987b1b6d8def8d08b",
+      "functions": [],
+      "classes": [
+        {
+          "name": "HealthModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./health.controller",
+          "specifiers": [
+            "HealthController"
+          ]
+        }
+      ],
+      "exports": [
+        "HealthModule"
+      ],
+      "totalLines": 8,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/linked-accounts/linked-accounts.controller.ts": {
+      "filePath": "apps/api/src/linked-accounts/linked-accounts.controller.ts",
+      "contentHash": "07311fa9dd28f1a418f658be6ee2d5cc560b53bb942204f948d8e4e21ef02e1f",
+      "functions": [],
+      "classes": [
+        {
+          "name": "LinkedAccountsController",
+          "methods": [
+            "constructor",
+            "getLinkedAccounts",
+            "getPendingInvitations",
+            "invitePartner",
+            "respondToInvitation",
+            "removeLink",
+            "linkBabyMon"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 52
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Post",
+            "Delete",
+            "Body",
+            "Param",
+            "UseGuards"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth"
+          ]
+        },
+        {
+          "source": "./linked-accounts.service",
+          "specifiers": [
+            "LinkedAccountsService"
+          ]
+        },
+        {
+          "source": "./dto/linked-accounts.dto",
+          "specifiers": [
+            "InvitePartnerDto",
+            "RespondToInvitationDto",
+            "LinkBabyMonDto"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        },
+        {
+          "source": "../common/decorators/current-user.decorator",
+          "specifiers": [
+            "CurrentUser"
+          ]
+        }
+      ],
+      "exports": [
+        "LinkedAccountsController"
+      ],
+      "totalLines": 64,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/linked-accounts/linked-accounts.module.ts": {
+      "filePath": "apps/api/src/linked-accounts/linked-accounts.module.ts",
+      "contentHash": "fbe99f300951ff6c37c27acf8c57c5a53d6631d7c5b64c8ba9badbbfaed9723a",
+      "functions": [],
+      "classes": [
+        {
+          "name": "LinkedAccountsModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./linked-accounts.controller",
+          "specifiers": [
+            "LinkedAccountsController"
+          ]
+        },
+        {
+          "source": "./linked-accounts.service",
+          "specifiers": [
+            "LinkedAccountsService"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.module",
+          "specifiers": [
+            "PrismaModule"
+          ]
+        }
+      ],
+      "exports": [
+        "LinkedAccountsModule"
+      ],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/linked-accounts/linked-accounts.service.ts": {
+      "filePath": "apps/api/src/linked-accounts/linked-accounts.service.ts",
+      "contentHash": "702ec6e9173562e3ee5097aff6a488670d6eb30fd08af8b812efbeb488d54475",
+      "functions": [],
+      "classes": [
+        {
+          "name": "LinkedAccountsService",
+          "methods": [
+            "constructor",
+            "getLinkedAccounts",
+            "getPendingInvitations",
+            "invitePartner",
+            "respondToInvitation",
+            "removeLink",
+            "linkBabyMonToUser"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 253
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "NotFoundException",
+            "BadRequestException",
+            "ForbiddenException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [
+        "LinkedAccountsService"
+      ],
+      "totalLines": 258,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/linked-accounts/dto/linked-accounts.dto.ts": {
+      "filePath": "apps/api/src/linked-accounts/dto/linked-accounts.dto.ts",
+      "contentHash": "b177c945c1cca7495a2e957f8a549169b5516e42a1d04d4e826de2edc836e163",
+      "functions": [],
+      "classes": [
+        {
+          "name": "InvitePartnerDto",
+          "methods": [],
+          "properties": [
+            "partnerEmail"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "RespondToInvitationDto",
+          "methods": [],
+          "properties": [
+            "accept"
+          ],
+          "exported": true,
+          "lineCount": 5
+        },
+        {
+          "name": "LinkBabyMonDto",
+          "methods": [],
+          "properties": [
+            "babyMonId",
+            "access"
+          ],
+          "exported": true,
+          "lineCount": 10
+        }
+      ],
+      "imports": [
+        {
+          "source": "class-validator",
+          "specifiers": [
+            "IsString",
+            "IsEmail",
+            "IsOptional",
+            "IsBoolean",
+            "IsEnum"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiProperty"
+          ]
+        }
+      ],
+      "exports": [
+        "InvitePartnerDto",
+        "RespondToInvitationDto",
+        "LinkBabyMonDto"
+      ],
+      "totalLines": 26,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/journal/journal-proposals.service.ts": {
+      "filePath": "apps/api/src/journal/journal-proposals.service.ts",
+      "contentHash": "4eaecd38152177feb0b8bd7b78bffbb6e55f2d475b107b7ad80962be3a19fa45",
+      "functions": [],
+      "classes": [
+        {
+          "name": "JournalProposalsService",
+          "methods": [
+            "constructor",
+            "createProposal",
+            "getPendingProposals",
+            "approveProposal",
+            "rejectProposal"
+          ],
+          "properties": [
+            "logger"
+          ],
+          "exported": true,
+          "lineCount": 94
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "Logger",
+            "NotFoundException",
+            "ForbiddenException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [
+        "JournalProposalsService"
+      ],
+      "totalLines": 99,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/journal/journal.controller.ts": {
+      "filePath": "apps/api/src/journal/journal.controller.ts",
+      "contentHash": "59eef1554e208fff6875617746129b05482bd29300829bf1750b130ffbec4d1d",
+      "functions": [],
+      "classes": [
+        {
+          "name": "JournalController",
+          "methods": [
+            "constructor",
+            "getJournal",
+            "getProposals",
+            "approveProposal",
+            "rejectProposal"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 34
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Post",
+            "Param",
+            "Body",
+            "UseGuards",
+            "Request"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth"
+          ]
+        },
+        {
+          "source": "./journal.service",
+          "specifiers": [
+            "JournalService"
+          ]
+        },
+        {
+          "source": "./journal-proposals.service",
+          "specifiers": [
+            "JournalProposalsService"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        }
+      ],
+      "exports": [
+        "JournalController"
+      ],
+      "totalLines": 45,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/journal/journal.module.ts": {
+      "filePath": "apps/api/src/journal/journal.module.ts",
+      "contentHash": "a9f083875da2621ce23ac98d36c4c8cb16d0ff4b8d371cda0bd26f4e3a2ef9d9",
+      "functions": [],
+      "classes": [
+        {
+          "name": "JournalModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./journal.service",
+          "specifiers": [
+            "JournalService"
+          ]
+        },
+        {
+          "source": "./journal-proposals.service",
+          "specifiers": [
+            "JournalProposalsService"
+          ]
+        },
+        {
+          "source": "./journal.controller",
+          "specifiers": [
+            "JournalController"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.module",
+          "specifiers": [
+            "PrismaModule"
+          ]
+        }
+      ],
+      "exports": [
+        "JournalModule"
+      ],
+      "totalLines": 14,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/journal/journal.service.ts": {
+      "filePath": "apps/api/src/journal/journal.service.ts",
+      "contentHash": "3b614175d9eac5900c7518ec7b227aca872e469ada25485dec2a7f84e4c54074",
+      "functions": [],
+      "classes": [
+        {
+          "name": "JournalService",
+          "methods": [
+            "constructor",
+            "checkAccess",
+            "getJournal",
+            "getProposals",
+            "respondToProposal"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 106
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "NotFoundException",
+            "ForbiddenException",
+            "BadRequestException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [
+        "JournalService"
+      ],
+      "totalLines": 111,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/mail/mail.module.ts": {
+      "filePath": "apps/api/src/mail/mail.module.ts",
+      "contentHash": "49c0a5f5244a2c57d12fe9e953a8032475afd48ec190af11aa73a348b704a636",
+      "functions": [],
+      "classes": [
+        {
+          "name": "MailModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./mail.service",
+          "specifiers": [
+            "MailService"
+          ]
+        }
+      ],
+      "exports": [
+        "MailModule"
+      ],
+      "totalLines": 9,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/mail/mail.service.ts": {
+      "filePath": "apps/api/src/mail/mail.service.ts",
+      "contentHash": "8e7ae6cfb01f8a15ac5354fc58a146ed0db57d8ec4f1b5a4eb25c5b1f0962eba",
+      "functions": [],
+      "classes": [
+        {
+          "name": "MailService",
+          "methods": [
+            "constructor",
+            "sendEmail",
+            "sendVerificationEmail",
+            "sendPasswordResetEmail",
+            "sendLinkedAccountInvitation",
+            "sendProposalNotification"
+          ],
+          "properties": [
+            "logger",
+            "initialized"
+          ],
+          "exported": true,
+          "lineCount": 116
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "Logger"
+          ]
+        },
+        {
+          "source": "@sendgrid/mail",
+          "specifiers": [
+            "* as sgMail"
+          ]
+        }
+      ],
+      "exports": [
+        "MailService"
+      ],
+      "totalLines": 128,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/media/media.controller.ts": {
+      "filePath": "apps/api/src/media/media.controller.ts",
+      "contentHash": "3870f2d0bdfe120b08229f54816feb08379566da33becfda03a3957bdc8d6d9c",
+      "functions": [],
+      "classes": [
+        {
+          "name": "MediaController",
+          "methods": [
+            "constructor",
+            "upload",
+            "getPresignedUrl",
+            "getAll",
+            "delete"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 66
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Post",
+            "Delete",
+            "Body",
+            "Param",
+            "UseGuards",
+            "Request",
+            "ForbiddenException",
+            "BadRequestException"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth",
+            "ApiConsumes"
+          ]
+        },
+        {
+          "source": "./media.service",
+          "specifiers": [
+            "MediaService"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        },
+        {
+          "source": "../common/decorators/current-user.decorator",
+          "specifiers": [
+            "CurrentUser"
+          ]
+        }
+      ],
+      "exports": [
+        "MediaController"
+      ],
+      "totalLines": 77,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/media/media.module.ts": {
+      "filePath": "apps/api/src/media/media.module.ts",
+      "contentHash": "9babff42aee65d356ff11ffc052600949f8f9957007d276eb8dcd38f7784a0c5",
+      "functions": [],
+      "classes": [
+        {
+          "name": "MediaModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./media.controller",
+          "specifiers": [
+            "MediaController"
+          ]
+        },
+        {
+          "source": "./media.service",
+          "specifiers": [
+            "MediaService"
+          ]
+        },
+        {
+          "source": "../s3/s3.module",
+          "specifiers": [
+            "S3Module"
+          ]
+        }
+      ],
+      "exports": [
+        "MediaModule"
+      ],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/media/media.service.ts": {
+      "filePath": "apps/api/src/media/media.service.ts",
+      "contentHash": "9f5fc8cd6d383e6b64c0648d2b7bb8ab92e46034a09fe396f65ce909d2094b2d",
+      "functions": [],
+      "classes": [
+        {
+          "name": "MediaService",
+          "methods": [
+            "constructor",
+            "uploadMedia",
+            "getPresignedUploadUrl",
+            "getMediaForBabyMon",
+            "deleteMedia"
+          ],
+          "properties": [
+            "logger"
+          ],
+          "exported": true,
+          "lineCount": 177
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "Logger",
+            "BadRequestException",
+            "ForbiddenException",
+            "NotFoundException"
+          ]
+        },
+        {
+          "source": "../s3/s3.service",
+          "specifiers": [
+            "S3Service"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [
+        "MediaService"
+      ],
+      "totalLines": 193,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/milestones/dto/milestone.dto.ts": {
+      "filePath": "apps/api/src/milestones/dto/milestone.dto.ts",
+      "contentHash": "efa0fbc1c4a31b6271c56850168babe726ee703d18c88d4845c72bb8e6df5c21",
+      "functions": [],
+      "classes": [
+        {
+          "name": "CreateMilestoneDto",
+          "methods": [],
+          "properties": [
+            "title",
+            "notes",
+            "happenedAt",
+            "localMediaRefs",
+            "isCustom"
+          ],
+          "exported": true,
+          "lineCount": 24
+        },
+        {
+          "name": "UpdateMilestoneDto",
+          "methods": [],
+          "properties": [
+            "title",
+            "notes",
+            "happenedAt",
+            "localMediaRefs"
+          ],
+          "exported": true,
+          "lineCount": 21
+        }
+      ],
+      "imports": [
+        {
+          "source": "class-validator",
+          "specifiers": [
+            "IsString",
+            "IsOptional",
+            "IsArray",
+            "IsDateString",
+            "IsEnum"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiProperty"
+          ]
+        }
+      ],
+      "exports": [
+        "CreateMilestoneDto",
+        "UpdateMilestoneDto"
+      ],
+      "totalLines": 50,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/milestones/milestones.controller.ts": {
+      "filePath": "apps/api/src/milestones/milestones.controller.ts",
+      "contentHash": "4db10f0c0a3c7d1b740c6e007ffdbfb3741a5a3c6f9e256febbcc56ce3eda7f1",
+      "functions": [],
+      "classes": [
+        {
+          "name": "MilestonesController",
+          "methods": [
+            "constructor",
+            "create",
+            "findAll",
+            "findOne",
+            "update",
+            "delete"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 52
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Post",
+            "Patch",
+            "Delete",
+            "Body",
+            "Param",
+            "Query",
+            "UseGuards",
+            "Request"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth",
+            "ApiQuery"
+          ]
+        },
+        {
+          "source": "./milestones.service",
+          "specifiers": [
+            "MilestonesService"
+          ]
+        },
+        {
+          "source": "./dto/milestone.dto",
+          "specifiers": [
+            "CreateMilestoneDto",
+            "UpdateMilestoneDto"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        },
+        {
+          "source": "../common/dto/pagination.dto",
+          "specifiers": [
+            "PaginationDto"
+          ]
+        }
+      ],
+      "exports": [
+        "MilestonesController"
+      ],
+      "totalLines": 64,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/milestones/milestones.module.ts": {
+      "filePath": "apps/api/src/milestones/milestones.module.ts",
+      "contentHash": "2e6fdf2fd37c1c3d3889814d3a2e4ca6ecc1d6b6d55e3ad950de220b6a0d1b68",
+      "functions": [],
+      "classes": [
+        {
+          "name": "MilestonesModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./milestones.service",
+          "specifiers": [
+            "MilestonesService"
+          ]
+        },
+        {
+          "source": "./milestones.controller",
+          "specifiers": [
+            "MilestonesController"
+          ]
+        },
+        {
+          "source": "../badges/badges.module",
+          "specifiers": [
+            "BadgesModule"
+          ]
+        },
+        {
+          "source": "../baby-mon/baby-mon.module",
+          "specifiers": [
+            "BabyMonModule"
+          ]
+        }
+      ],
+      "exports": [
+        "MilestonesModule"
+      ],
+      "totalLines": 14,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/milestones/milestones.service.ts": {
+      "filePath": "apps/api/src/milestones/milestones.service.ts",
+      "contentHash": "2316d6465f6f99200836c544d876b630f5e0659a3ba772dbbdf35af6e170ee9b",
+      "functions": [],
+      "classes": [
+        {
+          "name": "MilestonesService",
+          "methods": [
+            "constructor",
+            "create",
+            "findAll",
+            "findOne",
+            "update",
+            "delete",
+            "verifyAccess"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 181
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "NotFoundException",
+            "ForbiddenException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        },
+        {
+          "source": "./dto/milestone.dto",
+          "specifiers": [
+            "CreateMilestoneDto",
+            "UpdateMilestoneDto"
+          ]
+        },
+        {
+          "source": "../badges/badges.service",
+          "specifiers": [
+            "BadgesService"
+          ]
+        },
+        {
+          "source": "../common/access-control.service",
+          "specifiers": [
+            "AccessControlService"
+          ]
+        }
+      ],
+      "exports": [
+        "MilestonesService"
+      ],
+      "totalLines": 189,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/notifications/notifications.controller.ts": {
+      "filePath": "apps/api/src/notifications/notifications.controller.ts",
+      "contentHash": "969a1b17b35de638704ed10172cc926aee30fc8c1751073529ae0d286ca1e29f",
+      "functions": [],
+      "classes": [
+        {
+          "name": "NotificationsController",
+          "methods": [
+            "constructor",
+            "registerDevice",
+            "sendTest"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 21
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Post",
+            "Body",
+            "UseGuards"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth"
+          ]
+        },
+        {
+          "source": "./notifications.service",
+          "specifiers": [
+            "NotificationsService"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        },
+        {
+          "source": "../common/decorators/current-user.decorator",
+          "specifiers": [
+            "CurrentUser"
+          ]
+        }
+      ],
+      "exports": [
+        "NotificationsController"
+      ],
+      "totalLines": 32,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/notifications/notifications.module.ts": {
+      "filePath": "apps/api/src/notifications/notifications.module.ts",
+      "contentHash": "41094febe33233a54e9fc58fba998d32121223cbf2f10cbca629ea2432ff0b2e",
+      "functions": [],
+      "classes": [
+        {
+          "name": "NotificationsModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./notifications.controller",
+          "specifiers": [
+            "NotificationsController"
+          ]
+        },
+        {
+          "source": "./notifications.service",
+          "specifiers": [
+            "NotificationsService"
+          ]
+        }
+      ],
+      "exports": [
+        "NotificationsModule"
+      ],
+      "totalLines": 11,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/notifications/notifications.service.ts": {
+      "filePath": "apps/api/src/notifications/notifications.service.ts",
+      "contentHash": "374d87d0a0c4998a142d77fccd15a1a54bbaa515288482239f581a62234d931a",
+      "functions": [],
+      "classes": [
+        {
+          "name": "NotificationsService",
+          "methods": [
+            "constructor",
+            "initializeFirebase",
+            "registerDevice",
+            "unregisterDevice",
+            "sendPushNotification",
+            "notifyMilestoneAdded",
+            "notifyBadgeUnlocked",
+            "notifyGrowthRecorded",
+            "notifyProposalReceived"
+          ],
+          "properties": [
+            "logger",
+            "initialized"
+          ],
+          "exported": true,
+          "lineCount": 165
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "Logger"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        },
+        {
+          "source": "firebase-admin",
+          "specifiers": [
+            "* as admin"
+          ]
+        }
+      ],
+      "exports": [
+        "NotificationsService"
+      ],
+      "totalLines": 177,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/prisma/prisma.module.ts": {
+      "filePath": "apps/api/src/prisma/prisma.module.ts",
+      "contentHash": "9223a0889abb0669020e94a9b8c1e68274cdc05533c1f79d84fe516450e94ebd",
+      "functions": [],
+      "classes": [
+        {
+          "name": "PrismaModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Global",
+            "Module"
+          ]
+        },
+        {
+          "source": "./prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [
+        "PrismaModule"
+      ],
+      "totalLines": 10,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/prisma/prisma.service.ts": {
+      "filePath": "apps/api/src/prisma/prisma.service.ts",
+      "contentHash": "092fb7b72bf76e2bd33dbe21228a3613df5c21383dfe961629672135c86c9508",
+      "functions": [],
+      "classes": [
+        {
+          "name": "PrismaService",
+          "methods": [
+            "onModuleInit",
+            "onModuleDestroy"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 9
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "OnModuleInit",
+            "OnModuleDestroy"
+          ]
+        },
+        {
+          "source": "@prisma/client",
+          "specifiers": [
+            "PrismaClient"
+          ]
+        }
+      ],
+      "exports": [
+        "PrismaService"
+      ],
+      "totalLines": 14,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/s3/s3.module.ts": {
+      "filePath": "apps/api/src/s3/s3.module.ts",
+      "contentHash": "c8d590200d6cb6aaac57d707d1eb9ea8dc76a2eab6bd2e972ad2696870ac7267",
+      "functions": [],
+      "classes": [
+        {
+          "name": "S3Module",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./s3.service",
+          "specifiers": [
+            "S3Service"
+          ]
+        }
+      ],
+      "exports": [
+        "S3Module"
+      ],
+      "totalLines": 9,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/s3/s3.service.ts": {
+      "filePath": "apps/api/src/s3/s3.service.ts",
+      "contentHash": "efd22b6fbbb532542333d0a000322648a0f7d5c55e0dd13c7f27c1feb6485a89",
+      "functions": [],
+      "classes": [
+        {
+          "name": "S3Service",
+          "methods": [
+            "constructor",
+            "isConfigured",
+            "uploadFile",
+            "getSignedUploadUrl",
+            "getSignedDownloadUrl",
+            "deleteFile",
+            "extractKeyFromUrl"
+          ],
+          "properties": [
+            "logger",
+            "s3Client",
+            "bucketName"
+          ],
+          "exported": true,
+          "lineCount": 123
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "Logger",
+            "BadRequestException"
+          ]
+        },
+        {
+          "source": "@aws-sdk/client-s3",
+          "specifiers": [
+            "S3Client",
+            "PutObjectCommand",
+            "GetObjectCommand",
+            "DeleteObjectCommand",
+            "PutObjectCommandInput"
+          ]
+        },
+        {
+          "source": "@aws-sdk/s3-request-presigner",
+          "specifiers": [
+            "getSignedUrl"
+          ]
+        }
+      ],
+      "exports": [
+        "S3Service"
+      ],
+      "totalLines": 135,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/stage-content/stage-content.controller.ts": {
+      "filePath": "apps/api/src/stage-content/stage-content.controller.ts",
+      "contentHash": "fed06384d44a19e4701cf5ecdd3a2e4260834b4e9c7542b0cb4dee9228d9fb15",
+      "functions": [],
+      "classes": [
+        {
+          "name": "StageContentController",
+          "methods": [
+            "constructor",
+            "getForBabyMon"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 9
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Param",
+            "Query",
+            "UseGuards"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth"
+          ]
+        },
+        {
+          "source": "./stage-content.service",
+          "specifiers": [
+            "StageContentService"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        }
+      ],
+      "exports": [
+        "StageContentController"
+      ],
+      "totalLines": 18,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/stage-content/stage-content.module.ts": {
+      "filePath": "apps/api/src/stage-content/stage-content.module.ts",
+      "contentHash": "bef31dafe7af3755dd4991c21185d760063b65ce30b460b69ac75c0ce9591840",
+      "functions": [],
+      "classes": [
+        {
+          "name": "StageContentModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./stage-content.service",
+          "specifiers": [
+            "StageContentService"
+          ]
+        },
+        {
+          "source": "./stage-content.controller",
+          "specifiers": [
+            "StageContentController"
+          ]
+        }
+      ],
+      "exports": [
+        "StageContentModule"
+      ],
+      "totalLines": 11,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/stage-content/stage-content.service.ts": {
+      "filePath": "apps/api/src/stage-content/stage-content.service.ts",
+      "contentHash": "cf01b7fa98e93d1927a8a45d7ecfe9ef63dadfbf87766103ad1d644de943093b",
+      "functions": [],
+      "classes": [
+        {
+          "name": "StageContentService",
+          "methods": [
+            "constructor",
+            "getByStageKey",
+            "getForBabyMon"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 63
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "NotFoundException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [
+        "StageContentService"
+      ],
+      "totalLines": 68,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/stripe/stripe-webhook.controller.ts": {
+      "filePath": "apps/api/src/stripe/stripe-webhook.controller.ts",
+      "contentHash": "7abd13593a92d24111ec6fc02f809711ebd9f9cbc8c1bfb88a5dea330114eca0",
+      "functions": [],
+      "classes": [
+        {
+          "name": "StripeWebhookController",
+          "methods": [
+            "constructor",
+            "handleStripeWebhook"
+          ],
+          "properties": [
+            "logger"
+          ],
+          "exported": true,
+          "lineCount": 23
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Post",
+            "Req",
+            "HttpCode",
+            "HttpStatus",
+            "Logger",
+            "BadRequestException"
+          ]
+        },
+        {
+          "source": "express",
+          "specifiers": [
+            "Request"
+          ]
+        }
+      ],
+      "exports": [
+        "StripeWebhookController"
+      ],
+      "totalLines": 28,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/stripe/stripe.controller.ts": {
+      "filePath": "apps/api/src/stripe/stripe.controller.ts",
+      "contentHash": "6c74dc4248845673cb89fc798c92315bdc6cfadf41d0c5d2b7fb38fd0d678df9",
+      "functions": [],
+      "classes": [
+        {
+          "name": "StripeController",
+          "methods": [
+            "constructor",
+            "handleWebhook",
+            "createCheckoutSession",
+            "createPortalSession",
+            "cancelSubscription"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 67
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Post",
+            "Get",
+            "Body",
+            "UseGuards",
+            "Req",
+            "HttpCode",
+            "HttpStatus",
+            "RawBodyRequest",
+            "BadRequestException"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth"
+          ]
+        },
+        {
+          "source": "express",
+          "specifiers": [
+            "Request"
+          ]
+        },
+        {
+          "source": "./stripe.service",
+          "specifiers": [
+            "StripeService"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        },
+        {
+          "source": "../common/decorators/public.decorator",
+          "specifiers": [
+            "Public"
+          ]
+        },
+        {
+          "source": "../common/decorators/current-user.decorator",
+          "specifiers": [
+            "CurrentUser"
+          ]
+        }
+      ],
+      "exports": [
+        "StripeController"
+      ],
+      "totalLines": 78,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/stripe/stripe.module.ts": {
+      "filePath": "apps/api/src/stripe/stripe.module.ts",
+      "contentHash": "0f1e7696289461fc869d82a053faa85432f4a66070c63e2346e1d36410c13f15",
+      "functions": [],
+      "classes": [
+        {
+          "name": "StripeModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./stripe.controller",
+          "specifiers": [
+            "StripeController"
+          ]
+        },
+        {
+          "source": "./stripe-webhook.controller",
+          "specifiers": [
+            "StripeWebhookController"
+          ]
+        },
+        {
+          "source": "./stripe.service",
+          "specifiers": [
+            "StripeService"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.module",
+          "specifiers": [
+            "PrismaModule"
+          ]
+        },
+        {
+          "source": "../subscriptions/subscriptions.module",
+          "specifiers": [
+            "SubscriptionsModule"
+          ]
+        }
+      ],
+      "exports": [
+        "StripeModule"
+      ],
+      "totalLines": 15,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/stripe/stripe.service.ts": {
+      "filePath": "apps/api/src/stripe/stripe.service.ts",
+      "contentHash": "96131a1eadba857dade5928aecc66064a29f6a9d6139a69df25de5599848f62d",
+      "functions": [],
+      "classes": [
+        {
+          "name": "StripeService",
+          "methods": [
+            "constructor",
+            "isConfigured",
+            "createCustomer",
+            "createCheckoutSession",
+            "createPortalSession",
+            "handleWebhook",
+            "handleStripeEvent",
+            "handleCheckoutCompleted",
+            "handleSubscriptionUpdated",
+            "handleSubscriptionDeleted",
+            "handlePaymentFailed",
+            "getTierFromPriceId",
+            "cancelSubscription"
+          ],
+          "properties": [
+            "logger",
+            "stripe"
+          ],
+          "exported": true,
+          "lineCount": 301
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "Logger",
+            "BadRequestException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        },
+        {
+          "source": "stripe",
+          "specifiers": [
+            "Stripe"
+          ]
+        }
+      ],
+      "exports": [
+        "StripeService"
+      ],
+      "totalLines": 307,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/subscriptions/subscriptions.controller.ts": {
+      "filePath": "apps/api/src/subscriptions/subscriptions.controller.ts",
+      "contentHash": "314d2f0336a5cc219de44fa2e05267d7c3739a949bed5b8de7719257d71c3483",
+      "functions": [],
+      "classes": [
+        {
+          "name": "SubscriptionsController",
+          "methods": [
+            "constructor",
+            "getCurrent",
+            "devOverrideTrial"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 22
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Post",
+            "Body",
+            "UseGuards"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth"
+          ]
+        },
+        {
+          "source": "./subscriptions.service",
+          "specifiers": [
+            "SubscriptionsService"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        },
+        {
+          "source": "../common/decorators/current-user.decorator",
+          "specifiers": [
+            "CurrentUser"
+          ]
+        },
+        {
+          "source": "../common/decorators/public.decorator",
+          "specifiers": [
+            "Public"
+          ]
+        }
+      ],
+      "exports": [
+        "SubscriptionsController"
+      ],
+      "totalLines": 32,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/subscriptions/subscriptions.module.ts": {
+      "filePath": "apps/api/src/subscriptions/subscriptions.module.ts",
+      "contentHash": "191c2228532af7aa440c6d0961171f6b3ef9bd8f6a2f50d5af5e0b2625d7e8e2",
+      "functions": [],
+      "classes": [
+        {
+          "name": "SubscriptionsModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./subscriptions.service",
+          "specifiers": [
+            "SubscriptionsService"
+          ]
+        },
+        {
+          "source": "./subscriptions.controller",
+          "specifiers": [
+            "SubscriptionsController"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.module",
+          "specifiers": [
+            "PrismaModule"
+          ]
+        }
+      ],
+      "exports": [
+        "SubscriptionsModule"
+      ],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/subscriptions/subscriptions.service.ts": {
+      "filePath": "apps/api/src/subscriptions/subscriptions.service.ts",
+      "contentHash": "9838b34bad9df67c6f06e2f331c8f9cbe443c9f04cae1d1a4fe418714266f517",
+      "functions": [],
+      "classes": [
+        {
+          "name": "SubscriptionsService",
+          "methods": [
+            "constructor",
+            "getCurrentSubscription",
+            "canWrite",
+            "checkWriteAccess",
+            "devOverrideTrial",
+            "getSubscriptionByUserId"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 114
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "ForbiddenException",
+            "NotFoundException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [
+        "SubscriptionsService"
+      ],
+      "totalLines": 119,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/users/dto/user.dto.ts": {
+      "filePath": "apps/api/src/users/dto/user.dto.ts",
+      "contentHash": "5eb97655274bf104e3a05d4d613015db3d1d5c9bde6bfae80ab43c49239a98b5",
+      "functions": [],
+      "classes": [
+        {
+          "name": "UpdateUserDto",
+          "methods": [],
+          "properties": [
+            "email",
+            "name"
+          ],
+          "exported": true,
+          "lineCount": 13
+        },
+        {
+          "name": "DeleteAccountDto",
+          "methods": [],
+          "properties": [
+            "password"
+          ],
+          "exported": true,
+          "lineCount": 6
+        }
+      ],
+      "imports": [
+        {
+          "source": "class-validator",
+          "specifiers": [
+            "IsString",
+            "IsEmail",
+            "IsOptional",
+            "MinLength",
+            "MaxLength"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiProperty"
+          ]
+        }
+      ],
+      "exports": [
+        "UpdateUserDto",
+        "DeleteAccountDto"
+      ],
+      "totalLines": 24,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/users/users.controller.ts": {
+      "filePath": "apps/api/src/users/users.controller.ts",
+      "contentHash": "7fe17fd0f310e5280d55b45f5bc1415a5652a3b90590f168f1d23d4ad3d43ce4",
+      "functions": [],
+      "classes": [
+        {
+          "name": "UsersController",
+          "methods": [
+            "constructor",
+            "getProfile",
+            "updateProfile",
+            "deleteAccount"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 28
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Controller",
+            "Get",
+            "Patch",
+            "Delete",
+            "Body",
+            "UseGuards",
+            "HttpCode",
+            "HttpStatus"
+          ]
+        },
+        {
+          "source": "@nestjs/swagger",
+          "specifiers": [
+            "ApiTags",
+            "ApiOperation",
+            "ApiBearerAuth"
+          ]
+        },
+        {
+          "source": "./users.service",
+          "specifiers": [
+            "UsersService"
+          ]
+        },
+        {
+          "source": "./dto/user.dto",
+          "specifiers": [
+            "UpdateUserDto",
+            "DeleteAccountDto"
+          ]
+        },
+        {
+          "source": "../common/guards/jwt-auth.guard",
+          "specifiers": [
+            "JwtAuthGuard"
+          ]
+        },
+        {
+          "source": "../common/decorators/current-user.decorator",
+          "specifiers": [
+            "CurrentUser"
+          ]
+        }
+      ],
+      "exports": [
+        "UsersController"
+      ],
+      "totalLines": 40,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/users/users.module.ts": {
+      "filePath": "apps/api/src/users/users.module.ts",
+      "contentHash": "0e6dcf825a397b7781e7a337a149765e9d531581584825a24beb0c56e2fd01ac",
+      "functions": [],
+      "classes": [
+        {
+          "name": "UsersModule",
+          "methods": [],
+          "properties": [],
+          "exported": true,
+          "lineCount": 1
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Module"
+          ]
+        },
+        {
+          "source": "./users.controller",
+          "specifiers": [
+            "UsersController"
+          ]
+        },
+        {
+          "source": "./users.service",
+          "specifiers": [
+            "UsersService"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.module",
+          "specifiers": [
+            "PrismaModule"
+          ]
+        }
+      ],
+      "exports": [
+        "UsersModule"
+      ],
+      "totalLines": 13,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/users/users.service.spec.ts": {
+      "filePath": "apps/api/src/users/users.service.spec.ts",
+      "contentHash": "2857dff3df3918d173cca0e0c6bb1b6d0a3029d939de6932792148fb743cf308",
+      "functions": [],
+      "classes": [],
+      "imports": [
+        {
+          "source": "@nestjs/testing",
+          "specifiers": [
+            "Test",
+            "TestingModule"
+          ]
+        },
+        {
+          "source": "./users.service",
+          "specifiers": [
+            "UsersService"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        }
+      ],
+      "exports": [],
+      "totalLines": 57,
+      "hasStructuralAnalysis": true
+    },
+    "apps/api/src/users/users.service.ts": {
+      "filePath": "apps/api/src/users/users.service.ts",
+      "contentHash": "816d43f3783735dad6d1e57d589652142fea21443043a6cc4c83306d77fd5cdf",
+      "functions": [],
+      "classes": [
+        {
+          "name": "UsersService",
+          "methods": [
+            "constructor",
+            "getProfile",
+            "updateProfile",
+            "deleteAccount",
+            "getUserById"
+          ],
+          "properties": [],
+          "exported": true,
+          "lineCount": 148
+        }
+      ],
+      "imports": [
+        {
+          "source": "@nestjs/common",
+          "specifiers": [
+            "Injectable",
+            "NotFoundException",
+            "BadRequestException"
+          ]
+        },
+        {
+          "source": "../prisma/prisma.service",
+          "specifiers": [
+            "PrismaService"
+          ]
+        },
+        {
+          "source": "./dto/user.dto",
+          "specifiers": [
+            "UpdateUserDto",
+            "DeleteAccountDto"
+          ]
+        }
+      ],
+      "exports": [
+        "UsersService"
+      ],
+      "totalLines": 154,
+      "hasStructuralAnalysis": true
+    },
+    "apps/mobile/lib/app.dart": {
+      "filePath": "apps/mobile/lib/app.dart",
+      "contentHash": "9fa6acb1477307044e6e776795c64851e1ea7d75040f44c0bca2bf0877433d7b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 24,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/core/constants/api_constants.dart": {
+      "filePath": "apps/mobile/lib/core/constants/api_constants.dart",
+      "contentHash": "cdb49877ff7b721037180a44c4ea9ab4ed608c33eeb843fe8f8e5a5ae95d60a8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 33,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/core/constants/app_colors.dart": {
+      "filePath": "apps/mobile/lib/core/constants/app_colors.dart",
+      "contentHash": "e517f801ba90595be4e193ddc59ed38fe699b27d83b99ba17ffa1588b57e2ca7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 33,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/core/constants/app_strings.dart": {
+      "filePath": "apps/mobile/lib/core/constants/app_strings.dart",
+      "contentHash": "1d354a2ccb1c437f87ecbd11fa7fd08a5f68a9b174ad2c0a4d128f98132de9e8",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/core/di/service_locator.dart": {
+      "filePath": "apps/mobile/lib/core/di/service_locator.dart",
+      "contentHash": "64a469b68d3be04cea0a21efff5587008f78feb804609baa373e72ba84a03018",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 28,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/core/services/local_storage_service.dart": {
+      "filePath": "apps/mobile/lib/core/services/local_storage_service.dart",
+      "contentHash": "b97b68a1db8e846f171fe17186197d5578bdeb1854292c3919409568cfeb98cf",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 44,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/core/theme/app_theme.dart": {
+      "filePath": "apps/mobile/lib/core/theme/app_theme.dart",
+      "contentHash": "f987e86941dc4343fc2223f84fb6f0f0496865d4ac9271d9cd2e8ce42b495f2e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 135,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/core/utils/date_utils.dart": {
+      "filePath": "apps/mobile/lib/core/utils/date_utils.dart",
+      "contentHash": "95baa0d842825a39d6fb78eeb7a9f9888d7ee54ec3a34f90ffdec5587ae14fdc",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 48,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/core/utils/validators.dart": {
+      "filePath": "apps/mobile/lib/core/utils/validators.dart",
+      "contentHash": "16db2ef9bc90fa5d20d31b599799281478aac7e478e652552b51216afc5c49ed",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 22,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/core/widgets/custom_button.dart": {
+      "filePath": "apps/mobile/lib/core/widgets/custom_button.dart",
+      "contentHash": "4f1f597a5cb5ce19599861ae7600385400fc0b47e51db14d747bccd7519e21a0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 91,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/core/widgets/custom_text_field.dart": {
+      "filePath": "apps/mobile/lib/core/widgets/custom_text_field.dart",
+      "contentHash": "80132ced61d68e2fb570c1cfc6e975b355382001774350ca922892c3d8cc2f84",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 82,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/core/widgets/loading_widget.dart": {
+      "filePath": "apps/mobile/lib/core/widgets/loading_widget.dart",
+      "contentHash": "d5cf0053e86c9aa47f6b9bf1adcfc992da470868a25df65912259805c1c33505",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 57,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/data/api_client.dart": {
+      "filePath": "apps/mobile/lib/data/api_client.dart",
+      "contentHash": "3964d687edfd8c1ccbb5a6672480cedc8e0ee0978c4a291c4ccfe0b210e2fe4b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 249,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/data/local/local_database.dart": {
+      "filePath": "apps/mobile/lib/data/local/local_database.dart",
+      "contentHash": "aefa0e45b145b175a1ec2bdbbcfab31b9716e07fe3bc8811d5f37581e845656d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 43,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/data/services/api_service.dart": {
+      "filePath": "apps/mobile/lib/data/services/api_service.dart",
+      "contentHash": "7fcffab214217f49adba0ef619b164708fdd6c4e608321b1b7b04633e78bdc24",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 118,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/auth/data/datasources/auth_remote_datasource.dart": {
+      "filePath": "apps/mobile/lib/features/auth/data/datasources/auth_remote_datasource.dart",
+      "contentHash": "62cc74b9dd7ed25ff93843f7c970f5ae3b1f919a199cecadde2e4633932c08c3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 87,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/auth/data/repositories/auth_repository_impl.dart": {
+      "filePath": "apps/mobile/lib/features/auth/data/repositories/auth_repository_impl.dart",
+      "contentHash": "ceceec2a2546e7ef8cbbf0e1f25bf41feed44198c8cba37c170f5ffe27a9eada",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 35,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/auth/domain/entities/user.dart": {
+      "filePath": "apps/mobile/lib/features/auth/domain/entities/user.dart",
+      "contentHash": "8ca17cc55af765384539b5b04df8551c4f8c4f4159b5839c81b55f95556db424",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 28,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/auth/domain/repositories/auth_repository.dart": {
+      "filePath": "apps/mobile/lib/features/auth/domain/repositories/auth_repository.dart",
+      "contentHash": "278e420fd9e6bc48a92ff948afb6d2327449aa0bc0e50f76d71c3a4a6ece1916",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 9,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/auth/presentation/providers/auth_provider.dart": {
+      "filePath": "apps/mobile/lib/features/auth/presentation/providers/auth_provider.dart",
+      "contentHash": "8ea8215321126824b74783c66f3122206486ca4d4bad06fb429f0004738cded2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 105,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/auth/presentation/screens/login_screen.dart": {
+      "filePath": "apps/mobile/lib/features/auth/presentation/screens/login_screen.dart",
+      "contentHash": "bfb40bdf084d0270e36152f0417c3083eddabcf29d50b66d79855f905d17dfc6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 149,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/auth/presentation/screens/register_screen.dart": {
+      "filePath": "apps/mobile/lib/features/auth/presentation/screens/register_screen.dart",
+      "contentHash": "72450479e35e6c58306973533fea15f1e582d1c71b0000a7b768d63fbb443fa9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 168,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/auth/presentation/widgets/auth_text_field.dart": {
+      "filePath": "apps/mobile/lib/features/auth/presentation/widgets/auth_text_field.dart",
+      "contentHash": "9310d66245fc460caa91d6abeab890cbe4a2caa93b6bf0de6b8886b765bf28a3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 79,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/dashboard/data/repositories/dashboard_repository.dart": {
+      "filePath": "apps/mobile/lib/features/dashboard/data/repositories/dashboard_repository.dart",
+      "contentHash": "2d3097656980545ae11f8b23ee8eedcf68aff4456e17d170e5d859c47caf1bc2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 4,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/dashboard/domain/entities/baby_mon_summary.dart": {
+      "filePath": "apps/mobile/lib/features/dashboard/domain/entities/baby_mon_summary.dart",
+      "contentHash": "c16af810bf96e4cbcf55fc62ef38a08c8244b9933f39e7229b1768ecca12983a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 74,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/dashboard/domain/entities/dashboard_data.dart": {
+      "filePath": "apps/mobile/lib/features/dashboard/domain/entities/dashboard_data.dart",
+      "contentHash": "4d1cd0a5ff210b93949fae48c2cd1b51c7cc1dcde29999aca416dfea443cbd50",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 26,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/dashboard/presentation/providers/dashboard_provider.dart": {
+      "filePath": "apps/mobile/lib/features/dashboard/presentation/providers/dashboard_provider.dart",
+      "contentHash": "cb15b270baf707a94f35b2d92ea087b7ca1a4b32865fa301d2771901fa114b38",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 13,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/dashboard/presentation/screens/dashboard_screen.dart": {
+      "filePath": "apps/mobile/lib/features/dashboard/presentation/screens/dashboard_screen.dart",
+      "contentHash": "c484d2d02804b971a90c14be1e0500c76c14ecc2470ff5d6198aaa43ff9be4cf",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 116,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/dashboard/presentation/widgets/baby_mon_card.dart": {
+      "filePath": "apps/mobile/lib/features/dashboard/presentation/widgets/baby_mon_card.dart",
+      "contentHash": "51a3a1dc3591f195408dbf6e80dca8196c463cbf324aa092c6bafe0aa359f2ea",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 109,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/dashboard/presentation/widgets/badge_showcase.dart": {
+      "filePath": "apps/mobile/lib/features/dashboard/presentation/widgets/badge_showcase.dart",
+      "contentHash": "df42ed0745d77a9e19bc4cc11df1363fd4586137f7f8e6fd0bf86e98190f7af3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 98,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/dashboard/presentation/widgets/evolution_visualizer.dart": {
+      "filePath": "apps/mobile/lib/features/dashboard/presentation/widgets/evolution_visualizer.dart",
+      "contentHash": "d68e61f70325fd177b433cb375eb2ce0a58f6260d4c54e4ef3afae05e3764d91",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 116,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/dashboard/presentation/widgets/xp_progress_bar.dart": {
+      "filePath": "apps/mobile/lib/features/dashboard/presentation/widgets/xp_progress_bar.dart",
+      "contentHash": "59feaa0f719c67e106f79f51c3f05d00337a7c59096e4b1e6aa270a2dcce12db",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 77,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/feeding/data/repositories/feeding_repository.dart": {
+      "filePath": "apps/mobile/lib/features/feeding/data/repositories/feeding_repository.dart",
+      "contentHash": "db40a3e62e60f037983af748bde5e9ef087c765bc06d13d6dd0e426b29ff9d7d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 43,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/feeding/domain/entities/feed_log.dart": {
+      "filePath": "apps/mobile/lib/features/feeding/domain/entities/feed_log.dart",
+      "contentHash": "168e34c35cc16979df91c971bc3b7bcdcd3a2447ce4b6a9a97f17e1c43a95ab6",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 84,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/feeding/presentation/providers/feeding_provider.dart": {
+      "filePath": "apps/mobile/lib/features/feeding/presentation/providers/feeding_provider.dart",
+      "contentHash": "82846268e303e2166bebb75961a7f547d35eb0a62f4cfeb527dfe1e0bf856eed",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 64,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/feeding/presentation/screens/feeding_screen.dart": {
+      "filePath": "apps/mobile/lib/features/feeding/presentation/screens/feeding_screen.dart",
+      "contentHash": "053ced26ce5bde7a2701867ce400b984906e9669ec3070da4226c02fffc3dc80",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 83,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/feeding/presentation/widgets/feed_log_card.dart": {
+      "filePath": "apps/mobile/lib/features/feeding/presentation/widgets/feed_log_card.dart",
+      "contentHash": "4d242cffdef00c722f0fa9308cc84e4ca1d5680535fc7c95640411341982a5e2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 66,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/feeding/presentation/widgets/feed_log_form.dart": {
+      "filePath": "apps/mobile/lib/features/feeding/presentation/widgets/feed_log_form.dart",
+      "contentHash": "8365054053866b1f98a09dc8a29d5601bca77806041f0498cdf9fd7658140cdb",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 149,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/health/data/repositories/health_repository.dart": {
+      "filePath": "apps/mobile/lib/features/health/data/repositories/health_repository.dart",
+      "contentHash": "94d1a2063e7742cf74954bbcaf81b578dc02ab7ed2418ef69865f2c3f233617a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 41,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/health/domain/entities/health_record.dart": {
+      "filePath": "apps/mobile/lib/features/health/domain/entities/health_record.dart",
+      "contentHash": "93e9584b703f5e65d593f8398cf3b1f83eab5e43ca97fbba55337aa0351b57f2",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 101,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/health/presentation/providers/health_provider.dart": {
+      "filePath": "apps/mobile/lib/features/health/presentation/providers/health_provider.dart",
+      "contentHash": "c198f3a12c19f66040f80865a3f412d334401c4aa335f4e2587ee2ba6f01aae9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 68,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/health/presentation/screens/health_screen.dart": {
+      "filePath": "apps/mobile/lib/features/health/presentation/screens/health_screen.dart",
+      "contentHash": "a3396e944ace4a9b3e5039162cfa653f4a6300b80da0e2df02fe6deab6b2b5c9",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 68,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/health/presentation/widgets/health_record_card.dart": {
+      "filePath": "apps/mobile/lib/features/health/presentation/widgets/health_record_card.dart",
+      "contentHash": "7d83b1483acb32f9f8164bf7d13502ce00f459b4602ebb6ef2acaf6405021c30",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 110,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/health/presentation/widgets/health_record_form.dart": {
+      "filePath": "apps/mobile/lib/features/health/presentation/widgets/health_record_form.dart",
+      "contentHash": "3b771f75132a7f78f90109fe075bd87033d3b7ea757ef461feba6324ff37aed0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 103,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/journal/data/repositories/journal_repository.dart": {
+      "filePath": "apps/mobile/lib/features/journal/data/repositories/journal_repository.dart",
+      "contentHash": "fd3a6650cc7ea6458e4abf44b2408093812fb425d233529eddd0dad9470964e7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 77,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/journal/domain/entities/journal_entry.dart": {
+      "filePath": "apps/mobile/lib/features/journal/domain/entities/journal_entry.dart",
+      "contentHash": "b36ee9f76134c499e1638e0b5446d8568f34269a3c85de08d5476c515953aadb",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 222,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/journal/presentation/providers/journal_provider.dart": {
+      "filePath": "apps/mobile/lib/features/journal/presentation/providers/journal_provider.dart",
+      "contentHash": "6ac5efe1cccbf6d9cb5fb8130f8cfa9d6ec7a719eb92183a0965f16353bc5da5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 58,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/journal/presentation/screens/journal_screen.dart": {
+      "filePath": "apps/mobile/lib/features/journal/presentation/screens/journal_screen.dart",
+      "contentHash": "d9ea29feed1a00599db50c46a21d3e52c4a9cb205b190ebaa840d969fe000c6e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 218,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/milestones/data/repositories/milestones_repository.dart": {
+      "filePath": "apps/mobile/lib/features/milestones/data/repositories/milestones_repository.dart",
+      "contentHash": "87f929d04415039886a6f6f7a8432617158ca8da49564fa858bf816821950383",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 51,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/milestones/domain/entities/milestone.dart": {
+      "filePath": "apps/mobile/lib/features/milestones/domain/entities/milestone.dart",
+      "contentHash": "dedb296910e88454624b545d0ed5c8e31bf9849f566efba140965e2728f0257e",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 100,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/milestones/presentation/providers/milestones_provider.dart": {
+      "filePath": "apps/mobile/lib/features/milestones/presentation/providers/milestones_provider.dart",
+      "contentHash": "451f2014c6b70f6a0051c05be5dd73c79ba8699b0c39f1cf983fbdde03a03e82",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 69,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/milestones/presentation/screens/milestones_screen.dart": {
+      "filePath": "apps/mobile/lib/features/milestones/presentation/screens/milestones_screen.dart",
+      "contentHash": "67f0a0fc811ae13c75291a9bfdf9cb26ca643287820e4813cb861dc9a9e9068b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 118,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/milestones/presentation/widgets/milestone_card.dart": {
+      "filePath": "apps/mobile/lib/features/milestones/presentation/widgets/milestone_card.dart",
+      "contentHash": "3fa1e8a48c0aacbd29d3539ee62627f4f0e9e3b5066140e6d071de6fef1b4ff0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 62,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/milestones/presentation/widgets/milestone_form.dart": {
+      "filePath": "apps/mobile/lib/features/milestones/presentation/widgets/milestone_form.dart",
+      "contentHash": "c676ed54a01f995ac60d4155ce616827d6cf43d7f224afdd62d90bc2d451e30f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 156,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/profile/data/repositories/profile_repository_impl.dart": {
+      "filePath": "apps/mobile/lib/features/profile/data/repositories/profile_repository_impl.dart",
+      "contentHash": "6dfdf9da155653235533261c710568a2cd1fe78cd7970e914e48d6bb6baee0cb",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 37,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/profile/domain/entities/user_profile.dart": {
+      "filePath": "apps/mobile/lib/features/profile/domain/entities/user_profile.dart",
+      "contentHash": "0d5975f246fe829aa026b2e265dccd975880dad42400e10a4dc43237d5627760",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 77,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/profile/domain/repositories/profile_repository.dart": {
+      "filePath": "apps/mobile/lib/features/profile/domain/repositories/profile_repository.dart",
+      "contentHash": "e235a68d12fd198ccc3df0ecbbdc05f0ffac3675c135ee25c3d3dbf879fceb77",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 7,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/profile/presentation/providers/profile_provider.dart": {
+      "filePath": "apps/mobile/lib/features/profile/presentation/providers/profile_provider.dart",
+      "contentHash": "71c98c40df607220f64745948e201a6d0576ad5b1c68e472002bafeff3910aec",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 43,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/profile/presentation/screens/profile_screen.dart": {
+      "filePath": "apps/mobile/lib/features/profile/presentation/screens/profile_screen.dart",
+      "contentHash": "8c44ec9fd242118746b27955f1fcd5af0957cefd9ba54ce377182804acf2ab4d",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 72,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/profile/presentation/widgets/achievements_section.dart": {
+      "filePath": "apps/mobile/lib/features/profile/presentation/widgets/achievements_section.dart",
+      "contentHash": "78e41814211f6bfdefdf24eaac7aff4360c1cee9d5e227ce773122000ee50790",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 44,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/profile/presentation/widgets/baby_info_card.dart": {
+      "filePath": "apps/mobile/lib/features/profile/presentation/widgets/baby_info_card.dart",
+      "contentHash": "7625daf507a3c23669117811baf1174bf0506cca4312d738a5fe7ebd71d786e3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 84,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/profile/presentation/widgets/profile_header.dart": {
+      "filePath": "apps/mobile/lib/features/profile/presentation/widgets/profile_header.dart",
+      "contentHash": "a6dc166ac350f1c61a3f0e9e5e50beda057890f799d3c6fb4f33249f3ba69301",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 76,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/tracking/data/repositories/activity_repository_impl.dart": {
+      "filePath": "apps/mobile/lib/features/tracking/data/repositories/activity_repository_impl.dart",
+      "contentHash": "09316cd639b39ec658530956f5baf2d38b5849537454d758338c07c9474d585b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 72,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/tracking/domain/entities/activity.dart": {
+      "filePath": "apps/mobile/lib/features/tracking/domain/entities/activity.dart",
+      "contentHash": "08f7fd21fd1adc0207d8841eff097eb21796499200383dec912e1dcc0b66ab91",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 38,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/tracking/domain/repositories/activity_repository.dart": {
+      "filePath": "apps/mobile/lib/features/tracking/domain/repositories/activity_repository.dart",
+      "contentHash": "3691fa6f2712c21ac174b86b547cd3ecb8660fe42f8fe07c3dcdf2c15c31638a",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 8,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/tracking/presentation/providers/activity_provider.dart": {
+      "filePath": "apps/mobile/lib/features/tracking/presentation/providers/activity_provider.dart",
+      "contentHash": "e01a29047b33c167db8aa70c02efc44e0e6c3363bf400800db381919111e7bdb",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 77,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/tracking/presentation/screens/tracking_screen.dart": {
+      "filePath": "apps/mobile/lib/features/tracking/presentation/screens/tracking_screen.dart",
+      "contentHash": "b7cabfcc277e6887683e385169de26cb6803497a0a6b16be185f3f150d4930f1",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 105,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/tracking/presentation/widgets/activity_card.dart": {
+      "filePath": "apps/mobile/lib/features/tracking/presentation/widgets/activity_card.dart",
+      "contentHash": "fb8954efad2bee528ae4663c7e2e93b0908091a8562621c237b794fa6abca79f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 119,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/tracking/presentation/widgets/activity_type_selector.dart": {
+      "filePath": "apps/mobile/lib/features/tracking/presentation/widgets/activity_type_selector.dart",
+      "contentHash": "c366a2c2c4bfb208bad7dcd798f727390b971e384f8308bb3813071900040813",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 45,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/features/tracking/presentation/widgets/add_activity_sheet.dart": {
+      "filePath": "apps/mobile/lib/features/tracking/presentation/widgets/add_activity_sheet.dart",
+      "contentHash": "b0c3445ee7458d0e232ed8674fc641c7ec60429cd82c4410a8f20a783b10f6ec",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 202,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/main.dart": {
+      "filePath": "apps/mobile/lib/main.dart",
+      "contentHash": "5d659fc1d2b5c13883e9a9b894386a064f0c37e747162713d9ac8c5d5609ea50",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 21,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/presentation/router/app_router.dart": {
+      "filePath": "apps/mobile/lib/presentation/router/app_router.dart",
+      "contentHash": "7c9c4cba01b6572c99faa5ec8127a0da06641a21b1777735a44b1a309cbfa3e3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 36,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/presentation/screens/auth/login_screen.dart": {
+      "filePath": "apps/mobile/lib/presentation/screens/auth/login_screen.dart",
+      "contentHash": "2fced0d812ace0debce189195da693c711c2ccc42f4709ae18641826fae79479",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 101,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/presentation/screens/auth/register_screen.dart": {
+      "filePath": "apps/mobile/lib/presentation/screens/auth/register_screen.dart",
+      "contentHash": "e5c7741df354c43cb40b046fa08e9ebf41129b0f920ba2770931dc30822a2d61",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 109,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/presentation/screens/main/dashboard/dashboard_screen.dart": {
+      "filePath": "apps/mobile/lib/presentation/screens/main/dashboard/dashboard_screen.dart",
+      "contentHash": "de6a4d9da89de1495d1491466039d37a536cbc8099af05f5086f97a1255702d5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 70,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/presentation/screens/main/feeding/feeding_screen.dart": {
+      "filePath": "apps/mobile/lib/presentation/screens/main/feeding/feeding_screen.dart",
+      "contentHash": "a42280d42c31b2b7d44d8108a6517ebea91865a204f06a6fe6b9b7150d7ff0a5",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 143,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/presentation/screens/main/health/health_screen.dart": {
+      "filePath": "apps/mobile/lib/presentation/screens/main/health/health_screen.dart",
+      "contentHash": "8985bdf80d80005f611469758cdfad2d7fca9bc11f5beca398ba48501180fc02",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 142,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/presentation/screens/main/journal/journal_screen.dart": {
+      "filePath": "apps/mobile/lib/presentation/screens/main/journal/journal_screen.dart",
+      "contentHash": "d5ef7bf128f3666767b2a6fc8034b2d7d8fc12d31fa2b3049a664e394d10c42b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 118,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/presentation/screens/main/main_screen.dart": {
+      "filePath": "apps/mobile/lib/presentation/screens/main/main_screen.dart",
+      "contentHash": "81d17174a7ef3003c731c06ece447345becaf8e13aff727316882400d0089a90",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 62,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/presentation/screens/main/milestones/milestones_screen.dart": {
+      "filePath": "apps/mobile/lib/presentation/screens/main/milestones/milestones_screen.dart",
+      "contentHash": "d16ebbb183f84e6b535c01214acd50825213ad399bba43d1c033fd5274eb62dd",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 130,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/presentation/screens/onboarding/create_baby_mon_screen.dart": {
+      "filePath": "apps/mobile/lib/presentation/screens/onboarding/create_baby_mon_screen.dart",
+      "contentHash": "e6d95876e68f9ce8e036cb36707d5f493718305a013ddfe660cc2fd52dd06e13",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 191,
+      "hasStructuralAnalysis": false
+    },
+    "apps/mobile/lib/presentation/screens/splash/splash_screen.dart": {
+      "filePath": "apps/mobile/lib/presentation/screens/splash/splash_screen.dart",
+      "contentHash": "09623bb87fe1c682c356384f25063ae1622599beb89f23055a48812bb4dbf1e0",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 64,
+      "hasStructuralAnalysis": false
+    },
+    ".github/workflows/ci.yml": {
+      "filePath": ".github/workflows/ci.yml",
+      "contentHash": "8e33b57e66d18c288c9ec97090f70f63dc827620a41d7c3fef3cb4a5047b2a8f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 116,
+      "hasStructuralAnalysis": true
+    },
+    ".gitignore": {
+      "filePath": ".gitignore",
+      "contentHash": "21dfe74d85b78a8c3db16465dde8a328cc8f83a6a1e96b7328ca379d14a90aa7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 47,
+      "hasStructuralAnalysis": false
+    },
+    "README.md": {
+      "filePath": "README.md",
+      "contentHash": "b7daa69e588ad55e5dc614c7a2ab0a9b55d564a2866bafbfdbf6281089e669f7",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 264,
+      "hasStructuralAnalysis": true
+    },
+    "SPEC.md": {
+      "filePath": "SPEC.md",
+      "contentHash": "0881832cbd65fb7b96eb61eb94288ff8ff830bc7d590fdb9d5aa47f357e83c71",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 242,
+      "hasStructuralAnalysis": true
+    },
+    "docker-compose.yml": {
+      "filePath": "docker-compose.yml",
+      "contentHash": "310249ece8c09d63ffd4ad6b7df48cbaf74c2b891ffd9737239cf4d8f5b05d5b",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 63,
+      "hasStructuralAnalysis": true
+    },
+    "AuthViewModel.swift": {
+      "filePath": "AuthViewModel.swift",
+      "contentHash": "e7df8ed33e1f80da4ebaca4915d91844b563b1ab743fa9767bc86d21f7d41196",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 25,
+      "hasStructuralAnalysis": false
+    },
+    "HomeScreen.swift": {
+      "filePath": "HomeScreen.swift",
+      "contentHash": "bf2ad016a3c0fee558bb19b5cc39b9520e49847e10d11f25a98dd2da0347331f",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 78,
+      "hasStructuralAnalysis": false
+    },
+    "LoginScreen.swift": {
+      "filePath": "LoginScreen.swift",
+      "contentHash": "f710c38b7fb22c895bedc17d605e2dbbc3e142b7b7697aa11ea4917a927657c3",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 30,
+      "hasStructuralAnalysis": false
+    },
+    "SendMessageScreen.swift": {
+      "filePath": "SendMessageScreen.swift",
+      "contentHash": "126f6e29b478e3da71a96fa533c0a3897abccad16834f48407f450111f8642fb",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 23,
+      "hasStructuralAnalysis": false
+    },
+    "TestProjectApp.swift": {
+      "filePath": "TestProjectApp.swift",
+      "contentHash": "b5de266716ea165fdcd81cee4b37faeefb3c5f3e087fe513218bf83db2f40a11",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 31,
+      "hasStructuralAnalysis": false
+    },
+    "UploadPhotoScreen.swift": {
+      "filePath": "UploadPhotoScreen.swift",
+      "contentHash": "56b8e2b79111ce829b6d2ba856d35ee86dada75b31d3a1b925cadb2cd3a8dc14",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 23,
+      "hasStructuralAnalysis": false
+    },
+    "UserBadgeView.swift": {
+      "filePath": "UserBadgeView.swift",
+      "contentHash": "854c510e646e1f66d055993f5f6ebfa90c450f7a5b7eced1fabb43bcb446e005",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 41,
+      "hasStructuralAnalysis": false
+    },
+    "ViewStatsScreen.swift": {
+      "filePath": "ViewStatsScreen.swift",
+      "contentHash": "5fb0701bbb11a27bacfcaf0f158ea9c866521ad0d24e97cc606fde410c68b146",
+      "functions": [],
+      "classes": [],
+      "imports": [],
+      "exports": [],
+      "totalLines": 23,
+      "hasStructuralAnalysis": false
+    }
+  }
+}

@@ -1,0 +1,317 @@
+{
+  "core": {
+    "app.dart": {
+      "description": "Main app entry and routing",
+      "path": "app.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 23
+      }
+    },
+    "constants/app_colors.dart": {
+      "description": "Color constants",
+      "path": "constants/app_colors.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "constants/app_strings.dart": {
+      "description": "String constants",
+      "path": "constants/app_strings.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "di/service_locator.dart": {
+      "description": "Dependency injection setup",
+      "path": "di/service_locator.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "services/local_storage_service.dart": {
+      "description": "Local storage service",
+      "path": "services/local_storage_service.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "utils/date_utils.dart": {
+      "description": "Date utility functions",
+      "path": "utils/date_utils.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "utils/validators.dart": {
+      "description": "Input validation functions",
+      "path": "utils/validators.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "widgets/custom_button.dart": {
+      "description": "Custom button widget",
+      "path": "widgets/custom_button.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "widgets/custom_text_field.dart": {
+      "description": "Custom text field widget",
+      "path": "widgets/custom_text_field.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "widgets/loading_widget.dart": {
+      "description": "Loading indicator widget",
+      "path": "widgets/loading_widget.dart",
+      "status": {
+        "exists": false
+      }
+    }
+  },
+  "auth": {
+    "data/repositories/auth_repository_impl.dart": {
+      "description": "Auth repository implementation",
+      "path": "features/auth/data/repositories/auth_repository_impl.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 34
+      }
+    },
+    "domain/repositories/auth_repository.dart": {
+      "description": "Auth repository interface",
+      "path": "features/auth/domain/repositories/auth_repository.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 9
+      }
+    },
+    "presentation/providers/auth_provider.dart": {
+      "description": "Auth provider",
+      "path": "features/auth/presentation/providers/auth_provider.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 76
+      }
+    },
+    "presentation/screens/login_screen.dart": {
+      "description": "Login screen",
+      "path": "features/auth/presentation/screens/login_screen.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 149
+      }
+    },
+    "presentation/screens/register_screen.dart": {
+      "description": "Register screen",
+      "path": "features/auth/presentation/screens/register_screen.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 168
+      }
+    },
+    "presentation/widgets/auth_text_field.dart": {
+      "description": "Auth text field widget",
+      "path": "features/auth/presentation/widgets/auth_text_field.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 79
+      }
+    }
+  },
+  "tracking": {
+    "data/repositories/activity_repository_impl.dart": {
+      "description": "Activity repository implementation",
+      "path": "features/tracking/data/repositories/activity_repository_impl.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "domain/repositories/activity_repository.dart": {
+      "description": "Activity repository interface",
+      "path": "features/tracking/domain/repositories/activity_repository.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "presentation/providers/activity_provider.dart": {
+      "description": "Activity provider",
+      "path": "features/tracking/presentation/providers/activity_provider.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "presentation/screens/tracking_screen.dart": {
+      "description": "Tracking screen",
+      "path": "features/tracking/presentation/screens/tracking_screen.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "presentation/widgets/activity_card.dart": {
+      "description": "Activity card widget",
+      "path": "features/tracking/presentation/widgets/activity_card.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "presentation/widgets/activity_type_selector.dart": {
+      "description": "Activity type selector",
+      "path": "features/tracking/presentation/widgets/activity_type_selector.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "presentation/widgets/add_activity_sheet.dart": {
+      "description": "Add activity bottom sheet",
+      "path": "features/tracking/presentation/widgets/add_activity_sheet.dart",
+      "status": {
+        "exists": false
+      }
+    }
+  },
+  "profile": {
+    "data/repositories/profile_repository_impl.dart": {
+      "description": "Profile repository implementation",
+      "path": "features/profile/data/repositories/profile_repository_impl.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "domain/repositories/profile_repository.dart": {
+      "description": "Profile repository interface",
+      "path": "features/profile/domain/repositories/profile_repository.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "presentation/providers/profile_provider.dart": {
+      "description": "Profile provider",
+      "path": "features/profile/presentation/providers/profile_provider.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "presentation/screens/profile_screen.dart": {
+      "description": "Profile screen",
+      "path": "features/profile/presentation/screens/profile_screen.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "presentation/widgets/profile_header.dart": {
+      "description": "Profile header widget",
+      "path": "features/profile/presentation/widgets/profile_header.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "presentation/widgets/baby_info_card.dart": {
+      "description": "Baby info card widget",
+      "path": "features/profile/presentation/widgets/baby_info_card.dart",
+      "status": {
+        "exists": false
+      }
+    },
+    "presentation/widgets/achievements_section.dart": {
+      "description": "Achievements section widget",
+      "path": "features/profile/presentation/widgets/achievements_section.dart",
+      "status": {
+        "exists": false
+      }
+    }
+  },
+  "dashboard": {
+    "data/repositories/dashboard_repository.dart": {
+      "description": "Dashboard repository interface",
+      "path": "features/dashboard/data/repositories/dashboard_repository.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 111
+      }
+    },
+    "domain/entities/baby_mon_summary.dart": {
+      "description": "Baby mon summary entity",
+      "path": "features/dashboard/domain/entities/baby_mon_summary.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 73
+      }
+    },
+    "domain/entities/dashboard_data.dart": {
+      "description": "Dashboard data entity",
+      "path": "features/dashboard/domain/entities/dashboard_data.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 25
+      }
+    },
+    "presentation/providers/dashboard_provider.dart": {
+      "description": "Dashboard provider",
+      "path": "features/dashboard/presentation/providers/dashboard_provider.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 12
+      }
+    },
+    "presentation/screens/dashboard_screen.dart": {
+      "description": "Dashboard screen",
+      "path": "features/dashboard/presentation/screens/dashboard_screen.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 115
+      }
+    },
+    "presentation/widgets/baby_mon_card.dart": {
+      "description": "Baby mon card widget",
+      "path": "features/dashboard/presentation/widgets/baby_mon_card.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 109
+      }
+    },
+    "presentation/widgets/badge_showcase.dart": {
+      "description": "Badge showcase widget",
+      "path": "features/dashboard/presentation/widgets/badge_showcase.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 97
+      }
+    },
+    "presentation/widgets/evolution_visualizer.dart": {
+      "description": "Evolution visualizer widget",
+      "path": "features/dashboard/presentation/widgets/evolution_visualizer.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 115
+      }
+    },
+    "presentation/widgets/xp_progress_bar.dart": {
+      "description": "XP progress bar widget",
+      "path": "features/dashboard/presentation/widgets/xp_progress_bar.dart",
+      "status": {
+        "exists": true,
+        "empty": false,
+        "lines": 76
+      }
+    }
+  }
+}
