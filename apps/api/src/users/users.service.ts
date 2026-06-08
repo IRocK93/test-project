@@ -63,7 +63,7 @@ export class UsersService {
     }
 
     // Import bcrypt here to avoid circular dependency
-    const { default: bcrypt } = await import('bcrypt');
+    const bcrypt = require('bcryptjs');
     const isValid = await bcrypt.compare(dto.password, user.passwordHash || '');
 
     if (!isValid) {

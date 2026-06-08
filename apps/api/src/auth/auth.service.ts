@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException, ConflictException, InternalServerErrorException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, LoginDto, RefreshTokenDto } from './dto/auth.dto';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
@@ -288,12 +288,12 @@ export class AuthService {
   async generateTokens(userId: string, email: string) {
     const accessToken = this.jwtService.sign(
       { sub: userId, email, type: 'access' },
-      { expiresIn: process.env.JWT_EXPIRES_IN || '15m' },
+      { expiresIn: '15m' as const },
     );
 
     const refreshToken = this.jwtService.sign(
       { sub: userId, email, type: 'refresh' },
-      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' },
+      { expiresIn: '7d' as const },
     );
 
     const expiresAt = new Date();

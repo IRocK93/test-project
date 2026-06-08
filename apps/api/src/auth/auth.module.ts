@@ -21,7 +21,7 @@ const safeJwtSecret = jwtSecret || 'babymon-jwt-secret-do-not-use-in-production'
     JwtModule.register({
       secret: safeJwtSecret,
       signOptions: {
-        expiresIn: process.env.JWT_EXPIRES_IN || '15m',
+        expiresIn: '15m',
       },
     }),
     PrismaModule,
