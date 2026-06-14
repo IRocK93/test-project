@@ -2,14 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
 import '../../core/constants/api_constants.dart';
-
-typedef _PendingRetry = Future<void> Function(bool success, String? newToken);
+import 'retry_interceptor.dart';
 
 class ApiClient {
   late final Dio _dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
-  bool _isRefreshing = false;
-  final List<_PendingRetry> _pendingRetries = [];
 
   /// Optional [HttpClientAdapter] for testing — allows injecting a mock adapter.
   /// When null, Dio uses the platform default (IOHttpClientAdapter).
@@ -35,44 +32,12 @@ class ApiClient {
         }
         return handler.next(options);
       },
-      onError: (error, handler) async {
-        if (error.response?.statusCode == 401) {
-          // Don't try to refresh token for auth endpoints
-          final path = error.requestOptions.path;
-          if (path.contains('/auth/login') || path.contains('/auth/register') || path.contains('/auth/refresh')) {
-            return handler.next(error);
-          }
-          // Queue this request to retry after token refresh
-          _pendingRetries.add((success, newToken) async {
-            if (success && newToken != null) {
-              error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-              try {
-                final response = await _dio.fetch<dynamic>(error.requestOptions);
-                handler.resolve(response);
-              } catch (e) {
-                handler.reject(e is DioException ? e : DioException(requestOptions: error.requestOptions, error: e));
-              }
-            } else {
-              handler.next(error);
-            }
-          });
-          // Only trigger refresh once
-          if (!_isRefreshing) {
-            _isRefreshing = true;
-            final success = await _refreshToken();
-            final newToken = await _storage.read(key: StorageKeys.accessToken);
-            // Retry all queued requests with the new token
-            final retries = List<_PendingRetry>.from(_pendingRetries);
-            _pendingRetries.clear();
-            for (final retry in retries) {
-              retry(success, newToken);
-            }
-            _isRefreshing = false;
-          }
-          return;
-        }
-        return handler.next(error);
-      },
+    ));
+
+    _dio.interceptors.add(RetryInterceptor(
+      storage: _storage,
+      dio: _dio,
+      refreshToken: _refreshToken,
     ));
   }
 

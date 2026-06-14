@@ -182,6 +182,64 @@ void main() {
             .any((r) => r.path.contains('/auth/refresh')),
         isTrue,
       );
+    });    test('concurrent 401s all reject when refresh fails', () async {
+      int refreshCount = 0;
+      await client.saveTokens('old-token', 'my-refresh-token', 'user-1');
+
+      mockAdapter.statusCodeFor = (o) {
+        if (o.path.contains('/auth/refresh')) {
+          refreshCount++;
+          return 401;
+        }
+        return 401;
+      };
+      mockAdapter.bodyFor = (_) => '{"message": "Unauthorized"}';
+
+      // Fire two concurrent requests that both get 401
+      final milestoneFuture = client.getMilestones('baby-1');
+      final feedFuture = client.getFeedLogs('baby-1');
+
+      // Both should reject (not hang) — use expectLater to properly await
+      await expectLater(milestoneFuture, throwsA(isA<DioException>()));
+      await expectLater(feedFuture, throwsA(isA<DioException>()));
+
+      // Refresh was called exactly once
+      expect(refreshCount, 1);
+    });
+
+    test('concurrent 401s all retry when refresh succeeds', () async {
+      await client.saveTokens('old-token', 'my-refresh-token', 'user-1');
+
+      mockAdapter.statusCodeFor = (o) {
+        if (o.path.contains('/auth/')) return 200;
+        final count = mockAdapter.capturedRequests
+            .where((r) => r.path == o.path).length;
+        return count <= 1 ? 401 : 200;
+      };
+      mockAdapter.bodyFor = (o) {
+        if (o.path.contains('/auth/refresh')) {
+          return '{"accessToken": "new-token", "refreshToken": "new-refresh"}';
+        }
+        return '{"message": "ok"}';
+      };
+
+      // Fire two concurrent requests that both get 401
+      await Future.wait([
+        client.getMilestones('baby-1'),
+        client.getFeedLogs('baby-1'),
+      ]);
+
+      // Both should succeed after retry
+      expect(
+        mockAdapter.capturedRequests
+            .where((r) => r.path.contains('/milestones')).length,
+        2, // original + retry
+      );
+      expect(
+        mockAdapter.capturedRequests
+            .where((r) => r.path.contains('/feed-logs')).length,
+        2, // original + retry
+      );
     });
 
     test('refresh endpoint 401 does not recurse', () async {

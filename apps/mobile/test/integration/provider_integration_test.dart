@@ -9,6 +9,8 @@ import 'package:baby_mon/features/dashboard/presentation/screens/dashboard_scree
 import 'package:baby_mon/features/milestones/presentation/screens/milestones_screen.dart';
 import 'package:baby_mon/features/health/presentation/screens/health_screen.dart';
 import 'package:baby_mon/features/feeding/presentation/screens/feeding_screen.dart';
+import 'package:baby_mon/features/settings/presentation/screens/settings_screen.dart';
+import 'package:baby_mon/features/settings/presentation/screens/subscription_screen.dart';
 
 /// A version of StubApiClient that returns configurable data wrapped in [Response].
 class _TestApiClient extends StubApiClient {
@@ -107,8 +109,11 @@ Widget _buildTestApp(Widget child, _TestApiClient apiClient) {
     ],
     child: MaterialApp(
       theme: ThemeData(useMaterial3: true),
-      home: Scaffold(
-        body: child,
+      home: MediaQuery(
+        data: const MediaQueryData(size: Size(400, 800)),
+        child: Scaffold(
+          body: child,
+        ),
       ),
     ),
   );
@@ -305,10 +310,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(HealthScreen), findsOneWidget);
-    });
-
-    testWidgets('handles API errors gracefully',
-        (WidgetTester tester) async {
+    });    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
       final apiClient = _TestApiClient();
       apiClient.setData('getHealthRecords', null);
 
@@ -319,6 +321,74 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(HealthScreen), findsOneWidget);
+    });
+  });
+
+  group('SettingsScreen provider integration', () {
+    testWidgets('renders settings with user profile',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getProfile', {
+        'id': 'user-1',
+        'name': 'Test Parent',
+        'email': 'test@example.com',
+      });
+      apiClient.setData('getSubscription', {
+        'plan': 'FREE',
+        'trialDaysRemaining': 7,
+      });
+
+      await tester.pumpWidget(
+        _buildTestApp(const SettingsScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(SettingsScreen), findsOneWidget);
+    });
+
+    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getProfile', null);
+
+      await tester.pumpWidget(
+        _buildTestApp(const SettingsScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(SettingsScreen), findsOneWidget);
+    });
+  });
+
+  group('SubscriptionScreen provider integration', () {
+    testWidgets('renders subscription plans', (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getSubscription', {
+        'plan': 'FREE',
+        'trialDaysRemaining': 14,
+      });
+
+      await tester.pumpWidget(
+        _buildTestApp(const SubscriptionScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(SubscriptionScreen), findsOneWidget);
+    });
+
+    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getSubscription', null);
+
+      await tester.pumpWidget(
+        _buildTestApp(const SubscriptionScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(SubscriptionScreen), findsOneWidget);
     });
   });
 
