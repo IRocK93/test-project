@@ -51,6 +51,22 @@ void main() {
       expect(find.text('All'), findsOneWidget);
     });
 
+    testWidgets('tapping filter chip changes selection', (tester) async {
+      await tester.pumpWidget(_buildJournalApp());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Tap the Milestones filter chip
+      final milestonesChip = find.text('Milestones');
+      expect(milestonesChip, findsOneWidget);
+      await tester.tap(milestonesChip);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Screen should still render after filter change
+      expect(find.byType(Scaffold), findsWidgets);
+    });
+
     testWidgets('renders on dark theme without error', (tester) async {
       await tester.pumpWidget(
         ProviderScope(

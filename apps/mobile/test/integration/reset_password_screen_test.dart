@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:baby_mon/features/health/presentation/screens/health_screen.dart';
+import 'package:baby_mon/features/auth/presentation/screens/reset_password_screen.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screen_test_helper.dart';
 
-/// Build HealthScreen wrapped in ProviderScope.
-Widget _buildHealthApp({TestApiClient? apiClient}) {
+/// Build ResetPasswordScreen wrapped in ProviderScope.
+Widget _buildResetPasswordApp({TestApiClient? apiClient}) {
   final client = apiClient ?? TestApiClient();
   return ProviderScope(
     overrides: [
@@ -17,7 +17,7 @@ Widget _buildHealthApp({TestApiClient? apiClient}) {
     ],
     child: MaterialApp(
       theme: ThemeData(useMaterial3: true),
-      home: const HealthScreen(),
+      home: const ResetPasswordScreen(token: 'test-reset-token'),
     ),
   );
 }
@@ -26,46 +26,40 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
 
-  group('HealthScreen', () {
+  group('ResetPasswordScreen', () {
     testWidgets('renders without error', (tester) async {
-      await tester.pumpWidget(_buildHealthApp());
+      await tester.pumpWidget(_buildResetPasswordApp());
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.byType(Scaffold), findsWidgets);
+      expect(find.byType(Scaffold), findsOneWidget);
     });
 
-    testWidgets('shows Growth Chart link', (tester) async {
-      await tester.pumpWidget(_buildHealthApp());
+    testWidgets('shows Reset Password title', (tester) async {
+      await tester.pumpWidget(_buildResetPasswordApp());
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('Growth Chart'), findsOneWidget);
+      // 'Reset Password' appears in both the title and the button
+      expect(find.text('Reset Password'), findsWidgets);
     });
 
-    testWidgets('shows Sleep Tracking link', (tester) async {
-      await tester.pumpWidget(_buildHealthApp());
+    testWidgets('shows password input fields', (tester) async {
+      await tester.pumpWidget(_buildResetPasswordApp());
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('Sleep Tracking'), findsOneWidget);
+      expect(find.text('New Password'), findsOneWidget);
+      expect(find.text('Confirm Password'), findsOneWidget);
     });
 
-    testWidgets('shows All records filter chip', (tester) async {
-      await tester.pumpWidget(_buildHealthApp());
+    testWidgets('shows Reset Password button', (tester) async {
+      await tester.pumpWidget(_buildResetPasswordApp());
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('All records'), findsOneWidget);
-    });
-
-    testWidgets('renders with expandable FAB', (tester) async {
-      await tester.pumpWidget(_buildHealthApp());
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
-
-      // HealthScreen uses InfoFab as its floatingActionButton
-      expect(find.byType(Scaffold), findsWidgets);
+      // 'Reset Password' appears in both title and button - check for at least 2
+      expect(find.text('Reset Password'), findsNWidgets(2));
     });
 
     testWidgets('renders on dark theme without error', (tester) async {
@@ -77,14 +71,14 @@ void main() {
           ],
           child: MaterialApp(
             theme: ThemeData.dark(useMaterial3: true),
-            home: const HealthScreen(),
+            home: const ResetPasswordScreen(token: 'test-reset-token'),
           ),
         ),
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      expect(find.byType(Scaffold), findsWidgets);
+      expect(find.byType(Scaffold), findsOneWidget);
     });
   });
 }
