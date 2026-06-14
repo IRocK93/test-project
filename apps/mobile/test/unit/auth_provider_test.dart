@@ -140,7 +140,6 @@ void main() {
       });
 
       test('sets isLoading during login', () async {
-        // Create a completable future to control timing
         fakeRepo.nextLoginResult = (
           user: User(id: 'u1', email: 'test@test.com', createdAt: DateTime(2024)),
           token: 'token',
@@ -185,7 +184,6 @@ void main() {
 
     group('logout', () {
       test('resets state to empty after logout', () async {
-        // First login
         fakeRepo.nextLoginResult = (
           user: User(id: 'u1', email: 'test@test.com', createdAt: DateTime(2024)),
           token: 'token',
@@ -193,7 +191,6 @@ void main() {
         await notifier.login('test@test.com', 'pass');
         expect(notifier.state.isLoggedIn, isTrue);
 
-        // Then logout
         await notifier.logout();
         expect(notifier.state.user, isNull);
         expect(notifier.state.token, isNull);
@@ -210,9 +207,7 @@ void main() {
 
       test('sets error on failure', () async {
         fakeRepo.nextLoginError = Exception('Not found');
-        // forgotPassword uses its own try/catch
         await notifier.forgotPassword('bad@test.com');
-        // Should not throw, just set error
       });
     });
 
@@ -236,7 +231,6 @@ void main() {
       test('returns true when user is logged in', () async {
         fakeRepo.shouldLoggedIn = true;
         fakeRepo.currentUser = User(id: 'u1', email: 'exist@test.com', createdAt: DateTime(2024));
-        // Pre-populate SharedPreferences with a token (read by _checkAuthStatus)
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('accessToken', 'stored-token');
 
@@ -253,6 +247,120 @@ void main() {
 
         expect(result, isFalse);
         expect(notifier.state.isLoggedIn, isFalse);
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Social Login — Error handling tests
+    //
+    //  GoogleSignInService and FacebookSignInService catch exceptions
+    //  INTERNALLY and return null → provider treats as "user cancelled".
+    //  AppleSignInService.isAvailable() does NOT catch → throws
+    //  MissingPluginException → provider catch block sets error.
+    // ═══════════════════════════════════════════════════════════════
+
+    group('googleLogin', () {
+      test('sets isLoading true during login', () async {
+        final future = notifier.googleLogin();
+        expect(notifier.state.isLoading, isTrue);
+        expect(notifier.state.error, isNull);
+        await future;
+      });
+
+      test('handles cancelled/null response from service gracefully', () async {
+        // GoogleSignInService catches internally and returns null in test env.
+        // Provider treats null as "user cancelled" — no error set.
+        await notifier.googleLogin();
+
+        expect(notifier.state.isLoading, isFalse);
+        expect(notifier.state.user, isNull);
+        expect(notifier.state.token, isNull);
+        expect(notifier.state.error, isNull);
+      });
+
+      test('clears isLoading after completion', () async {
+        // Set up a logged-in state first
+        fakeRepo.nextLoginResult = (
+          user: User(id: 'u1', email: 'test@test.com', createdAt: DateTime(2024)),
+          token: 'token',
+        );
+        await notifier.login('test@test.com', 'pass');
+        expect(notifier.state.isLoggedIn, isTrue);
+
+        // googleLogin clears isLoading: true, error: null
+        final future = notifier.googleLogin();
+        expect(notifier.state.isLoading, isTrue);
+        expect(notifier.state.error, isNull);
+        await future;
+        expect(notifier.state.isLoading, isFalse);
+      });
+    });
+
+    group('appleLogin', () {
+      test('sets isLoading true during login', () async {
+        final future = notifier.appleLogin();
+        expect(notifier.state.isLoading, isTrue);
+        expect(notifier.state.error, isNull);
+        await future;
+      });
+
+      test('sets error when Apple Sign-In is not available', () async {
+        // AppleSignInService.isAvailable() does NOT catch exceptions.
+        // It throws MissingPluginException in test env.
+        await notifier.appleLogin();
+
+        expect(notifier.state.isLoading, isFalse);
+        expect(notifier.state.error, isNotNull);
+        expect(notifier.state.user, isNull);
+        expect(notifier.state.token, isNull);
+      });
+
+      test('clears isLoading after completion', () async {
+        fakeRepo.nextLoginResult = (
+          user: User(id: 'u1', email: 'test@test.com', createdAt: DateTime(2024)),
+          token: 'token',
+        );
+        await notifier.login('test@test.com', 'pass');
+        expect(notifier.state.isLoggedIn, isTrue);
+
+        final future = notifier.appleLogin();
+        expect(notifier.state.isLoading, isTrue);
+        await future;
+        expect(notifier.state.isLoading, isFalse);
+      });
+    });
+
+    group('facebookLogin', () {
+      test('sets isLoading true during login', () async {
+        final future = notifier.facebookLogin();
+        expect(notifier.state.isLoading, isTrue);
+        expect(notifier.state.error, isNull);
+        await future;
+      });
+
+      test('handles cancelled/null response from service gracefully', () async {
+        // FacebookSignInService catches internally and returns null in test env.
+        // Provider treats null as "user cancelled" — no error set.
+        await notifier.facebookLogin();
+
+        expect(notifier.state.isLoading, isFalse);
+        expect(notifier.state.user, isNull);
+        expect(notifier.state.token, isNull);
+        expect(notifier.state.error, isNull);
+      });
+
+      test('clears isLoading after completion', () async {
+        fakeRepo.nextLoginResult = (
+          user: User(id: 'u1', email: 'test@test.com', createdAt: DateTime(2024)),
+          token: 'token',
+        );
+        await notifier.login('test@test.com', 'pass');
+        expect(notifier.state.isLoggedIn, isTrue);
+
+        final future = notifier.facebookLogin();
+        expect(notifier.state.isLoading, isTrue);
+        await future;
+        expect(notifier.state.isLoading, isFalse);
       });
     });
 
