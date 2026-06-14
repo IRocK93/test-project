@@ -1,18 +1,19 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/providers.dart';
-import 'package:baby_mon/presentation/providers/auth_provider.dart';
-import 'package:baby_mon/data/api_client.dart';
-import 'dashboard/dashboard_screen.dart';
-import 'milestones/milestones_screen.dart';
-import 'feeding/feeding_screen.dart';
-import 'health/health_screen.dart';
-import 'album/album_screen.dart';
-import 'journal/journal_screen.dart';
-import 'settings/partners_screen.dart';
+import 'package:baby_mon/features/dashboard/dashboard.dart';
+import 'package:baby_mon/features/milestones/milestones.dart';
+import 'package:baby_mon/features/feeding/feeding.dart';
+import 'package:baby_mon/features/health/health.dart';
+import 'package:baby_mon/core/core.dart';
 
-/// Main navigation shell with a shared AppBar BabyMon selector
+/// Main navigation shell — redesigned with 5-tab bottom nav, floating AppBar,
+/// premium drawer, and cross-fade tab transitions.
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
@@ -24,13 +25,57 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   int _currentIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // BabyMon selector state shared across all screens
+  // ═══ BabyMon selector ═══
   String? _activeBabyMonId;
   String _activeBabyMonName = '';
   String _activeBabyMonGender = 'MONIOUS';
   List<Map<String, dynamic>> _allBabyMons = [];
   bool _selectorLoading = true;
   bool _switchInProgress = false;
+
+  // ═══ Scroll-aware tab label ═══
+  final Set<int> _scrolledTabs = {};
+
+  // Navigation configuration
+  static const _tabCount = 5;
+  static const List<_NavTab> _tabs = [
+    _NavTab(PhosphorIconsLight.gauge, PhosphorIconsLight.gauge, 'Dashboard'),
+    _NavTab(PhosphorIconsLight.trophy, PhosphorIconsLight.trophy, 'Milestones'),
+    _NavTab(PhosphorIconsLight.bowlFood, PhosphorIconsLight.bowlFood, 'Feeding'),
+    _NavTab(PhosphorIconsLight.heart, PhosphorIconsLight.heart, 'Health'),
+    _NavTab(PhosphorIconsLight.dotsSixVertical, PhosphorIconsLight.dotsSixVertical, 'More'),
+  ];
+
+  /// Tab screens with scroll listeners for the show-on-scroll tab label pill.
+  List<Widget> _buildScreenList() {
+    return [
+      const DashboardScreen(),
+      _scrollAware(1, const MilestonesScreen()),
+      _scrollAware(2, const FeedingScreen()),
+      _scrollAware(3, const HealthScreen()),
+      const SizedBox.shrink(), // More opens a sheet, not a screen
+    ];
+  }
+
+  /// Wraps a tab screen in [ScrollAware] to track scroll offset for the pill.
+  Widget _scrollAware(int tabIndex, Widget screen) {
+    return ScrollAware(
+      threshold: 10,
+      onScrolledChanged: (isScrolled) {
+        final wasScrolled = _scrolledTabs.contains(tabIndex);
+        if (wasScrolled != isScrolled) {
+          setState(() {
+            if (isScrolled) {
+              _scrolledTabs.add(tabIndex);
+            } else {
+              _scrolledTabs.remove(tabIndex);
+            }
+          });
+        }
+      },
+      child: screen,
+    );
+  }
 
   @override
   void initState() {
@@ -41,23 +86,23 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     });
   }
 
+  // ═══ BabyMon selector ═══
+
   Future<void> _loadSelectorData() async {
     try {
       final api = ref.read(apiClientProvider);
       final allRes = await api.getBabyMons();
-      final items = (allRes.data is List) ? allRes.data : ((allRes.data as Map)['items'] as List?) ?? [];
-      _allBabyMons = items.cast<Map<String, dynamic>>();
+      _allBabyMons = parseItemsTyped(allRes.data);
       final activeId = await api.getSelectedBabyMonId();
       if (activeId != null) {
         _activeBabyMonId = activeId;
-        // Find name/gender from list
-        final current = _allBabyMons.cast<Map<String, dynamic>?>().firstWhere(
+        final current = _allBabyMons.whereType<Map<String, dynamic>?>().firstWhere(
           (b) => b?['id'] == activeId,
           orElse: () => null,
         );
         if (current != null) {
-          _activeBabyMonName = current['name'] as String? ?? '';
-          _activeBabyMonGender = current['gender'] as String? ?? 'MONIOUS';
+          _activeBabyMonName = parseString(current['name']) ?? '';
+          _activeBabyMonGender = parseString(current['gender']) ?? 'MONIOUS';
         }
       }
       if (mounted) setState(() => _selectorLoading = false);
@@ -69,243 +114,926 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   Future<void> _switchBabyMon(String newId) async {
     if (_switchInProgress || newId == _activeBabyMonId) return;
     _switchInProgress = true;
-    final capturedId = newId;
     try {
-      await ref.read(apiClientProvider).setSelectedBabyMonId(capturedId);
+      await ref.read(apiClientProvider).setSelectedBabyMonId(newId);
       ref.read(appRefreshProvider.notifier).state++;
       await _loadSelectorData();
-      if (_activeBabyMonId != capturedId) {
-        await _loadSelectorData();
-      }
     } finally {
       _switchInProgress = false;
     }
   }
 
-  // ── Gender helpers ──
-  String _genderEmoji(String? g) => g == 'MONIESE' ? '👶‍♀️' : g == 'MONIOUS' ? '👶‍♂️' : '👶';
+  // ═══ Gender helpers ═══
 
-  Color _genderColor(String? g) {
+  String _genderEmoji(String? g) =>
+      g == 'MONIESE' ? '👶‍♀️' : g == 'MONIOUS' ? '👶‍♂️' : '👶';
+
+  Color _genderBg(String? g) {
     switch (g) {
-      case 'MONIESE': return Colors.pink.shade100;
-      case 'MONIOUS': return Colors.lightBlue.shade100;
-      default: return Colors.purple.shade100;
+      case 'MONIESE': return AppColors.genderMoniese;
+      case 'MONIOUS': return AppColors.genderMonious;
+      default: return AppColors.genderNeutral;
     }
   }
 
   Color _genderAccent(String? g) {
     switch (g) {
-      case 'MONIESE': return Colors.pink.shade300;
-      case 'MONIOUS': return Colors.lightBlue.shade300;
-      default: return Colors.purple.shade300;
+      case 'MONIESE': return AppColors.genderMonieseAccent;
+      case 'MONIOUS': return AppColors.genderMoniousAccent;
+      default: return AppColors.genderNeutralAccent;
     }
   }
 
+  // ═══ AppBar — Floating island BabyMon selector ═══
+
   Widget _buildAppBarSelector() {
     if (_selectorLoading) {
-      return const Padding(padding: EdgeInsets.all(4), child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)));
+      return const ButtonLoading(size: 24);
     }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = _genderBg(_activeBabyMonGender);
+    final accent = _genderAccent(_activeBabyMonGender);
+
     if (_allBabyMons.length <= 1) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: _genderColor(_activeBabyMonGender),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _genderAccent(_activeBabyMonGender).withOpacity(0.5)),
+          color: bg.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+          border: Border.all(color: accent.withValues(alpha: 0.3)),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(_genderEmoji(_activeBabyMonGender), style: const TextStyle(fontSize: 16)),
-          const SizedBox(width: 6),
-          Text(_activeBabyMonName.isNotEmpty ? _activeBabyMonName : 'BabyMon', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-        ]),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_genderEmoji(_activeBabyMonGender),
+                style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Text(
+              _activeBabyMonName.isNotEmpty
+                  ? _activeBabyMonName
+                  : 'BabyMon',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
       );
     }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
-        color: _genderColor(_activeBabyMonGender),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _genderAccent(_activeBabyMonGender).withOpacity(0.5)),
+        color: bg.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+        border: Border.all(color: accent.withValues(alpha: 0.3)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _activeBabyMonId,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87),
-          icon: Icon(Icons.arrow_drop_down, color: _genderAccent(_activeBabyMonGender)),
-          dropdownColor: Colors.white,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+          icon: Icon(Icons.keyboard_arrow_down, color: accent, size: 20),            dropdownColor: isDark ? AppColors.darkSurface : AppColors.surface,
           underline: const SizedBox.shrink(),
           padding: const EdgeInsets.symmetric(horizontal: 8),
           items: _allBabyMons
-            .where((bm) => bm['deletedAt'] == null)
-            .map((bm) => DropdownMenuItem(
-              value: bm['id'] as String,
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Text(_genderEmoji(bm['gender'] as String?), style: const TextStyle(fontSize: 14)),
-                const SizedBox(width: 6),
-                Text(bm['name'] as String? ?? 'BabyMon'),
-              ]),
-            )).toList(),
-          onChanged: (v) { if (v != null) _switchBabyMon(v); },
+              .where((bm) => bm['deletedAt'] == null)
+              .map((bm) => DropdownMenuItem(
+                    value: parseString(bm['id']) ?? '',
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(_genderEmoji(parseString(bm['gender'])),
+                            style: const TextStyle(fontSize: 14)),
+                        const SizedBox(width: 8),
+                        Text(
+                          parseString(bm['name']) ?? 'BabyMon',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ))
+              .toList(),
+          onChanged: (v) {
+            if (v != null) _switchBabyMon(v);
+          },
         ),
       ),
     );
   }
+
+  // ═══ More Menu Sheet ═══
+
+  void _showMoreMenu() {
+    final moreItems = [
+      _MoreItem(PhosphorIconsLight.images, 'Album', AppColors.bentoPurple, () {
+        Navigator.pop(context);
+        context.push('/album');
+      }),
+      _MoreItem(PhosphorIconsLight.bookOpen, 'Journal', AppColors.bentoGold, () {
+        Navigator.pop(context);
+        context.push('/journal');
+      }),
+      _MoreItem(PhosphorIconsLight.moon, 'Sleep', AppColors.bentoBlue, () {
+        Navigator.pop(context);
+        context.push('/sleep');
+      }),
+      _MoreItem(PhosphorIconsLight.compass, 'Discover', AppColors.bentoTeal, () {
+        Navigator.pop(context);
+        context.push('/discover');
+      }),
+    ];
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(DesignTokens.radiusXl),
+        ),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            DesignTokens.spaceLg,
+            DesignTokens.spaceLg,
+            DesignTokens.spaceLg,
+            DesignTokens.spaceLg,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Container(
+                  width: 32,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: DesignTokens.spaceLg),
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Text(
+                  'More Features',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: DesignTokens.spaceMd),
+                // Shared BackdropFilter for the grid — one blur pass instead of per-tile.
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                  child: BackdropFilter(
+                    filter: ui.ImageFilter.blur(
+                      sigmaX: DesignTokens.glassBlurLight,
+                      sigmaY: DesignTokens.glassBlurLight,
+                    ),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: DesignTokens.bentoGap,
+                        mainAxisSpacing: DesignTokens.bentoGap,
+                        childAspectRatio: 1.4,
+                      ),
+                      itemCount: moreItems.length,
+                      itemBuilder: (ctx, i) => _buildMoreGridItem(ctx, moreItems[i]),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMoreGridItem(BuildContext ctx, _MoreItem item) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ScalePress(
+      onTap: item.onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+          color: isDark ? AppColors.glassDark : AppColors.glassWhite,
+          border: Border.all(
+            color: item.color.withValues(alpha: isDark ? 0.2 : 0.15),
+            width: DesignTokens.glassBorderWidth,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: item.color.withValues(alpha: 0.15),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: item.color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(
+                  DesignTokens.radiusMd,
+                ),
+                border: Border.all(
+                  color: item.color.withValues(alpha: 0.25),
+                  width: 0.5,
+                ),
+              ),
+              child: Icon(
+                item.icon,
+                color: item.color,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: DesignTokens.spaceSm),
+            Text(
+              item.label,
+              style: Theme.of(ctx).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+
+  // ═══ Helpers ═══
+
+  void _triggerTabRefresh(int index) {
+    ref.read(tabRefreshProvider(index).notifier).state++;
+  }
+
+  // ═══ Drawer ═══
+
+  Widget _buildDrawer() {
+    final navItems = [
+      const _DrawerSection('Main', [
+        _DrawerItem(PhosphorIconsLight.house, 'Dashboard', 0),
+        _DrawerItem(PhosphorIconsLight.trophy, 'Milestones', 1),
+        _DrawerItem(PhosphorIconsLight.bowlFood, 'Feeding', 2),
+        _DrawerItem(PhosphorIconsLight.heart, 'Health', 3),
+      ]),
+      _DrawerSection('More', [
+        _DrawerItem(PhosphorIconsLight.images, 'Album', null, () =>
+            _drawerNavigate(() => GoRouter.of(context).push('/album'))),
+        _DrawerItem(PhosphorIconsLight.bookOpen, 'Journal', null, () =>
+            _drawerNavigate(() => GoRouter.of(context).push('/journal'))),
+        _DrawerItem(PhosphorIconsLight.moon, 'Sleep', null, () =>
+            _drawerNavigate(() => GoRouter.of(context).push('/sleep'))),
+        _DrawerItem(PhosphorIconsLight.compass, 'Discover', null, () =>
+            _drawerNavigate(() => GoRouter.of(context).push('/discover'))),
+      ]),
+    ];
+
+    return Drawer(
+      width: MediaQuery.of(context).size.width * 0.75,
+      child: Column(
+        children: [
+          // Profile header
+          Container(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 20,
+              left: DesignTokens.spaceLg,
+              right: DesignTokens.spaceLg,
+              bottom: DesignTokens.space2xl,
+            ),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary,
+                  AppColors.primaryDark,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CircleAvatar(
+                  radius: 28,
+                  backgroundColor: AppColors.surface,
+              child: Icon(
+                PhosphorIconsLight.baby,
+                size: 28,
+                color: AppColors.primary,
+              ),
+                ),
+                const SizedBox(height: DesignTokens.spaceMd),
+                Text(
+                  'BabyMon',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textOnDark,
+                  ),
+                ),
+                const SizedBox(height: DesignTokens.space2xs),
+                Text(
+                  'Your Parenting Companion',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textOnDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Nav items
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(
+                vertical: DesignTokens.spaceSm,
+              ),
+              children: [
+                for (final section in navItems) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      DesignTokens.spaceLg,
+                      DesignTokens.spaceMd,
+                      DesignTokens.spaceLg,
+                      DesignTokens.spaceXs,
+                    ),
+                    child: Text(
+                      section.title,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.08,
+                      ),
+                    ),
+                  ),
+                  for (final item in section.items)
+                    _buildDrawerItem(item),
+                ],
+
+                const Divider(
+                  height: DesignTokens.space3xl,
+                  indent: DesignTokens.spaceLg,
+                  endIndent: DesignTokens.spaceLg,
+                ),
+
+                // Secondary actions
+                _buildDrawerTile(
+                  PhosphorIconsLight.gear,
+                  'Settings',
+                  Theme.of(context).brightness == Brightness.dark ? AppColors.textOnDark : AppColors.textPrimary,
+                  () => _drawerNavigate(
+                    () => GoRouter.of(context).push('/settings'),
+                  ),
+                ),
+                _buildDrawerTile(
+                  PhosphorIconsLight.users,
+                  'Manage Partners',
+                  AppColors.accent,
+                  () => _drawerNavigate(
+                    () => GoRouter.of(context).push('/partners'),
+                  ),
+                ),
+
+                const SizedBox(height: DesignTokens.spaceLg),
+
+                // Logout
+                _buildDrawerTile(
+                  PhosphorIconsLight.signOut,
+                  'Logout',
+                  AppColors.error,
+                  () => _logout(),
+                ),
+
+                const SizedBox(height: DesignTokens.space3xl),
+              ],
+            ),
+          ),
+
+          // Footer
+          Container(
+            padding: const EdgeInsets.all(DesignTokens.spaceLg),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: AppColors.divider.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  PhosphorIconsLight.heart,
+                  size: 12,
+                  color: AppColors.secondary,
+                ),
+                const SizedBox(width: DesignTokens.spaceXs),
+                Text(
+                  'BabyMon v1.0.0',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem(_DrawerItem item) {
+    final index = item.index;
+    if (index != null && index < _tabCount) {
+      return _buildDrawerTile(
+        item.icon,
+        item.label,
+        _currentIndex == index
+            ? AppColors.primary
+            : AppColors.textSecondary,
+        () {
+          setState(() => _currentIndex = index);
+          _triggerTabRefresh(index);
+          Navigator.pop(context);
+        },
+        _currentIndex == index,
+      );
+    }
+    return _buildDrawerTile(
+      item.icon,
+      item.label,
+      AppColors.textSecondary,
+      item.onTap,
+    );
+  }
+
+  Widget _buildDrawerTile(
+    IconData icon,
+    String label,
+    Color color, [
+    VoidCallback? onTap,
+    bool selected = false,
+  ]) {
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: DesignTokens.spaceSm,
+        vertical: 1,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+        color: selected
+            ? AppColors.primaryContainer
+            : Colors.transparent,
+      ),
+      child: ListTile(
+        leading: Icon(icon, size: 20, color: color),
+        title: Text(
+          label,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+        dense: true,
+        visualDensity: VisualDensity.compact,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  void _drawerNavigate(VoidCallback action) {
+    Navigator.pop(context);
+    action();
+  }
+
+  // ═══ Logout ═══
+
+  Future<void> _logout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Logout',
+              style: Theme.of(ctx).textTheme.labelLarge?.copyWith(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(authProvider.notifier).logout();
+      if (mounted) context.go('/login');
+    }
+  }
+
+  // ═══ Build ═══
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final navBg = isDark ? AppColors.glassDark : AppColors.glassWhite;
+    final navBorder = isDark
+        ? AppColors.glassDarkBorder.withValues(alpha: 0.6)
+        : AppColors.glassBorder.withValues(alpha: 0.6);
+
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        title: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.55,
-          child: _buildAppBarSelector(),
-        ),
-        centerTitle: false,
-        titleSpacing: 4,
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            tooltip: 'Notifications',
-            onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+
+      // ── Floating pill AppBar with enhanced frosted glass + premium shadow ──
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(64),
+        child: Padding(
+          padding: const EdgeInsets.only(
+            top: DesignTokens.spaceSm,
+            left: DesignTokens.spaceSm,
+            right: DesignTokens.spaceSm,
           ),
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: Colors.green),
-            tooltip: 'Create BabyMon',
-            onPressed: () => GoRouter.of(context).go('/create-baby-mon'),
-          ),
-        ],
-      ),
-      endDrawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
-              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(children: [Icon(Icons.notifications, color: Colors.white, size: 28), SizedBox(width: 12), Text('Notifications', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))]),
-                  SizedBox(height: 4),
-                  Text('Stay updated on your BabyMon', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                ],
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+              boxShadow: [
+                BoxShadow(
+                  color: isDark ? AppColors.glassDarkShadow : AppColors.glassShadow,
+                  blurRadius: DesignTokens.glassShadowBlur,
+                  offset: const Offset(0, DesignTokens.glassShadowOffset),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(
+                  sigmaX: DesignTokens.glassBlurHeavy,
+                  sigmaY: DesignTokens.glassBlurHeavy,
+                ),
+                child: AppBar(
+                  backgroundColor: navBg,
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 0,
+                  scrolledUnderElevation: 2,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(DesignTokens.radiusXl),
+                    side: BorderSide(
+                      color: navBorder,
+                      width: DesignTokens.glassBorderWidth,
+                    ),
+                  ),
+                  leading: MorphingHamburger(
+                    isOpen: _scaffoldKey.currentState?.isDrawerOpen ?? false,
+                    onTap: () =>
+                        _scaffoldKey.currentState?.openDrawer(),
+                    size: 28,
+                    strokeWidth: 2.5,
+                  ),
+                  title: Row(
+                    children: [
+                      Flexible(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.4,
+                          ),
+                          child: _buildAppBarSelector(),
+                        ),
+                      ),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        transitionBuilder: (child, anim) => ScaleTransition(
+                          scale: Tween<double>(
+                            begin: 1.08,
+                            end: 1.0,
+                          ).animate(CurvedAnimation(
+                            parent: anim,
+                            curve: Curves.easeOutBack,
+                          )),
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(-0.2, 0),
+                              end: Offset.zero,
+                            ).animate(CurvedAnimation(
+                              parent: anim,
+                              curve: Curves.easeOutCubic,
+                            )),
+                            child: FadeTransition(
+                              opacity: anim,
+                              child: child,
+                            ),
+                          ),
+                        ),
+                        child: _currentIndex > 0 &&
+                                _currentIndex < _tabCount - 1 &&
+                                _scrolledTabs.contains(_currentIndex)
+                            ? Padding(
+                                key: const ValueKey('tabLabel'),
+                                padding: const EdgeInsets.only(left: 8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(
+                                      DesignTokens.radiusFull,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _tabs[_currentIndex].label,
+                                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ),
+                  centerTitle: false,
+                  titleSpacing: 0,
+                  actions: [
+                    ThemeButton.icon(icon: PhosphorIconsLight.bell, onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notifications coming soon'), duration: Duration(seconds: 2))); }, tooltip: 'Notifications', variant: ThemeButtonVariant.text),
+                    ThemeButton.icon(icon: PhosphorIconsLight.plusCircle, onPressed: () => GoRouter.of(context).push('/create-baby-mon'), tooltip: 'Create BabyMon', variant: ThemeButtonVariant.text, foregroundColor: AppColors.secondary),
+                    const SizedBox(width: DesignTokens.spaceXs),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 48),
-            const Center(child: Column(children: [
-              Icon(Icons.notifications_none, size: 64, color: Colors.grey),
-              SizedBox(height: 16),
-              Text('Coming Soon', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey)),
-              SizedBox(height: 8),
-              Padding(padding: EdgeInsets.symmetric(horizontal: 32), child: Text('Notification features are under development.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey))),
-            ])),
-          ],
+          ),
         ),
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  CircleAvatar(radius: 30, backgroundColor: Colors.white, child: Text('B', style: TextStyle(fontSize: 24, color: Color(0xFF9C7CF4)))),
-                  SizedBox(height: 12),
-                  Text('BabyMon', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text('Your Parenting Companion', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                ],
-              ),
-            ),
-            _drawerItem(Icons.home_filled, 'Dashboard', 0),
-            _drawerItem(Icons.star, 'Milestones', 1),
-            _drawerItem(Icons.restaurant, 'Feeding', 2),
-            _drawerItem(Icons.favorite, 'Health', 3),
-            _drawerItem(Icons.explore, 'Discover', 4),
-            _drawerItem(Icons.photo_library, 'Album', 5),
-            _drawerItem(Icons.auto_stories, 'Journal', 6),
-            const Divider(),
-            ListTile(leading: const Icon(Icons.settings), title: const Text('Settings'), onTap: () { Navigator.pop(context); GoRouter.of(context).go('/settings'); }),
-            ListTile(leading: const Icon(Icons.group_add, color: Colors.indigo), title: const Text('Manage Partners'), onTap: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const PartnersScreen())); }),
-            const Divider(),
-            ListTile(leading: const Icon(Icons.logout, color: Colors.red), title: const Text('Logout', style: TextStyle(color: Colors.red)), onTap: () async {
-              final confirmed = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(title: const Text('Logout'), content: const Text('Are you sure?'), actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')), TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Logout', style: TextStyle(color: Colors.red)))]));
-              if (confirmed == true) { await ref.read(authProvider.notifier).logout(); if (mounted) context.go('/login'); }
-            }),
-          ],
-        ),
-      ),
+
+      // ── Drawer ──
+      drawer: _buildDrawer(),
+
+      // ── Body — IndexedStack preserves state across tab switches ──
       body: IndexedStack(
-        index: _currentIndex,
-        children: const [
-          DashboardScreen(),
-          MilestonesScreen(),
-          FeedingScreen(),
-          HealthScreen(),
-          _DiscoverPlaceholder(),
-          AlbumScreen(),
-          JournalScreen(),
-        ],
+        index: _currentIndex < _tabCount - 1 ? _currentIndex : 0,
+        children: _buildScreenList(),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Milestones'),
-          BottomNavigationBarItem(icon: Icon(Icons.restaurant), label: 'Feeding'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Health'),
-          BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Discover'),
-          BottomNavigationBarItem(icon: Icon(Icons.photo_library), label: 'Album'),
-          BottomNavigationBarItem(icon: Icon(Icons.auto_stories), label: 'Journal'),
-        ],
+
+      // ── Bottom Nav — Floating Glass Pill ──
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.only(
+          left: DesignTokens.spaceLg,
+          right: DesignTokens.spaceLg,
+          bottom: DesignTokens.spaceLg + MediaQuery.of(context).padding.bottom,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(
+              sigmaX: DesignTokens.glassBlurHeavy,
+              sigmaY: DesignTokens.glassBlurHeavy,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: navBg.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
+                border: Border.all(
+                  color: navBorder,
+                  width: DesignTokens.glassBorderWidth,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isDark ? AppColors.glassDarkShadow : AppColors.glassShadow).withValues(alpha: 0.15),
+                    blurRadius: DesignTokens.glassShadowBlur,
+                    offset: const Offset(0, DesignTokens.glassShadowOffset),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: DesignTokens.spaceSm,
+                vertical: DesignTokens.spaceXs,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(_tabCount - 1, (index) {
+                  final isSelected = _currentIndex == index;
+                  final tab = _tabs[index];
+                  return _FloatingNavItem(
+                    icon: tab.outlinedIcon,
+                    activeIcon: tab.filledIcon,
+                    label: tab.label,
+                    isSelected: isSelected,
+                    onTap: () {
+                      setState(() => _currentIndex = index);
+                      _triggerTabRefresh(index);
+                    },
+                  );
+                })..add(
+                    _FloatingNavItem(
+                      icon: PhosphorIconsLight.dotsSixVertical,
+                      activeIcon: PhosphorIconsLight.dotsSixVertical,
+                      label: 'More',
+                      isSelected: _currentIndex == _tabCount - 1,
+                      onTap: _showMoreMenu,
+                    ),
+                  ),
+              ),
+            ),
+          ),
+        ),
       ),
-      floatingActionButton: _currentIndex == 0 || _currentIndex == 6
-          ? FloatingActionButton(onPressed: () => _onFabPressed(), child: Icon(_currentIndex == 0 ? Icons.flash_on : Icons.edit))
+
+      // ── FAB ──
+      floatingActionButton: _currentIndex == 0
+          ? InfoFab(
+                tooltip: 'Quick actions',
+                icon: PhosphorIconsLight.lightning,
+                children: [
+                  InfoFabAction(
+                    tooltip: 'Log Feeding',
+                    infoDescription: 'Feeding',
+                    backgroundColor: AppColors.warning,
+                    onTap: () {
+                      // One-shot signal: the Feeding tab (kept alive in the
+                      // IndexedStack) listens for `AddAction.feeding` and
+                      // opens `_showAddFeedLogDialog` on the next frame.
+                      ref.read(pendingAddActionProvider.notifier).state =
+                          AddAction.feeding;
+                      setState(() => _currentIndex = 2);
+                      _triggerTabRefresh(2);
+                    },
+                    child: const Icon(PhosphorIconsLight.bowlFood, color: Colors.white),
+                  ),
+                  InfoFabAction(
+                    tooltip: 'Add Milestone',
+                    infoDescription: 'Milestone',
+                    backgroundColor: AppColors.accent,
+                    onTap: () {
+                      ref.read(pendingAddActionProvider.notifier).state =
+                          AddAction.milestone;
+                      setState(() => _currentIndex = 1);
+                      _triggerTabRefresh(1);
+                    },
+                    child: const Icon(PhosphorIconsLight.star, color: Colors.white),
+                  ),
+                  InfoFabAction(
+                    tooltip: 'Health Record',
+                    infoDescription: 'Health',
+                    backgroundColor: AppColors.success,
+                    onTap: () {
+                      // Defaults to measurement (the most common parenting
+                      // task). Users wanting an event can dismiss and use
+                      // the Health tab's own expandable FAB.
+                      ref.read(pendingAddActionProvider.notifier).state =
+                          AddAction.healthMeasurement;
+                      setState(() => _currentIndex = 3);
+                      _triggerTabRefresh(3);
+                    },
+                    child: const Icon(PhosphorIconsLight.heart, color: Colors.white),
+                  ),
+                  InfoFabAction(
+                    tooltip: 'Create BabyMon',
+                    infoDescription: 'New Baby',
+                    backgroundColor: AppColors.secondary,
+                    onTap: () {
+                      GoRouter.of(context).push('/create-baby-mon');
+                    },
+                    child: const Icon(PhosphorIconsLight.baby, color: Colors.white),
+                  ),
+                ],
+              )
           : null,
     );
   }
-
-  Widget _drawerItem(IconData icon, String label, int index) => ListTile(
-    leading: Icon(icon), title: Text(label), selected: _currentIndex == index,
-    onTap: () { setState(() => _currentIndex = index); Navigator.pop(context); },
-  );
-
-  void _onFabPressed() {
-    if (_currentIndex == 0) _showQuickActions();
-    else if (_currentIndex == 6) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('New journal entry coming soon')));
-  }
-
-  void _showQuickActions() => showModalBottomSheet(context: context, builder: (ctx) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
-    const Padding(padding: EdgeInsets.all(16), child: Text('Quick Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-    ListTile(leading: const Icon(Icons.restaurant, color: Colors.orange), title: const Text('Log Feeding'), onTap: () { Navigator.pop(ctx); setState(() => _currentIndex = 2); }),
-    ListTile(leading: const Icon(Icons.star, color: Colors.amber), title: const Text('Add Milestone'), onTap: () { Navigator.pop(ctx); setState(() => _currentIndex = 1); }),
-    ListTile(leading: const Icon(Icons.medical_services, color: Colors.green), title: const Text('Add Health Record'), onTap: () { Navigator.pop(ctx); setState(() => _currentIndex = 3); }),
-    const SizedBox(height: 16),
-  ])));
 }
 
-/// Discover screen placeholder — Sleep screen still exists at apps/mobile/.../sleep/sleep_screen.dart
-/// but is no longer shown in the bottom nav. Sleep tracking remains accessible via the Health screen.
-class _DiscoverPlaceholder extends StatelessWidget {
-  const _DiscoverPlaceholder();
+// ═══════════════════════════════════════
+//  Floating Nav Item
+// ═══════════════════════════════════════
+
+class _FloatingNavItem extends StatelessWidget {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FloatingNavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Discover')),
-    body: const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(Icons.explore, size: 80, color: Colors.grey),
-      SizedBox(height: 24),
-      Text('Coming Soon', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey)),
-      SizedBox(height: 12),
-      Padding(padding: EdgeInsets.symmetric(horizontal: 48), child: Text('Discover new features, tips, and community content.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey))),
-    ])),
-  );
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const activeColor = AppColors.primary;
+    final inactiveColor = isDark ? AppColors.textOnDark : AppColors.textCaption;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
+        child: AnimatedContainer(
+          duration: DesignTokens.durationFast,
+          curve: DesignTokens.curvePremium,
+          padding: EdgeInsets.symmetric(
+            horizontal: isSelected ? DesignTokens.spaceMd : DesignTokens.spaceSm,
+            vertical: DesignTokens.spaceXs,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? activeColor.withValues(alpha: 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedSwitcher(
+                duration: DesignTokens.durationFast,
+                transitionBuilder: (child, anim) => ScaleTransition(
+                  scale: Tween<double>(begin: 0.8, end: 1.0).animate(
+                    CurvedAnimation(parent: anim, curve: DesignTokens.curvePremium),
+                  ),
+                  child: FadeTransition(opacity: anim, child: child),
+                ),
+                child: Icon(
+                  isSelected ? activeIcon : icon,
+                  key: ValueKey(isSelected),
+                  size: 22,
+                  color: isSelected ? activeColor : inactiveColor,
+                ),
+              ),
+              if (isSelected) ...[
+                const SizedBox(width: DesignTokens.spaceXs),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: activeColor,
+                    fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
+
+// ═══════════════════════════════════════
+//  Supporting classes
+// ═══════════════════════════════════════
+
+class _NavTab {
+  final IconData outlinedIcon;
+  final IconData filledIcon;
+  final String label;
+
+  const _NavTab(this.outlinedIcon, this.filledIcon, this.label);
+}
+
+class _DrawerSection {
+  final String title;
+  final List<_DrawerItem> items;
+
+  const _DrawerSection(this.title, this.items);
+}
+
+class _DrawerItem {
+  final IconData icon;
+  final String label;
+  final int? index;
+  final VoidCallback? onTap;
+
+  const _DrawerItem(this.icon, this.label, this.index, [this.onTap]);
+}
+
+class _MoreItem {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _MoreItem(this.icon, this.label, this.color, this.onTap);
+}
+
+
+
