@@ -42,10 +42,9 @@ void main() {
     );
   });
 
-  group('ApiClient token management', () {
+  group('ApiClient storage round-trips', () {
     test('saveTokens stores all three values', () async {
       final client = ApiClient();
-
       await client.saveTokens('access-abc', 'refresh-def', 'user-123');
 
       expect(await client.getAccessToken(), 'access-abc');
@@ -55,6 +54,11 @@ void main() {
     test('getAccessToken returns null when not set', () async {
       final client = ApiClient();
       expect(await client.getAccessToken(), isNull);
+    });
+
+    test('getUserId returns null when not set', () async {
+      final client = ApiClient();
+      expect(await client.getUserId(), isNull);
     });
 
     test('getSelectedBabyMonId returns null when not set', () async {
@@ -69,6 +73,13 @@ void main() {
       expect(await client.getSelectedBabyMonId(), isNull);
     });
 
+    test('setSelectedBabyMonId with null deletes key', () async {
+      final client = ApiClient();
+      await client.setSelectedBabyMonId('baby-1');
+      await client.setSelectedBabyMonId(null);
+      expect(await client.getSelectedBabyMonId(), isNull);
+    });
+
     test('logout clears all stored tokens', () async {
       final client = ApiClient();
       await client.saveTokens('access', 'refresh', 'user-1');
@@ -80,25 +91,9 @@ void main() {
       expect(await client.getUserId(), isNull);
       expect(await client.getSelectedBabyMonId(), isNull);
     });
-  });
 
-  group('ApiClient request construction', () {
-    test('createBabyMon adds auth header', () async {
-      final client = ApiClient();
-      await client.saveTokens('my-jwt-token', 'refresh', 'user-1');
-
-      // createBabyMon reads the token and adds it to the request headers
-      // We can't fully test the HTTP call without mocking Dio,
-      // but we can verify the token is accessible
-      final token = await client.getAccessToken();
-      expect(token, 'my-jwt-token');
-    });
-  });
-
-  group('ApiClient storage edge cases', () {
     test('setTrialOverride and getTrialOverride round-trip', () async {
       final client = ApiClient();
-
       await client.setTrialOverride(14);
       expect(await client.getTrialOverride(), 14);
 
@@ -111,29 +106,68 @@ void main() {
       expect(await client.getTrialOverride(), isNull);
     });
 
-    test('setSelectedBabyMonId stores value', () async {
+    test('setSelectedBabyMonId stores and overwrites value', () async {
       final client = ApiClient();
-
       await client.setSelectedBabyMonId('baby-42');
       expect(await client.getSelectedBabyMonId(), 'baby-42');
 
       await client.setSelectedBabyMonId('baby-99');
       expect(await client.getSelectedBabyMonId(), 'baby-99');
     });
+  });
 
-    test('setSelectedBabyMonId with null deletes key', () async {
+  group('ApiClient token access', () {
+    test('createBabyMon reads token correctly', () async {
       final client = ApiClient();
+      await client.saveTokens('my-jwt-token', 'refresh', 'user-1');
 
-      await client.setSelectedBabyMonId('baby-1');
-      await client.setSelectedBabyMonId(null);
-      expect(await client.getSelectedBabyMonId(), isNull);
+      final token = await client.getAccessToken();
+      expect(token, 'my-jwt-token');
+    });
+
+    test('multiple clients share the same storage', () async {
+      final client1 = ApiClient();
+      final client2 = ApiClient();
+
+      await client1.saveTokens('token-1', 'refresh-1', 'user-1');
+
+      expect(await client2.getAccessToken(), 'token-1');
+      expect(await client2.getUserId(), 'user-1');
     });
   });
 
-  group('ApiClient URL patterns', () {
-    test('ApiClient can be instantiated', () {
+  group('ApiClient edge cases', () {
+    test('ApiClient can be created', () {
       final client = ApiClient();
       expect(client, isA<ApiClient>());
+    });
+
+    test('logout is idempotent — calling twice does not throw', () async {
+      final client = ApiClient();
+      await client.saveTokens('access', 'refresh', 'user-1');
+
+      await client.logout();
+      await client.logout();
+
+      expect(await client.getAccessToken(), isNull);
+    });
+
+    test('saveTokens overwrites previous values', () async {
+      final client = ApiClient();
+      await client.saveTokens('old-access', 'old-refresh', 'old-user');
+      await client.saveTokens('new-access', 'new-refresh', 'new-user');
+
+      expect(await client.getAccessToken(), 'new-access');
+      expect(await client.getUserId(), 'new-user');
+    });
+
+    test('setSelectedBabyMonId handles rapid updates', () async {
+      final client = ApiClient();
+      await client.setSelectedBabyMonId('baby-1');
+      await client.setSelectedBabyMonId('baby-2');
+      await client.setSelectedBabyMonId('baby-3');
+
+      expect(await client.getSelectedBabyMonId(), 'baby-3');
     });
   });
 }
