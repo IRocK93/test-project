@@ -1,3 +1,6 @@
+@Tags(['golden'])
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:baby_mon/core/core.dart';
@@ -5,8 +8,6 @@ import 'package:baby_mon/core/theme/theme_mode_provider.dart' hide AppThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'golden_helpers.dart';
 import 'golden_error_stubs.dart';
-
-
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
