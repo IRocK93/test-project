@@ -45,6 +45,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
 
+  // ---------------------------------------------------------------------------
+  // Component goldens — dark glass
+  // ---------------------------------------------------------------------------
   group('Component goldens — dark glass', () {
     testWidgets('PremiumBackground', (tester) async {
       await tester.pumpWidget(_goldenApp(
@@ -122,6 +125,9 @@ void main() {
     });
   });
 
+  // ---------------------------------------------------------------------------
+  // Component goldens — dark clay
+  // ---------------------------------------------------------------------------
   group('Component goldens — dark clay', () {
     testWidgets('PremiumBackground', (tester) async {
       await tester.pumpWidget(_goldenApp(
@@ -206,6 +212,176 @@ void main() {
     });
   });
 
+  // ---------------------------------------------------------------------------
+  // Component goldens — light glass
+  // ---------------------------------------------------------------------------
+  group('Component goldens — light glass', () {
+    testWidgets('PremiumBackground', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const PremiumBackground(child: Center(child: Text('Content'))),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      await _testerMatchesGoldenFile(tester, 'light_glass_background.png');
+    });
+
+    testWidgets('ScreenHeader', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const ScreenHeader(title: 'Dashboard'),
+        brightness: Brightness.light,
+      ));
+      await tester.pumpAndSettle();
+      await _testerMatchesGoldenFile(tester, 'light_glass_header.png');
+    });
+
+    testWidgets('PremiumCard', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const PremiumCard(isGlass: true, child: Text('Card Content')),
+        brightness: Brightness.light,
+      ));
+      await tester.pumpAndSettle();
+      await _testerMatchesGoldenFile(tester, 'light_glass_card.png');
+    });
+
+    testWidgets('PremiumStatCard', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const PremiumStatCard(
+          label: 'Milestones',
+          value: '42',
+          icon: Icons.star,
+          iconColor: Colors.amber,
+        ),
+        brightness: Brightness.light,
+      ));
+      await tester.pumpAndSettle();
+      await _testerMatchesGoldenFile(tester, 'light_glass_stat_card.png');
+    });
+
+    testWidgets('PremiumEmptyState', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        PremiumEmptyState(
+          icon: Icons.child_care,
+          title: 'No data yet',
+          subtitle: 'Start tracking to see your progress.',
+          actionLabel: 'Get Started',
+          onAction: () {},
+        ),
+        brightness: Brightness.light,
+      ));
+      await tester.pumpAndSettle();
+      await _testerMatchesGoldenFile(tester, 'light_glass_empty_state.png');
+    });
+
+    testWidgets('PremiumDoubleBezel', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const PremiumDoubleBezel(child: Text('Bezel Content')),
+        brightness: Brightness.light,
+      ));
+      await tester.pumpAndSettle();
+      await _testerMatchesGoldenFile(tester, 'light_glass_double_bezel.png');
+    });
+
+    testWidgets('PremiumProgressBar', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const PremiumProgressBar(value: 0.65, isGlass: true),
+        brightness: Brightness.light,
+      ));
+      await tester.pumpAndSettle();
+      await _testerMatchesGoldenFile(tester, 'light_glass_progress_bar.png');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Component goldens — light clay
+  // ---------------------------------------------------------------------------
+  group('Component goldens — light clay', () {
+    testWidgets('PremiumBackground', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const PremiumBackground(child: Center(child: Text('Content'))),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      await _testerMatchesGoldenFile(tester, 'light_clay_background.png');
+    });
+
+    testWidgets('ScreenHeader', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const ScreenHeader(title: 'Dashboard'),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pumpAndSettle();
+      await _testerMatchesGoldenFile(tester, 'light_clay_header.png');
+    });
+
+    testWidgets('PremiumCard', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const PremiumCard(isGlass: true, child: Text('Card Content')),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pumpAndSettle();
+      await _testerMatchesGoldenFile(tester, 'light_clay_card.png');
+    });
+
+    testWidgets('PremiumStatCard', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const PremiumStatCard(
+          label: 'Feedings',
+          value: '128',
+          icon: Icons.star,
+          iconColor: Colors.orange,
+        ),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pumpAndSettle();
+      await _testerMatchesGoldenFile(tester, 'light_clay_stat_card.png');
+    });
+
+    testWidgets('PremiumEmptyState', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        PremiumEmptyState(
+          icon: Icons.child_care,
+          title: 'No records',
+          subtitle: 'Add your first entry.',
+          actionLabel: 'Add',
+          onAction: () {},
+        ),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pumpAndSettle();
+      await _testerMatchesGoldenFile(tester, 'light_clay_empty_state.png');
+    });
+
+    testWidgets('PremiumDoubleBezel', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const PremiumDoubleBezel(child: Text('Bezel Content')),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pumpAndSettle();
+      await _testerMatchesGoldenFile(tester, 'light_clay_double_bezel.png');
+    });
+
+    testWidgets('PremiumProgressBar', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const PremiumProgressBar(value: 0.45, isGlass: true),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pumpAndSettle();
+      await _testerMatchesGoldenFile(tester, 'light_clay_progress_bar.png');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Screen goldens — dark glass
+  // ---------------------------------------------------------------------------
   group('Screen goldens — dark glass', () {
     testWidgets('JournalScreen', (tester) async {
       await tester.pumpWidget(_goldenApp(
@@ -268,6 +444,9 @@ void main() {
     });
   });
 
+  // ---------------------------------------------------------------------------
+  // Screen goldens — dark clay
+  // ---------------------------------------------------------------------------
   group('Screen goldens — dark clay', () {
     testWidgets('JournalScreen', (tester) async {
       await tester.pumpWidget(_goldenApp(
@@ -333,6 +512,142 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
       await _testerMatchesGoldenFile(tester, 'dark_clay_milestones.png');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Screen goldens — light glass
+  // ---------------------------------------------------------------------------
+  group('Screen goldens — light glass', () {
+    testWidgets('JournalScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const JournalScreen(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_glass_journal.png');
+    });
+
+    testWidgets('HealthScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const HealthScreen(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_glass_health.png');
+    });
+
+    testWidgets('FeedingScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const FeedingScreen(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_glass_feeding.png');
+    });
+
+    testWidgets('SleepScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const SleepScreen(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_glass_sleep.png');
+    });
+
+    testWidgets('GrowthChartScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const GrowthChartScreen(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_glass_growth.png');
+    });
+
+    testWidgets('MilestonesScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const MilestonesScreen(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_glass_milestones.png');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Screen goldens — light clay
+  // ---------------------------------------------------------------------------
+  group('Screen goldens — light clay', () {
+    testWidgets('JournalScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const JournalScreen(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_clay_journal.png');
+    });
+
+    testWidgets('HealthScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const HealthScreen(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_clay_health.png');
+    });
+
+    testWidgets('FeedingScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const FeedingScreen(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_clay_feeding.png');
+    });
+
+    testWidgets('SleepScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const SleepScreen(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_clay_sleep.png');
+    });
+
+    testWidgets('GrowthChartScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const GrowthChartScreen(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_clay_growth.png');
+    });
+
+    testWidgets('MilestonesScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const MilestonesScreen(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_clay_milestones.png');
     });
   });
 }

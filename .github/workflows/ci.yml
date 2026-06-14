@@ -88,6 +88,49 @@ jobs:
         working-directory: ./apps/mobile
         run: flutter analyze --no-pub
 
+      - name: Run Flutter tests (includes golden comparison)
+        working-directory: ./apps/mobile
+        run: flutter test
+
+      - name: Upload golden failure diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: apps/mobile/test/golden/failures/
+          retention-days: 7
+
+  update-goldens:
+    runs-on: ubuntu-latest
+    needs: flutter-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+
+      - name: Get Flutter dependencies
+        working-directory: ./apps/mobile
+        run: flutter pub get
+
+      - name: Regenerate golden baselines
+        working-directory: ./apps/mobile
+        run: flutter test test/golden/ --update-goldens
+
+      - name: Commit updated goldens
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/mobile/test/golden/goldens/
+          git diff --cached --quiet || git commit -m "chore: update golden baselines [skip ci]"
+          git push
+
   docker-build:
     runs-on: ubuntu-latest
     needs: lint-and-test
