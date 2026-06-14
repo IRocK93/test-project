@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:baby_mon/core/core.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/theme/theme_mode_provider.dart';
 import 'package:baby_mon/core/testing/stub_api_client.dart';
+import 'auth_form_goldens.dart';
+import 'package:baby_mon/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:baby_mon/features/journal/presentation/screens/journal_screen.dart';
 import 'package:baby_mon/features/health/presentation/screens/health_screen.dart';
 import 'package:baby_mon/features/health/presentation/screens/sleep_screen.dart';
@@ -12,6 +15,37 @@ import 'package:baby_mon/features/health/presentation/screens/growth_chart_scree
 import 'package:baby_mon/features/feeding/presentation/screens/feeding_screen.dart';
 import 'package:baby_mon/features/milestones/presentation/screens/milestones_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// Set up mock platform channels needed by screens that use platform plugins.
+void _setupPlatformMocks() {
+  // local_auth — used by LoginScreen in initState (_checkBiometrics)
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(
+    const MethodChannel('plugins.flutter.io/local_auth'),
+    (MethodCall methodCall) async {
+      switch (methodCall.method) {
+        case 'canCheckBiometrics':
+          return false;
+        case 'isDeviceSupported':
+          return false;
+        case 'authenticate':
+          return false;
+        case 'getAvailableBiometrics':
+          return <dynamic>[];
+        default:
+          return null;
+      }
+    },
+  );
+
+  // share_plus — imported by DashboardScreen (only used in callbacks, but mock
+  // to prevent MissingPluginException if any path touches it during build).
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(
+    const MethodChannel('plugins.flutter.io/share_plus'),
+    (MethodCall methodCall) async => null,
+  );
+}
 
 /// Helper to wrap a widget with all required providers for golden tests.
 Widget _goldenApp(Widget child, {
@@ -44,6 +78,7 @@ Widget _goldenApp(Widget child, {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   SharedPreferences.setMockInitialValues({});
+  _setupPlatformMocks();
 
   // ---------------------------------------------------------------------------
   // Component goldens — dark glass
@@ -383,6 +418,36 @@ void main() {
   // Screen goldens — dark glass
   // ---------------------------------------------------------------------------
   group('Screen goldens — dark glass', () {
+    testWidgets('LoginForm', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const GoldenLoginForm(),
+        brightness: Brightness.dark,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'dark_glass_login.png');
+    });
+
+    testWidgets('RegisterForm', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const GoldenRegisterForm(),
+        brightness: Brightness.dark,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'dark_glass_register.png');
+    });
+
+    testWidgets('DashboardScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const DashboardScreen(),
+        brightness: Brightness.dark,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'dark_glass_dashboard.png');
+    });
+
     testWidgets('JournalScreen', (tester) async {
       await tester.pumpWidget(_goldenApp(
         const JournalScreen(),
@@ -448,6 +513,39 @@ void main() {
   // Screen goldens — dark clay
   // ---------------------------------------------------------------------------
   group('Screen goldens — dark clay', () {
+    testWidgets('LoginForm', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const GoldenLoginForm(),
+        brightness: Brightness.dark,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'dark_clay_login.png');
+    });
+
+    testWidgets('RegisterForm', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const GoldenRegisterForm(),
+        brightness: Brightness.dark,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'dark_clay_register.png');
+    });
+
+    testWidgets('DashboardScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const DashboardScreen(),
+        brightness: Brightness.dark,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'dark_clay_dashboard.png');
+    });
+
     testWidgets('JournalScreen', (tester) async {
       await tester.pumpWidget(_goldenApp(
         const JournalScreen(),
@@ -519,6 +617,36 @@ void main() {
   // Screen goldens — light glass
   // ---------------------------------------------------------------------------
   group('Screen goldens — light glass', () {
+    testWidgets('LoginForm', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const GoldenLoginForm(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_glass_login.png');
+    });
+
+    testWidgets('RegisterForm', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const GoldenRegisterForm(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_glass_register.png');
+    });
+
+    testWidgets('DashboardScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const DashboardScreen(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_glass_dashboard.png');
+    });
+
     testWidgets('JournalScreen', (tester) async {
       await tester.pumpWidget(_goldenApp(
         const JournalScreen(),
@@ -584,6 +712,39 @@ void main() {
   // Screen goldens — light clay
   // ---------------------------------------------------------------------------
   group('Screen goldens — light clay', () {
+    testWidgets('LoginForm', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const GoldenLoginForm(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_clay_login.png');
+    });
+
+    testWidgets('RegisterForm', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const GoldenRegisterForm(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_clay_register.png');
+    });
+
+    testWidgets('DashboardScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const DashboardScreen(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_clay_dashboard.png');
+    });
+
     testWidgets('JournalScreen', (tester) async {
       await tester.pumpWidget(_goldenApp(
         const JournalScreen(),
