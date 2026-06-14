@@ -9,6 +9,7 @@ import 'package:baby_mon/features/dashboard/presentation/screens/dashboard_scree
 import 'package:baby_mon/features/milestones/presentation/screens/milestones_screen.dart';
 import 'package:baby_mon/features/health/presentation/screens/health_screen.dart';
 import 'package:baby_mon/features/feeding/presentation/screens/feeding_screen.dart';
+import 'package:baby_mon/features/journal/presentation/screens/journal_screen.dart';
 import 'package:baby_mon/features/settings/presentation/screens/settings_screen.dart';
 import 'package:baby_mon/features/settings/presentation/screens/subscription_screen.dart';
 
@@ -321,6 +322,58 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(HealthScreen), findsOneWidget);
+    });
+  });
+
+  group('JournalScreen provider integration', () {
+    testWidgets('renders empty state when no journal entries',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getJournal', <dynamic>[]);
+      apiClient.setData('getProposals', <dynamic>[]);
+
+      await tester.pumpWidget(
+        _buildTestApp(const JournalScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(JournalScreen), findsOneWidget);
+    });
+
+    testWidgets('renders journal entries with data',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getJournal', [
+        {
+          'id': 'entry-1',
+          'entryType': 'MILESTONE',
+          'title': 'First Smile',
+          'happenedAt': '2024-03-15T10:30:00.000Z',
+        },
+      ]);
+      apiClient.setData('getProposals', <dynamic>[]);
+
+      await tester.pumpWidget(
+        _buildTestApp(const JournalScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(JournalScreen), findsOneWidget);
+    });
+
+    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getJournal', null);
+
+      await tester.pumpWidget(
+        _buildTestApp(const JournalScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(JournalScreen), findsOneWidget);
     });
   });
 
