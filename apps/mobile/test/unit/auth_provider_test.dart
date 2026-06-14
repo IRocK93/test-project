@@ -3,6 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:baby_mon/features/auth/presentation/providers/auth_provider.dart';
 import 'package:baby_mon/features/auth/domain/repositories/auth_repository.dart';
 import 'package:baby_mon/features/auth/domain/entities/user.dart';
+import 'package:baby_mon/core/services/google_sign_in_service.dart';
+import 'package:baby_mon/core/services/apple_sign_in_service.dart';
+import 'package:baby_mon/core/services/facebook_sign_in_service.dart';
 
 /// Minimal in-memory mock of [AuthRepository] for testing [AuthNotifier].
 class FakeAuthRepository implements AuthRepository {
@@ -296,6 +299,139 @@ void main() {
       });
     });
 
+    // ═══════════════════════════════════════════════════════════════
+    //  Social Login — Happy path tests (injectable services)
+    //
+    //  These tests use mock services via the factory pattern to verify
+    //  the full success flow: service returns credentials → user created
+    //  → state transitions correctly.
+    // ═══════════════════════════════════════════════════════════════
+
+    group('googleLogin happy path', () {
+      test('creates user and token on successful Google login', () async {
+        final mockNotifier = AuthNotifier(
+          FakeAuthRepository(),
+          googleServiceFactory: () => _MockGoogleSignInService(),
+        );
+        addTearDown(mockNotifier.dispose);
+
+        await mockNotifier.googleLogin();
+
+        expect(mockNotifier.state.isLoggedIn, isTrue);
+        expect(mockNotifier.state.user, isNotNull);
+        expect(mockNotifier.state.user!.email, contains('gmail.com'));
+        expect(mockNotifier.state.token, startsWith('google-token-'));
+        expect(mockNotifier.state.isEmailVerified, isTrue);
+        expect(mockNotifier.state.isLoading, isFalse);
+        expect(mockNotifier.state.error, isNull);
+      });
+
+      test('handles cancelled Google login (null response)', () async {
+        final mockNotifier = AuthNotifier(
+          FakeAuthRepository(),
+          googleServiceFactory: () => _MockCancelledGoogleService(),
+        );
+        addTearDown(mockNotifier.dispose);
+
+        await mockNotifier.googleLogin();
+
+        expect(mockNotifier.state.isLoggedIn, isFalse);
+        expect(mockNotifier.state.user, isNull);
+        expect(mockNotifier.state.token, isNull);
+        expect(mockNotifier.state.isLoading, isFalse);
+        expect(mockNotifier.state.error, isNull);
+      });
+    });
+
+    group('appleLogin happy path', () {
+      test('creates user and token on successful Apple login', () async {
+        final mockNotifier = AuthNotifier(
+          FakeAuthRepository(),
+          appleServiceFactory: () => _MockAppleSignInService(),
+        );
+        addTearDown(mockNotifier.dispose);
+
+        await mockNotifier.appleLogin();
+
+        expect(mockNotifier.state.isLoggedIn, isTrue);
+        expect(mockNotifier.state.user, isNotNull);
+        expect(mockNotifier.state.user!.email, 'test@privaterelay.appleid.com');
+        expect(mockNotifier.state.user!.name, 'Apple Test User');
+        expect(mockNotifier.state.token, startsWith('apple-token-'));
+        expect(mockNotifier.state.isEmailVerified, isTrue);
+        expect(mockNotifier.state.isLoading, isFalse);
+        expect(mockNotifier.state.error, isNull);
+      });
+
+      test('handles unavailable Apple Sign-In', () async {
+        final mockNotifier = AuthNotifier(
+          FakeAuthRepository(),
+          appleServiceFactory: () => _MockAppleNotAvailableService(),
+        );
+        addTearDown(mockNotifier.dispose);
+
+        await mockNotifier.appleLogin();
+
+        expect(mockNotifier.state.isLoggedIn, isFalse);
+        expect(mockNotifier.state.user, isNull);
+        expect(mockNotifier.state.error, contains('not available'));
+        expect(mockNotifier.state.isLoading, isFalse);
+      });
+
+      test('handles cancelled Apple login (null response)', () async {
+        final mockNotifier = AuthNotifier(
+          FakeAuthRepository(),
+          appleServiceFactory: () => _MockAppleCancelledService(),
+        );
+        addTearDown(mockNotifier.dispose);
+
+        await mockNotifier.appleLogin();
+
+        expect(mockNotifier.state.isLoggedIn, isFalse);
+        expect(mockNotifier.state.user, isNull);
+        expect(mockNotifier.state.token, isNull);
+        expect(mockNotifier.state.isLoading, isFalse);
+        expect(mockNotifier.state.error, isNull);
+      });
+    });
+
+    group('facebookLogin happy path', () {
+      test('creates user and token on successful Facebook login', () async {
+        final mockNotifier = AuthNotifier(
+          FakeAuthRepository(),
+          facebookServiceFactory: () => _MockFacebookSignInService(),
+        );
+        addTearDown(mockNotifier.dispose);
+
+        await mockNotifier.facebookLogin();
+
+        expect(mockNotifier.state.isLoggedIn, isTrue);
+        expect(mockNotifier.state.user, isNotNull);
+        expect(mockNotifier.state.user!.email, 'test@facebook.com');
+        expect(mockNotifier.state.user!.name, 'Facebook Test User');
+        expect(mockNotifier.state.token, startsWith('facebook-token-'));
+        expect(mockNotifier.state.isEmailVerified, isTrue);
+        expect(mockNotifier.state.isLoading, isFalse);
+        expect(mockNotifier.state.error, isNull);
+      });
+
+      test('handles cancelled Facebook login (null response)', () async {
+        final mockNotifier = AuthNotifier(
+          FakeAuthRepository(),
+          facebookServiceFactory: () => _MockCancelledFacebookService(),
+        );
+        addTearDown(mockNotifier.dispose);
+
+        await mockNotifier.facebookLogin();
+
+        expect(mockNotifier.state.isLoggedIn, isFalse);
+        expect(mockNotifier.state.user, isNull);
+        expect(mockNotifier.state.token, isNull);
+        expect(mockNotifier.state.isLoading, isFalse);
+        expect(mockNotifier.state.error, isNull);
+      });
+    });
+
     group('appleLogin', () {
       test('sets isLoading true during login', () async {
         final future = notifier.appleLogin();
@@ -401,4 +537,59 @@ void main() {
       });
     });
   });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  Mock services for happy-path social login tests
+// ═══════════════════════════════════════════════════════════════
+
+class _MockGoogleSignInService extends GoogleSignInService {
+  @override
+  Future<String?> signInWithGoogle() async => 'mock-google-id-token-123';
+}
+
+class _MockCancelledGoogleService extends GoogleSignInService {
+  @override
+  Future<String?> signInWithGoogle() async => null;
+}
+
+class _MockAppleSignInService extends AppleSignInService {
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<Map<String, String?>?> signInWithApple() async => {
+        'userIdentifier': 'apple-user-456',
+        'email': 'test@privaterelay.appleid.com',
+        'fullName': 'Apple Test User',
+        'identityToken': 'mock-apple-identity-token-789',
+      };
+}
+
+class _MockAppleNotAvailableService extends AppleSignInService {
+  @override
+  Future<bool> isAvailable() async => false;
+}
+
+class _MockAppleCancelledService extends AppleSignInService {
+  @override
+  Future<bool> isAvailable() async => true;
+
+  @override
+  Future<Map<String, String?>?> signInWithApple() async => null;
+}
+
+class _MockFacebookSignInService extends FacebookSignInService {
+  @override
+  Future<Map<String, String?>?> signInWithFacebook() async => {
+        'userId': 'fb-user-789',
+        'email': 'test@facebook.com',
+        'name': 'Facebook Test User',
+        'accessToken': 'mock-fb-access-token-abc',
+      };
+}
+
+class _MockCancelledFacebookService extends FacebookSignInService {
+  @override
+  Future<Map<String, String?>?> signInWithFacebook() async => null;
 }

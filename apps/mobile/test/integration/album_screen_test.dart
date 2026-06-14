@@ -8,7 +8,6 @@ import 'package:baby_mon/core/testing/stub_api_client.dart';
 import 'package:baby_mon/core/widgets/premium_background.dart';
 
 import 'screen_test_helper.dart';
-import 'fake_auth_helpers.dart';
 
 /// Build AlbumScreen wrapped in ProviderScope + GoRouter.
 Widget _buildAlbumApp({StubApiClient? apiClient}) {
@@ -43,6 +42,7 @@ void main() {
   group('AlbumScreen', () {
     testWidgets('renders without error', (tester) async {
       await tester.pumpWidget(_buildAlbumApp());
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(Scaffold), findsWidgets);
@@ -50,19 +50,18 @@ void main() {
 
     testWidgets('renders content after loading', (tester) async {
       await tester.pumpWidget(_buildAlbumApp());
-      // Pump for DataScreenMixin async loading to complete
-      await tester.pump(const Duration(seconds: 3));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
 
       // With StubApiClient, getSelectedBabyMonId returns null,
       // so the screen shows the "no baby mon" state.
-      // Verify the screen rendered without crash and shows some content.
       expect(find.byType(Scaffold), findsWidgets);
-      // The screen should show either empty state or no-baby-mon state
       expect(find.byType(PremiumBackground), findsOneWidget);
     });
 
     testWidgets('renders FAB for adding photos', (tester) async {
       await tester.pumpWidget(_buildAlbumApp());
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(FloatingActionButton), findsOneWidget);
@@ -93,6 +92,7 @@ void main() {
           ),
         ),
       );
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(Scaffold), findsWidgets);
@@ -100,14 +100,10 @@ void main() {
 
     testWidgets('handles API error gracefully', (tester) async {
       final apiClient = StubApiClient();
-      // Override getPhotos to throw
-      // Since StubApiClient.getPhotos returns _ok(), it won't throw.
-      // But the DataScreenMixin handles errors via try/catch in fetchData.
-      // We verify the screen still renders with empty state.
       await tester.pumpWidget(_buildAlbumApp(apiClient: apiClient));
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 500));
 
-      // Screen should render without crash
       expect(find.byType(Scaffold), findsWidgets);
     });
   });
