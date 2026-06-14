@@ -18,7 +18,6 @@ import 'package:baby_mon/features/settings/presentation/screens/subscription_scr
 import 'package:baby_mon/features/settings/presentation/screens/settings_screen.dart';
 import 'package:baby_mon/features/discover/presentation/screens/discover_screen.dart';
 import 'package:baby_mon/features/album/presentation/screens/album_screen.dart';
-import 'package:baby_mon/features/onboarding/presentation/screens/create_baby_mon_screen.dart';
 import 'package:baby_mon/features/settings/presentation/screens/partners_screen.dart';
 import 'package:baby_mon/features/auth/presentation/screens/reset_password_screen.dart';
 
