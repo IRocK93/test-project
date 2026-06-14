@@ -12,6 +12,9 @@ import 'package:baby_mon/features/feeding/presentation/screens/feeding_screen.da
 import 'package:baby_mon/features/journal/presentation/screens/journal_screen.dart';
 import 'package:baby_mon/features/settings/presentation/screens/settings_screen.dart';
 import 'package:baby_mon/features/settings/presentation/screens/subscription_screen.dart';
+import 'package:baby_mon/features/settings/presentation/screens/partners_screen.dart';
+import 'package:baby_mon/features/health/presentation/screens/sleep_screen.dart';
+import 'package:baby_mon/features/health/presentation/screens/growth_chart_screen.dart';
 
 /// A version of StubApiClient that returns configurable data wrapped in [Response].
 class _TestApiClient extends StubApiClient {
@@ -101,6 +104,10 @@ class _TestApiClient extends StubApiClient {
               'encouragement': 'You are doing great!',
             },
       );
+
+  @override
+  Future<Response> getPartners(String babyMonId) async =>
+      _ok(_responseData['getPartners'] ?? <dynamic>[]);
 }
 
 Widget _buildTestApp(Widget child, _TestApiClient apiClient) {
@@ -442,6 +449,165 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(SubscriptionScreen), findsOneWidget);
+    });
+  });
+
+  group('SleepScreen provider integration', () {
+    testWidgets('renders empty state when no sleep logs',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getSleepLogs', <dynamic>[]);
+
+      await tester.pumpWidget(
+        _buildTestApp(const SleepScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(SleepScreen), findsOneWidget);
+    });
+
+    testWidgets('renders sleep logs with data',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getSleepLogs', [
+        {
+          'id': 'sleep-1',
+          'type': 'NIGHT',
+          'startTime': '2024-03-15T22:00:00.000Z',
+          'endTime': '2024-03-16T06:30:00.000Z',
+          'quality': 'GREAT',
+        },
+      ]);
+
+      await tester.pumpWidget(
+        _buildTestApp(const SleepScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(SleepScreen), findsOneWidget);
+    });
+
+    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getSleepLogs', null);
+
+      await tester.pumpWidget(
+        _buildTestApp(const SleepScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(SleepScreen), findsOneWidget);
+    });
+  });
+
+  group('GrowthChartScreen provider integration', () {
+    testWidgets('renders empty state when no growth records',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getGrowthRecords', <dynamic>[]);
+
+      await tester.pumpWidget(
+        _buildTestApp(const GrowthChartScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(GrowthChartScreen), findsOneWidget);
+    });
+
+    testWidgets('renders growth records with data',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getGrowthRecords', [
+        {
+          'id': 'growth-1',
+          'type': 'WEIGHT',
+          'value': '7.5',
+          'unit': 'kg',
+          'measuredAt': '2024-03-15T10:00:00.000Z',
+        },
+        {
+          'id': 'growth-2',
+          'type': 'WEIGHT',
+          'value': '8.0',
+          'unit': 'kg',
+          'measuredAt': '2024-04-15T10:00:00.000Z',
+        },
+      ]);
+
+      await tester.pumpWidget(
+        _buildTestApp(const GrowthChartScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(GrowthChartScreen), findsOneWidget);
+    });
+
+    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getGrowthRecords', null);
+
+      await tester.pumpWidget(
+        _buildTestApp(const GrowthChartScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(GrowthChartScreen), findsOneWidget);
+    });
+  });
+
+  group('PartnersScreen provider integration', () {
+    testWidgets('renders empty state when no partners',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getPartners', <dynamic>[]);
+
+      await tester.pumpWidget(
+        _buildTestApp(const PartnersScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(PartnersScreen), findsOneWidget);
+    });
+
+    testWidgets('renders partners with data',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getPartners', [
+        {
+          'id': 'partner-1',
+          'status': 'ACCEPTED',
+          'role': 'PARENT',
+          'user': {'name': 'Co-Parent', 'email': 'partner@test.com'},
+        },
+      ]);
+
+      await tester.pumpWidget(
+        _buildTestApp(const PartnersScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(PartnersScreen), findsOneWidget);
+    });
+
+    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getPartners', null);
+
+      await tester.pumpWidget(
+        _buildTestApp(const PartnersScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(PartnersScreen), findsOneWidget);
     });
   });
 

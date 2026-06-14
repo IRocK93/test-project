@@ -68,58 +68,69 @@ class PremiumEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final content = Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon with container
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.primaryContainer,
+                borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
+              ),
+              child: customIcon ??
+                  Icon(
+                    icon,
+                    size: 36,
+                    color: AppColors.primary.withValues(alpha: 0.6),
+                  ),
+            ),
+            const SizedBox(height: DesignTokens.space2xl),
+
+            // Title
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+
+            // Subtitle
+            if (subtitle != null) ...[
+              const SizedBox(height: DesignTokens.spaceSm),
+              Text(
+                subtitle!,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+
+            // Action button
+            if (actionLabel != null && onAction != null)
+              _buildActionButton(context, actionLabel!, onAction!),
+          ],
+        );
+
+        // When inside a scrollable parent (infinite height), just center
+        // the content without constraining height.
+        if (!constraints.hasBoundedHeight) {
+          return Padding(
+            padding: const EdgeInsets.all(DesignTokens.space3xl),
+            child: Center(child: content),
+          );
+        }
+
+        // When given bounded height (e.g. inside SliverFillRemaining),
+        // fill and center the remaining space.
         return SingleChildScrollView(
           padding: const EdgeInsets.all(DesignTokens.space3xl),
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Center(
-              child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Icon with container
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryContainer,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
-                  ),
-                  child: customIcon ??
-                      Icon(
-                        icon,
-                        size: 36,
-                        color: AppColors.primary.withValues(alpha: 0.6),
-                      ),
-                ),
-                const SizedBox(height: DesignTokens.space2xl),
-
-                // Title
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                  textAlign: TextAlign.center,
-                ),
-
-                // Subtitle
-                if (subtitle != null) ...[
-                  const SizedBox(height: DesignTokens.spaceSm),
-                  Text(
-                    subtitle!,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-
-                // Action button
-                if (actionLabel != null && onAction != null)
-                  _buildActionButton(context, actionLabel!, onAction!),
-              ],
-            ),
-            ),
+            child: Center(child: content),
           ),
         );
       },
