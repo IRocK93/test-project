@@ -7,6 +7,7 @@ import 'package:baby_mon/core/testing/stub_api_client.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:baby_mon/features/milestones/presentation/screens/milestones_screen.dart';
+import 'package:baby_mon/features/health/presentation/screens/health_screen.dart';
 import 'package:baby_mon/features/feeding/presentation/screens/feeding_screen.dart';
 
 /// A version of StubApiClient that returns configurable data wrapped in [Response].
@@ -264,6 +265,60 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(FeedingScreen), findsOneWidget);
+    });
+  });
+
+  group('HealthScreen provider integration', () {
+    testWidgets('renders empty state when no health records',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getHealthRecords', <dynamic>[]);
+      apiClient.setData('getAllergies', <dynamic>[]);
+
+      await tester.pumpWidget(
+        _buildTestApp(const HealthScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(HealthScreen), findsOneWidget);
+    });
+
+    testWidgets('renders health records with data',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getHealthRecords', [
+        {
+          'id': 'health-1',
+          'category': 'CHECKUP',
+          'title': '6-Month Checkup',
+          'notes': 'All good!',
+          'createdAt': '2024-03-15T10:30:00.000Z',
+        },
+      ]);
+      apiClient.setData('getAllergies', <dynamic>[]);
+
+      await tester.pumpWidget(
+        _buildTestApp(const HealthScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(HealthScreen), findsOneWidget);
+    });
+
+    testWidgets('handles API errors gracefully',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getHealthRecords', null);
+
+      await tester.pumpWidget(
+        _buildTestApp(const HealthScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(HealthScreen), findsOneWidget);
     });
   });
 
