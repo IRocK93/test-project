@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -221,6 +222,94 @@ void main() {
       expect(payload['gender'], 'MONIOUS');
       expect(payload['birthDate'], isNotNull);
       expect(payload['traits'], isA<List>());
+
+      // Verify setSelectedBabyMonId was called with the new ID
+      expect(apiClient.capturedBabyMonIds, ['new-record-id']);
+    });
+
+    testWidgets('Begin Your Story with API failure shows error snackbar',
+        (WidgetTester tester) async {
+      final apiClient = TestApiClient();
+      await tester.pumpWidget(_buildOnboardingApp(apiClient));
+      await tester.pump(const Duration(seconds: 4));
+
+      // Navigate through all steps to the review screen
+      await tester.tap(find.text('Begin Your Journey'));
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.enterText(find.byType(TextField), 'Luna');
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Continue'));
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.ensureVisible(find.text('Today'));
+      await tester.tap(find.text('Today'));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Continue'));
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.tap(find.text('Continue'));
+      await tester.pump(const Duration(milliseconds: 600));
+
+      // Now override post to throw a DioException
+      apiClient.postCallback = (path, {data}) {
+        throw DioException(
+          requestOptions: RequestOptions(path: path),
+          response: Response(
+            data: {'message': 'Server validation failed'},
+            statusCode: 422,
+            requestOptions: RequestOptions(path: path),
+          ),
+        );
+      };
+
+      // Tap "Begin Your Story" — should catch the error and show snackbar
+      await tester.tap(find.text('Begin Your Story'));
+      await tester.pump(const Duration(milliseconds: 1200));
+
+      // Verify the POST was attempted
+      expect(apiClient.capturedPosts.length, 1);
+      expect(apiClient.capturedPosts.first.key, '/baby-mons');
+
+      // Verify error snackbar is shown
+      expect(find.text('Server validation failed'), findsOneWidget);
+
+      // Verify setSelectedBabyMonId was NOT called (error path)
+      expect(apiClient.capturedBabyMonIds, isEmpty);
+    });
+
+    testWidgets('Begin Your Story with connection error shows generic message',
+        (WidgetTester tester) async {
+      final apiClient = TestApiClient();
+      await tester.pumpWidget(_buildOnboardingApp(apiClient));
+      await tester.pump(const Duration(seconds: 4));
+
+      // Navigate through all steps to the review screen
+      await tester.tap(find.text('Begin Your Journey'));
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.enterText(find.byType(TextField), 'Luna');
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Continue'));
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.ensureVisible(find.text('Today'));
+      await tester.tap(find.text('Today'));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Continue'));
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.tap(find.text('Continue'));
+      await tester.pump(const Duration(milliseconds: 600));
+
+      // Override post to throw a connection error
+      apiClient.postCallback = (path, {data}) {
+        throw DioException(
+          requestOptions: RequestOptions(path: path),
+          type: DioExceptionType.connectionError,
+        );
+      };
+
+      await tester.tap(find.text('Begin Your Story'));
+      await tester.pump(const Duration(milliseconds: 1200));
+
+      expect(apiClient.capturedPosts.length, 1);
+      // Connection error shows generic message
+      expect(find.text('Cannot connect to server. Please check your connection.'), findsOneWidget);
     });
 
     testWidgets('traits step shows all gender and trait options',

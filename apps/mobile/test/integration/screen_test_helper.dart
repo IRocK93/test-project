@@ -12,6 +12,9 @@ class TestApiClient extends StubApiClient {
   /// Captured POST calls: list of (path, data) pairs.
   final List<MapEntry<String, dynamic>> capturedPosts = [];
 
+  /// Captured setSelectedBabyMonId calls.
+  final List<String?> capturedBabyMonIds = [];
+
   Response<dynamic> _ok(dynamic data) => Response<dynamic>(
         data: data,
         statusCode: 200,
@@ -105,6 +108,9 @@ class TestApiClient extends StubApiClient {
   Future<Response> getPhotos(String babyMonId) async =>
       _ok(_responseData['getPhotos'] ?? <dynamic>[]);
 
+  /// Optional callback to override post() behavior (e.g., to throw errors).
+  Future<Response> Function(String path, {dynamic data})? postCallback;
+
   @override
   Future<Response> post(
     String path, {
@@ -114,8 +120,14 @@ class TestApiClient extends StubApiClient {
     CancelToken? cancelToken,
   }) async {
     capturedPosts.add(MapEntry(path, data));
+    if (postCallback != null) return postCallback!(path, data: data);
     // Return a response with 'id' so screens that read response.data['id'] work.
     return _ok({'id': 'new-record-id'});
+  }
+
+  @override
+  Future<void> setSelectedBabyMonId(String? id) async {
+    capturedBabyMonIds.add(id);
   }
 }
 
