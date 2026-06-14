@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/testing/stub_api_client.dart';
+import 'package:baby_mon/features/auth/domain/entities/user.dart';
+import 'package:baby_mon/features/auth/domain/repositories/auth_repository.dart';
 
 /// Extended test API client with configurable method responses.
 class TestApiClient extends StubApiClient {
@@ -160,4 +162,54 @@ Future<TestApiClient> pumpTestScreen(
   await tester.pumpWidget(buildTestApp(screen, apiClient));
   await tester.pump(const Duration(milliseconds: 500));
   return apiClient;
+}
+
+// ═══════════════════════════════════════
+//  Fake Auth helpers — avoids SharedPreferences dependency chain
+// ═══════════════════════════════════════
+
+/// Minimal [AuthRepository] stub that satisfies the abstract interface.
+class StubAuthRepo implements AuthRepository {
+  @override
+  Future<bool> isLoggedIn() async => false;
+  @override
+  Future<User?> getCurrentUser() async => null;
+  @override
+  Future<void> logout() async {}
+  @override
+  Future<({User user, String token})> login({
+    required String email,
+    required String password,
+  }) async => throw UnimplementedError();
+  @override
+  Future<({User user, String token})> register({
+    required String email,
+    required String password,
+    String? name,
+  }) async => throw UnimplementedError();
+  @override
+  Future<({User user, String token})> biometricLogin() async =>
+      throw UnimplementedError();
+  @override
+  Future<void> forgotPassword(String email) async {}
+  @override
+  Future<void> resetPassword(String token, String newPassword) async {}
+  @override
+  Future<void> sendVerificationEmail(String email) async {}
+  @override
+  Future<bool> checkEmailVerified() async => true;
+}
+
+/// Fake AuthNotifier that bypasses the real constructor's _checkAuthStatus.
+/// Use this to override [authProvider] in tests that need to render
+/// screens without triggering SharedPreferences initialization.
+///
+/// **Contract:** [StubAuthRepo] must always return `false` from [isLoggedIn]
+/// so that the parent constructor's fire-and-forget `_checkAuthStatus` never
+/// tries to read SharedPreferences.
+class FakeAuthNotifier extends AuthNotifier {
+  FakeAuthNotifier() : super(StubAuthRepo());
+
+  @override
+  Future<bool> checkAuth() async => false;
 }
