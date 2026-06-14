@@ -2,8 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/providers.dart';
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/data/api_client.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/services/google_sign_in_service.dart';
 import '../../../../core/services/apple_sign_in_service.dart';
 import '../../../../core/services/facebook_sign_in_service.dart';
@@ -42,7 +41,7 @@ class AuthState {
   final String? error;
   final bool isEmailVerified;
 
-  AuthState({this.user, this.token, this.isLoading = false, this.error, this.isEmailVerified = true});
+  const AuthState({this.user, this.token, this.isLoading = false, this.error, this.isEmailVerified = true});
 
   bool get isLoggedIn => token != null && user != null;
 
@@ -60,8 +59,19 @@ class AuthState {
 // AuthNotifier
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository;
+  final GoogleSignInService Function() _googleServiceFactory;
+  final AppleSignInService Function() _appleServiceFactory;
+  final FacebookSignInService Function() _facebookServiceFactory;
 
-  AuthNotifier(this._repository) : super(AuthState()) {
+  AuthNotifier(
+    this._repository, {
+    GoogleSignInService Function()? googleServiceFactory,
+    AppleSignInService Function()? appleServiceFactory,
+    FacebookSignInService Function()? facebookServiceFactory,
+  })  : _googleServiceFactory = googleServiceFactory ?? GoogleSignInService.new,
+        _appleServiceFactory = appleServiceFactory ?? AppleSignInService.new,
+        _facebookServiceFactory = facebookServiceFactory ?? FacebookSignInService.new,
+        super(const AuthState()) {
     _checkAuthStatus();
   }
 
@@ -70,12 +80,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final loggedIn = await _repository.isLoggedIn();
       if (loggedIn) {
         final user = await _repository.getCurrentUser();
-        final token = state.token;
+        final prefs = await SharedPreferences.getInstance();
+        final token = prefs.getString('accessToken');
         state = AuthState(user: user, token: token);
       }
     } catch (e) {
-      state = AuthState(error: e.toString());
+      state = AuthState(error: extractErrorMessage(e));
     }
+  }
+
+  Future<bool> checkAuth() async {
+    await _checkAuthStatus();
+    return state.isLoggedIn;
   }
 
   Future<void> login(String email, String password) async {
@@ -84,7 +100,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final result = await _repository.login(email: email, password: password);
       state = AuthState(user: result.user, token: result.token);
     } catch (e) {
-      state = AuthState(error: e.toString());
+      state = AuthState(error: extractErrorMessage(e));
     }
   }
 
@@ -94,7 +110,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final result = await _repository.register(email: email, password: password, name: name);
       state = AuthState(user: result.user, token: result.token, isEmailVerified: false);
     } catch (e) {
-      state = AuthState(error: e.toString());
+      state = AuthState(error: extractErrorMessage(e));
+    }
+  }
+
+  Future<void> biometricLogin() async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final result = await _repository.biometricLogin();
+      state = AuthState(user: result.user, token: result.token);
+    } catch (e) {
+      state = AuthState(error: extractErrorMessage(e));
     }
   }
 
@@ -103,10 +129,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       // Call backend endpoint to send verification email
       // For now, just simulate success
-      await Future.delayed(const Duration(seconds: 1));
+      await Future<void>.delayed(const Duration(seconds: 1));
       state = state.copyWith(isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: extractErrorMessage(e));
       rethrow;
     }
   }
@@ -121,7 +147,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> googleLogin() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final googleService = GoogleSignInService();
+      final googleService = _googleServiceFactory();
       final idToken = await googleService.signInWithGoogle();
 
       if (idToken == null) {
@@ -132,7 +158,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       // TODO: Send ID token to backend for verification
       // For now, simulate successful Google login
-      await Future.delayed(const Duration(seconds: 1));
+      await Future<void>.delayed(const Duration(seconds: 1));
 
       // Create a mock user for now - in production, backend returns real user
       final user = User(
@@ -148,14 +174,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isEmailVerified: true, // Google emails are pre-verified
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: extractErrorMessage(e));
     }
   }
 
   Future<void> appleLogin() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final appleService = AppleSignInService();
+      final appleService = _appleServiceFactory();
 
       // Check if Apple Sign-In is available
       final isAvailable = await appleService.isAvailable();
@@ -177,7 +203,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       // TODO: Send identityToken to backend for verification
       // For now, simulate successful Apple login
-      await Future.delayed(const Duration(seconds: 1));
+      await Future<void>.delayed(const Duration(seconds: 1));
 
       // Create user from Apple data
       final user = User(
@@ -193,16 +219,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isEmailVerified: true, // Apple emails are pre-verified
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: extractErrorMessage(e));
     }
   }
 
   Future<void> facebookLogin() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final facebookService = FacebookSignInService();
-      await facebookService.initialize();
-
+      final facebookService = _facebookServiceFactory();
       final facebookData = await facebookService.signInWithFacebook();
 
       if (facebookData == null) {
@@ -213,7 +237,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       // TODO: Send accessToken to backend for verification
       // For now, simulate successful Facebook login
-      await Future.delayed(const Duration(seconds: 1));
+      await Future<void>.delayed(const Duration(seconds: 1));
 
       // Create user from Facebook data
       final user = User(
@@ -229,16 +253,39 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isEmailVerified: true, // Facebook emails are pre-verified
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: extractErrorMessage(e));
+    }
+  }
+
+  Future<void> resetPassword(String token, String newPassword) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repository.resetPassword(token, newPassword);
+      state = state.copyWith(isLoading: false);
+    } catch (e) {
+      state = AuthState(error: extractErrorMessage(e));
+    }
+  }
+
+  Future<void> forgotPassword(String email) async {
+    state = state.copyWith(error: null);
+    try {
+      await _repository.forgotPassword(email);
+    } catch (e) {
+      state = AuthState(error: extractErrorMessage(e));
     }
   }
 
   Future<void> logout() async {
     await _repository.logout();
-    state = AuthState();
+    state = const AuthState();
   }
 }
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.watch(authRepositoryProvider));
+});
+
+final isLoggedInProvider = Provider<bool>((ref) {
+  return ref.watch(authProvider).isLoggedIn;
 });
