@@ -83,6 +83,19 @@ void main() {
       ));
       await matchesGolden(tester, 'premium_empty_state_light_clay_action.png');
     });
+
+    testWidgets('without action', (WidgetTester tester) async {
+      await tester.pumpWidget(goldenApp(
+        const PremiumEmptyState(
+          icon: PhosphorIconsLight.compass,
+          title: 'Coming Soon',
+          subtitle: 'This feature is under development.',
+        ),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await matchesGolden(tester, 'premium_empty_state_light_clay_no_action.png');
+    });
   });
 
   group('PremiumEmptyState golden — dark clay', () {
@@ -99,6 +112,19 @@ void main() {
         visualStyle: AppVisualStyle.clay,
       ));
       await matchesGolden(tester, 'premium_empty_state_dark_clay_action.png');
+    });
+
+    testWidgets('without action', (WidgetTester tester) async {
+      await tester.pumpWidget(goldenApp(
+        const PremiumEmptyState(
+          icon: PhosphorIconsLight.compass,
+          title: 'Coming Soon',
+          subtitle: 'This feature is under development.',
+        ),
+        brightness: Brightness.dark,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await matchesGolden(tester, 'premium_empty_state_dark_clay_no_action.png');
     });
   });
 }

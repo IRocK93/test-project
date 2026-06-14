@@ -431,7 +431,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                           ),
                           const SizedBox(height: 4),
                           Container(
-                            height: 140,
+                            height: 136,
                             width: 36,
                             decoration: BoxDecoration(
                               color: isSelected
@@ -446,8 +446,8 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                                 final amount = typeData[t]![di].value;
                                 if (amount <= 0) return const SizedBox.shrink();
                                 final segHeight =
-                                    (amount / overallMax * 140)
-                                        .clamp(2.0, 140.0 - yOffset);
+                                    (amount / overallMax * 136)
+                                        .clamp(2.0, 136.0 - yOffset);
                                 final segTop = yOffset;
                                 yOffset += segHeight;
                                 return Positioned(

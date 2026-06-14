@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:baby_mon/core/testing/stub_api_client.dart';
-import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:baby_mon/features/milestones/presentation/screens/milestones_screen.dart';
 import 'package:baby_mon/features/health/presentation/screens/health_screen.dart';
@@ -17,121 +13,7 @@ import 'package:baby_mon/features/health/presentation/screens/sleep_screen.dart'
 import 'package:baby_mon/features/health/presentation/screens/growth_chart_screen.dart';
 import 'package:baby_mon/features/album/presentation/screens/album_screen.dart';
 import 'package:baby_mon/features/discover/presentation/screens/discover_screen.dart';
-
-/// A version of StubApiClient that returns configurable data wrapped in [Response].
-class _TestApiClient extends StubApiClient {
-  final Map<String, dynamic> _responseData = {};
-
-  Response<dynamic> _ok(dynamic data) => Response<dynamic>(
-        data: data,
-        statusCode: 200,
-        requestOptions: RequestOptions(path: '/test'),
-      );
-
-  void setData(String method, dynamic data) {
-    _responseData[method] = data;
-  }
-
-  @override
-  Future<String?> getSelectedBabyMonId() async => 'test-baby-mon-id';
-
-  @override
-  Future<Response> getBabyMons() async => _ok(
-        _responseData['getBabyMons'] ??
-            [
-              {'id': 'test-baby-mon-id', 'name': 'Test Baby'},
-            ],
-      );
-
-  @override
-  Future<Response> getEvolution(String babyMonId) async => _ok(
-        _responseData['getEvolution'] ??
-            {
-              'currentStage': 1,
-              'currentXp': 50,
-            },
-      );
-
-  @override
-  Future<Response> getMilestones(String babyMonId) async =>
-      _ok(_responseData['getMilestones'] ?? <dynamic>[]);
-
-  @override
-  Future<Response> getFeedLogs(String babyMonId) async =>
-      _ok(_responseData['getFeedLogs'] ?? <dynamic>[]);
-
-  @override
-  Future<Response> getHealthRecords(String babyMonId) async =>
-      _ok(_responseData['getHealthRecords'] ?? <dynamic>[]);
-
-  @override
-  Future<Response> getBadges(String babyMonId) async =>
-      _ok(_responseData['getBadges'] ?? <dynamic>[]);
-
-  @override
-  Future<Response> getGrowthRecords(String babyMonId, {String? type}) async =>
-      _ok(_responseData['getGrowthRecords'] ?? <dynamic>[]);
-
-  @override
-  Future<Response> getAllergies(String babyMonId) async =>
-      _ok(_responseData['getAllergies'] ?? <dynamic>[]);
-
-  @override
-  Future<Response> getSleepLogs(String babyMonId) async =>
-      _ok(_responseData['getSleepLogs'] ?? <dynamic>[]);
-
-  @override
-  Future<Response> getProfile() async => _ok(
-        _responseData['getProfile'] ??
-            {
-              'id': 'user-1',
-              'email': 'test@example.com',
-            },
-      );
-
-  @override
-  Future<Response> getJournal(String babyMonId, {String? type}) async =>
-      _ok(_responseData['getJournal'] ?? <dynamic>[]);
-
-  @override
-  Future<Response> getProposals(String babyMonId) async =>
-      _ok(_responseData['getProposals'] ?? <dynamic>[]);
-
-  @override
-  Future<Response> getStageContent(String stageKey) async => _ok(
-        _responseData['getStageContent'] ??
-            {
-              'summary': 'Test stage content',
-              'nurturing': 'Test nurturing tips',
-              'encouragement': 'You are doing great!',
-            },
-      );
-
-  @override
-  Future<Response> getPartners(String babyMonId) async =>
-      _ok(_responseData['getPartners'] ?? <dynamic>[]);
-
-  @override
-  Future<Response> getPhotos(String babyMonId) async =>
-      _ok(_responseData['getPhotos'] ?? <dynamic>[]);
-}
-
-Widget _buildTestApp(Widget child, _TestApiClient apiClient) {
-  return ProviderScope(
-    overrides: [
-      apiClientProvider.overrideWithValue(apiClient),
-    ],
-    child: MaterialApp(
-      theme: ThemeData(useMaterial3: true),
-      home: MediaQuery(
-        data: const MediaQueryData(size: Size(400, 800)),
-        child: Scaffold(
-          body: child,
-        ),
-      ),
-    ),
-  );
-}
+import 'screen_test_helper.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -140,34 +22,25 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-
-  group('DashboardScreen provider integration', () {
+  group('DashboardScreen', () {
     testWidgets('renders loading state initially', (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      await tester.pumpWidget(
-        _buildTestApp(const DashboardScreen(), apiClient),
-      );
-
+      final apiClient = TestApiClient();
+      await tester.pumpWidget(buildTestApp(const DashboardScreen(), apiClient));
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
     testWidgets('renders empty state when no baby mon exists',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
+      final apiClient = TestApiClient();
       apiClient.setData('getBabyMons', <dynamic>[]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const DashboardScreen(), apiClient),
-      );
-
+      await tester.pumpWidget(buildTestApp(const DashboardScreen(), apiClient));
       await tester.pump(const Duration(milliseconds: 500));
-
       expect(find.byType(DashboardScreen), findsOneWidget);
     });
 
     testWidgets('renders dashboard with baby mon data',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
+      final apiClient = TestApiClient();
       apiClient.setData('getEvolution', {
         'currentStage': 3,
         'currentXp': 150,
@@ -175,523 +48,337 @@ void main() {
       apiClient.setData('getBadges', [
         {'id': 'badge-1', 'name': 'First Steps', 'icon': '🏆'},
       ]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const DashboardScreen(), apiClient),
-      );
-
+      await tester.pumpWidget(buildTestApp(const DashboardScreen(), apiClient));
       await tester.pump(const Duration(milliseconds: 1000));
       await tester.pump(const Duration(milliseconds: 500));
-
       expect(find.byType(DashboardScreen), findsOneWidget);
     });
 
     testWidgets('handles API errors gracefully', (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
+      final apiClient = TestApiClient();
       apiClient.setData('getEvolution', null);
-
-      await tester.pumpWidget(
-        _buildTestApp(const DashboardScreen(), apiClient),
-      );
-
+      await tester.pumpWidget(buildTestApp(const DashboardScreen(), apiClient));
       await tester.pump(const Duration(milliseconds: 500));
-
       expect(find.byType(DashboardScreen), findsOneWidget);
     });
   });
 
-  group('MilestonesScreen provider integration', () {
+  group('MilestonesScreen', () {
     testWidgets('renders empty state when no milestones',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getMilestones', <dynamic>[]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const MilestonesScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const MilestonesScreen(),
+          data: {'getMilestones': <dynamic>[]});
       expect(find.byType(MilestonesScreen), findsOneWidget);
     });
 
     testWidgets('renders milestone list with data',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getMilestones', [
-        {
-          'id': 'milestone-1',
-          'title': 'First Smile',
-          'notes': 'Baby smiled for the first time!',
-          'happenedAt': '2024-03-15T10:30:00.000Z',
-        },
-        {
-          'id': 'milestone-2',
-          'title': 'Rolled Over',
-          'notes': 'Rolled from back to tummy',
-          'happenedAt': '2024-04-20T14:15:00.000Z',
-        },
-      ]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const MilestonesScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const MilestonesScreen(), data: {
+        'getMilestones': [
+          {
+            'id': 'milestone-1',
+            'title': 'First Smile',
+            'notes': 'Baby smiled for the first time!',
+            'happenedAt': '2024-03-15T10:30:00.000Z',
+          },
+          {
+            'id': 'milestone-2',
+            'title': 'Rolled Over',
+            'notes': 'Rolled from back to tummy',
+            'happenedAt': '2024-04-20T14:15:00.000Z',
+          },
+        ],
+      });
       expect(find.byType(MilestonesScreen), findsOneWidget);
     });
 
     testWidgets('handles API errors gracefully',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getMilestones', null);
-
-      await tester.pumpWidget(
-        _buildTestApp(const MilestonesScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const MilestonesScreen(),
+          data: {'getMilestones': null});
       expect(find.byType(MilestonesScreen), findsOneWidget);
     });
   });
 
-  group('FeedingScreen provider integration', () {
+  group('FeedingScreen', () {
     testWidgets('renders empty state when no feed logs',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getFeedLogs', <dynamic>[]);
+      await pumpTestScreen(tester, const FeedingScreen(),
+          data: {'getFeedLogs': <dynamic>[]});
+      expect(find.byType(FeedingScreen), findsOneWidget);
+    });
 
-      await tester.pumpWidget(
-        _buildTestApp(const FeedingScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+    testWidgets('renders feed logs with data',
+        (WidgetTester tester) async {
+      await pumpTestScreen(tester, const FeedingScreen(), data: {
+        'getFeedLogs': [
+          {
+            'id': 'feed-1',
+            'type': 'BOTTLE',
+            'amount': '120',
+            'unit': 'ml',
+            'happenedAt': DateTime.now().toIso8601String(),
+          },
+        ],
+      });
       expect(find.byType(FeedingScreen), findsOneWidget);
     });
 
     testWidgets('handles API errors gracefully',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getFeedLogs', null);
-
-      await tester.pumpWidget(
-        _buildTestApp(const FeedingScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const FeedingScreen(),
+          data: {'getFeedLogs': null});
       expect(find.byType(FeedingScreen), findsOneWidget);
     });
   });
 
-  group('HealthScreen provider integration', () {
+  group('HealthScreen', () {
     testWidgets('renders empty state when no health records',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getHealthRecords', <dynamic>[]);
-      apiClient.setData('getAllergies', <dynamic>[]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const HealthScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const HealthScreen(), data: {
+        'getHealthRecords': <dynamic>[],
+        'getAllergies': <dynamic>[],
+      });
       expect(find.byType(HealthScreen), findsOneWidget);
     });
 
     testWidgets('renders health records with data',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getHealthRecords', [
-        {
-          'id': 'health-1',
-          'category': 'CHECKUP',
-          'title': '6-Month Checkup',
-          'notes': 'All good!',
-          'createdAt': '2024-03-15T10:30:00.000Z',
-        },
-      ]);
-      apiClient.setData('getAllergies', <dynamic>[]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const HealthScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const HealthScreen(), data: {
+        'getHealthRecords': [
+          {
+            'id': 'health-1',
+            'category': 'CHECKUP',
+            'title': '6-Month Checkup',
+            'notes': 'All good!',
+            'createdAt': '2024-03-15T10:30:00.000Z',
+          },
+        ],
+        'getAllergies': <dynamic>[],
+      });
       expect(find.byType(HealthScreen), findsOneWidget);
-    });    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getHealthRecords', null);
+    });
 
-      await tester.pumpWidget(
-        _buildTestApp(const HealthScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+    testWidgets('handles API errors gracefully',
+        (WidgetTester tester) async {
+      await pumpTestScreen(tester, const HealthScreen(),
+          data: {'getHealthRecords': null});
       expect(find.byType(HealthScreen), findsOneWidget);
     });
   });
 
-  group('JournalScreen provider integration', () {
+  group('JournalScreen', () {
     testWidgets('renders empty state when no journal entries',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getJournal', <dynamic>[]);
-      apiClient.setData('getProposals', <dynamic>[]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const JournalScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const JournalScreen(), data: {
+        'getJournal': <dynamic>[],
+        'getProposals': <dynamic>[],
+      });
       expect(find.byType(JournalScreen), findsOneWidget);
     });
 
     testWidgets('renders journal entries with data',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getJournal', [
-        {
-          'id': 'entry-1',
-          'entryType': 'MILESTONE',
-          'title': 'First Smile',
-          'happenedAt': '2024-03-15T10:30:00.000Z',
-        },
-      ]);
-      apiClient.setData('getProposals', <dynamic>[]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const JournalScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const JournalScreen(), data: {
+        'getJournal': [
+          {
+            'id': 'entry-1',
+            'entryType': 'MILESTONE',
+            'title': 'First Smile',
+            'happenedAt': '2024-03-15T10:30:00.000Z',
+          },
+        ],
+        'getProposals': <dynamic>[],
+      });
       expect(find.byType(JournalScreen), findsOneWidget);
     });
 
-    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getJournal', null);
-
-      await tester.pumpWidget(
-        _buildTestApp(const JournalScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+    testWidgets('handles API errors gracefully',
+        (WidgetTester tester) async {
+      await pumpTestScreen(tester, const JournalScreen(),
+          data: {'getJournal': null});
       expect(find.byType(JournalScreen), findsOneWidget);
     });
   });
 
-  group('SettingsScreen provider integration', () {
+  group('SettingsScreen', () {
     testWidgets('renders settings with user profile',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getProfile', {
-        'id': 'user-1',
-        'name': 'Test Parent',
-        'email': 'test@example.com',
+      await pumpTestScreen(tester, const SettingsScreen(), data: {
+        'getProfile': {
+          'id': 'user-1',
+          'name': 'Test Parent',
+          'email': 'test@example.com',
+        },
+        'getSubscription': {
+          'plan': 'FREE',
+          'trialDaysRemaining': 7,
+        },
       });
-      apiClient.setData('getSubscription', {
-        'plan': 'FREE',
-        'trialDaysRemaining': 7,
-      });
-
-      await tester.pumpWidget(
-        _buildTestApp(const SettingsScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
       expect(find.byType(SettingsScreen), findsOneWidget);
     });
 
-    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getProfile', null);
-
-      await tester.pumpWidget(
-        _buildTestApp(const SettingsScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+    testWidgets('renders empty state when no profile',
+        (WidgetTester tester) async {
+      await pumpTestScreen(tester, const SettingsScreen(),
+          data: {'getProfile': null});
       expect(find.byType(SettingsScreen), findsOneWidget);
     });
   });
 
-  group('SubscriptionScreen provider integration', () {
+  group('SubscriptionScreen', () {
     testWidgets('renders subscription plans', (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getSubscription', {
-        'plan': 'FREE',
-        'trialDaysRemaining': 14,
+      await pumpTestScreen(tester, const SubscriptionScreen(), data: {
+        'getSubscription': {
+          'plan': 'FREE',
+          'trialDaysRemaining': 14,
+        },
       });
-
-      await tester.pumpWidget(
-        _buildTestApp(const SubscriptionScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
       expect(find.byType(SubscriptionScreen), findsOneWidget);
     });
 
-    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getSubscription', null);
-
-      await tester.pumpWidget(
-        _buildTestApp(const SubscriptionScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+    testWidgets('handles API errors gracefully',
+        (WidgetTester tester) async {
+      await pumpTestScreen(tester, const SubscriptionScreen(),
+          data: {'getSubscription': null});
       expect(find.byType(SubscriptionScreen), findsOneWidget);
     });
   });
 
-  group('SleepScreen provider integration', () {
+  group('SleepScreen', () {
     testWidgets('renders empty state when no sleep logs',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getSleepLogs', <dynamic>[]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const SleepScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const SleepScreen(),
+          data: {'getSleepLogs': <dynamic>[]});
       expect(find.byType(SleepScreen), findsOneWidget);
     });
 
     testWidgets('renders sleep logs with data',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getSleepLogs', [
-        {
-          'id': 'sleep-1',
-          'type': 'NIGHT',
-          'startTime': '2024-03-15T22:00:00.000Z',
-          'endTime': '2024-03-16T06:30:00.000Z',
-          'quality': 'GREAT',
-        },
-      ]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const SleepScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const SleepScreen(), data: {
+        'getSleepLogs': [
+          {
+            'id': 'sleep-1',
+            'type': 'NIGHT',
+            'startTime': '2024-03-15T22:00:00.000Z',
+            'endTime': '2024-03-16T06:30:00.000Z',
+            'quality': 'GREAT',
+          },
+        ],
+      });
       expect(find.byType(SleepScreen), findsOneWidget);
     });
 
-    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getSleepLogs', null);
-
-      await tester.pumpWidget(
-        _buildTestApp(const SleepScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+    testWidgets('handles API errors gracefully',
+        (WidgetTester tester) async {
+      await pumpTestScreen(tester, const SleepScreen(),
+          data: {'getSleepLogs': null});
       expect(find.byType(SleepScreen), findsOneWidget);
     });
   });
 
-  group('GrowthChartScreen provider integration', () {
+  group('GrowthChartScreen', () {
     testWidgets('renders empty state when no growth records',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getGrowthRecords', <dynamic>[]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const GrowthChartScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const GrowthChartScreen(),
+          data: {'getGrowthRecords': <dynamic>[]});
       expect(find.byType(GrowthChartScreen), findsOneWidget);
     });
 
     testWidgets('renders growth records with data',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getGrowthRecords', [
-        {
-          'id': 'growth-1',
-          'type': 'WEIGHT',
-          'value': '7.5',
-          'unit': 'kg',
-          'measuredAt': '2024-03-15T10:00:00.000Z',
-        },
-        {
-          'id': 'growth-2',
-          'type': 'WEIGHT',
-          'value': '8.0',
-          'unit': 'kg',
-          'measuredAt': '2024-04-15T10:00:00.000Z',
-        },
-      ]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const GrowthChartScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const GrowthChartScreen(), data: {
+        'getGrowthRecords': [
+          {
+            'id': 'growth-1',
+            'type': 'WEIGHT',
+            'value': '7.5',
+            'unit': 'kg',
+            'measuredAt': '2024-03-15T10:00:00.000Z',
+          },
+        ],
+      });
       expect(find.byType(GrowthChartScreen), findsOneWidget);
     });
 
-    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getGrowthRecords', null);
-
-      await tester.pumpWidget(
-        _buildTestApp(const GrowthChartScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+    testWidgets('handles API errors gracefully',
+        (WidgetTester tester) async {
+      await pumpTestScreen(tester, const GrowthChartScreen(),
+          data: {'getGrowthRecords': null});
       expect(find.byType(GrowthChartScreen), findsOneWidget);
     });
   });
 
-  group('PartnersScreen provider integration', () {
+  group('PartnersScreen', () {
     testWidgets('renders empty state when no partners',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getPartners', <dynamic>[]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const PartnersScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const PartnersScreen(),
+          data: {'getPartners': <dynamic>[]});
       expect(find.byType(PartnersScreen), findsOneWidget);
     });
 
-    testWidgets('renders partners with data',
+    testWidgets('renders partners with data', (WidgetTester tester) async {
+      await pumpTestScreen(tester, const PartnersScreen(), data: {
+        'getPartners': [
+          {
+            'id': 'partner-1',
+            'status': 'ACCEPTED',
+            'role': 'PARENT',
+            'user': {'name': 'Co-Parent', 'email': 'partner@test.com'},
+          },
+        ],
+      });
+      expect(find.byType(PartnersScreen), findsOneWidget);
+    });
+
+    testWidgets('handles API errors gracefully',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getPartners', [
-        {
-          'id': 'partner-1',
-          'status': 'ACCEPTED',
-          'role': 'PARENT',
-          'user': {'name': 'Co-Parent', 'email': 'partner@test.com'},
-        },
-      ]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const PartnersScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
-      expect(find.byType(PartnersScreen), findsOneWidget);
-    });
-
-    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getPartners', null);
-
-      await tester.pumpWidget(
-        _buildTestApp(const PartnersScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const PartnersScreen(),
+          data: {'getPartners': null});
       expect(find.byType(PartnersScreen), findsOneWidget);
     });
   });
 
-  group('AlbumScreen provider integration', () {
+  group('AlbumScreen', () {
     testWidgets('renders empty state when no photos',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getPhotos', <dynamic>[]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const AlbumScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const AlbumScreen(),
+          data: {'getPhotos': <dynamic>[]});
       expect(find.byType(AlbumScreen), findsOneWidget);
     });
 
-    testWidgets('renders album with photos',
+    testWidgets('renders album with photos', (WidgetTester tester) async {
+      await pumpTestScreen(tester, const AlbumScreen(), data: {
+        'getPhotos': [
+          {
+            'id': 'photo-1',
+            'takenAt': '2024-03-15T10:00:00.000Z',
+            'url': 'https://example.com/photo1.jpg',
+          },
+        ],
+      });
+      expect(find.byType(AlbumScreen), findsOneWidget);
+    });
+
+    testWidgets('handles API errors gracefully',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getPhotos', [
-        {
-          'id': 'photo-1',
-          'takenAt': '2024-03-15T10:00:00.000Z',
-          'url': 'https://example.com/photo1.jpg',
-        },
-      ]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const AlbumScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
-      expect(find.byType(AlbumScreen), findsOneWidget);
-    });
-
-    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getPhotos', null);
-
-      await tester.pumpWidget(
-        _buildTestApp(const AlbumScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const AlbumScreen(),
+          data: {'getPhotos': null});
       expect(find.byType(AlbumScreen), findsOneWidget);
     });
   });
 
-  group('DiscoverScreen provider integration', () {
+  group('DiscoverScreen', () {
     testWidgets('renders discover coming soon screen',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-
-      await tester.pumpWidget(
-        _buildTestApp(const DiscoverScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const DiscoverScreen());
       expect(find.byType(DiscoverScreen), findsOneWidget);
     });
 
     testWidgets('renders coming soon badge',
         (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-
-      await tester.pumpWidget(
-        _buildTestApp(const DiscoverScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
+      await pumpTestScreen(tester, const DiscoverScreen());
       expect(find.text('COMING SOON'), findsOneWidget);
     });
   });
-
 }
