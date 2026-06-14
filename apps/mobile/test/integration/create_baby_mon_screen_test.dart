@@ -107,10 +107,6 @@ void main() {
       expect(find.text('Monious'), findsOneWidget);
       expect(find.text('Neutral'), findsOneWidget);
 
-      // Select a trait
-      await tester.tap(find.text('Curious'));
-      await tester.pump(const Duration(milliseconds: 300));
-
       // ── Step 3 → Step 4: Review ──
       await tester.tap(find.text('Continue'));
       await tester.pump(const Duration(milliseconds: 600));
@@ -182,6 +178,49 @@ void main() {
       // Without selecting a date, Continue shows "Select a date"
       expect(find.text('Select a date'), findsOneWidget);
       expect(find.text('Born'), findsOneWidget);
+    });
+
+    testWidgets('taps Begin Your Story and verifies API payload',
+        (WidgetTester tester) async {
+      final apiClient = TestApiClient();
+      await tester.pumpWidget(_buildOnboardingApp(apiClient));
+      await tester.pump(const Duration(seconds: 4));
+
+      // Navigate through all steps to the review screen
+      await tester.tap(find.text('Begin Your Journey'));
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.enterText(find.byType(TextField), 'Luna');
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Continue'));
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.ensureVisible(find.text('Today'));
+      await tester.tap(find.text('Today'));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Continue'));
+      await tester.pump(const Duration(milliseconds: 600));
+      await tester.tap(find.text('Continue'));
+      await tester.pump(const Duration(milliseconds: 600));
+
+      // Verify review shows our data
+      expect(find.text('Luna'), findsOneWidget);
+      expect(find.text('Begin Your Story'), findsOneWidget);
+
+      // Tap "Begin Your Story" to trigger the API call
+      await tester.tap(find.text('Begin Your Story'));
+      await tester.pump(const Duration(milliseconds: 1200));
+
+      // Verify the POST was made to /baby-mons
+      expect(apiClient.capturedPosts.length, 1);
+      final post = apiClient.capturedPosts.first;
+      expect(post.key, '/baby-mons');
+
+      // Verify the payload contains expected fields
+      final payload = post.value as Map<String, dynamic>;
+      expect(payload['name'], 'Luna');
+      expect(payload['stageStartType'], 'BORN');
+      expect(payload['gender'], 'MONIOUS');
+      expect(payload['birthDate'], isNotNull);
+      expect(payload['traits'], isA<List>());
     });
 
     testWidgets('traits step shows all gender and trait options',

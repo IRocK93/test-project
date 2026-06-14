@@ -9,6 +9,9 @@ import 'package:baby_mon/core/testing/stub_api_client.dart';
 class TestApiClient extends StubApiClient {
   final Map<String, dynamic> _responseData = {};
 
+  /// Captured POST calls: list of (path, data) pairs.
+  final List<MapEntry<String, dynamic>> capturedPosts = [];
+
   Response<dynamic> _ok(dynamic data) => Response<dynamic>(
         data: data,
         statusCode: 200,
@@ -101,6 +104,19 @@ class TestApiClient extends StubApiClient {
   @override
   Future<Response> getPhotos(String babyMonId) async =>
       _ok(_responseData['getPhotos'] ?? <dynamic>[]);
+
+  @override
+  Future<Response> post(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    capturedPosts.add(MapEntry(path, data));
+    // Return a response with 'id' so screens that read response.data['id'] work.
+    return _ok({'id': 'new-record-id'});
+  }
 }
 
 /// Wrap a widget in [ProviderScope] + [MaterialApp] with mock API client.
