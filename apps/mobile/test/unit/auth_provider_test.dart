@@ -311,7 +311,7 @@ void main() {
       test('creates user and token on successful Google login', () async {
         final mockNotifier = AuthNotifier(
           FakeAuthRepository(),
-          googleServiceFactory: () => _MockGoogleSignInService(),
+          googleServiceFactory: () => _FakeGoogleSignInService(token: 'mock-google-id-token-123'),
         );
         addTearDown(mockNotifier.dispose);
 
@@ -329,7 +329,7 @@ void main() {
       test('handles cancelled Google login (null response)', () async {
         final mockNotifier = AuthNotifier(
           FakeAuthRepository(),
-          googleServiceFactory: () => _MockCancelledGoogleService(),
+          googleServiceFactory: () => _FakeGoogleSignInService(),
         );
         addTearDown(mockNotifier.dispose);
 
@@ -347,7 +347,14 @@ void main() {
       test('creates user and token on successful Apple login', () async {
         final mockNotifier = AuthNotifier(
           FakeAuthRepository(),
-          appleServiceFactory: () => _MockAppleSignInService(),
+          appleServiceFactory: () => _FakeAppleSignInService(
+            data: {
+              'userIdentifier': 'apple-user-456',
+              'email': 'test@privaterelay.appleid.com',
+              'fullName': 'Apple Test User',
+              'identityToken': 'mock-apple-identity-token-789',
+            },
+          ),
         );
         addTearDown(mockNotifier.dispose);
 
@@ -366,7 +373,7 @@ void main() {
       test('handles unavailable Apple Sign-In', () async {
         final mockNotifier = AuthNotifier(
           FakeAuthRepository(),
-          appleServiceFactory: () => _MockAppleNotAvailableService(),
+          appleServiceFactory: () => _FakeAppleSignInService(available: false),
         );
         addTearDown(mockNotifier.dispose);
 
@@ -381,7 +388,7 @@ void main() {
       test('handles cancelled Apple login (null response)', () async {
         final mockNotifier = AuthNotifier(
           FakeAuthRepository(),
-          appleServiceFactory: () => _MockAppleCancelledService(),
+          appleServiceFactory: () => _FakeAppleSignInService(data: null),
         );
         addTearDown(mockNotifier.dispose);
 
@@ -399,7 +406,12 @@ void main() {
       test('creates user and token on successful Facebook login', () async {
         final mockNotifier = AuthNotifier(
           FakeAuthRepository(),
-          facebookServiceFactory: () => _MockFacebookSignInService(),
+          facebookServiceFactory: () => _FakeFacebookSignInService(data: {
+            'userId': 'fb-user-789',
+            'email': 'test@facebook.com',
+            'name': 'Facebook Test User',
+            'accessToken': 'mock-fb-access-token-abc',
+          }),
         );
         addTearDown(mockNotifier.dispose);
 
@@ -418,7 +430,7 @@ void main() {
       test('handles cancelled Facebook login (null response)', () async {
         final mockNotifier = AuthNotifier(
           FakeAuthRepository(),
-          facebookServiceFactory: () => _MockCancelledFacebookService(),
+          facebookServiceFactory: () => _FakeFacebookSignInService(),
         );
         addTearDown(mockNotifier.dispose);
 
@@ -540,56 +552,34 @@ void main() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  Mock services for happy-path social login tests
+//  Configurable mock services for social login tests
+//
+//  Each mock accepts return values via constructor parameters,
+//  replacing the need for 6 separate subclasses.
 // ═══════════════════════════════════════════════════════════════
 
-class _MockGoogleSignInService extends GoogleSignInService {
+class _FakeGoogleSignInService extends GoogleSignInService {
+  final String? _token;
+  _FakeGoogleSignInService({String? token}) : _token = token;
   @override
-  Future<String?> signInWithGoogle() async => 'mock-google-id-token-123';
+  Future<String?> signInWithGoogle() async => _token;
 }
 
-class _MockCancelledGoogleService extends GoogleSignInService {
+class _FakeAppleSignInService extends AppleSignInService {
+  final bool _available;
+  final Map<String, String?>? _data;
+  _FakeAppleSignInService({bool available = true, Map<String, String?>? data})
+      : _available = available,
+        _data = data;
   @override
-  Future<String?> signInWithGoogle() async => null;
+  Future<bool> isAvailable() async => _available;
+  @override
+  Future<Map<String, String?>?> signInWithApple() async => _data;
 }
 
-class _MockAppleSignInService extends AppleSignInService {
+class _FakeFacebookSignInService extends FacebookSignInService {
+  final Map<String, String?>? _data;
+  _FakeFacebookSignInService({Map<String, String?>? data}) : _data = data;
   @override
-  Future<bool> isAvailable() async => true;
-
-  @override
-  Future<Map<String, String?>?> signInWithApple() async => {
-        'userIdentifier': 'apple-user-456',
-        'email': 'test@privaterelay.appleid.com',
-        'fullName': 'Apple Test User',
-        'identityToken': 'mock-apple-identity-token-789',
-      };
-}
-
-class _MockAppleNotAvailableService extends AppleSignInService {
-  @override
-  Future<bool> isAvailable() async => false;
-}
-
-class _MockAppleCancelledService extends AppleSignInService {
-  @override
-  Future<bool> isAvailable() async => true;
-
-  @override
-  Future<Map<String, String?>?> signInWithApple() async => null;
-}
-
-class _MockFacebookSignInService extends FacebookSignInService {
-  @override
-  Future<Map<String, String?>?> signInWithFacebook() async => {
-        'userId': 'fb-user-789',
-        'email': 'test@facebook.com',
-        'name': 'Facebook Test User',
-        'accessToken': 'mock-fb-access-token-abc',
-      };
-}
-
-class _MockCancelledFacebookService extends FacebookSignInService {
-  @override
-  Future<Map<String, String?>?> signInWithFacebook() async => null;
+  Future<Map<String, String?>?> signInWithFacebook() async => _data;
 }

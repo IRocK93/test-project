@@ -51,6 +51,19 @@ void main() {
       expect(find.byType(FloatingActionButton), findsOneWidget);
     });
 
+    testWidgets('FAB tap opens Log Feeding dialog', (tester) async {
+      await tester.pumpWidget(_buildFeedingApp());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // The FAB opens a bottom sheet with 'Log Feeding' title
+      expect(find.text('Log Feeding'), findsOneWidget);
+    });
+
     testWidgets('renders on dark theme without error', (tester) async {
       await tester.pumpWidget(
         ProviderScope(

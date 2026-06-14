@@ -51,6 +51,19 @@ void main() {
       expect(find.byType(FloatingActionButton), findsOneWidget);
     });
 
+    testWidgets('FAB tap opens Add Milestone dialog', (tester) async {
+      await tester.pumpWidget(_buildMilestonesApp());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // The FAB opens a bottom sheet with 'Add Milestone' title
+      expect(find.text('Add Milestone'), findsOneWidget);
+    });
+
     testWidgets('renders on dark theme without error', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
