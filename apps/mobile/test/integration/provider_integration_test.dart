@@ -15,6 +15,8 @@ import 'package:baby_mon/features/settings/presentation/screens/subscription_scr
 import 'package:baby_mon/features/settings/presentation/screens/partners_screen.dart';
 import 'package:baby_mon/features/health/presentation/screens/sleep_screen.dart';
 import 'package:baby_mon/features/health/presentation/screens/growth_chart_screen.dart';
+import 'package:baby_mon/features/album/presentation/screens/album_screen.dart';
+import 'package:baby_mon/features/discover/presentation/screens/discover_screen.dart';
 
 /// A version of StubApiClient that returns configurable data wrapped in [Response].
 class _TestApiClient extends StubApiClient {
@@ -108,6 +110,10 @@ class _TestApiClient extends StubApiClient {
   @override
   Future<Response> getPartners(String babyMonId) async =>
       _ok(_responseData['getPartners'] ?? <dynamic>[]);
+
+  @override
+  Future<Response> getPhotos(String babyMonId) async =>
+      _ok(_responseData['getPhotos'] ?? <dynamic>[]);
 }
 
 Widget _buildTestApp(Widget child, _TestApiClient apiClient) {
@@ -608,6 +614,83 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.byType(PartnersScreen), findsOneWidget);
+    });
+  });
+
+  group('AlbumScreen provider integration', () {
+    testWidgets('renders empty state when no photos',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getPhotos', <dynamic>[]);
+
+      await tester.pumpWidget(
+        _buildTestApp(const AlbumScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(AlbumScreen), findsOneWidget);
+    });
+
+    testWidgets('renders album with photos',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getPhotos', [
+        {
+          'id': 'photo-1',
+          'takenAt': '2024-03-15T10:00:00.000Z',
+          'url': 'https://example.com/photo1.jpg',
+        },
+      ]);
+
+      await tester.pumpWidget(
+        _buildTestApp(const AlbumScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(AlbumScreen), findsOneWidget);
+    });
+
+    testWidgets('handles API errors gracefully', (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+      apiClient.setData('getPhotos', null);
+
+      await tester.pumpWidget(
+        _buildTestApp(const AlbumScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(AlbumScreen), findsOneWidget);
+    });
+  });
+
+  group('DiscoverScreen provider integration', () {
+    testWidgets('renders discover coming soon screen',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+
+      await tester.pumpWidget(
+        _buildTestApp(const DiscoverScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(DiscoverScreen), findsOneWidget);
+    });
+
+    testWidgets('renders coming soon badge',
+        (WidgetTester tester) async {
+      final apiClient = _TestApiClient();
+
+      await tester.pumpWidget(
+        _buildTestApp(const DiscoverScreen(), apiClient),
+      );
+
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('COMING SOON'), findsOneWidget);
     });
   });
 
