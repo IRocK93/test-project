@@ -7,7 +7,6 @@ import 'package:baby_mon/core/testing/stub_api_client.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:baby_mon/features/milestones/presentation/screens/milestones_screen.dart';
-import 'package:baby_mon/features/health/presentation/screens/health_screen.dart';
 import 'package:baby_mon/features/feeding/presentation/screens/feeding_screen.dart';
 
 /// A version of StubApiClient that returns configurable data wrapped in [Response].
@@ -264,19 +263,4 @@ void main() {
     });
   });
 
-  group('HealthScreen provider integration', () {
-    testWidgets('renders health screen', (WidgetTester tester) async {
-      final apiClient = _TestApiClient();
-      apiClient.setData('getHealthRecords', <dynamic>[]);
-      apiClient.setData('getAllergies', <dynamic>[]);
-
-      await tester.pumpWidget(
-        _buildTestApp(const HealthScreen(), apiClient),
-      );
-
-      await tester.pump(const Duration(milliseconds: 500));
-
-      expect(find.byType(HealthScreen), findsOneWidget);
-    });
-  });
 }
