@@ -601,6 +601,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               right: DesignTokens.bentoPadding,
               bottom: 100,
             ),
+            // ignore: deprecated_member_use – onReorderItem not yet in stable
             onReorder: (int oldIndex, int newIndex) {
               if (newIndex > oldIndex) newIndex--;
               setState(() {
@@ -641,7 +642,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       key: ValueKey(tile),
                       padding: const EdgeInsets.only(
                           bottom: DesignTokens.bentoGap),
-                      child: tiles[tile]!,
+                      child: tiles[tile],
                     ))
                 .toList(),
           ),
@@ -1722,7 +1723,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   void _showLevelUpCelebration(int newLevel) {
-    showDialog(
+    showDialog<void>(
       context: context,
       barrierDismissible: true,
       barrierColor: Colors.black54,
