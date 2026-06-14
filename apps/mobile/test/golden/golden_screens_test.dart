@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:baby_mon/core/core.dart';
 import 'package:baby_mon/core/theme/theme_mode_provider.dart' hide AppThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'auth_form_goldens.dart';
+import 'golden_screen_stubs.dart';
 import 'golden_helpers.dart';
 import 'package:baby_mon/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:baby_mon/features/journal/presentation/screens/journal_screen.dart';
@@ -17,6 +17,8 @@ import 'package:baby_mon/features/settings/presentation/screens/settings_screen.
 import 'package:baby_mon/features/discover/presentation/screens/discover_screen.dart';
 import 'package:baby_mon/features/album/presentation/screens/album_screen.dart';
 import 'package:baby_mon/features/onboarding/presentation/screens/create_baby_mon_screen.dart';
+import 'package:baby_mon/features/settings/presentation/screens/partners_screen.dart';
+import 'package:baby_mon/features/auth/presentation/screens/reset_password_screen.dart';
 
 
 void main() {
@@ -176,6 +178,26 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
       await matchesGolden(tester, 'dark_glass_splash.png');
+    });
+
+    testWidgets('PartnersScreen', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const PartnersScreen(),
+        brightness: Brightness.dark,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'dark_glass_partners.png');
+    });
+
+    testWidgets('ResetPasswordScreen', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const ResetPasswordScreen(token: 'test-token'),
+        brightness: Brightness.dark,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'dark_glass_reset_password.png');
     });
   });
 
@@ -347,6 +369,28 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       await matchesGolden(tester, 'dark_clay_splash.png');
     });
+
+    testWidgets('PartnersScreen', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const PartnersScreen(),
+        brightness: Brightness.dark,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'dark_clay_partners.png');
+    });
+
+    testWidgets('ResetPasswordScreen', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const ResetPasswordScreen(token: 'test-token'),
+        brightness: Brightness.dark,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'dark_clay_reset_password.png');
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -501,6 +545,26 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
       await matchesGolden(tester, 'light_glass_splash.png');
+    });
+
+    testWidgets('PartnersScreen', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const PartnersScreen(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'light_glass_partners.png');
+    });
+
+    testWidgets('ResetPasswordScreen', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const ResetPasswordScreen(token: 'test-token'),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'light_glass_reset_password.png');
     });
   });
 
@@ -671,6 +735,28 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
       await matchesGolden(tester, 'light_clay_splash.png');
+    });
+
+    testWidgets('PartnersScreen', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const PartnersScreen(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'light_clay_partners.png');
+    });
+
+    testWidgets('ResetPasswordScreen', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const ResetPasswordScreen(token: 'test-token'),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'light_clay_reset_password.png');
     });
   });
 }
