@@ -14,6 +14,8 @@ import 'package:baby_mon/features/health/presentation/screens/sleep_screen.dart'
 import 'package:baby_mon/features/health/presentation/screens/growth_chart_screen.dart';
 import 'package:baby_mon/features/feeding/presentation/screens/feeding_screen.dart';
 import 'package:baby_mon/features/milestones/presentation/screens/milestones_screen.dart';
+import 'package:baby_mon/features/settings/presentation/screens/subscription_screen.dart';
+import 'package:baby_mon/features/settings/presentation/screens/settings_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Set up mock platform channels needed by screens that use platform plugins.
@@ -507,6 +509,26 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       await _testerMatchesGoldenFile(tester, 'dark_glass_milestones.png');
     });
+
+    testWidgets('SubscriptionScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const SubscriptionScreen(),
+        brightness: Brightness.dark,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'dark_glass_subscription.png');
+    });
+
+    testWidgets('SettingsScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const SettingsScreen(),
+        brightness: Brightness.dark,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'dark_glass_settings.png');
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -611,6 +633,28 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       await _testerMatchesGoldenFile(tester, 'dark_clay_milestones.png');
     });
+
+    testWidgets('SubscriptionScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const SubscriptionScreen(),
+        brightness: Brightness.dark,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'dark_clay_subscription.png');
+    });
+
+    testWidgets('SettingsScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const SettingsScreen(),
+        brightness: Brightness.dark,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'dark_clay_settings.png');
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -705,6 +749,26 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
       await _testerMatchesGoldenFile(tester, 'light_glass_milestones.png');
+    });
+
+    testWidgets('SubscriptionScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const SubscriptionScreen(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_glass_subscription.png');
+    });
+
+    testWidgets('SettingsScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const SettingsScreen(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_glass_settings.png');
     });
   });
 
@@ -809,6 +873,28 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
       await _testerMatchesGoldenFile(tester, 'light_clay_milestones.png');
+    });
+
+    testWidgets('SubscriptionScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const SubscriptionScreen(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_clay_subscription.png');
+    });
+
+    testWidgets('SettingsScreen', (tester) async {
+      await tester.pumpWidget(_goldenApp(
+        const SettingsScreen(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await _testerMatchesGoldenFile(tester, 'light_clay_settings.png');
     });
   });
 }
