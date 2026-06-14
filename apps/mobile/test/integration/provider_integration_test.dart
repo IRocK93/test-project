@@ -105,7 +105,10 @@ Widget _buildTestApp(Widget child, _TestApiClient apiClient) {
       apiClientProvider.overrideWithValue(apiClient),
     ],
     child: MaterialApp(
-      home: child,
+      theme: ThemeData(useMaterial3: true),
+      home: Scaffold(
+        body: child,
+      ),
     ),
   );
 }
@@ -116,6 +119,7 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
+
 
   group('DashboardScreen provider integration', () {
     testWidgets('renders loading state initially', (WidgetTester tester) async {

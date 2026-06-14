@@ -169,5 +169,21 @@ void main() {
 
       expect(await client.getSelectedBabyMonId(), 'baby-3');
     });
+
+    test('logout clears refresh token', () async {
+      final client = ApiClient();
+      await client.saveTokens('access', 'refresh-abc', 'user-1');
+
+      await client.logout();
+
+      expect(_secureStore['refresh_token'], isNull);
+    });
+
+    test('saveTokens stores refresh token', () async {
+      final client = ApiClient();
+      await client.saveTokens('access', 'refresh-xyz', 'user-1');
+
+      expect(_secureStore['refresh_token'], 'refresh-xyz');
+    });
   });
 }
