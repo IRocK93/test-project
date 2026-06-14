@@ -29,6 +29,9 @@ void main(List<String> args) {
   // Gather all golden test names
   final goldenTests = _extractGoldenTestNames(goldenDir);
 
+  // Build stub mappings dynamically from golden_*_stubs.dart files
+  final stubMappings = _buildStubMappings(goldenDir, goldenTests);
+
   // Discover screens
   final screens = _discoverScreens(libDir);
 
@@ -40,7 +43,7 @@ void main(List<String> args) {
 
   // Build report
   final screenResults = screens.map((s) {
-    final covered = _isCoveredByGolden(s.className, goldenTests);
+    final covered = _isCoveredByGolden(s.className, goldenTests, stubMappings);
     final goldenFile = covered ? _findGoldenFile(s.className, goldenDir) : null;
     return CoverageItem(
       name: s.className,
@@ -53,7 +56,7 @@ void main(List<String> args) {
   }).toList();
 
   final coreWidgetResults = coreWidgets.map((w) {
-    final covered = _isCoveredByGolden(w.className, goldenTests);
+    final covered = _isCoveredByGolden(w.className, goldenTests, stubMappings);
     final goldenFile = covered ? _findGoldenFile(w.className, goldenDir) : null;
     return CoverageItem(
       name: w.className,
@@ -66,7 +69,7 @@ void main(List<String> args) {
   }).toList();
 
   final featureWidgetResults = featureWidgets.map((w) {
-    final covered = _isCoveredByGolden(w.className, goldenTests);
+    final covered = _isCoveredByGolden(w.className, goldenTests, stubMappings);
     final goldenFile = covered ? _findGoldenFile(w.className, goldenDir) : null;
     return CoverageItem(
       name: w.className,
@@ -180,19 +183,28 @@ List<DiscoveredWidget> _discoverFeatureWidgets(Directory libDir) {
 
   for (final featureDir in featuresDir.listSync().whereType<Directory>()) {
     final featureName = featureDir.path.split(Platform.pathSeparator).last;
-    final widgetsPath = '${featureDir.path}${Platform.pathSeparator}widgets';
-    final dir = Directory(widgetsPath);
-    if (!dir.existsSync()) continue;
+    // Try multiple possible widget paths (cross-platform compatibility)
+    final seenClassNames = <String>{};
+    for (final widgetsPath in [
+      '${featureDir.path}${Platform.pathSeparator}presentation${Platform.pathSeparator}widgets',
+      '${featureDir.path}/presentation/widgets',
+      '${featureDir.path}${Platform.pathSeparator}widgets',
+      '${featureDir.path}/widgets',
+    ]) {
+      final dir = Directory(widgetsPath);
+      if (!dir.existsSync()) continue;
 
-    for (final file in dir.listSync().whereType<File>()) {
-      if (!file.path.endsWith('.dart')) continue;
-      final className = _extractFirstClassName(file);
-      if (className == null) continue;
-      widgets.add(DiscoveredWidget(
-        className: className,
-        relativePath: _relativePath(file.path, libDir.parent.path),
-        feature: featureName,
-      ));
+      for (final file in dir.listSync().whereType<File>()) {
+        if (!file.path.endsWith('.dart')) continue;
+        final className = _extractFirstClassName(file);
+        if (className == null || seenClassNames.contains(className)) continue;
+        seenClassNames.add(className);
+        widgets.add(DiscoveredWidget(
+          className: className,
+          relativePath: _relativePath(file.path, libDir.parent.path),
+          feature: featureName,
+        ));
+      }
     }
   }
   return widgets;
@@ -234,26 +246,45 @@ Set<String> _extractGoldenTestNames(Directory goldenDir) {
   return names;
 }
 
-bool _isCoveredByGolden(String className, Set<String> goldenTests) {
+/// Build stub mappings dynamically by scanning golden_*_stubs.dart files.
+Map<String, String> _buildStubMappings(Directory goldenDir, Set<String> goldenTests) {
+  final mappings = <String, String>{};
+  for (final file in goldenDir.listSync().whereType<File>()) {
+    if (!file.path.endsWith('_stubs.dart')) continue;
+    final content = file.readAsStringSync();
+    // Extract class names from stubs (e.g., class GoldenLoginForm extends ...)
+    final classPattern = RegExp(r'^\s*class\s+(\w+)', multiLine: true);
+    final stubClasses = classPattern.allMatches(content).map((m) => m.group(1)!).toList();
+
+    // Map real screen/widget names to their stub names based on naming conventions
+    // e.g., GoldenLoginForm -> LoginScreen, GoldenSplashScreen -> SplashScreen
+    for (final stubClass in stubClasses) {
+      if (!goldenTests.contains(stubClass)) continue;
+      // Remove 'Golden' prefix and try common suffixes
+      final base = stubClass.replaceFirst('Golden', '');
+      for (final suffix in ['Screen', 'Widget', '']) {
+        final realName = '$base$suffix';
+        mappings[realName] = stubClass;
+      }
+    }
+  }
+  return mappings;
+}
+
+bool _isCoveredByGolden(String className, Set<String> goldenTests, Map<String, String> stubMappings) {
   // Direct class name match
   if (goldenTests.contains(className)) return true;
 
-  // Check for known stub mappings
-  final stubMappings = {
-    'LoginScreen': 'GoldenLoginForm',
-    'RegisterScreen': 'GoldenRegisterForm',
-    'SplashScreen': 'GoldenSplashScreen',
-    'CreateBabyMonScreen': 'GoldenOnboarding',
-  };
-
+  // Check for stub mappings (dynamically built from stubs files)
   if (stubMappings.containsKey(className)) {
     final stub = stubMappings[className]!;
     if (goldenTests.contains(stub)) return true;
-    // Also check if any golden test name starts with the stub prefix
     return goldenTests.any((t) => t.startsWith(stub));
   }
 
   // Fuzzy match: check if class name appears in any golden test name
+  // Only match names with 5+ chars to avoid false positives on short names like 'Card'
+  if (className.length < 5) return false;
   return goldenTests.any((t) => t.contains(className));
 }
 
