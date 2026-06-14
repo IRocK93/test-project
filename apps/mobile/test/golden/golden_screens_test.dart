@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:baby_mon/core/core.dart';
 import 'package:baby_mon/core/theme/theme_mode_provider.dart' hide AppThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'golden_screen_stubs.dart';
+import 'golden_auth_stubs.dart';
+import 'golden_splash_stubs.dart';
+import 'golden_onboarding_stubs.dart';
 import 'golden_helpers.dart';
 import 'package:baby_mon/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:baby_mon/features/journal/presentation/screens/journal_screen.dart';
@@ -160,14 +162,34 @@ void main() {
       await matchesGolden(tester, 'dark_glass_album.png');
     });
 
-    testWidgets('CreateBabyMonScreen', (tester) async {
+    testWidgets('Onboarding Empty', (tester) async {
       await tester.pumpWidget(goldenApp(
-        const CreateBabyMonScreen(),
+        const GoldenOnboardingEmpty(),
         brightness: Brightness.dark,
       ));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
-      await matchesGolden(tester, 'dark_glass_create_baby_mon.png');
+      await matchesGolden(tester, 'dark_glass_onboarding_empty.png');
+    });
+
+    testWidgets('Onboarding Partial', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const GoldenOnboardingPartial(),
+        brightness: Brightness.dark,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'dark_glass_onboarding_partial.png');
+    });
+
+    testWidgets('Onboarding Complete', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const GoldenOnboardingComplete(),
+        brightness: Brightness.dark,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'dark_glass_onboarding_complete.png');
     });
 
     testWidgets('SplashScreen', (tester) async {
@@ -348,15 +370,37 @@ void main() {
       await matchesGolden(tester, 'dark_clay_album.png');
     });
 
-    testWidgets('CreateBabyMonScreen', (tester) async {
+    testWidgets('Onboarding Empty', (tester) async {
       await tester.pumpWidget(goldenApp(
-        const CreateBabyMonScreen(),
+        const GoldenOnboardingEmpty(),
         brightness: Brightness.dark,
         visualStyle: AppVisualStyle.clay,
       ));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
-      await matchesGolden(tester, 'dark_clay_create_baby_mon.png');
+      await matchesGolden(tester, 'dark_clay_onboarding_empty.png');
+    });
+
+    testWidgets('Onboarding Partial', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const GoldenOnboardingPartial(),
+        brightness: Brightness.dark,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'dark_clay_onboarding_partial.png');
+    });
+
+    testWidgets('Onboarding Complete', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const GoldenOnboardingComplete(),
+        brightness: Brightness.dark,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'dark_clay_onboarding_complete.png');
     });
 
     testWidgets('SplashScreen', (tester) async {
@@ -527,14 +571,34 @@ void main() {
       await matchesGolden(tester, 'light_glass_album.png');
     });
 
-    testWidgets('CreateBabyMonScreen', (tester) async {
+    testWidgets('Onboarding Empty', (tester) async {
       await tester.pumpWidget(goldenApp(
-        const CreateBabyMonScreen(),
+        const GoldenOnboardingEmpty(),
         brightness: Brightness.light,
       ));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
-      await matchesGolden(tester, 'light_glass_create_baby_mon.png');
+      await matchesGolden(tester, 'light_glass_onboarding_empty.png');
+    });
+
+    testWidgets('Onboarding Partial', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const GoldenOnboardingPartial(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'light_glass_onboarding_partial.png');
+    });
+
+    testWidgets('Onboarding Complete', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const GoldenOnboardingComplete(),
+        brightness: Brightness.light,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'light_glass_onboarding_complete.png');
     });
 
     testWidgets('SplashScreen', (tester) async {
@@ -715,15 +779,37 @@ void main() {
       await matchesGolden(tester, 'light_clay_album.png');
     });
 
-    testWidgets('CreateBabyMonScreen', (tester) async {
+    testWidgets('Onboarding Empty', (tester) async {
       await tester.pumpWidget(goldenApp(
-        const CreateBabyMonScreen(),
+        const GoldenOnboardingEmpty(),
         brightness: Brightness.light,
         visualStyle: AppVisualStyle.clay,
       ));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
-      await matchesGolden(tester, 'light_clay_create_baby_mon.png');
+      await matchesGolden(tester, 'light_clay_onboarding_empty.png');
+    });
+
+    testWidgets('Onboarding Partial', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const GoldenOnboardingPartial(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'light_clay_onboarding_partial.png');
+    });
+
+    testWidgets('Onboarding Complete', (tester) async {
+      await tester.pumpWidget(goldenApp(
+        const GoldenOnboardingComplete(),
+        brightness: Brightness.light,
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await matchesGolden(tester, 'light_clay_onboarding_complete.png');
     });
 
     testWidgets('SplashScreen', (tester) async {
