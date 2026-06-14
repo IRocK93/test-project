@@ -1449,21 +1449,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return PremiumCard(
       isGlass: true,
       padding: EdgeInsets.zero,
-      child: ExpansionTile(
-        dense: true,
-        visualDensity: VisualDensity.compact,
-        tilePadding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.spaceLg, vertical: DesignTokens.spaceSm),
-        childrenPadding: const EdgeInsets.fromLTRB(
-            DesignTokens.spaceSm, 0, DesignTokens.spaceSm, DesignTokens.spaceSm),
-        initiallyExpanded: false,
-        title: Row(
-          children: [
-            const Text('🏆', style: TextStyle(fontSize: 18)),
-            const SizedBox(width: DesignTokens.spaceSm),
-            const Expanded(
-              child: Text(
-                'Achievements',
+      child: Material(
+        type: MaterialType.transparency,
+        child: ExpansionTile(
+          dense: true,
+          visualDensity: VisualDensity.compact,
+          tilePadding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.spaceLg, vertical: DesignTokens.spaceSm),
+          childrenPadding: const EdgeInsets.fromLTRB(
+              DesignTokens.spaceSm, 0, DesignTokens.spaceSm, DesignTokens.spaceSm),
+          initiallyExpanded: false,
+          title: Row(
+            children: [
+              const Text('🏆', style: TextStyle(fontSize: 18)),
+              const SizedBox(width: DesignTokens.spaceSm),
+              const Expanded(
+                child: Text(
+                  'Achievements',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
@@ -1486,6 +1488,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           for (final entry in sorted.entries)
             _badgeCategoryTile(entry.key, entry.value),
         ],
+        ),
       ),
     );
   }
@@ -1496,41 +1499,44 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Widget _badgeCategoryTile(String cat, List<Map<String, dynamic>> badges) {
     final unlocked = _unlockedInCategory(cat);
     final total = _totalInCategory(cat);
-    return ExpansionTile(
-      dense: true,
-      visualDensity: VisualDensity.compact,
-      tilePadding: const EdgeInsets.symmetric(
-          horizontal: DesignTokens.spaceSm, vertical: 0),
-      childrenPadding: const EdgeInsets.only(bottom: DesignTokens.spaceSm),
-      initiallyExpanded: false,
-      title: Row(
-        children: [
-          Text(_categoryEmoji(cat), style: const TextStyle(fontSize: 14)),
-          const SizedBox(width: DesignTokens.spaceSm),
-          Expanded(
-            child: Text(
-              '${cat[0].toUpperCase()}${cat.substring(1)}',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
-                letterSpacing: 0.2,
+    return Material(
+      type: MaterialType.transparency,
+      child: ExpansionTile(
+        dense: true,
+        visualDensity: VisualDensity.compact,
+        tilePadding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.spaceSm, vertical: 0),
+        childrenPadding: const EdgeInsets.only(bottom: DesignTokens.spaceSm),
+        initiallyExpanded: false,
+        title: Row(
+          children: [
+            Text(_categoryEmoji(cat), style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: DesignTokens.spaceSm),
+            Expanded(
+              child: Text(
+                '${cat[0].toUpperCase()}${cat.substring(1)}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.2,
+                ),
               ),
             ),
-          ),
-          Text(
-            '$unlocked/$total',
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textCaption,
+            Text(
+              '$unlocked/$total',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textCaption,
+              ),
             ),
-          ),
+          ],
+        ),
+        children: [
+          _badgeGrid(badges),
         ],
       ),
-      children: [
-        _badgeGrid(badges),
-      ],
     );
   }
 

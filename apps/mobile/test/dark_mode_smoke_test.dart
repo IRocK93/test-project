@@ -288,6 +288,86 @@ void main() {
 
   // ─── Placeholder layout tests ──────────────────────────────────────
 
+  // ─── Clay dark mode screen tests ─────────────────────────────────
+
+  group('JournalScreen (clay)', () {
+    testWidgets('renders in dark clay mode without error', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(_screenApp(
+        const JournalScreen(),
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.byType(JournalScreen), findsOneWidget);
+    });
+  });
+
+  group('HealthScreen (clay)', () {
+    testWidgets('renders in dark clay mode without error', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(_screenApp(
+        const HealthScreen(),
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.byType(HealthScreen), findsOneWidget);
+    });
+  });
+
+  group('FeedingScreen (clay)', () {
+    testWidgets('renders in dark clay mode without error', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(_screenApp(
+        const FeedingScreen(),
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.byType(FeedingScreen), findsOneWidget);
+    });
+  });
+
+  group('SleepScreen (clay)', () {
+    testWidgets('renders in dark clay mode without error', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(_screenApp(
+        const SleepScreen(),
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.byType(SleepScreen), findsOneWidget);
+    });
+  });
+
+  group('GrowthChartScreen (clay)', () {
+    testWidgets('renders in dark clay mode without error', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(_screenApp(
+        const GrowthChartScreen(),
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.byType(GrowthChartScreen), findsOneWidget);
+    });
+  });
+
+  group('MilestonesScreen (clay)', () {
+    testWidgets('renders in dark clay mode without error', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(_screenApp(
+        const MilestonesScreen(),
+        visualStyle: AppVisualStyle.clay,
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.byType(MilestonesScreen), findsOneWidget);
+    });
+  });
+
   group('Login screen form layout', () {
     testWidgets('render login form fields in dark theme', (tester) async {
       // Test the login form layout without the full LoginScreen
