@@ -76,5 +76,8 @@ export 'health_record_row.dart' show HealthRecordRow;
 // ── Milestones ──
 export 'milestone_timeline_row.dart' show MilestoneTimelineRow;
 
+// ── Dialogs ──
+export 'confirm_delete_dialog.dart' show ConfirmDeleteDialog;
+
 // ── Pickers ──
 export 'wheel_picker.dart' show WheelPickerBottomSheet, WheelColumn, WheelOption;

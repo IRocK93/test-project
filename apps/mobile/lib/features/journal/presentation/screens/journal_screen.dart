@@ -4,12 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:baby_mon/core/core.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/mixins/mixins.dart';
-import 'package:baby_mon/core/constants/constants.dart';
-import 'package:baby_mon/core/utils/utils.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
-import 'package:baby_mon/core/widgets/widgets.dart';
 
 class JournalScreen extends ConsumerStatefulWidget {
   const JournalScreen({super.key});
@@ -250,11 +248,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
     return Scaffold(
       appBar: ScreenHeader(
         title: 'Journey Journal',
-        onBack: () {
-          GoRouter.of(context).canPop()
-              ? GoRouter.of(context).pop()
-              : context.go('/home');
-        },
+        onBack: () => popOrGoHome(context),
       ),
       body: PremiumBackground(
         child: loading
@@ -554,16 +548,15 @@ class _JournalEntryTile extends StatelessWidget {
           background: Container(
             color: AppColors.error,
             alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 24),
-            child: const Row(
+            padding: const EdgeInsets.only(right: 24),              child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(PhosphorIconsLight.trash, color: Colors.white, size: 20),
+                Icon(PhosphorIconsLight.trash, color: AppColors.textOnPrimary, size: 20),
                 SizedBox(width: 8),
                 Text(
                   'Delete',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.textOnPrimary,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
@@ -672,7 +665,7 @@ class _ProposalRow extends StatelessWidget {
                 label: const Text('Accept'),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.textOnPrimary,
                 ),
               ),
             ],

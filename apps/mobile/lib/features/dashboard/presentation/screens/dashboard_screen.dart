@@ -485,28 +485,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   infoDescription: 'Feeding',
                   backgroundColor: AppColors.warning,
                   onTap: () {},
-                  child: const Icon(PhosphorIconsLight.bowlFood, color: Colors.white),
+                  child: const Icon(PhosphorIconsLight.bowlFood, color: AppColors.textOnPrimary),
                 ),
                 InfoFabAction(
                   tooltip: 'Add Milestone',
                   infoDescription: 'Milestone',
                   backgroundColor: AppColors.accent,
                   onTap: () {},
-                  child: const Icon(PhosphorIconsLight.trophy, color: Colors.white),
+                  child: const Icon(PhosphorIconsLight.trophy, color: AppColors.textOnPrimary),
                 ),
                 InfoFabAction(
                   tooltip: 'Health Record',
                   infoDescription: 'Health',
                   backgroundColor: AppColors.success,
                   onTap: () {},
-                  child: const Icon(PhosphorIconsLight.heart, color: Colors.white),
+                  child: const Icon(PhosphorIconsLight.heart, color: AppColors.textOnPrimary),
                 ),
                 InfoFabAction(
                   tooltip: 'Create BabyMon',
                   infoDescription: 'New Baby',
                   backgroundColor: AppColors.secondary,
                   onTap: () => GoRouter.of(context).push('/create-baby-mon'),
-                  child: const Icon(PhosphorIconsLight.baby, color: Colors.white),
+                  child: const Icon(PhosphorIconsLight.baby, color: AppColors.textOnPrimary),
                 ),
               ],
             )
@@ -1462,7 +1462,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           initiallyExpanded: false,
           title: Row(
             children: [
-              const Text('🏆', style: TextStyle(fontSize: 18)),
+              const Icon(PhosphorIconsLight.trophy, size: 18, color: AppColors.warning),
               const SizedBox(width: DesignTokens.spaceSm),
               const Expanded(
                 child: Text(
@@ -1511,7 +1511,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         initiallyExpanded: false,
         title: Row(
           children: [
-            Text(_categoryEmoji(cat), style: const TextStyle(fontSize: 14)),
+            Icon(_categoryIcon(cat), size: 16, color: AppColors.textSecondary),
             const SizedBox(width: DesignTokens.spaceSm),
             Expanded(
               child: Text(
@@ -1563,24 +1563,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   // into a 4×N grid. The new _badgeGrid + _badgeCategoryHeader helpers
   // replace it.
 
-  String _categoryEmoji(String c) {
+  IconData _categoryIcon(String c) {
     switch (c) {
       case 'milestones':
-        return '🏅';
+        return PhosphorIconsLight.trophy;
       case 'feeding':
-        return '🍼';
+        return PhosphorIconsLight.bowlFood;
       case 'sleep':
-        return '💤';
+        return PhosphorIconsLight.moon;
       case 'health':
-        return '💉';
+        return PhosphorIconsLight.heart;
       case 'growth':
-        return '📏';
+        return PhosphorIconsLight.scales;
       case 'parenting':
-        return '👨\u200d👩\u200d👧';
+        return PhosphorIconsLight.users;
       case 'progression':
-        return '⚡';
+        return PhosphorIconsLight.lightning;
       default:
-        return '🏆';
+        return PhosphorIconsLight.trophy;
     }
   }
 
@@ -1726,7 +1726,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     showDialog<void>(
       context: context,
       barrierDismissible: true,
-      barrierColor: Colors.black54,
+      barrierColor: AppColors.textPrimary.withValues(alpha: 0.3),
       builder: (ctx) => LevelUpCelebration(
         level: newLevel,
         onDismiss: () => Navigator.of(ctx).pop(),

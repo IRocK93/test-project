@@ -1,10 +1,23 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import '../../../../core/utils/validators.dart';
-import '../providers/auth_provider.dart';
-import '../widgets/auth_text_field.dart';
+import 'dart:ui' as ui;
 
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:baby_mon/features/auth/auth.dart';
+import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/core/widgets/widgets.dart';
+import '../../../../core/utils/validators.dart';
+
+/// Register screen with matching auth card layout, password strength indicator,
+/// confirm password field, and social row.
+///
+/// ═══════════════════════════════════════════
+///  Auth provider: features/auth/auth.dart
+///  Google OAuth:  core/services/google_sign_in_service.dart
+///  Facebook OAuth: core/services/facebook_sign_in_service.dart
+///  Apple OAuth:   core/services/apple_sign_in_service.dart
+/// ═══════════════════════════════════════════
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -19,6 +32,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -28,33 +44,54 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
+  double get _passwordStrength {
+    final p = _passwordController.text;
+    if (p.isEmpty) return 0;
+    double score = 0;
+    if (p.length >= 6) score += 0.25;
+    if (p.length >= 10) score += 0.15;
+    if (RegExp(r'[A-Z]').hasMatch(p)) score += 0.2;
+    if (RegExp(r'[0-9]').hasMatch(p)) score += 0.2;
+    if (RegExp(r"[!@#\$%^&*(),.?':{}|<>]").hasMatch(p)) score += 0.2;
+    return score.clamp(0.0, 1.0);
+  }
+
+  Color get _strengthColor {
+    final s = _passwordStrength;
+    if (s == 0) return Colors.transparent;
+    if (s < 0.3) return AppColors.error;
+    if (s < 0.6) return AppColors.warning;
+    return AppColors.success;
+  }
+
+  String get _strengthLabel {
+    final s = _passwordStrength;
+    if (s == 0) return '';
+    if (s < 0.3) return 'Weak';
+    if (s < 0.6) return 'Fair';
+    if (s < 0.8) return 'Good';
+    return 'Strong';
+  }
+
   Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
       await ref.read(authProvider.notifier).register(
-        _emailController.text.trim(),
-        _passwordController.text,
-        _nameController.text.isNotEmpty ? _nameController.text.trim() : null,
-      );
+            _emailController.text.trim(),
+            _passwordController.text,
+            _nameController.text.isNotEmpty ? _nameController.text.trim() : null,
+          );
     }
   }
 
-  Future<void> _googleLogin() async {
-    await ref.read(authProvider.notifier).googleLogin();
-  }
-
-  Future<void> _appleLogin() async {
-    await ref.read(authProvider.notifier).appleLogin();
-  }
-
-  Future<void> _facebookLogin() async {
-    await ref.read(authProvider.notifier).facebookLogin();
-  }
+  Future<void> _googleLogin() async => await ref.read(authProvider.notifier).googleLogin();
+  Future<void> _appleLogin() async => await ref.read(authProvider.notifier).appleLogin();
+  Future<void> _facebookLogin() async => await ref.read(authProvider.notifier).facebookLogin();
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    // Navigate to email verification after successful registration
+    // Navigate after successful registration
     ref.listen<AuthState>(authProvider, (previous, next) {
       if (next.isLoggedIn && !next.isEmailVerified && mounted) {
         context.go('/verify-email?email=${Uri.encodeComponent(_emailController.text.trim())}');
@@ -64,179 +101,316 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 40),
-                const Icon(
-                  Icons.child_care,
-                  size: 80,
-                  color: Color(0xFF9C7CF4),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Create Account',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Join BabyMon today',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[400],
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                AuthTextField(
-                  controller: _nameController,
-                  labelText: 'Name (optional)',
-                  hintText: 'Enter your name',
-                  prefixIcon: Icons.person,
-                ),
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _emailController,
-                  labelText: 'Email',
-                  hintText: 'Enter your email',
-                  prefixIcon: Icons.email,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: emailValidator,
-                ),
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _passwordController,
-                  labelText: 'Password',
-                  hintText: 'Create a password',
-                  prefixIcon: Icons.lock,
-                  obscureText: true,
-                  validator: passwordValidator,
-                ),
-                const SizedBox(height: 16),
-                AuthTextField(
-                  controller: _confirmPasswordController,
-                  labelText: 'Confirm Password',
-                  hintText: 'Confirm your password',
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: true,
-                  validator: (value) => confirmPasswordValidator(value, _passwordController.text),
-                ),
-                const SizedBox(height: 24),
-                if (authState.error != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Text(
-                      authState.error!,
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ElevatedButton(
-                  onPressed: authState.isLoading ? null : _register,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF9C7CF4),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: authState.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.primary, AppColors.primaryDark],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(DesignTokens.spaceLg),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // ── Glass Auth Card ──
+                  StaggeredFadeSlide(
+                    index: 0,
+                    child: ClipRRect(
+                    borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
+                    child: BackdropFilter(
+                      filter: ui.ImageFilter.blur(
+                        sigmaX: DesignTokens.glassBlurMd,
+                        sigmaY: DesignTokens.glassBlurMd,
+                      ),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(DesignTokens.space2xl),
+                        decoration: BoxDecoration(
+                          color: AppColors.glassWhite,
+                          borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
+                          border: Border.all(
+                            color: AppColors.glassBorder,
+                            width: DesignTokens.glassBorderWidth,
                           ),
-                        )
-                      : const Text(
-                          'Create Account',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          boxShadow: [
+                            ...DesignTokens.glassShadow(null),
+                          ],
                         ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: Colors.grey[700])),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text('OR', style: TextStyle(color: Colors.grey[400])),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          // Logo
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryContainer,
+                              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                            ),
+                            child: const Icon(
+                              PhosphorIconsLight.baby,
+                              size: 36,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(height: DesignTokens.spaceLg),
+
+                          // Title
+                          const Text(
+                            'Create Account',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: DesignTokens.spaceXs),
+                          const Text(
+                            'Join BabyMon today',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: DesignTokens.space2xl),
+
+                          // Name
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Name (optional)',
+                              prefixIcon: Icon(PhosphorIconsLight.user),
+                            ),
+                          ),
+                          const SizedBox(height: DesignTokens.spaceMd),
+
+                          // Email
+                          TextFormField(
+                            controller: _emailController,
+                            decoration: const InputDecoration(
+                              labelText: 'Email',
+                              prefixIcon: Icon(PhosphorIconsLight.envelope),
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                            validator: emailValidator,
+                          ),
+                          const SizedBox(height: DesignTokens.spaceMd),
+
+                          // Password with strength indicator
+                          TextFormField(
+                            controller: _passwordController,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              prefixIcon: const Icon(PhosphorIconsLight.lock),
+                              suffixIcon: Semantics(
+                                label: 'Toggle password visibility',
+                                child: IconButton(
+                                  icon: Icon(_obscurePassword ? PhosphorIconsLight.eyeSlash : PhosphorIconsLight.eye),
+                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                ),
+                              ),
+                            ),
+                            obscureText: _obscurePassword,
+                            onChanged: (_) => setState(() {}),
+                            validator: passwordValidator,
+                          ),
+
+                          // Password strength bar
+                          if (_passwordController.text.isNotEmpty) ...[
+                            const SizedBox(height: DesignTokens.spaceSm),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(2),
+                              child: SizedBox(
+                                height: 3,
+                                child: FractionallySizedBox(
+                                  widthFactor: _passwordStrength,
+                                  child: Container(color: _strengthColor),
+                                ),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  _strengthLabel,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: _strengthColor,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: DesignTokens.spaceMd),
+
+                          // Confirm Password
+                          TextFormField(
+                            controller: _confirmPasswordController,
+                            decoration: InputDecoration(
+                              labelText: 'Confirm Password',
+                              prefixIcon: const Icon(PhosphorIconsLight.lock),
+                              suffixIcon: Semantics(
+                                label: 'Toggle password visibility',
+                                child: IconButton(
+                                  icon: Icon(_obscureConfirmPassword ? PhosphorIconsLight.eyeSlash : PhosphorIconsLight.eye),
+                                  onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                                ),
+                              ),
+                            ),
+                            obscureText: _obscureConfirmPassword,
+                            validator: (value) => confirmPasswordValidator(value, _passwordController.text),
+                          ),
+
+                          const SizedBox(height: DesignTokens.spaceLg),
+
+                          // Error
+                          if (authState.error != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: DesignTokens.spaceMd),
+                              child: Text(
+                                authState.error!,
+                                style: const TextStyle(color: AppColors.error, fontSize: 13),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+
+                          // Register button
+                          ThemeButton(
+                            text: 'Sign Up',
+                            onPressed: _register,
+                            isLoading: authState.isLoading,
+                            fullWidth: true,
+                            trailingIcon: PhosphorIconsLight.heart,
+                            borderRadius: DesignTokens.radiusFull,
+                            semanticLabel: 'Create your account',
+                          ),
+                        ],
+                      ),
                     ),
-                    Expanded(child: Divider(color: Colors.grey[700])),
-                  ],
+                  ),                  ),
                 ),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  onPressed: authState.isLoading ? null : _googleLogin,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: BorderSide(color: Colors.grey[700]!),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              ),
+                const SizedBox(height: DesignTokens.space2xl),
+
+              // ── Social Row ──
+              StaggeredFadeSlide(
+                index: 1,
+                child: Column(
+                    children: [
+                      const Row(
+                        children: [
+                          Expanded(child: Divider(color: AppColors.divider)),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: DesignTokens.spaceMd),
+                            child: Text(
+                              'OR',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textOnDark,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Expanded(child: Divider(color: AppColors.divider)),
+                        ],
+                      ),
+                      const SizedBox(height: DesignTokens.spaceLg),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _socialCircle(Icons.g_mobiledata, AppColors.warning, _googleLogin),
+                          const SizedBox(width: DesignTokens.spaceMd),
+                          _socialCircle(Icons.apple, AppColors.textPrimary, _appleLogin),
+                          const SizedBox(width: DesignTokens.spaceMd),
+                          _socialCircle(Icons.facebook, const Color(0xFF1877F2), _facebookLogin),
+                        ],
+                      ),
+                    ],
+                  ),
+              ),
+
+              const SizedBox(height: DesignTokens.space2xl),
+
+              // Login link
+              StaggeredFadeSlide(
+                index: 2,
+                child: Semantics(
+                    label: 'Navigate to login',
+                    button: true,
+                    child: GestureDetector(
+                    onTap: () => context.go('/login'),
+                    child: RichText(
+                      text: const TextSpan(
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textOnDark,
+                        ),
+                        children: [
+                          TextSpan(text: 'Already have an account? '),
+                          TextSpan(
+                            text: 'Login',
+                            style: TextStyle(
+                              color: AppColors.textOnDark,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  icon: const Icon(Icons.g_mobiledata, size: 24),
-                  label: const Text(
-                    'Continue with Google',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: authState.isLoading ? null : _appleLogin,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: BorderSide(color: Colors.grey[700]!),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: const Icon(Icons.apple, size: 24),
-                  label: const Text(
-                    'Continue with Apple',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: authState.isLoading ? null : _facebookLogin,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: BorderSide(color: Colors.grey[700]!),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  icon: const Icon(Icons.facebook, size: 24, color: Color(0xFF1877F2)),
-                  label: const Text(
-                    'Continue with Facebook',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => context.go('/login'),
-                  child: Text(
-                    'Already have an account? Login',
-                    style: TextStyle(color: Colors.grey[400]),
-                  ),
-                ),
-              ],
+              ),
+              ),
+                ],
+              ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _socialCircle(IconData icon, Color color, VoidCallback onTap) {
+    final label = icon == Icons.g_mobiledata
+        ? 'Sign up with Google'
+        : icon == Icons.apple
+            ? 'Sign up with Apple'
+            : 'Sign up with Facebook';
+    return Tooltip(
+      message: label,
+      preferBelow: false,
+      verticalOffset: 12,
+      decoration: BoxDecoration(
+        color: AppColors.textPrimary,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+      ),
+      textStyle: const TextStyle(
+        color: AppColors.textOnPrimary,
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+      ),
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppColors.surface.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
+          border: Border.all(
+            color: AppColors.textOnDark.withValues(alpha: 0.15),
+          ),
+        ),
+        child: IconButton(
+          onPressed: onTap,
+          icon: Icon(icon, color: AppColors.textOnDark, size: 22),
+          padding: EdgeInsets.zero,
         ),
       ),
     );

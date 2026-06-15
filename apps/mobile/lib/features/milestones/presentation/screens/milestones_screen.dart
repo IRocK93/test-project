@@ -74,25 +74,9 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
     // (avoids `use_build_context_synchronously` warnings if the widget
     // unmounts mid-delete).
     final messenger = ScaffoldMessenger.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        ),
-        title: const Text('Delete Milestone'),
-        content: const Text('Are you sure you want to delete this milestone?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: Theme.of(ctx).textTheme.labelLarge),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Delete', style: Theme.of(ctx).textTheme.labelLarge?.copyWith(color: AppColors.error)),
-          ),
-        ],
-      ),
+    final confirmed = await ConfirmDeleteDialog.show(
+      context,
+      itemType: 'milestone',
     );
     if (confirmed != true) return false;
     try {
@@ -213,7 +197,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
       floatingActionButton: FloatingActionButton(
         heroTag: 'add_milestone',
         backgroundColor: AppColors.accent,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.textOnPrimary,
         onPressed: _showAddMilestoneDialog,
         child: const Icon(PhosphorIconsLight.plus),
       ),

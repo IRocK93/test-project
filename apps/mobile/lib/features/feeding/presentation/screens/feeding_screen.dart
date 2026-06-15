@@ -120,26 +120,9 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
 
   Future<bool> _deleteFeedLog(String id, int index) async {
     final messenger = ScaffoldMessenger.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Log'),
-        content:
-            const Text('Are you sure you want to delete this feeding log?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
-      ),
+    final confirmed = await ConfirmDeleteDialog.show(
+      context,
+      itemType: 'feeding log',
     );
     if (confirmed != true) return false;
     try {
@@ -542,10 +525,9 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                                       alignment: Alignment.centerRight,
                                       padding:
                                           const EdgeInsets.only(right: 20),
-                                      color: AppColors.error,
-                                      child: const Icon(
+                                      color: AppColors.error,                                        child: const Icon(
                                         PhosphorIconsLight.trash,
-                                        color: Colors.white,
+                                        color: AppColors.textOnPrimary,
                                       ),
                                     ),
                                     child: PremiumCard(
@@ -597,7 +579,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
       floatingActionButton: FloatingActionButton(
         heroTag: 'add_feeding',
         backgroundColor: AppColors.warning,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.textOnPrimary,
         onPressed: _showAddFeedLogDialog,
         child: const Icon(PhosphorIconsLight.plus),
       ),

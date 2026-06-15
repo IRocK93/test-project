@@ -179,15 +179,10 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
   Future<bool> _deleteRecord(String id, int index) async {
     // Capture messenger upfront so we can safely use it after async gaps.
     final messenger = ScaffoldMessenger.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Record'),
-        content: const Text('Delete this health record?'),
-        actions: [            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: AppColors.error))),
-        ],
-      ),
+    final confirmed = await ConfirmDeleteDialog.show(
+      context,
+      title: 'Delete Record',
+      message: 'Delete this health record?',
     );
     if (confirmed != true) return false;
     try {
@@ -204,15 +199,10 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
   Future<bool> _deleteAllergyEvent(String eventId) async {
     // Capture messenger upfront so we can safely use it after async gaps.
     final messenger = ScaffoldMessenger.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Event'),
-        content: const Text('Delete this allergy event? (The allergy itself will remain)'),
-        actions: [            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: AppColors.error))),
-        ],
-      ),
+    final confirmed = await ConfirmDeleteDialog.show(
+      context,
+      title: 'Delete Event',
+      message: 'Delete this allergy event? (The allergy itself will remain)',
     );
     if (confirmed != true) return false;
     try {
@@ -324,14 +314,14 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
             infoDescription: 'Measurement',
             backgroundColor: AppColors.teal,
             onTap: () { _showMeasurementDialog(); },
-            child: const Icon(PhosphorIconsLight.ruler, color: Colors.white),
+            child: const Icon(PhosphorIconsLight.ruler, color: AppColors.textOnPrimary),
           ),
           InfoFabAction(
             tooltip: 'Add Event',
             infoDescription: 'Event',
             backgroundColor: AppColors.warning,
             onTap: () { _showEventDialog(); },
-            child: const Icon(PhosphorIconsLight.building, color: Colors.white),
+            child: const Icon(PhosphorIconsLight.building, color: AppColors.textOnPrimary),
           ),
         ],
       );

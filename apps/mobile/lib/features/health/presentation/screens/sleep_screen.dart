@@ -45,10 +45,11 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
   Future<bool> _deleteLog(String id, int index) async {
     // Capture messenger upfront so we can safely use it after async gaps.
     final messenger = ScaffoldMessenger.of(context);
-    final confirmed = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-      title: const Text('Delete Sleep Log'), content: const Text('Remove this sleep record?'),
-      actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary))), TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: AppColors.error)))],
-    ));
+    final confirmed = await ConfirmDeleteDialog.show(
+      context,
+      title: 'Delete Sleep Log',
+      message: 'Remove this sleep record?',
+    );
     if (confirmed != true) return false;
     try {
       await ref.read(apiClientProvider).deleteSleepLog(babyMonId!, id);
@@ -224,7 +225,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
                                 alignment: Alignment.center,
                                 child: barHeight > 18
                                     ? Text('${_formatTime(log['startTime']?.toString())}-${_formatTime(log['endTime']?.toString())}',
-                                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600))
+                                        style: const TextStyle(color: AppColors.textOnPrimary, fontSize: 10, fontWeight: FontWeight.w600))
                                     : null,
                               ),
                             );
@@ -348,7 +349,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
                 return ScrollStagger(
                     index: index,
                     child: Dismissible(key: Key(parseString(log['id']) ?? index.toString()), direction: DismissDirection.endToStart,                   confirmDismiss: (_) => _deleteLog(parseString(log['id']) ?? '', _sleepLogs.indexOf(log)),
-                  background: Container(alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 20), color: AppColors.error, child: const Icon(PhosphorIconsLight.trash, color: Colors.white)),
+                  background: Container(alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 20), color: AppColors.error, child: const Icon(PhosphorIconsLight.trash, color: AppColors.textOnPrimary)),
                   child: PremiumCard(
                     isGlass: true,
                     margin: const EdgeInsets.only(bottom: DesignTokens.spaceSm),
@@ -373,7 +374,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
       floatingActionButton: FloatingActionButton(
         heroTag: 'add_sleep',
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.textOnPrimary,
         onPressed: _showAddSleepDialog,
         child: const Icon(PhosphorIconsLight.moon),
       ),

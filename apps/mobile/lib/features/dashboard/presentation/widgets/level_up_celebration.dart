@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:baby_mon/core/constants/constants.dart';
 
 /// All 50 level names from the BabyMon Bloom Journey.
 const Map<int, String> _levelNames = {
@@ -102,7 +103,7 @@ class LevelUpCelebration extends StatefulWidget {
     showDialog<void>(
       context: context,
       barrierDismissible: true,
-      barrierColor: Colors.black54,
+      barrierColor: AppColors.textPrimary.withValues(alpha: 0.3),
       builder: (ctx) => LevelUpCelebration(
         level: newLevel,
         onDismiss: () => Navigator.of(ctx).pop(),
@@ -211,7 +212,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
                   Positioned.fill(
                     child: Opacity(
                       opacity: (_controller.value * 0.7).clamp(0.0, 0.7),
-                      child: Container(color: Colors.black),
+                      child: Container(color: AppColors.darkBackground),
                     ),
                   ),
                   // Content
@@ -258,7 +259,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
                             'Tap anywhere to continue',
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.white.withValues(alpha: 0.7),
+                              color: AppColors.textOnPrimary.withValues(alpha: 0.7),
                             ),
                           ),
                         ),
@@ -350,7 +351,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
             style: TextStyle(
               fontSize: _isLuminary ? 34 : 28,
               fontWeight: FontWeight.w900,
-              color: Colors.white,
+              color: AppColors.textOnPrimary,
               letterSpacing: -1.0,
               shadows: [
                 if (showGlow)
@@ -417,8 +418,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.white.withValues(alpha: 0.8),
+            fontWeight: FontWeight.w500,                              color: AppColors.textOnPrimary.withValues(alpha: 0.8),
           ),
         ),
       ),
@@ -451,8 +451,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Colors.white.withValues(alpha: 0.9),
+              fontWeight: FontWeight.w600,                              color: AppColors.textOnPrimary.withValues(alpha: 0.9),
               height: 1.5,
             ),
           ),
