@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { JwtService } from '@nestjs/jwt';
 import { MailService } from '../mail/mail.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -44,6 +45,7 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: { sign: jest.fn() } },
         { provide: SubscriptionsService, useValue: {} },
         { provide: MailService, useValue: mockMailService },
+        { provide: ConfigService, useValue: { get: jest.fn((key: string) => key === 'TRIAL_DAYS' ? '14' : undefined) } },
       ],
     }).compile();
 

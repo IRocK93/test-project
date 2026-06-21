@@ -1,4 +1,3 @@
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,13 +49,14 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.primary, AppColors.primaryDark],
+            colors: [colorScheme.primary, colorScheme.primaryContainer],
           ),
         ),
         child: SafeArea(
@@ -69,29 +69,10 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   // ── Glass card ──
                   StaggeredFadeSlide(
                     index: 0,
-                    child: ClipRRect(
-                    borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
-                    child: BackdropFilter(
-                      filter: ui.ImageFilter.blur(
-                        sigmaX: DesignTokens.glassBlurMd,
-                        sigmaY: DesignTokens.glassBlurMd,
-                      ),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(DesignTokens.space2xl),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.glassDark
-                              : AppColors.glassWhite,
-                          borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
-                          border: Border.all(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? AppColors.glassDarkBorder
-                                : AppColors.glassBorder,
-                            width: DesignTokens.glassBorderWidth,
-                          ),
-                          boxShadow: [...DesignTokens.glassShadow(null)],
-                        ),
+                    child: GlassSurface(
+                      borderRadius: DesignTokens.radius2xl,
+                      blurSigma: DesignTokens.glassBlurMd,
+                      padding: const EdgeInsets.all(DesignTokens.space2xl),
                         child: Form(
                           key: _formKey,
                           child: Column(
@@ -101,13 +82,13 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                                 width: 64,
                                 height: 64,
                                 decoration: BoxDecoration(
-                                  color: AppColors.primaryContainer,
+                                  color: colorScheme.primaryContainer,
                                   borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   PhosphorIconsLight.lockKey,
                                   size: 36,
-                                  color: AppColors.primary,
+                                  color: colorScheme.primary,
                                 ),
                               ),
                               const SizedBox(height: DesignTokens.spaceLg),
@@ -115,7 +96,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                                 'Reset Password',
                                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 22,
+                                  fontSize: DesignTokens.fontXl2,
                                 ),
                               ),
                               const SizedBox(height: DesignTokens.spaceXs),
@@ -186,9 +167,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                             ],
                           ),
                         ),
-                      ),                  ),
+                      ),
                 ),
-              ),
                 ],
               ),
             ),

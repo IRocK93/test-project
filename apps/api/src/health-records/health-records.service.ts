@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessControlService } from '../common/access-control.service';
+import { isWithinUndoWindow } from '../common/undo-window.helper';
 import { CreateHealthRecordDto, UpdateHealthRecordDto } from './dto/health-record.dto';
 
 @Injectable()
@@ -61,10 +62,7 @@ export class HealthRecordsService {
 
   async update(id: string, userId: string, dto: UpdateHealthRecordDto) {
     const record = await this.findOne(id, userId);
-    const createdAt = new Date(record.createdAt);
-    const minutesDiff = (new Date().getTime() - createdAt.getTime()) / (1000 * 60);
-
-    if (minutesDiff <= 10) {
+    if (isWithinUndoWindow(record.createdAt)) {
       return this.prisma.healthRecord.update({
         where: { id },
         data: {
@@ -86,10 +84,7 @@ export class HealthRecordsService {
 
   async delete(id: string, userId: string) {
     const record = await this.findOne(id, userId);
-    const createdAt = new Date(record.createdAt);
-    const minutesDiff = (new Date().getTime() - createdAt.getTime()) / (1000 * 60);
-
-    if (minutesDiff <= 10) {
+    if (isWithinUndoWindow(record.createdAt)) {
       await this.prisma.healthRecord.update({ where: { id }, data: { deletedAt: new Date() } });
       await this.prisma.babyMon.update({ where: { id: record.babymonId }, data: { currentXp: { decrement: record.xpAwarded } } });
       return { message: 'Health record deleted' };

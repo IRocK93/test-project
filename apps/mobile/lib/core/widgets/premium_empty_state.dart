@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import '../constants/app_colors.dart';
 import '../theme/design_tokens.dart';
 import 'sliver_fill_centered.dart';
 import 'theme_button.dart';
@@ -67,6 +66,7 @@ class PremiumEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return SliverFillCentered(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -76,14 +76,14 @@ class PremiumEmptyState extends StatelessWidget {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: AppColors.primaryContainer,
+              color: colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
             ),
             child: customIcon ??
                 Icon(
                   icon,
                   size: 36,
-                  color: AppColors.primary.withValues(alpha: 0.6),
+                  color: colorScheme.primary.withValues(alpha: 0.6),
                 ),
           ),
           const SizedBox(height: DesignTokens.space2xl),
@@ -103,7 +103,7 @@ class PremiumEmptyState extends StatelessWidget {
             Text(
               subtitle!,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: colorScheme.onSurfaceVariant,
                   ),
               textAlign: TextAlign.center,
             ),

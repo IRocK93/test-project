@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { ConfigModule } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -27,6 +28,7 @@ const safeJwtSecret = jwtSecret || 'babymon-jwt-secret-do-not-use-in-production'
     PrismaModule,
     SubscriptionsModule,
     MailModule,
+    ConfigModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateMilestoneDto, UpdateMilestoneDto } from './dto/milestone.dto';
 import { BadgesService } from '../badges/badges.service';
 import { AccessControlService } from '../common/access-control.service';
+import { isWithinUndoWindow } from '../common/undo-window.helper';
 
 @Injectable()
 export class MilestonesService {
@@ -104,11 +105,7 @@ export class MilestonesService {
     const milestone = await this.findOne(id, userId);
 
     // Check if within 10-minute undo window
-    const createdAt = new Date(milestone.createdAt);
-    const now = new Date();
-    const minutesDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-
-    if (minutesDiff <= 10) {
+    if (isWithinUndoWindow(milestone.createdAt)) {
       // Allow direct update
       return this.prisma.milestone.update({
         where: { id },
@@ -142,11 +139,7 @@ export class MilestonesService {
     const milestone = await this.findOne(id, userId);
 
     // Check if within 10-minute undo window
-    const createdAt = new Date(milestone.createdAt);
-    const now = new Date();
-    const minutesDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-
-    if (minutesDiff <= 10) {
+    if (isWithinUndoWindow(milestone.createdAt)) {
       // Allow direct delete
       await this.prisma.milestone.update({
         where: { id },

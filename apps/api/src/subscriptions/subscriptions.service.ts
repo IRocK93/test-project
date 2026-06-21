@@ -13,7 +13,7 @@ export class SubscriptionsService {
 
     if (!subscription) {
       return {
-        tier: 'CORE',
+        tier: 'FREE',
         trialActive: false,
         hasSubscription: false,
       };
@@ -93,7 +93,7 @@ export class SubscriptionsService {
       create: {
         id: `dev-${userId}`,
         userId,
-        tier: 'CORE',
+        tier: 'FREE',
         trialStartDate: new Date(),
         trialEndDate: trialEnd,
         isActive: true,

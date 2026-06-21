@@ -33,6 +33,7 @@ export 'theme_text.dart' show ThemeText;
 export 'premium_background.dart' show PremiumBackground;
 
 // ── Premium Components ──
+export 'glass_surface.dart' show GlassSurface;
 export 'premium_card.dart' show PremiumCard, BentoVariant;
 export 'premium_double_bezel.dart' show PremiumDoubleBezel;
 export 'premium_empty_state.dart' show PremiumEmptyState;

@@ -63,7 +63,7 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
-      messenger.showSnackBar(const SnackBar(content: Text('Partners feature coming soon')));
+      messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
     }
   }
 
@@ -78,7 +78,7 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
       await _fetchPartners();
       messenger.showSnackBar(const SnackBar(content: Text('Invitation sent!')));
     } catch (e) {
-      messenger.showSnackBar(const SnackBar(content: Text('Partners feature coming soon')));
+      messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
     }
   }
 
@@ -89,7 +89,7 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
       await _fetchPartners();
       messenger.showSnackBar(SnackBar(content: Text(status == 'ACCEPTED' ? 'Partner accepted!' : 'Invitation declined')));
     } catch (e) {
-      messenger.showSnackBar(const SnackBar(content: Text('Partners feature coming soon')));
+      messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
     }
   }
 
@@ -103,7 +103,7 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
     );
     if (confirmed != true) return;
     try {
-      await ref.read(apiClientProvider).removePartner(partnerId);
+      await ref.read(apiClientProvider).removePartner(_babyMonId ?? '', partnerId);
       if (mounted) setState(() => _partners.removeAt(index));
       messenger.showSnackBar(const SnackBar(content: Text('Partner removed')));
     } catch (e) {
@@ -234,14 +234,14 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
             ),
           ),
       floatingActionButton: FadeScaleIn(
-        child: FloatingActionButton.extended(
-          heroTag: 'add_partner',
-          backgroundColor: AppColors.primary,
-          onPressed: _showInviteDialog,
-          icon: const Icon(PhosphorIconsLight.userPlus, color: AppColors.textOnPrimary),
-          label: const Text('Invite Partner', style: TextStyle(color: AppColors.textOnPrimary)),
-        ),
-      ),
+              child: FloatingActionButton.extended(
+                heroTag: 'add_partner',
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                onPressed: _showInviteDialog,
+                icon: const Icon(PhosphorIconsLight.userPlus, color: AppColors.textOnPrimary),
+                label: const Text('Invite Partner', style: TextStyle(color: AppColors.textOnPrimary)),
+              ),
+            ),
     );
   }
 

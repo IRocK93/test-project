@@ -1,6 +1,7 @@
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
+import 'package:baby_mon/core/utils/json_utils.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDatasource _datasource;
@@ -13,18 +14,36 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<({User user, String token})> register({required String email, required String password, String? name}) async {
-    return await _datasource.register(email: email, password: password, name: name);
+  Future<({User user, String token})> register({
+    required String email,
+    required String password,
+    String? name,
+    required DateTime dateOfBirth,
+    required bool tosAccepted,
+    required bool privacyAccepted,
+    required bool consentToDataProcessing,
+  }) async {
+    return await _datasource.register(
+      email: email,
+      password: password,
+      name: name,
+      dateOfBirth: dateOfBirth,
+      tosAccepted: tosAccepted,
+      privacyAccepted: privacyAccepted,
+      consentToDataProcessing: consentToDataProcessing,
+    );
   }
 
   @override
   Future<({User user, String token})> biometricLogin() async {
     try {
       final response = await _datasource.post('/api/auth/biometric-verify');
-      final data = response.data as Map<String, dynamic>;
+      final raw = response.data;
+      if (raw is! Map) throw Exception('Invalid response format');
+      final data = parseJsonMap(raw)!;
       return (
-        user: User.fromJson(data['user']),
-        token: data['token'] as String,
+        user: User.fromJson(parseJsonMap(data['user']) ?? {}),
+        token: parseString(data['token']) ?? '',
       );
     } catch (e) {
       throw Exception('Biometric login failed: $e');
@@ -81,5 +100,20 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<bool> isLoggedIn() async {
     return await _datasource.isLoggedIn();
+  }
+
+  @override
+  Future<({User user, String token})> googleLogin(String idToken) async {
+    return await _datasource.googleLogin(idToken);
+  }
+
+  @override
+  Future<({User user, String token})> appleLogin(String idToken) async {
+    return await _datasource.appleLogin(idToken);
+  }
+
+  @override
+  Future<({User user, String token})> facebookLogin(String accessToken) async {
+    return await _datasource.facebookLogin(accessToken);
   }
 }

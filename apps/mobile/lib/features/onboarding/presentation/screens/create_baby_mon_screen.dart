@@ -63,6 +63,20 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
   late final AnimationController _particleController;
   bool _showParticles = false;
 
+  // ── Loading phase ──
+  bool _loadingStep = false;
+  int _loadingMessageIndex = 0;
+  Timer? _loadingTimer;
+
+  static const List<String> _loadingMessages = [
+    'Weaving the nest…',
+    'Gathering tiny blankets…',
+    'Warming the incubator…',
+    'Preparing a gentle arrival…',
+    'Writing the first lullaby…',
+    'Almost ready…',
+  ];
+
   // ── Calendar state ──
   DateTime _calendarMonth =
       DateTime(DateTime.now().year, DateTime.now().month);
@@ -160,6 +174,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     _orbController.dispose();
     _splashFadeController.dispose();
     _particleController.dispose();
+    _loadingTimer?.cancel();
     super.dispose();
   }
 
@@ -306,14 +321,36 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         data['ideaDate'] = DateFormat('yyyy-MM-dd').format(_ideaDate!);
       }
 
-      await Future<void>.delayed(const Duration(milliseconds: 600));
-
       final response =
           await ref.read(apiClientProvider).post('/baby-mons', data: data);
       await ref
           .read(apiClientProvider)
           .setSelectedBabyMonId(parseString(response.data['id']));
       ref.read(appRefreshProvider.notifier).state++;
+
+      // ── Loading phase: cycle messages for ~6 seconds ──
+      setState(() {
+        _loadingStep = true;
+        _isLoading = false;
+        _isCompleting = false;
+        _showParticles = false;
+      });
+      _particleController.reset();
+
+      _loadingMessageIndex = 0;
+      _loadingTimer = Timer.periodic(const Duration(milliseconds: 1200), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        setState(() {
+          _loadingMessageIndex = (_loadingMessageIndex + 1) % _loadingMessages.length;
+        });
+      });
+
+      // Navigate home after the loading phase
+      await Future<void>.delayed(const Duration(milliseconds: 6200));
+      _loadingTimer?.cancel();
       if (mounted) context.go('/home');
     } catch (e) {
       setState(() {
@@ -380,16 +417,16 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                   height: 32,
                   decoration: BoxDecoration(
                     color: isActive
-                        ? AppColors.primary
+                        ? context.colorScheme.primary
                         : isCompleted
-                            ? AppColors.success
-                            : _textColor.withValues(alpha: 0.15),
+                            ? context.colorScheme.primary
+                            : _textColor.withValues(alpha: DesignTokens.opacitySubtle),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: isActive
                         ? [
                             BoxShadow(
                               color:
-                                  AppColors.primary.withValues(alpha: 0.3),
+                                  context.colorScheme.primary.withValues(alpha: DesignTokens.opacityDim),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -398,14 +435,14 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                   ),
                   alignment: Alignment.center,
                   child: isCompleted
-                      ? const Icon(PhosphorIconsLight.check,
-                          size: 16, color: Colors.white)
+                      ? Icon(PhosphorIconsLight.check,
+                          size: 16, color: context.colorScheme.onPrimary)
                       : i == 0
                           ? Icon(
                               PhosphorIconsLight.heart,
                               size: 16,
                               color: isActive
-                                  ? Colors.white
+                                  ? context.colorScheme.onPrimary
                                   : _textColor.withValues(alpha: 0.5),
                             )
                           : Text(
@@ -427,8 +464,8 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                         gradient: LinearGradient(
                           colors: i < _currentStep
                               ? [
-                                  AppColors.success,
-                                  AppColors.success.withValues(alpha: 0.3)
+                                  context.colorScheme.primary,
+                                  context.colorScheme.primary.withValues(alpha: DesignTokens.opacityDim)
                                 ]
                               : [
                                   _textColor.withValues(alpha: 0.12),
@@ -482,15 +519,15 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                           center: Alignment.center,
                           radius: 0.5,
                           colors: [
-                            AppColors.primaryLight.withValues(alpha: 0.8),
-                            AppColors.primary.withValues(alpha: 0.4),
-                            AppColors.primaryDark.withValues(alpha: 0.1),
+                            context.colorScheme.primary.withValues(alpha: 0.8),
+                            context.colorScheme.primary.withValues(alpha: DesignTokens.opacityDisabled),
+                            context.colorScheme.primaryContainer.withValues(alpha: 0.1),
                           ],
                         ),
                         boxShadow: [
                           BoxShadow(
                             color:
-                                AppColors.primary.withValues(alpha: 0.3),
+                                context.colorScheme.primary.withValues(alpha: DesignTokens.opacityDim),
                             blurRadius: 24,
                             spreadRadius: 4,
                           ),
@@ -609,15 +646,15 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                       center: Alignment.center,
                       radius: 0.5,
                       colors: [
-                        AppColors.primaryLight.withValues(alpha: 0.6),
-                        AppColors.primary.withValues(alpha: 0.3),
-                        AppColors.primaryDark.withValues(alpha: 0.05),
+                        context.colorScheme.primary.withValues(alpha: 0.6),
+                        context.colorScheme.primary.withValues(alpha: DesignTokens.opacityDim),
+                        context.colorScheme.primaryContainer.withValues(alpha: 0.05),
                       ],
                     ),
                     boxShadow: _nameController.text.isNotEmpty
                         ? [
                             BoxShadow(
-                              color: AppColors.primary
+                              color: context.colorScheme.primary
                                   .withValues(alpha: 0.25),
                               blurRadius: 16,
                             ),
@@ -625,10 +662,10 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                         : null,
                   ),
                   alignment: Alignment.center,
-                  child: const Icon(
+                  child: Icon(
                     PhosphorIconsLight.baby,
                     size: 40,
-                    color: AppColors.primary,
+                    color: context.colorScheme.primary,
                   ),
                 ),
               );
@@ -639,7 +676,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
           PremiumDoubleBezel(
             outerRadius: DesignTokens.radius2xl,
             gap: 5.0,
-            outerColor: AppColors.primary.withValues(alpha: 0.06),
+            outerColor: context.colorScheme.primary.withValues(alpha: DesignTokens.opacityGhost),
             innerPadding: const EdgeInsets.all(DesignTokens.spaceSm),
             child: TextField(
               controller: _nameController,
@@ -703,9 +740,9 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                   ),
                 ),
                 backgroundColor:
-                    AppColors.primary.withValues(alpha: 0.10),
+                    context.colorScheme.primary.withValues(alpha: 0.10),
                 side: BorderSide(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: context.colorScheme.primary.withValues(alpha: DesignTokens.opacitySubtle),
                 ),
                 onPressed: () {
                   _nameController.text = name;
@@ -733,40 +770,72 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
   // ═══════════════════════════════════════
 
   Widget _buildStageStep() {
+    final pageController = PageController(
+      initialPage: _stageType == 'BORN' ? 0 : _stageType == 'CONCEIVED' ? 1 : 2,
+      viewportFraction: 0.82,
+    );
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: DesignTokens.spaceSm),
-          // ── Stage cards ──
-          Row(
-            children: [
-              _buildStageCard(
-                value: 'BORN',
-                icon: PhosphorIconsLight.baby,
-                title: 'Born',
-                description: 'A gentle arrival.\nThe world welcomed them.',
-              ),
-              const SizedBox(width: DesignTokens.spaceSm),
-              _buildStageCard(
-                value: 'CONCEIVED',
-                icon: PhosphorIconsLight.heart,
-                title: 'Conceived',
-                description:
-                    'A beautiful surprise.\nThe journey began in stillness.',
-              ),
-              const SizedBox(width: DesignTokens.spaceSm),
-              _buildStageCard(
-                value: 'IDEA',
-                icon: PhosphorIconsLight.lightbulb,
-                title: 'Idea',
-                description:
-                    'A heartfelt wish.\nLong before they existed,\nthey were loved.',
-              ),
-            ],
+          // ── Stage cards — horizontal swipeable carousel ──
+          SizedBox(
+            height: 176,
+            child: PageView(
+              controller: pageController,
+              onPageChanged: (i) {
+                setState(() {
+                  _stageType = i == 0 ? 'BORN' : i == 1 ? 'CONCEIVED' : 'IDEA';
+                });
+              },
+              children: [
+                _buildStageCard(
+                  value: 'BORN',
+                  icon: PhosphorIconsLight.baby,
+                  title: 'Born',
+                  description: 'A gentle arrival.\nThe world welcomed them.',
+                  subText: 'Your BabyMon is already in the wild.\nWhen did you first meet?',
+                ),
+                _buildStageCard(
+                  value: 'CONCEIVED',
+                  icon: PhosphorIconsLight.heart,
+                  title: 'Incubating',
+                  description: 'A beautiful surprise.\nThe journey began in stillness.',
+                  subText: 'Expecting a surprise!\nWhen is it due?',
+                ),
+                _buildStageCard(
+                  value: 'IDEA',
+                  icon: PhosphorIconsLight.lightbulb,
+                  title: 'Plan',
+                  description: 'A heartfelt wish.\nLong before they existed,\nthey were loved.',
+                  subText: "Wouldn't it be nice to catch\n1 or 2 little BabyMons?",
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: DesignTokens.spaceXl),
+          const SizedBox(height: DesignTokens.spaceSm),
+          // ── Page dots ──
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(3, (i) {
+              final active = i == (_stageType == 'BORN' ? 0 : _stageType == 'CONCEIVED' ? 1 : 2);
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: active ? 16 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: active
+                      ? context.colorScheme.primary
+                      : _textColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: DesignTokens.spaceLg),
           // ── Calendar grid ──
           _buildCalendarGrid(),
         ],
@@ -779,65 +848,106 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     required IconData icon,
     required String title,
     required String description,
+    required String subText,
   }) {
     final isSelected = _stageType == value;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Expanded(
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        child: PremiumDoubleBezel(
-          outerRadius: DesignTokens.radiusXl,
-          gap: 4.0,
-          outerColor: isSelected
-              ? AppColors.primary.withValues(alpha: 0.12)
-              : _textColor.withValues(alpha: 0.04),
-          innerColor: isSelected
-              ? AppColors.primary.withValues(alpha: 0.08)
-              : (isDark ? AppColors.glassDark : AppColors.glassWhite),
-          innerPadding: const EdgeInsets.symmetric(
-            vertical: DesignTokens.spaceMd,
-            horizontal: DesignTokens.spaceSm,
-          ),
-          showInnerHighlight: isSelected,
-          onTap: () => setState(() => _stageType = value),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Transform.scale(
-                scale: isSelected ? 1.05 : 1.0,
-                child: Icon(
-                  icon,
-                  size: 28,
-                  color: isSelected
-                      ? AppColors.primary
-                      : _textColor.withValues(alpha: 0.45),
+    return AnimatedScale(
+      scale: isSelected ? 1.04 : 0.95,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceSm),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Card ──
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              child: PremiumDoubleBezel(
+                outerRadius: DesignTokens.radiusXl,
+                gap: 4.0,
+                outerColor: isSelected
+                    ? context.colorScheme.primary.withValues(alpha: 0.18)
+                    : _textColor.withValues(alpha: 0.04),
+                innerColor: isSelected
+                    ? context.colorScheme.primary.withValues(alpha: 0.1)
+                    : (isDark ? context.glass.background : context.glass.surface),
+                innerPadding: const EdgeInsets.symmetric(
+                  vertical: DesignTokens.spaceSm,
+                  horizontal: DesignTokens.spaceXs,
+                ),
+                showInnerHighlight: isSelected,
+                onTap: () => setState(() => _stageType = value),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedScale(
+                      scale: isSelected ? 1.1 : 1.0,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                      child: Icon(
+                        icon,
+                        size: isSelected ? 30 : 22,
+                        color: isSelected
+                            ? context.colorScheme.primary
+                            : _textColor.withValues(alpha: 0.45),
+                      ),
+                    ),
+                    const SizedBox(height: DesignTokens.spaceXs),
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                      style: TextStyle(
+                        fontSize: isSelected ? 15 : 12,
+                        fontWeight: FontWeight.w700,
+                        color: isSelected
+                            ? context.colorScheme.primary
+                            : _textColor.withValues(alpha: 0.7),
+                      ),
+                      textAlign: TextAlign.center,
+                      child: Text(title),
+                    ),
+                    const SizedBox(height: 2),
+                    AnimatedDefaultTextStyle(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                      style: TextStyle(
+                        fontSize: isSelected ? 11 : 10,
+                        color: isSelected
+                            ? _textColor.withValues(alpha: 0.85)
+                            : _textColor.withValues(alpha: 0.45),
+                        height: 1.3,
+                      ),
+                      textAlign: TextAlign.center,
+                      child: Text(description),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: DesignTokens.spaceSm),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: isSelected
-                          ? AppColors.primary
-                          : _textColor.withValues(alpha: 0.7),
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: DesignTokens.spaceXs),
-              Text(
-                description,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: isSelected
-                          ? _textColor.withValues(alpha: 0.85)
-                          : _textColor.withValues(alpha: 0.45),
-                      height: 1.4,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+            ),
+            // ── Sub-text (visible only when selected) ──
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              alignment: Alignment.topCenter,
+              child: isSelected
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: DesignTokens.spaceMd),
+                      child: Text(
+                        subText,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: _textColor.withValues(alpha: 0.55),
+                              fontStyle: FontStyle.italic,
+                              height: 1.4,
+                            ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
         ),
       ),
     );
@@ -861,17 +971,20 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     final isCurrentMonth = year == today.year && month == today.month;
 
     final now = DateTime.now();
-    final maxAllowed = _stageType == 'IDEA'
-        ? DateTime(now.year, now.month, now.day)
-            .add(const Duration(days: 280))
-        : DateTime(now.year, now.month, now.day);
+    // Incubating allows future dates up to ~40 weeks (due date range)
+    // Plan allows up to a year in the future
+    final maxAllowed = _stageType == 'CONCEIVED'
+        ? DateTime(now.year, now.month, now.day).add(const Duration(days: 280))
+        : _stageType == 'IDEA'
+            ? DateTime(now.year, now.month, now.day).add(const Duration(days: 365))
+            : DateTime(now.year, now.month, now.day);
 
     const weekdayHeaders = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
     return PremiumDoubleBezel(
       outerRadius: DesignTokens.radius2xl,
       gap: 5.0,
-      outerColor: AppColors.primary.withValues(alpha: 0.06),
+      outerColor: context.colorScheme.primary.withValues(alpha: DesignTokens.opacityGhost),
       innerPadding: const EdgeInsets.all(DesignTokens.spaceMd),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -977,16 +1090,16 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                   curve: DesignTokens.curvePremium,
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.primary
+                        ? context.colorScheme.primary
                         : isToday
-                            ? AppColors.primary.withValues(alpha: 0.15)
+                            ? context.colorScheme.primary.withValues(alpha: DesignTokens.opacitySubtle)
                             : Colors.transparent,
                     borderRadius:
                         BorderRadius.circular(DesignTokens.radiusSm),
                     border: isToday && !isSelected
                         ? Border.all(
-                            color: AppColors.primary
-                                .withValues(alpha: 0.3),
+                            color: context.colorScheme.primary
+                                .withValues(alpha: DesignTokens.opacityDim),
                             width: 1,
                           )
                         : null,
@@ -1000,7 +1113,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                           ? FontWeight.w700
                           : FontWeight.w500,
                       color: isSelected
-                          ? Colors.white
+                          ? context.colorScheme.onPrimary
                           : isFuture
                               ? _textColor.withValues(alpha: 0.2)
                               : _textColor.withValues(alpha: 0.7),
@@ -1029,10 +1142,10 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                   });
                 }
               },
-              child: const Text(
+              child: Text(
                 'Today',
                 style: TextStyle(
-                  color: AppColors.primary,
+                  color: context.colorScheme.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1121,17 +1234,17 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                     }
                   });
                 },
-                selectedColor: AppColors.primaryContainer,
-                checkmarkColor: AppColors.primary,
-                backgroundColor: _textColor.withValues(alpha: 0.06),
+                selectedColor: context.colorScheme.primaryContainer,
+                checkmarkColor: context.colorScheme.primary,
+                backgroundColor: _textColor.withValues(alpha: DesignTokens.opacityGhost),
                 side: BorderSide(
                   color: selected
-                      ? AppColors.primary.withValues(alpha: 0.5)
+                      ? context.colorScheme.primary.withValues(alpha: 0.5)
                       : _textColor.withValues(alpha: 0.1),
                 ),
                 labelStyle: TextStyle(
                   color: selected
-                      ? AppColors.primary
+                      ? context.colorScheme.primary
                       : _textColor.withValues(alpha: 0.7),
                   fontWeight:
                       selected ? FontWeight.w600 : FontWeight.w500,
@@ -1194,7 +1307,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
           PremiumDoubleBezel(
             outerRadius: DesignTokens.radiusXl,
             gap: 4.0,
-            outerColor: AppColors.primary.withValues(alpha: 0.04),
+            outerColor: context.colorScheme.primary.withValues(alpha: 0.04),
             innerPadding: const EdgeInsets.all(DesignTokens.spaceSm),
             child: TextField(
               controller: _specialMoveController,
@@ -1202,7 +1315,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                 hintText: 'e.g. "Loves bath time", "Funny laugh"',
                 hintStyle:
                     Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: _textColor.withValues(alpha: 0.3),
+                          color: _textColor.withValues(alpha: DesignTokens.opacityDim),
                         ),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(
@@ -1252,7 +1365,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                           gradientColors[1].withValues(alpha: 0.6),
                         ]
                       : [
-                          gradientColors[0].withValues(alpha: 0.3),
+                          gradientColors[0].withValues(alpha: DesignTokens.opacityDim),
                           gradientColors[1].withValues(alpha: 0.2),
                         ],
                 ),
@@ -1298,6 +1411,11 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
   // ═══════════════════════════════════════
 
   Widget _buildReviewStep() {
+    // ── Loading phase overlay ──
+    if (_loadingStep) {
+      return _buildLoadingPhase();
+    }
+
     return Stack(
       children: [
         SingleChildScrollView(
@@ -1311,16 +1429,16 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
               PremiumDoubleBezel(
                 outerRadius: DesignTokens.radius2xl,
                 gap: 5.0,
-                outerColor: AppColors.primary.withValues(alpha: 0.08),
+                outerColor: context.colorScheme.primary.withValues(alpha: 0.08),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const SizedBox(height: DesignTokens.spaceSm),
                     // ── Sparkle icon ──
-                    const Icon(
+                    Icon(
                       PhosphorIconsLight.sparkle,
                       size: 24,
-                      color: AppColors.primary,
+                      color: context.colorScheme.primary,
                     ),
                     const SizedBox(height: DesignTokens.spaceMd),
                     // ── Name ──
@@ -1427,6 +1545,94 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     );
   }
 
+  Widget _buildLoadingPhase() {
+    final msg = _loadingMessages[_loadingMessageIndex];
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space2xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Animated orb ──
+            AnimatedBuilder(
+              animation: _orbPulse,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _orbPulse.value,
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          context.colorScheme.primary.withValues(alpha: 0.7),
+                          context.colorScheme.primary.withValues(alpha: 0.2),
+                        ],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: context.colorScheme.primary.withValues(alpha: 0.25),
+                          blurRadius: 20,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      PhosphorIconsLight.sparkle,
+                      size: 28,
+                      color: Colors.white,
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: DesignTokens.space2xl),
+            // ── Cycling message ──
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.05),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: Text(
+                msg,
+                key: ValueKey(msg),
+                textAlign: TextAlign.center,
+                style: GoogleFonts.syne(
+                  textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: _textColor,
+                        fontStyle: FontStyle.italic,
+                        height: 1.4,
+                      ),
+                ),
+              ),
+            ),
+            const SizedBox(height: DesignTokens.spaceMd),
+            // ── Spinner ──
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: context.colorScheme.primary.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _formatPoeticDate() {
     final date = _stageType == 'BORN'
         ? _birthDate
@@ -1476,14 +1682,14 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.12),
+              color: context.colorScheme.primary.withValues(alpha: 0.12),
               borderRadius:
                   BorderRadius.circular(DesignTokens.radiusSm),
             ),
             child: Icon(
               icon,
               size: 16,
-              color: AppColors.primary.withValues(alpha: 0.7),
+              color: context.colorScheme.primary.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(width: DesignTokens.spaceMd),
@@ -1531,7 +1737,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
             child: CustomPaint(
               painter: _ParticleBurstPainter(
                 progress: t,
-                color: AppColors.primary,
+                color: context.colorScheme.primary,
               ),
             ),
           ),
@@ -1572,17 +1778,17 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
   Color get _bezelTint {
     switch (_currentStep) {
       case 0:
-        return AppColors.primary.withValues(alpha: 0.06);
+        return context.colorScheme.primary.withValues(alpha: DesignTokens.opacityGhost);
       case 1:
-        return AppColors.primary.withValues(alpha: 0.06);
+        return context.colorScheme.primary.withValues(alpha: DesignTokens.opacityGhost);
       case 2:
-        return AppColors.secondary.withValues(alpha: 0.06);
+        return context.colorScheme.secondary.withValues(alpha: DesignTokens.opacityGhost);
       case 3:
         return AppColors.genderNeutral.withValues(alpha: 0.08);
       case 4:
-        return AppColors.primary.withValues(alpha: 0.06);
+        return context.colorScheme.primary.withValues(alpha: DesignTokens.opacityGhost);
       default:
-        return AppColors.primary.withValues(alpha: 0.06);
+        return context.colorScheme.primary.withValues(alpha: DesignTokens.opacityGhost);
     }
   }
 
@@ -1738,12 +1944,12 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
           child: PremiumDoubleBezel(
             outerRadius: DesignTokens.radiusFull,
             gap: 2.0,
-            outerColor: AppColors.border.withValues(alpha: 0.12),
+            outerColor: context.colorScheme.outline.withValues(alpha: 0.12),
             innerPadding: EdgeInsets.zero,
             innerColor:
                 Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.glassDark
-                    : AppColors.glassWhite,
+                    ? context.glass.background
+                    : context.glass.surface,
             showInnerHighlight: false,
             onTap: _currentStep > 0
                 ? _prevStep

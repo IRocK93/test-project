@@ -36,7 +36,7 @@ class ConfirmDeleteDialog {
                   ? 'Are you sure you want to delete this $itemType? This action cannot be undone.'
                   : 'Are you sure?'),
           style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
+                color: context.colorScheme.onSurfaceVariant,
                 height: 1.4,
               ),
         ),
@@ -44,7 +44,7 @@ class ConfirmDeleteDialog {
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.textSecondary,
+              foregroundColor: context.colorScheme.onSurfaceVariant,
             ),
             child: Text(
               'Cancel',
@@ -54,13 +54,13 @@ class ConfirmDeleteDialog {
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(
-              foregroundColor: confirmColor ?? AppColors.error,
+              foregroundColor: confirmColor ?? context.colorScheme.error,
             ),
             child: Text(
               confirmLabel ?? 'Delete',
               style: Theme.of(ctx).textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: confirmColor ?? AppColors.error,
+                    color: confirmColor ?? context.colorScheme.error,
                   ),
             ),
           ),

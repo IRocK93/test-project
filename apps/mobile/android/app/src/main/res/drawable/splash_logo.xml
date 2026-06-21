@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- BabyMon Splash Screen Branding -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    <!-- Background circle -->
+    <path
+        android:fillColor="#F0EDFF"
+        android:pathData="M100,30 a70,70 0 1,1 0,140 a70,70 0 1,1 0,-140"/>
+    <!-- Baby icon silhouette: head -->
+    <path
+        android:fillColor="#6C63FF"
+        android:pathData="M83,58 a18,18 0 1,1 34,0 a18,18 0 1,1 -34,0"/>
+    <!-- Body -->
+    <path
+        android:fillColor="#6C63FF"
+        android:pathData="M78,82 a22,16 0 0,0 44,0 a22,16 0 0,0 -44,0"/>
+    <!-- Heart -->
+    <path
+        android:fillColor="#FF6B6B"
+        android:pathData="M100,112 l-8,-8 a4,4 0 0,1 5.6,-5.6 l2.4,2.4 l2.4,-2.4 a4,4 0 0,1 5.6,5.6 l-8,8z"/>
+</vector>

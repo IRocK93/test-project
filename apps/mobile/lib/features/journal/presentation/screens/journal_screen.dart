@@ -103,27 +103,13 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
     final messenger = ScaffoldMessenger.of(context);
     final id = entry['id']?.toString();
     if (id == null) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete entry?'),
-        content: const Text('This entry will be removed from your journal.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
-      ),
+    final confirmed = await ConfirmDeleteDialog.show(
+      context,
+      title: 'Delete entry?',
+      message: 'This entry will be removed from your journal.',
+      confirmLabel: 'Delete',
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     try {
       await ref
           .read(apiClientProvider)
@@ -283,7 +269,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
                             scrollDirection: Axis.horizontal,
                             itemCount: _filters.length,
                             separatorBuilder: (_, __) =>
-                                const SizedBox(width: 8),
+                                const SizedBox(width: DesignTokens.spaceSm),
                             itemBuilder: (_, i) {
                               final f = _filters[i];
                               final selected =
@@ -368,18 +354,18 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
               Text(
                 'Pending Approvals',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: DesignTokens.fontLg2,
                   fontWeight: FontWeight.w700,
                   color: context.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Review changes from your partner before they appear in '
                 'the journal.',
                 style: TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
+                  fontSize: DesignTokens.fontSm2,
+                  color: context.colorScheme.onSurfaceVariant,
                   height: 1.4,
                 ),
               ),
@@ -456,18 +442,18 @@ class _FilterPill extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: selected
-                ? AppColors.primaryContainer
+                ? context.colorScheme.primaryContainer
                 : (Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.glassDark
-                    : AppColors.surface),
+                    ? context.glass.background
+                    : context.colorScheme.surface),
             borderRadius:
                 BorderRadius.circular(DesignTokens.radiusFull),
             border: Border.all(
               color: selected
-                  ? AppColors.primary.withValues(alpha: 0.4)
+                  ? context.colorScheme.primary.withValues(alpha: 0.4)
                   : (Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.darkBorder
-                      : AppColors.border),
+                      ? context.colorScheme.outline
+                      : context.colorScheme.outline),
               width: 0.5,
             ),
           ),
@@ -477,10 +463,10 @@ class _FilterPill extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: DesignTokens.fontSm2,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                   color: selected
-                      ? AppColors.primaryDark
+                      ? context.colorScheme.primaryContainer
                       : null,
                 ),
               ),
@@ -489,11 +475,11 @@ class _FilterPill extends StatelessWidget {
                 Text(
                   '($count)',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: DesignTokens.fontSm,
                     fontWeight: FontWeight.w600,
                     color: selected
-                        ? AppColors.primary
-                        : AppColors.textCaption,
+                        ? context.colorScheme.primary
+                        : context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -546,18 +532,18 @@ class _JournalEntryTile extends StatelessWidget {
             return false;
           },
           background: Container(
-            color: AppColors.error,
+            color: context.colorScheme.error,
             alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 24),              child: const Row(
+            padding: const EdgeInsets.only(right: DesignTokens.space2xl),              child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(PhosphorIconsLight.trash, color: AppColors.textOnPrimary, size: 20),
-                SizedBox(width: 8),
+                Icon(PhosphorIconsLight.trash, color: context.colorScheme.onPrimary, size: 20),
+                const SizedBox(width: DesignTokens.spaceSm),
                 Text(
                   'Delete',
                   style: TextStyle(
-                    color: AppColors.textOnPrimary,
-                    fontSize: 14,
+                    color: context.colorScheme.onPrimary,
+                    fontSize: DesignTokens.fontMd,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -604,13 +590,13 @@ class _ProposalRow extends StatelessWidget {
       padding: const EdgeInsets.all(DesignTokens.spaceLg),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.glassDark
-            : AppColors.surface,
+            ? context.glass.background
+            : context.colorScheme.surface,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         border: Border.all(
           color: Theme.of(context).brightness == Brightness.dark
-              ? AppColors.darkBorder
-              : AppColors.border,
+              ? context.colorScheme.outline
+              : context.colorScheme.outline,
           width: 0.5,
         ),
       ),
@@ -619,17 +605,17 @@ class _ProposalRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 PhosphorIconsLight.hourglass,
                 size: 18,
-                color: AppColors.warning,
+                color: context.colorScheme.tertiary,
               ),
               const SizedBox(width: DesignTokens.spaceSm),
               Expanded(
                 child: Text(
                   summary,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: DesignTokens.fontMd,
                     fontWeight: FontWeight.w600,
                     color: context.textPrimary,
                     height: 1.3,
@@ -641,9 +627,9 @@ class _ProposalRow extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'From: $proposer',
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              fontSize: DesignTokens.fontSm2,
+              color: context.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: DesignTokens.spaceMd),
@@ -655,17 +641,17 @@ class _ProposalRow extends StatelessWidget {
                 icon: const Icon(PhosphorIconsLight.x, size: 18),
                 label: const Text('Decline'),
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.error,
+                  foregroundColor: context.colorScheme.error,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: DesignTokens.spaceSm),
               FilledButton.icon(
                 onPressed: onAccept,
                 icon: const Icon(PhosphorIconsLight.check, size: 18),
                 label: const Text('Accept'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.textOnPrimary,
+                  backgroundColor: context.colorScheme.primary,
+                  foregroundColor: context.colorScheme.onPrimary,
                 ),
               ),
             ],

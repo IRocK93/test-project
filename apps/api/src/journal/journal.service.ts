@@ -1,29 +1,17 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AccessControlService } from '../common/access-control.service';
 
 @Injectable()
 export class JournalService {
-  constructor(private prisma: PrismaService) {}
-
-  private async checkAccess(babymonId: string, userId: string): Promise<void> {
-    const babyMon = await this.prisma.babyMon.findFirst({
-      where: { id: babymonId, deletedAt: null },
-    });
-
-    if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
-    }
-
-    if (babyMon.ownerUserId !== userId) {
-      const linked = await this.prisma.linkedAccount.findFirst({
-        where: { OR: [{ userAId: userId, userBId: babyMon.ownerUserId }, { userBId: userId, userAId: babyMon.ownerUserId }] },
-      });
-      if (!linked) throw new ForbiddenException('Access denied');
-    }
-  }
+  constructor(
+    private prisma: PrismaService,
+    private accessControl: AccessControlService,
+  ) {}
 
   async getJournal(babymonId: string, userId: string, type?: string) {
-    await this.checkAccess(babymonId, userId);
+    const { hasAccess } = await this.accessControl.checkAccess(userId, babymonId);
+    if (!hasAccess) throw new ForbiddenException('Access denied');
 
     const where: any = { babymonId, deletedAt: null };
     if (type) {
@@ -54,7 +42,8 @@ export class JournalService {
   }
 
   async getProposals(babymonId: string, userId: string) {
-    await this.checkAccess(babymonId, userId);
+    const { hasAccess } = await this.accessControl.checkAccess(userId, babymonId);
+    if (!hasAccess) throw new ForbiddenException('Access denied');
 
     return this.prisma.entryChangeProposal.findMany({
       where: { babymonId: babymonId, status: 'PENDING' },
@@ -70,7 +59,8 @@ export class JournalService {
 
     if (!proposal) throw new NotFoundException('Proposal not found');
 
-    await this.checkAccess(proposal.babymonId, userId);
+    const { hasAccess } = await this.accessControl.checkAccess(userId, proposal.babymonId);
+    if (!hasAccess) throw new ForbiddenException('Access denied');
 
     if (accept) {
       // Apply the change

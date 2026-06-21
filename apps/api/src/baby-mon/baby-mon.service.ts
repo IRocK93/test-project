@@ -1,10 +1,18 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../s3/s3.service';
+import { AccessControlService } from '../common/access-control.service';
 import { CreateBabyMonDto, UpdateBabyMonDto } from './dto/baby-mon.dto';
 
 @Injectable()
 export class BabyMonService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(BabyMonService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private s3Service: S3Service,
+    private accessControl: AccessControlService,
+  ) {}
 
   async create(userId: string, dto: CreateBabyMonDto) {
     // Calculate dates based on stage
@@ -147,6 +155,23 @@ export class BabyMonService {
   async delete(id: string, userId: string) {
     await this.findOne(id, userId); // Verify ownership
 
+    // Delete S3 media files before removing DB records
+    const mediaRecords = await this.prisma.media.findMany({
+      where: { babyMonId: id },
+      select: { s3Key: true },
+    });
+
+    for (const media of mediaRecords) {
+      try {
+        await this.s3Service.deleteFile(media.s3Key);
+      } catch (error) {
+        this.logger.error(
+          { err: error, s3Key: media.s3Key },
+          'Failed to delete S3 object during BabyMon deletion',
+        );
+      }
+    }
+
     // Hard delete with manual cascade (children first, then parent)
     await this.prisma.$transaction([
       this.prisma.milestone.deleteMany({ where: { babymonId: id } }),
@@ -165,7 +190,13 @@ export class BabyMonService {
     return this.prisma.babyMon.delete({ where: { id } });
   }
 
-  async calculateCurrentStage(babymonId: string) {
+  async calculateCurrentStage(userId: string, babymonId: string) {
+    // Verify user has access to this BabyMon before returning stage data
+    const access = await this.accessControl.checkAccess(userId, babymonId);
+    if (!access.hasAccess) {
+      throw new NotFoundException('BabyMon not found');
+    }
+
     const babyMon = await this.prisma.babyMon.findUnique({
       where: { id: babymonId },
     });

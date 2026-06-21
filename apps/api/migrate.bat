@@ -1,0 +1,1 @@
+@echo off\r\ncd /d D:\Claude Workspace\Projects\00. Test Project\apps\api\r\necho y | npx prisma migrate dev --name schema_sync\r\necho DONE > D:\Claude Workspace\Projects\00. Test Project\apps\api\migrate_result.txt

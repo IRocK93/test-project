@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../constants/app_colors.dart';
 import '../theme/clay_colors.dart';
 import '../theme/theme_mode_provider.dart';
+import 'package:baby_mon/core/constants/constants.dart';
+
 
 class PremiumBackground extends ConsumerStatefulWidget {
   final Widget child;
@@ -120,12 +121,12 @@ class _PremiumBackgroundState extends ConsumerState<PremiumBackground>
 
     // Palette-aware color selection: Clay uses warm earthy tones,
     // Glass uses cool violet/teal tones.
-    final primary = isClay ? ClayColors.primary : AppColors.primary;
-    final primaryLight = isClay ? ClayColors.primaryLight : AppColors.primaryLight;
-    final accent = isClay ? ClayColors.accent : AppColors.accent;
-    final accentLight = isClay ? ClayColors.accentLight : AppColors.accentLight;
-    final secondary = isClay ? ClayColors.secondary : AppColors.secondary;
-    final secondaryLight = isClay ? ClayColors.secondaryLight : AppColors.secondaryLight;
+    final primary = isClay ? ClayColors.primary : context.colorScheme.primary;
+    final primaryLight = isClay ? ClayColors.primaryLight : context.colorScheme.primary;
+    final accent = isClay ? ClayColors.accent : context.colorScheme.primary;
+    final accentLight = isClay ? ClayColors.accentLight : context.colorScheme.primary;
+    final secondary = isClay ? ClayColors.secondary : context.colorScheme.secondary;
+    final secondaryLight = isClay ? ClayColors.secondaryLight : context.colorScheme.secondaryContainer;
 
     if (isDark) {
       return [

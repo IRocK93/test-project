@@ -1,6 +1,46 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../theme/design_tokens.dart';
+import 'theme_button.dart';
 
+/// A convenience wrapper around [ThemeButton] that provides a simpler API
+/// with `isOutlined` boolean instead of the [ThemeButtonVariant] enum.
+///
+/// **Deprecated:** Use [ThemeButton] directly instead. This wrapper exists only
+/// as a migration layer and will be removed in a future version.
+///
+/// This widget delegates all rendering to [ThemeButton], so it benefits
+/// from theme-aware color resolution, dark-mode support, and accessibility
+/// features like [Semantics] and [HapticFeedback].
+///
+/// Prefer using [ThemeButton] directly for new code — it offers more
+/// control with [ThemeButtonVariant.filled], [.outlined], and [.text],
+/// plus [icon], [trailingIcon], [fullWidth], [isDisabled], [borderRadius],
+/// [semanticLabel], and other premium features.
+///
+/// ## Usage
+/// ```dart
+/// // Filled (default)
+/// CustomButton(
+///   text: 'Save',
+///   onPressed: _save,
+///   isLoading: isSaving,
+/// )
+///
+/// // Outlined
+/// CustomButton(
+///   text: 'Cancel',
+///   onPressed: _cancel,
+///   isOutlined: true,
+/// )
+///
+/// // With icon
+/// CustomButton(
+///   text: 'Add',
+///   onPressed: _add,
+///   icon: PhosphorIconsLight.plus,
+/// )
+/// ```
+@Deprecated('Use ThemeButton directly instead of CustomButton')
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
@@ -15,7 +55,7 @@ class CustomButton extends StatelessWidget {
   final FontWeight fontWeight;
 
   const CustomButton({
-    Key? key,
+    super.key,
     required this.text,
     this.onPressed,
     this.isLoading = false,
@@ -27,65 +67,30 @@ class CustomButton extends StatelessWidget {
     this.icon,
     this.fontSize = 16,
     this.fontWeight = FontWeight.w600,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    final buttonWidth = width ?? double.infinity;
-    final buttonHeight = height ?? 48;
-    final bgColor = backgroundColor ?? 
-        (isOutlined ? Colors.transparent : AppColors.primary);
-    final fgColor = foregroundColor ?? 
-        (isOutlined ? AppColors.primary : Colors.white);
-    final borderColor = isOutlined ? AppColors.primary : Colors.transparent;
-
-    return SizedBox(
-      width: buttonWidth,
-      height: buttonHeight,
-      child: OutlinedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: OutlinedButton.styleFrom(
-          backgroundColor: bgColor,
-          foregroundColor: fgColor,
-          side: BorderSide(color: borderColor),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: isLoading
-            ? SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    isOutlined ? AppColors.primary : Colors.white,
-                  ),
-                ),
-              )
-            : icon != null
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(icon, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        text,
-                        style: TextStyle(
-                          fontSize: fontSize,
-                          fontWeight: fontWeight,
-                        ),
-                      ),
-                    ],
-                  )
-                : Text(
-                    text,
-                    style: TextStyle(
-                      fontSize: fontSize,
-                      fontWeight: fontWeight,
-                    ),
-                  ),
-      ),
+    final button = ThemeButton(
+      text: text,
+      onPressed: onPressed,
+      // ThemeButton handles disabled state internally when isLoading is true
+      isLoading: isLoading,
+      variant: isOutlined ? ThemeButtonVariant.outlined : ThemeButtonVariant.filled,
+      fullWidth: width == null,
+      icon: icon,
+      height: height ?? 48,
+      backgroundColor: backgroundColor,
+      foregroundColor: foregroundColor,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      borderRadius: DesignTokens.radiusMd,
     );
+
+    // If a specific width is given, apply it; otherwise the button is already fullWidth
+    if (width != null) {
+      return SizedBox(width: width, child: button);
+    }
+    return button;
   }
 }

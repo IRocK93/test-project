@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
 
 class LoadingWidget extends StatelessWidget {
   final String? message;
   final bool showIndicator;
 
   const LoadingWidget({
-    Key? key,
+    super.key,
     this.message,
     this.showIndicator = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -31,12 +31,12 @@ class LoadingWidget extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (showIndicator)
-              const SizedBox(
+              SizedBox(
                 height: 40,
                 width: 40,
                 child: CircularProgressIndicator(
                   strokeWidth: 3,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                 ),
               ),
             if (showIndicator && message != null) const SizedBox(height: 16),
@@ -44,9 +44,9 @@ class LoadingWidget extends StatelessWidget {
               Text(
                 message!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
-                  color: AppColors.textSecondary,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
           ],

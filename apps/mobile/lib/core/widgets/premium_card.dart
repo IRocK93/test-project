@@ -1,8 +1,8 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
 import '../theme/design_tokens.dart';
+import '../theme/glass_tokens.dart';
 import 'animated_entry.dart';
 
 /// A premium card widget with full glassmorphism support.
@@ -61,14 +61,13 @@ class PremiumCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    final glass = Theme.of(context).extension<GlassTokens>()!;
 
     final effectiveColor = backgroundColor ??
         (isGlass
-            ? (isDark
-                ? AppColors.glassDark
-                : AppColors.glassWhite)
-            : (isDark ? AppColors.darkSurface : AppColors.surface));
+            ? glass.background
+            : colorScheme.surface);
 
     final effectiveRadius = borderRadius ?? DesignTokens.radiusLg;
     final effectivePadding = padding ??
@@ -81,13 +80,11 @@ class PremiumCard extends StatelessWidget {
     final effectiveBorder = border ??
         (isGlass
             ? Border.all(
-                color: isDark
-                    ? AppColors.glassDarkBorder
-                    : AppColors.glassBorder.withValues(alpha: 0.6),
+                color: glass.border.withValues(alpha: 0.6),
                 width: DesignTokens.glassBorderWidth,
               )
             : Border.all(
-                color: isDark ? AppColors.darkBorder : AppColors.border,
+                color: glass.border,
                 width: 0.5,
               ));
 
@@ -95,9 +92,9 @@ class PremiumCard extends StatelessWidget {
     if (customShadow != null) {
       effectiveShadow = customShadow!;
     } else if (isGlass) {
-      effectiveShadow = DesignTokens.glassShadow(shadowColor);
+      effectiveShadow = DesignTokens.glassShadow(shadowColor ?? Colors.transparent);
     } else {
-      effectiveShadow = DesignTokens.shadowMd(shadowColor);
+      effectiveShadow = DesignTokens.shadowMd(shadowColor ?? Colors.transparent);
     }
 
     Widget cardBody = Container(
@@ -173,7 +170,7 @@ class PremiumCard extends StatelessWidget {
   ///
   /// Pass a [context] to auto-detect the correct glass surface color
   /// for the current theme (light/dark). If omitted, defaults to
-  /// [AppColors.glassWhite].
+  /// [glass.surface].
   static Widget glassGroup({
     BuildContext? context,
     required List<Widget> children,
@@ -189,9 +186,9 @@ class PremiumCard extends StatelessWidget {
     Axis direction = Axis.vertical,
     double gap = 0,
   }) {
-    final isDark = context != null
-        ? Theme.of(context).brightness == Brightness.dark
-        : false;
+    final glass = context != null
+        ? Theme.of(context).extension<GlassTokens>()
+        : null;
 
     Widget group = ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
@@ -200,15 +197,15 @@ class PremiumCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: backgroundColor ??
-                (isDark ? AppColors.glassDark : AppColors.glassWhite),
+                (glass?.background ?? const Color(0xFFF8F9FF)),
             borderRadius: BorderRadius.circular(borderRadius),
             gradient: gradient,
             border: border ??
                 Border.all(
-                  color: AppColors.glassBorder.withValues(alpha: 0.6),
+                  color: glass?.border.withValues(alpha: 0.6) ?? const Color(0xFFE0E0E0).withValues(alpha: 0.6),
                   width: DesignTokens.glassBorderWidth,
                 ),
-            boxShadow: boxShadow ?? DesignTokens.glassShadow(null),
+            boxShadow: boxShadow ?? DesignTokens.glassShadow(Colors.transparent),
           ),
           padding: padding,
           child: direction == Axis.vertical

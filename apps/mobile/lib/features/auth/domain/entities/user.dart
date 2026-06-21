@@ -12,7 +12,7 @@ class User {
       email: json['email'] ?? '',
       name: json['name'],
       createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt']) 
+          ? DateTime.parse(json['createdAt']).toLocal()
           : DateTime.now(),
     );
   }

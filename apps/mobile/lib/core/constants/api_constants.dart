@@ -1,7 +1,7 @@
 class ApiConstants {
   // Updated for Android emulator to reach host machine's localhost
-  static const String baseUrl = 'http://10.0.2.2:3000'; 
-  // static const String baseUrl = 'http://localhost:3000'; // Web/Desktop testing
+  static const String baseUrl = String.fromEnvironment('API_BASE_URL',
+      defaultValue: 'http://10.0.2.2:3000');
 
   // Auth endpoints
   static const String register = '/auth/register';
@@ -9,6 +9,9 @@ class ApiConstants {
   static const String refresh = '/auth/refresh';
   static const String profile = '/auth/profile';
   static const String logout = '/auth/logout';
+  static const String googleLogin = '/auth/google';
+  static const String appleLogin = '/auth/apple';
+  static const String facebookLogin = '/auth/facebook';
 
   // BabyMon endpoints
   static const String babyMons = '/baby-mons';

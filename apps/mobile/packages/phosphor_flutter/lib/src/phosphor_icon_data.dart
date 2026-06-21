@@ -1,0 +1,1 @@
+library phosphor_flutter;

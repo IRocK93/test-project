@@ -30,19 +30,19 @@ class StubApiClient implements ApiClient {
   @override Future<Response> getBabyMonStage(String id) async => _ok();
 
   // ── Milestones ──
-  @override Future<Response> getMilestones(String id) async => _ok();
+  @override Future<Response> getMilestones(String id, {bool forceRefresh = false}) async => _ok();
   @override Future<Response> createMilestone(String id, Map<String, dynamic> d) async => _ok();
   @override Future<Response> updateMilestone(String id, Map<String, dynamic> d) async => _ok();
   @override Future<Response> deleteMilestone(String id) async => _ok();
 
   // ── Feed Logs ──
-  @override Future<Response> getFeedLogs(String id) async => _ok();
+  @override Future<Response> getFeedLogs(String id, {bool forceRefresh = false}) async => _ok();
   @override Future<Response> createFeedLog(String id, Map<String, dynamic> d) async => _ok();
   @override Future<Response> updateFeedLog(String id, Map<String, dynamic> d) async => _ok();
   @override Future<Response> deleteFeedLog(String id) async => _ok();
 
   // ── Health Records ──
-  @override Future<Response> getHealthRecords(String id) async => _ok();
+  @override Future<Response> getHealthRecords(String id, {bool forceRefresh = false}) async => _ok();
   @override Future<Response> createHealthRecord(String id, Map<String, dynamic> d) async => _ok();
   @override Future<Response> updateHealthRecord(String id, Map<String, dynamic> d) async => _ok();
   @override Future<Response> deleteHealthRecord(String id) async => _ok();
@@ -83,15 +83,16 @@ class StubApiClient implements ApiClient {
   @override Future<Response> devOverrideTrial(int d) async => _ok();
 
   // ── Growth ──
-  @override Future<Response> getGrowthRecords(String id, {String? type}) async => _ok();
+  @override Future<Response> getGrowthRecords(String id, {String? type, bool forceRefresh = false}) async => _ok();
   @override Future<Response> createGrowthRecord(String id, Map<String, dynamic> d) async => _ok();
+  @override Future<Response> updateGrowthRecord(String id, String r, Map<String, dynamic> d) async => _ok();
   @override Future<Response> deleteGrowthRecord(String id, String r) async => _ok();
 
   // ── Partners ──
   @override Future<Response> invitePartner(String id, String e, String r) async => _ok();
   @override Future<Response> getPartners(String id) async => _ok();
   @override Future<Response> respondToInvitation(String id, String s) async => _ok();
-  @override Future<Response> removePartner(String id) async => _ok();
+  @override Future<Response> removePartner(String babyMonId, String partnerId) async => _ok();
 
   // ── Photos ──
   @override Future<Response> uploadPhoto(String id, Map<String, dynamic> d) async => _ok();
@@ -99,7 +100,7 @@ class StubApiClient implements ApiClient {
   @override Future<Response> deletePhoto(String id) async => _ok();
 
   // ── Sleep Logs ──
-  @override Future<Response> getSleepLogs(String id) async => _ok();
+  @override Future<Response> getSleepLogs(String id, {bool forceRefresh = false}) async => _ok();
   @override Future<Response> createSleepLog(String id, Map<String, dynamic> d) async => _ok();
   @override Future<Response> updateSleepLog(String id, String s, Map<String, dynamic> d) async => _ok();
   @override Future<Response> deleteSleepLog(String id, String s) async => _ok();
@@ -118,7 +119,7 @@ class StubApiClient implements ApiClient {
 
   // ── Generic HTTP ──
   @override Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken}) async => _ok();
-  @override Future<Response> get(String path, {Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken}) async => _ok();
+  @override Future<Response> get(String path, {Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken, bool forceRefresh = false}) async => _ok();
   @override Future<Response> patch(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken}) async => _ok();
   @override Future<Response> put(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken}) async => _ok();
   @override Future<Response> delete(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken}) async => _ok();

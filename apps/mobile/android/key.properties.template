@@ -1,0 +1,21 @@
+## Android Release Signing Configuration
+##
+## 1. Generate a keystore:
+##    Run: tool\generate_keystore.bat
+##    (or manually: keytool -genkey -v -keystore babymon-release.keystore -alias babymon-release -keyalg RSA -keysize 2048 -validity 10000)
+##
+## 2. Create apps/mobile/android/key.properties (DO NOT COMMIT):
+##    storePassword=YOUR_STORE_PASSWORD
+##    keyPassword=YOUR_KEY_PASSWORD
+##    keyAlias=babymon-release
+##    storeFile=../babymon-release.keystore
+##
+## 3. The build.gradle.kts is already configured to read key.properties
+##
+## 4. Build the release:
+##    cd apps/mobile && flutter build appbundle --release
+
+storePassword=
+keyPassword=
+keyAlias=babymon-release
+storeFile=../babymon-release.keystore

@@ -26,7 +26,7 @@ export class EvolutionService {
       throw new ForbiddenException('Access denied');
     }
 
-    const stageInfo = await this.babyMonService.calculateCurrentStage(babyMonId);
+    const stageInfo = await this.babyMonService.calculateCurrentStage(userId, babyMonId);
 
     // Calculate XP progress to next stage
     const xpForNextLevel = (babyMon.currentStage + 1) * 100;

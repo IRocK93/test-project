@@ -19,7 +19,7 @@ export class SleepLogsService {
       throw new NotFoundException('BabyMon not found');
     }
 
-    await this.accessControl.checkAccess(babymonId, userId);
+    await this.accessControl.checkAccess(userId, babymonId);
 
     const sleepLog = await this.prisma.sleepLog.create({
       data: {
@@ -45,7 +45,7 @@ export class SleepLogsService {
   }
 
   async findAll(babymonId: string, userId: string, skip: number = 0, take: number = 20) {
-    await this.accessControl.checkAccess(babymonId, userId);
+    await this.accessControl.checkAccess(userId, babymonId);
 
     const [items, total] = await Promise.all([
       this.prisma.sleepLog.findMany({

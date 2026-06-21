@@ -58,6 +58,6 @@ export class BabyMonController {
   @Get(':id/stage')
   @ApiOperation({ summary: 'Get current stage for BabyMon' })
   async getStage(@Request() req: any, @Param('id') id: string) {
-    return this.babyMonService.calculateCurrentStage(id);
+    return this.babyMonService.calculateCurrentStage(req.user.id, id);
   }
 }

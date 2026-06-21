@@ -266,17 +266,17 @@ export class StripeService {
     this.logger.log(`Payment failed for invoice ${invoice.id}`);
   }
 
-  private getTierFromPriceId(priceId: string): 'CORE' | 'AI_COMPANION' {
-    const aiPriceIds = [
-      process.env.STRIPE_PRICE_AI_MONTHLY,
-      process.env.STRIPE_PRICE_AI_YEARLY,
+  private getTierFromPriceId(priceId: string): 'FREE' | 'PREMIUM' {
+    const premiumPriceIds = [
+      process.env.STRIPE_PRICE_PREMIUM_MONTHLY,
+      process.env.STRIPE_PRICE_PREMIUM_YEARLY,
     ];
 
-    if (aiPriceIds.includes(priceId)) {
-      return 'AI_COMPANION';
+    if (premiumPriceIds.includes(priceId)) {
+      return 'PREMIUM';
     }
 
-    return 'CORE';
+    return 'FREE';
   }
 
   async cancelSubscription(userId: string) {

@@ -2,13 +2,21 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/core.dart';
 import 'package:baby_mon/core/data/api_client.dart';
+import 'package:baby_mon/features/dashboard/domain/entities/baby_mon.dart';
+import 'package:baby_mon/features/health/domain/entities/growth_record.dart';
+import 'package:baby_mon/features/health/domain/entities/allergy.dart';
+import 'package:baby_mon/features/dashboard/presentation/widgets/dashboard_stats_row.dart';
+import 'package:baby_mon/features/dashboard/presentation/widgets/dashboard_xp_card.dart';
+import 'package:baby_mon/features/dashboard/presentation/widgets/dashboard_growth_card.dart';
+import 'package:baby_mon/features/dashboard/presentation/widgets/dashboard_badge_section.dart';
+import 'package:baby_mon/features/dashboard/presentation/widgets/dashboard_content_card.dart';
 import 'package:baby_mon/features/dashboard/presentation/widgets/level_up_celebration.dart';
 
 enum _TileType { stage, stats, xp, growth, badges, content }
@@ -22,23 +30,18 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with WidgetsBindingObserver {
   String? _babyMonId;
-  String? _babyMonName;
-  String? _babyMonGender;
-  List<String>? _traits;
-  String? _specialMove;
-  String? _stageStartType;
-  DateTime? _referenceDate;
-  String? _bloodGroup;
-  String? _biologicalMother;
-  String? _biologicalFather;
+  BabyMon? _babyMon;
   String? _parentName;
   String? _parentContact;
+  bool _customTraitDialogOpen = false;
   Map<String, dynamic>? _evolution;
   List _badges = [];
   List<Map<String, dynamic>> _badgeDefinitions = [];
+  List<Allergy> _allergies = [];
   Map<String, dynamic>? _stageContent;
-  Map<String, dynamic>? _latestGrowth;
-  List<Map<String, dynamic>> _allergies = [];
+  GrowthRecord? _latestGrowth;
+  GrowthRecord? _latestHeight;
+
   bool _isLoading = true;
   bool _showDetails = false;
   bool _isRefreshing = false;
@@ -101,7 +104,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       if (prev != next) _loadData(force: true);
     });
     ref.listenManual(tabRefreshProvider(0), (prev, next) {
-      if (prev != next) _loadData(); // respects cooldown via non-force
+      if (prev != next) _loadData(force: true);
     });
   }
 
@@ -226,7 +229,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           _stageContent = parseJsonMap(rawStage);
         });
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('Failed to load stage content: $e'); }
   }
 
   Future<void> _fetchBadgeDefinitions(ApiClient api) async {
@@ -249,7 +252,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       } else {
         _badgeDefinitions = [];
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('Failed to load badge definitions: $e'); }
   }
 
   Future<void> _fetchBadges(ApiClient api) async {
@@ -258,7 +261,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       _badges = (badgesRes.data is List)
           ? (badgesRes.data as List<dynamic>)
           : parseItems(badgesRes.data);
-    } catch (_) {}
+    } catch (e) { debugPrint('Dashboard data load failed: $e'); }
   }
 
   Future<void> _fetchBabyMon(ApiClient api) async {
@@ -266,24 +269,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       final babyMonRes = await api.getBabyMon(_babyMonId!);
       final rawBabyMon = babyMonRes.data;
       if (rawBabyMon is! Map) throw Exception('Invalid babyMon data');
-      final babyMon = parseJsonMap(rawBabyMon)!;
-      _babyMonName = parseString(babyMon['name']) ?? 'Baby';
-      _babyMonGender = parseString(babyMon['gender']) ?? 'MONIOUS';
-      _traits = parseList(babyMon['traits']).whereType<String>().toList();
-      _specialMove = parseString(babyMon['specialMove']);
-      _stageStartType = parseString(babyMon['stageStartType']);
-      _bloodGroup = parseString(babyMon['bloodGroup']);
-      _biologicalMother = parseString(babyMon['biologicalMother']);
-      _biologicalFather = parseString(babyMon['biologicalFather']);
-      final refDateRaw = _stageStartType == 'CONCEIVED'
-          ? babyMon['conceptionDate'] ?? babyMon['lmpDate']
-          : _stageStartType == 'IDEA'
-              ? babyMon['ideaDate']
-              : babyMon['birthDate'];
-      _referenceDate = refDateRaw is String
-          ? DateTime.tryParse(refDateRaw)
-          : safeCast<DateTime>(refDateRaw);
-    } catch (_) {}
+      _babyMon = BabyMon.fromJson(parseJsonMap(rawBabyMon)!);
+    } catch (e) { debugPrint('Dashboard data load failed: $e'); }
   }
 
   Future<void> _fetchEvolution(ApiClient api) async {
@@ -294,27 +281,42 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       final evoData = parseJsonMap(rawData)!;
       final evoBabyMon = parseJsonMap(evoData['babyMon']) ?? <String, dynamic>{};
       _evolution = <String, dynamic>{...evoData, ...evoBabyMon};
-    } catch (_) {}
+    } catch (e) { debugPrint('Dashboard data load failed: $e'); }
   }
 
   Future<void> _fetchGrowth(ApiClient api) async {
     try {
-      final growthRes = await api.getGrowthRecords(_babyMonId!, type: 'WEIGHT');
-      final growthList = (growthRes.data is List)
-          ? (growthRes.data as List<dynamic>)
-          : parseItems(growthRes.data);
-      if (growthList.isNotEmpty) {
-        _latestGrowth = parseJsonMap(growthList.last);
+      // Fetch last weight
+      final weightRes = await api.getGrowthRecords(_babyMonId!, type: 'WEIGHT');
+      final weightList = (weightRes.data is List)
+          ? (weightRes.data as List<dynamic>)
+          : parseItems(weightRes.data);
+      if (weightList.isNotEmpty) {
+        final last = weightList.last;
+        _latestGrowth = GrowthRecord.fromJson(
+          last is Map<String, dynamic> ? last : parseJsonMap(last) ?? {},
+        );
       }
-    } catch (_) {}
+      // Fetch last height
+      final heightRes = await api.getGrowthRecords(_babyMonId!, type: 'HEIGHT');
+      final heightList = (heightRes.data is List)
+          ? (heightRes.data as List<dynamic>)
+          : parseItems(heightRes.data);
+      if (heightList.isNotEmpty) {
+        final last = heightList.last;
+        _latestHeight = GrowthRecord.fromJson(
+          last is Map<String, dynamic> ? last : parseJsonMap(last) ?? {},
+        );
+      }
+    } catch (e) { debugPrint('Dashboard data load failed: $e'); }
   }
 
   Future<void> _fetchAllergies(ApiClient api) async {
     try {
       final aRes = await api.getAllergies(_babyMonId!);
       final raw = aRes.data;
-      _allergies = parseItemsTyped(raw);
-    } catch (_) {}
+      _allergies = parseItemsTyped(raw).map(Allergy.fromJson).toList();
+    } catch (e) { debugPrint('Dashboard data load failed: $e'); }
   }
 
   Future<void> _fetchProfile(ApiClient api) async {
@@ -323,29 +325,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       final profileData = parseJsonMap(profile.data);
       _parentName = parseString(profileData?['name']);
       _parentContact = parseString(profileData?['phone']);
-    } catch (_) {}
+    } catch (e) { debugPrint('Dashboard data load failed: $e'); }
   }
 
   String _stageEmoji(String stage, String? gender) {
     switch (stage) {
       case 'BORN':
         return gender == 'MONIESE'
-            ? '👶\u200d♀️'
+            ? '♀'
             : gender == 'MONIOUS'
-                ? '👶\u200d♂️'
-                : '👶';
+                ? '♂'
+                : '';
       case 'CONCEIVED':
-        return '🤰';
+        return '';
       case 'IDEA':
-        return '💡';
+        return '';
       default:
-        return '🌟';
+        return '';
     }
   }
 
   String get _babyMonAge {
-    if (_stageStartType != 'BORN' || _referenceDate == null) return '';
-    final diff = DateTime.now().difference(_referenceDate!);
+    if (_babyMon?.stageStartType != 'BORN' || _babyMon?.referenceDate == null) return '';
+    final diff = DateTime.now().difference(_babyMon!.referenceDate!);
     final y = diff.inDays ~/ 365,
         m = (diff.inDays % 365) ~/ 30,
         d = diff.inDays % 30,
@@ -358,22 +360,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   String get _etaText {
-    if (_stageStartType != 'CONCEIVED' || _referenceDate == null) return '';
+    if (_babyMon?.stageStartType != 'CONCEIVED' || _babyMon?.referenceDate == null) return '';
     final r =
-        _referenceDate!.add(const Duration(days: 280)).difference(DateTime.now());
+        _babyMon!.referenceDate!.add(const Duration(days: 280)).difference(DateTime.now());
     return r.inDays <= 0 ? 'Due now!' : 'ETA: ${r.inDays} days';
   }
 
   String get _stageLabel {
-    switch (_stageStartType) {
+    switch (_babyMon?.stageStartType) {
       case 'CONCEIVED':
         return 'Fetus';
       case 'IDEA':
         return 'Planning';
       case 'BORN':
       default:
-        if (_referenceDate == null) return 'Born';
-        final d = DateTime.now().difference(_referenceDate!).inDays;
+        if (_babyMon?.referenceDate == null) return 'Born';
+        final d = DateTime.now().difference(_babyMon!.referenceDate!).inDays;
         if (d <= 28) return 'Neonate';
         if (d <= 365) return 'Infant';
         if (d <= 1095) return 'Toddler';
@@ -390,55 +392,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   /// XP progress as 0.0–1.0 for the progress bar.
   /// Uses the backend's pre-computed xpProgress when available.
-  double get _xpProgress {
-    if (_evolution == null) return 0.0;
-    // Pre-computed percentage from backend (0-100)
-    final progress = _evolution!['xpProgress'];
-    if (progress != null) return (progress as num).toDouble() / 100.0;
-    // Fallback: compute locally
-    final xp = (parseDouble(_evolution!['currentXp']) ?? 0.0);
-    final needed = parseDouble(_evolution!['xpForNextLevel']) ?? 50;
-    return needed > 0 ? (xp / needed).clamp(0.0, 1.0) : 0.0;
-  }
-
-  int get _xpCurrent => parseInt(_evolution?['currentXp']) ?? 0;
-  int get _xpForNextLevel {
-    // Backend now sends this explicitly
-    final numVal = parseDouble(_evolution?['xpForNextLevel']);
-    if (numVal != null && numVal > 0) return numVal.round();
-    // Legacy fallback for level 1 (50 XP)
-    return 50;
-  }
-
   int get _currentLevel => parseInt(_evolution?['currentLevel']) ?? 1;
-  String get _levelName => parseString(_evolution?['levelName']) ?? 'Level $_currentLevel';
-  String get _nextLevelName => parseString(_evolution?['nextLevelName']) ?? 'Level ${_currentLevel + 1}';
-
-  List<Map<String, dynamic>> get _badgesByCategory {
-    if (_badgeDefinitions.isEmpty) return [];
-    final u = _badges.map((b) => parseString(b['badgeType']) ?? '').toSet();
-    return _badgeDefinitions
-        .map((def) => {
-              ...def,
-              'unlocked': u.contains(parseString(def['badgeType']) ?? ''),
-              'category': parseString(def['category']) ?? 'Other',
-            })
-        .toList();
-  }
-
-  Map<String, List<Map<String, dynamic>>> get _groupedBadges {
-    final map = <String, List<Map<String, dynamic>>>{};
-    for (final b in _badgesByCategory) {
-      map.putIfAbsent(parseString(b['category']) ?? '', () => []).add(b);
-    }
-    return map;
-  }
-
-  int _unlockedInCategory(String c) =>
-      _groupedBadges[c]?.where((b) => b['unlocked'] == true).length ?? 0;
-  int _totalInCategory(String c) => _groupedBadges[c]?.length ?? 0;
-  int get _totalUnlocked => _badges.length;
-  int get _totalBadges => _badgeDefinitions.length;
 
   String _inferTier(String b) {
     if (b.contains('10') || b.contains('100') || b.contains('500')) {
@@ -448,18 +402,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return 'BRONZE';
   }
 
-  Color _tierColor(String t) {
-    switch (t) {
-      case 'DIAMOND':
-        return const Color(0xFFB366FF);
-      case 'GOLD':
-        return const Color(0xFFD4A017);
-      case 'SILVER':
-        return const Color(0xFF8E8E93);
-      default:
-        return const Color(0xFFCD7F32);
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -474,43 +417,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     onRefresh: () => _loadData(force: true),
                     child: _buildReorderableDashboard(context),
                   ),
-      ),
-      floatingActionButton: _babyMonId != null
-          ? InfoFab(
-              tooltip: 'Quick actions',
-              icon: PhosphorIconsLight.lightning,
-              children: [
-                InfoFabAction(
-                  tooltip: 'Log Feeding',
-                  infoDescription: 'Feeding',
-                  backgroundColor: AppColors.warning,
-                  onTap: () {},
-                  child: const Icon(PhosphorIconsLight.bowlFood, color: AppColors.textOnPrimary),
-                ),
-                InfoFabAction(
-                  tooltip: 'Add Milestone',
-                  infoDescription: 'Milestone',
-                  backgroundColor: AppColors.accent,
-                  onTap: () {},
-                  child: const Icon(PhosphorIconsLight.trophy, color: AppColors.textOnPrimary),
-                ),
-                InfoFabAction(
-                  tooltip: 'Health Record',
-                  infoDescription: 'Health',
-                  backgroundColor: AppColors.success,
-                  onTap: () {},
-                  child: const Icon(PhosphorIconsLight.heart, color: AppColors.textOnPrimary),
-                ),
-                InfoFabAction(
-                  tooltip: 'Create BabyMon',
-                  infoDescription: 'New Baby',
-                  backgroundColor: AppColors.secondary,
-                  onTap: () => GoRouter.of(context).push('/create-baby-mon'),
-                  child: const Icon(PhosphorIconsLight.baby, color: AppColors.textOnPrimary),
-                ),
-              ],
-            )
-          : null,
+      )
     );
   }
 
@@ -534,7 +441,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       _TileType.stage: _buildStageCard(),
       _TileType.stats: _buildQuickStatsRow(),
       _TileType.xp: _buildXpCard(),
-      if (_latestGrowth != null) _TileType.growth: _buildGrowthCard(),
+      if (_latestGrowth != null || _latestHeight != null) _TileType.growth: _buildGrowthRow(),
       _TileType.badges: _buildBadgeSection(),
       if (_stageContent != null) _TileType.content: _buildStageContentCard(),
     };
@@ -558,15 +465,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.08),
+                        color: context.colorScheme.primary.withValues(alpha: 0.08),
                         borderRadius:
                             BorderRadius.circular(DesignTokens.radiusFull),
                         border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.15),
+                          color: context.colorScheme.primary.withValues(alpha: DesignTokens.opacitySubtle),
                           width: 0.5,
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           SizedBox(
@@ -574,16 +481,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             height: 12,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: AppColors.primary,
+                              color: context.colorScheme.primary,
                             ),
                           ),
-                          SizedBox(width: 6),
+                          const SizedBox(width: 6),
                           Text(
                             'Refreshing',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: DesignTokens.font2xs,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
+                              color: context.colorScheme.primary,
                             ),
                           ),
                         ],
@@ -599,14 +506,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             padding: const EdgeInsets.only(
               left: DesignTokens.bentoPadding,
               right: DesignTokens.bentoPadding,
+              top: 7,
               bottom: 100,
             ),
             // ignore: deprecated_member_use – onReorderItem not yet in stable
             onReorder: (int oldIndex, int newIndex) {
-              if (newIndex > oldIndex) newIndex--;
               setState(() {
-                final tile = _tileOrder.removeAt(oldIndex);
-                _tileOrder.insert(newIndex, tile);
+                // Map visual indices to _tileOrder positions since the
+                // children list is filtered (only tiles with data are shown).
+                final visibleTiles = _tileOrder.where((t) => tiles.containsKey(t)).toList();
+                if (oldIndex >= visibleTiles.length || oldIndex < 0) return;
+                final movedTile = visibleTiles[oldIndex];
+                final oldFullIndex = _tileOrder.indexOf(movedTile);
+                _tileOrder.removeAt(oldFullIndex);
+
+                // Determine insertion point from the visible target position
+                final int insertAt;
+                if (newIndex >= visibleTiles.length) {
+                  insertAt = _tileOrder.length; // end of list
+                } else {
+                  final targetTile = visibleTiles[newIndex];
+                  insertAt = _tileOrder.indexOf(targetTile);
+                }
+                _tileOrder.insert(insertAt, movedTile);
               });
               _saveTileOrder();
             },
@@ -621,8 +543,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         boxShadow: animation.value > 0
                             ? [
                                 BoxShadow(
-                                  color: AppColors.primary
-                                      .withValues(alpha: 0.15),
+                                  color: context.colorScheme.primary
+                                      .withValues(alpha: DesignTokens.opacitySubtle),
                                   blurRadius: 24,
                                   offset: const Offset(0, 12),
                                 ),
@@ -652,25 +574,35 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Widget _buildStageCard() {
-    final accent = _genderAccent(_babyMonGender);
+    final accent = _genderAccent(_babyMon?.gender ?? 'MONIOUS');
+    final genderBg = _babyMon?.gender == 'MONIESE'
+        ? AppColors.genderMoniese
+        : _babyMon?.gender == 'MONIOUS'
+            ? AppColors.genderMonious
+            : AppColors.genderNeutral;
 
-    // StageHero is the flat replacement for the old 4-deep
-    // PremiumDoubleBezel stack. The details panel renders inside
-    // the same card surface (controlled by _showDetails) — one
-    // hero card with an expandable body, not two stacked cards.
-    return StageHero(
-      name: _babyMonName ?? 'Baby',
-      stageLabel: _stageLabel,
-      emoji: _stageEmoji(_stageStartType ?? 'BORN', _babyMonGender),
-      level: _currentLevel,
-      accent: accent,
-      ageText: _babyMonAge.isNotEmpty ? _babyMonAge : null,
-      etaText: _etaText.isNotEmpty ? _etaText : null,
-      detailsExpanded: _showDetails,
-      onToggleDetails: () => setState(() => _showDetails = !_showDetails),
-      onShare: _shareBabyMon,
-      onEdit: _editBabyMon,
-      child: _buildDetailsPanel(),
+    return Semantics(
+      label: '${_babyMon?.name ?? 'Baby'}, level $_currentLevel',
+      button: true,
+      child: PremiumDoubleBezel(
+        outerRadius: DesignTokens.radius2xl,
+        gap: 5.0,
+        outerColor: accent.withValues(alpha: 0.10),
+        child: StageHero(
+        name: _babyMon?.name ?? 'Baby',
+        level: _currentLevel,
+        accent: accent,
+        ageText: _babyMonAge.isNotEmpty ? _babyMonAge : null,
+        etaText: _etaText.isNotEmpty ? _etaText : null,
+        detailsExpanded: _showDetails,
+        onToggleDetails: () => setState(() => _showDetails = !_showDetails),
+        onShare: _shareBabyMon,
+        onEdit: _editBabyMon,
+        backgroundColor: genderBg.withValues(alpha: 0.08),
+        compact: true,
+        child: _buildDetailsPanel(),
+      ),
+    ),
     );
   }
 
@@ -678,44 +610,106 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── Identity ──
+        _detailRow('Age', _babyMonAge.isNotEmpty ? _babyMonAge : '—'),
+        if (_babyMon?.birthDate != null)
+          _detailRow('Birth Date', _formatDate(_babyMon!.birthDate!)),
+        if (_babyMon?.conceptionDate != null)
+          _detailRow('Conceived', _formatDate(_babyMon!.conceptionDate!)),
+        if (_babyMon?.middleName != null && _babyMon!.middleName!.isNotEmpty)
+          _detailRow('Middle Name', _babyMon!.middleName!),
+        if (_babyMon?.lastName != null && _babyMon!.lastName!.isNotEmpty)
+          _detailRow('Last Name', _babyMon!.lastName!),
         _detailRow(
           'Stage',
-          _stageStartType == 'BORN'
+          _babyMon?.stageStartType == 'BORN'
               ? 'Born'
-              : _stageStartType == 'CONCEIVED'
+              : _babyMon?.stageStartType == 'CONCEIVED'
                   ? 'Expecting'
                   : 'Planning',
         ),
-        if (_bloodGroup != null && _bloodGroup!.isNotEmpty)
-          _detailRow('Blood Type', _bloodGroup!),
-        if (_parentName != null && _parentName!.isNotEmpty)
-          _detailRow('Parent', _parentName!),
-        if (_biologicalMother != null && _biologicalMother!.isNotEmpty)
-          _detailRow('Mother', _biologicalMother!),
-        if (_biologicalFather != null && _biologicalFather!.isNotEmpty)
-          _detailRow('Father', _biologicalFather!),
-        if (_allergies.isNotEmpty)
-          _detailRow(
-            'Allergies',
-            _allergies
-                .map((a) =>
-                    '${a['name']} (${a['severity'] ?? 'Unknown'})')
-                .join(', '),
-          ),
-        if (_traits != null && _traits!.isNotEmpty)
-          _detailRow('Traits', _traits!.join(', ')),
-        if (_specialMove != null && _specialMove!.isNotEmpty)
-          _detailRow('Special Move', _specialMove!),
         _detailRow(
           'Gender',
-          _babyMonGender == 'MONIOUS'
+          _babyMon?.gender == 'MONIOUS'
               ? 'Monious (Male)'
-              : _babyMonGender == 'MONIESE'
+              : _babyMon?.gender == 'MONIESE'
                   ? 'Moniese (Female)'
                   : 'Mo (Neutral)',
         ),
+        if (_babyMon?.bloodGroup != null && _babyMon!.bloodGroup!.isNotEmpty)
+          _detailRow('Blood Type', _babyMon!.bloodGroup!),
+        if (_babyMon?.eyeColor != null && _babyMon!.eyeColor!.isNotEmpty)
+          _detailRow('Eye Color', _babyMon!.eyeColor!),
+
+        // ── Growth ──
+        if (_latestGrowth != null) ...[
+          _sectionHeader('Latest Growth'),
+          _detailRow(_growthTypeLabel(_latestGrowth!.type),
+              '${_latestGrowth!.value.toStringAsFixed(1)} ${_latestGrowth!.unit ?? ''}'),
+          if (_latestGrowth!.measuredAt != null)
+            _detailRow('Recorded', _formatDate(_latestGrowth!.measuredAt!)),
+        ],
+
+        // ── Progress ──
+        _sectionHeader('Progress'),
+        _detailRow('Level', '$_currentLevel — ${parseString(_evolution?['levelName']) ?? 'Level $_currentLevel'}'),
+        _detailRow('XP', '${parseInt(_evolution?['currentXp']) ?? 0} / ${parseInt(_evolution?['xpForNextLevel']) ?? 50}'),
+
+        // ── Family ──
+        if (_parentName != null && _parentName!.isNotEmpty) ...[
+          _sectionHeader('Family'),
+          _detailRow('Parent', _parentName!),
+        ],
+        if (_babyMon?.biologicalMother != null && _babyMon!.biologicalMother!.isNotEmpty)
+          _detailRow('Mother', _babyMon!.biologicalMother!),
+        if (_babyMon?.biologicalFather != null && _babyMon!.biologicalFather!.isNotEmpty)
+          _detailRow('Father', _babyMon!.biologicalFather!),
+
+        // ── Health ──
+        if (_allergies.isNotEmpty) ...[
+          _sectionHeader('Allergies'),
+          ..._allergies.map((a) => _detailRow(
+                a.name ?? 'Unknown',
+                '${a.severity ?? 'Unknown'} severity${a.triggers != null && (a.triggers as List).isNotEmpty ? ' — triggers: ${(a.triggers as List).join(', ')}' : ''}',
+              )),
+        ],
+
+        // ── Traits ──
+        if (_babyMon != null && _babyMon!.traits.isNotEmpty)
+          _detailRow('Traits', _babyMon!.traits.join(', ')),
+        if (_babyMon?.specialMove != null && _babyMon!.specialMove!.isNotEmpty)
+          _detailRow('Special Move', _babyMon!.specialMove!),
       ],
     );
+  }
+
+  Widget _sectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 2),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: context.colorScheme.primary,
+              letterSpacing: 1.2,
+            ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$m-$d';
+  }
+
+  String _growthTypeLabel(String type) {
+    switch (type) {
+      case 'WEIGHT': return 'Weight';
+      case 'HEIGHT': return 'Height';
+      case 'HEAD_CIRCUMFERENCE': return 'Head Circumference';
+      default: return type;
+    }
   }
 
   Widget _detailRow(String label, String value) {
@@ -733,7 +727,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   .labelSmall
                   ?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textCaption,
+                    color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   ),
             ),
           ),
@@ -754,37 +748,55 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Future<void> _shareBabyMon() async {
-    final allergyList = _allergies.isNotEmpty
+    final allergyText = _allergies.isNotEmpty
         ? _allergies
-            .map((a) =>
-                '• ${a['name']} (${a['severity'] ?? 'Unknown'}): ${a['treatment'] ?? 'N/A'}')
-            .toList()
-        : ['None recorded'];
-    final text =
-        '🦁 BabyMon Card: ${_babyMonName ?? 'Baby'}\n\nStage: $_stageLabel\nAge: ${_babyMonAge.isNotEmpty ? _babyMonAge : 'N/A'}\nGender: ${_babyMonGender == 'MONIOUS' ? 'Male (Monious)' : _babyMonGender == 'MONIESE' ? 'Female (Moniese)' : 'Neutral (Mo)'}${_bloodGroup != null && _bloodGroup!.isNotEmpty ? '\nBlood Type: $_bloodGroup' : ''}${_parentContact != null && _parentContact!.isNotEmpty ? '\nContact: $_parentContact' : ''}${_biologicalMother != null ? '\nMother: $_biologicalMother' : ''}${_biologicalFather != null ? '\nFather: $_biologicalFather' : ''}\n\nAllergies:\n${allergyList.join('\n')}\n\nTraits: ${(_traits ?? []).join(', ')}${_specialMove != null ? '\nSpecial Move: $_specialMove' : ''}\n\nShared via BabyMon';
-    await SharePlus.instance.share(ShareParams(text: text, subject: '${_babyMonName ?? 'BabyMon'} Card'));
+            .map((a) => '• ${a.name ?? 'Unknown'} (${a.severity ?? 'Unknown'})')
+            .join('\n')
+        : 'None recorded';
+
+    final text = StringBuffer();
+    text.writeln('BabyMon Card: ${_babyMon?.name ?? 'Baby'}');
+    text.writeln('Age: ${_babyMonAge.isNotEmpty ? _babyMonAge : 'N/A'}');
+    if (_babyMon?.bloodGroup != null && _babyMon!.bloodGroup!.isNotEmpty) {
+      text.writeln('Blood Type: ${_babyMon!.bloodGroup}');
+    }
+    if (_parentName != null && _parentName!.isNotEmpty) {
+      text.writeln('Parent: $_parentName');
+    }
+    if (_parentContact != null && _parentContact!.isNotEmpty) {
+      text.writeln('Parent Contact: $_parentContact');
+    }
+    text.writeln();
+    text.writeln('Allergies:');
+    text.writeln(allergyText);
+    text.writeln();
+    text.writeln('Shared via BabyMon');
+
+    await Share.share(text.toString(), subject: '${_babyMon?.name ?? 'BabyMon'} Card');
   }
 
   Future<void> _editBabyMon() async {
     if (_babyMonId == null) return;
     final api = ref.read(apiClientProvider);
-    final nameCtrl = TextEditingController(text: _babyMonName ?? '');
-    final motherCtrl = TextEditingController(text: _biologicalMother ?? '');
-    final fatherCtrl = TextEditingController(text: _biologicalFather ?? '');
+    final nameCtrl = TextEditingController(text: _babyMon?.name ?? '');
+    final middleCtrl = TextEditingController(text: _babyMon?.middleName ?? '');
+    final lastNameCtrl = TextEditingController(text: _babyMon?.lastName ?? '');
+    final motherCtrl = TextEditingController(text: _babyMon?.biologicalMother ?? '');
+    final fatherCtrl = TextEditingController(text: _babyMon?.biologicalFather ?? '');
     final parentCtrl = TextEditingController(text: _parentName ?? '');
     final contactCtrl = TextEditingController(text: _parentContact ?? '');
-    final traitsCtrl =
-        TextEditingController(text: (_traits ?? []).join(', '));
-    final specialMoveCtrl = TextEditingController(text: _specialMove ?? '');
-    String? bloodGroup = _bloodGroup;
-    String? gender = _babyMonGender;
+    final specialMoveCtrl = TextEditingController(text: _babyMon?.specialMove ?? '');
+    Set<String> traits = {...?_babyMon?.traits};
+    String? bloodGroup = _babyMon?.bloodGroup;
+    String? gender = _babyMon?.gender;
+    String? eyeColor = _babyMon?.eyeColor;
     if (!mounted) return;
 
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: AppColors.textPrimary.withValues(alpha: 0.3),
+      barrierColor: context.colorScheme.onSurface.withValues(alpha: DesignTokens.opacityDim),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
             top: Radius.circular(DesignTokens.radius3xl)),
@@ -801,12 +813,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             child: Container(
               decoration: BoxDecoration(
                 color: (Theme.of(context).brightness == Brightness.dark
-                        ? AppColors.glassDark
-                        : AppColors.glassWhite)
+                        ? context.glass.background
+                        : context.glass.surface)
                     .withValues(alpha: 0.98),
-                border: const Border(
+                border: Border(
                   top: BorderSide(
-                    color: AppColors.glassBorderLight,
+                    color: context.glass.borderLight,
                     width: DesignTokens.glassBorderWidth,
                   ),
                 ),
@@ -825,7 +837,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     margin:
                         const EdgeInsets.only(top: 12, bottom: DesignTokens.spaceMd),
                     decoration: BoxDecoration(
-                      color: AppColors.divider,
+                      color: context.dividerColor,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -839,7 +851,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.12),
+                            color: context.colorScheme.primary.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(
                                 DesignTokens.radiusFull),
                           ),
@@ -850,16 +862,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 .labelSmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.primary,
+                                  color: context.colorScheme.primary,
                                   letterSpacing: 1.5,
-                                  fontSize: 11,
+                                  fontSize: DesignTokens.font2xs,
                                 ),
                           ),
                         ),
                         const SizedBox(width: DesignTokens.spaceSm),
                         Expanded(
                           child: Text(
-                            _babyMonName ?? 'BabyMon',
+                            _babyMon?.name ?? 'BabyMon',
                             style: Theme.of(context)
                                 .textTheme
                                 .titleMedium
@@ -881,7 +893,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _editField(nameCtrl, 'Name'),
+                          _editField(nameCtrl, 'First Name'),
+                          const SizedBox(height: DesignTokens.spaceMd),
+                          _editField(middleCtrl, 'Middle Name'),
+                          const SizedBox(height: DesignTokens.spaceMd),
+                          _editField(lastNameCtrl, 'Last Name'),
                           const SizedBox(height: DesignTokens.spaceMd),
                           _editTile(ctx, setD, 'Gender',
                               gender == 'MONIOUS'
@@ -889,7 +905,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   : gender == 'MONIESE'
                                       ? 'Moniese'
                                       : 'Mo', () async {
-                            final result =
+                            final sel =
                                 await WheelPickerBottomSheet.show<String>(
                               context: ctx,
                               title: 'Select Gender',
@@ -907,7 +923,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 ),
                               ],
                             );
-                            if (result != null) setD(() => gender = result);
+                            if (sel != null) setD(() => gender = sel);
                           }),
                           const SizedBox(height: DesignTokens.spaceMd),
                           _editTile(ctx, setD, 'Blood Type',
@@ -915,7 +931,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   ? 'Not set'
                                   : bloodGroup!,
                               () async {
-                            final result =
+                            final sel =
                                 await WheelPickerBottomSheet.show<String>(
                               context: ctx,
                               title: 'Select Blood Type',
@@ -939,19 +955,48 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 ),
                               ],
                             );
-                            if (result != null) setD(() => bloodGroup = result);
+                            if (sel != null) setD(() => bloodGroup = sel);
                           }),
                           const SizedBox(height: DesignTokens.spaceMd),
-                          _editField(contactCtrl, 'Parent Contact #',
-                              keyboardType: TextInputType.phone),
-                          const SizedBox(height: DesignTokens.spaceMd),
-                          _editField(parentCtrl, 'Parent/Guardian Name'),
+                          _editTile(ctx, setD, 'Eye Color',
+                              eyeColor == null || eyeColor!.isEmpty
+                                  ? 'Not set'
+                                  : eyeColor!,
+                              () async {
+                            final sel =
+                                await WheelPickerBottomSheet.show<String>(
+                              context: ctx,
+                              title: 'Select Eye Color',
+                              columns: [
+                                WheelColumn<String>(
+                                  label: 'Eye Color',
+                                  options: const [
+                                    WheelOption(value: '', label: 'Not set'),
+                                    WheelOption(value: 'Brown', label: 'Brown'),
+                                    WheelOption(value: 'Blue', label: 'Blue'),
+                                    WheelOption(value: 'Green', label: 'Green'),
+                                    WheelOption(value: 'Hazel', label: 'Hazel'),
+                                    WheelOption(value: 'Gray', label: 'Gray'),
+                                    WheelOption(value: 'Amber', label: 'Amber'),
+                                  ],
+                                  initialValue: eyeColor ?? '',
+                                ),
+                              ],
+                            );
+                            if (sel != null) setD(() => eyeColor = sel);
+                          }),
                           const SizedBox(height: DesignTokens.spaceMd),
                           _editField(motherCtrl, 'Biological Mother'),
                           const SizedBox(height: DesignTokens.spaceMd),
                           _editField(fatherCtrl, 'Biological Father'),
                           const SizedBox(height: DesignTokens.spaceMd),
-                          _editField(traitsCtrl, 'Traits (comma separated)'),
+                          _editField(parentCtrl, 'Parent/Guardian Name'),
+                          const SizedBox(height: DesignTokens.spaceMd),
+                          _editField(contactCtrl, 'Parent Contact #',
+                              keyboardType: TextInputType.phone),
+                          const SizedBox(height: DesignTokens.spaceMd),
+                          // ── Traits: multi-select chips ──
+                          _buildTraitsEditor(ctx, setD, traits),
                           const SizedBox(height: DesignTokens.spaceMd),
                           _editField(specialMoveCtrl, 'Special Move'),
                         ],
@@ -983,35 +1028,69 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
 
     if (result != true) return;
-    await api.updateBabyMon(_babyMonId!, {
-      'name': nameCtrl.text.trim(),
-      'gender': gender,
-      'bloodGroup': bloodGroup,
-      'biologicalMother': motherCtrl.text.trim(),
-      'biologicalFather': fatherCtrl.text.trim(),
-      'traits': traitsCtrl.text
-          .split(',')
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty)
-          .toList(),
-      'specialMove': specialMoveCtrl.text.trim(),
-    });
 
-    final profileData = <String, dynamic>{};
-    if (parentCtrl.text.trim().isNotEmpty &&
-        parentCtrl.text.trim() != _parentName) {
-      profileData['name'] = parentCtrl.text.trim();
-    }
-    if (contactCtrl.text.trim() != (_parentContact ?? '')) {
-      profileData['phone'] = contactCtrl.text.trim();
-    }
-    if (profileData.isNotEmpty) {
+    // Save parent/guardian profile first (independent of BabyMon)
+    final newName = parentCtrl.text.trim();
+    final newPhone = contactCtrl.text.trim();
+    final nameChanged = newName != (_parentName ?? '');
+    final phoneChanged = newPhone != (_parentContact ?? '');
+
+    if (nameChanged || phoneChanged) {
       try {
+        final profileData = <String, dynamic>{};
+        if (nameChanged) {
+          profileData['name'] = newName.isEmpty ? null : newName;
+        }
+        if (phoneChanged) {
+          profileData['phone'] = newPhone.isEmpty ? null : newPhone;
+        }
         await api.patch('/users/me', data: profileData);
-        _parentName = parentCtrl.text.trim();
-        _parentContact = contactCtrl.text.trim();
-      } catch (_) {}
+        if (mounted) {
+          setState(() {
+            _parentName = newName.isEmpty ? null : newName;
+            _parentContact = newPhone.isEmpty ? null : newPhone;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Profile save failed: $e'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: context.colorScheme.error,
+            ),
+          );
+        }
+      }
     }
+
+    // Then update BabyMon
+    try {
+      await api.updateBabyMon(_babyMonId!, {
+        'name': nameCtrl.text.trim(),
+        'middleName': middleCtrl.text.trim(),
+        'lastName': lastNameCtrl.text.trim(),
+        'gender': gender,
+        'bloodGroup': bloodGroup,
+        'eyeColor': eyeColor,
+        'biologicalMother': motherCtrl.text.trim(),
+        'biologicalFather': fatherCtrl.text.trim(),
+        'traits': traits.toList(),
+        'specialMove': specialMoveCtrl.text.trim(),
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('BabyMon save failed: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: context.colorScheme.error,
+          ),
+        );
+      }
+      return;
+    }
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1031,7 +1110,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return PremiumDoubleBezel(
       outerRadius: DesignTokens.radiusMd + 2,
       gap: 2.0,
-      outerColor: AppColors.border.withValues(alpha: 0.08),
+      outerColor: context.colorScheme.outline.withValues(alpha: 0.08),
       innerPadding: EdgeInsets.zero,
       showInnerHighlight: false,
       child: TextField(
@@ -1052,7 +1131,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return PremiumDoubleBezel(
       outerRadius: DesignTokens.radiusMd + 2,
       gap: 2.0,
-      outerColor: AppColors.border.withValues(alpha: 0.08),
+      outerColor: ctx.colorScheme.outline.withValues(alpha: 0.08),
       innerPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
       showInnerHighlight: false,
       onTap: onTap,
@@ -1072,18 +1151,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
-                    ?.copyWith(color: AppColors.textSecondary),
+                    ?.copyWith(color: ctx.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(width: 4),
               Container(
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
+                  color: ctx.colorScheme.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
                 ),
                 child: Icon(PhosphorIconsLight.caretRight,
-                    size: 14, color: AppColors.primary.withValues(alpha: 0.5)),
+                    size: 14, color: ctx.colorScheme.primary.withValues(alpha: 0.5)),
               ),
             ],
           ),
@@ -1092,641 +1171,200 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  Widget _buildXpCard() {
-    return PremiumDoubleBezel(
-      outerRadius: DesignTokens.radius2xl,
-      gap: 5.0,
-      outerColor: AppColors.warning.withValues(alpha: 0.06),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AppColors.warning.withValues(alpha: 0.12),
-                      borderRadius:
-                          BorderRadius.circular(DesignTokens.radiusSm),
-                      border: Border.all(
-                        color: AppColors.warning.withValues(alpha: 0.15),
-                        width: 0.5,
-                      ),
-                    ),
-                    child: const Icon(
-                      PhosphorIconsLight.sparkle,
-                      size: 16,
-                      color: AppColors.warning,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Experience',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.3,
+  static const List<String> _kDefaultTraits = [
+    'Curious',
+    'Peaceful',
+    'Playful',
+    'Gentle',
+    'Adventurous',
+    'Creative',
+  ];
+
+  Widget _buildTraitsEditor(
+      BuildContext ctx, StateSetter setD, Set<String> traits) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Traits',
+            style: Theme.of(context)
+                .textTheme
+                .labelMedium
+                ?.copyWith(color: ctx.colorScheme.onSurfaceVariant)),
+        const SizedBox(height: DesignTokens.spaceSm),
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: [
+            // Default traits as simple ChoiceChips
+            for (final trait in _kDefaultTraits)
+              ChoiceChip(
+                key: ValueKey('default_$trait'),
+                label: Text(trait, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                selected: traits.contains(trait),
+                onSelected: (sel) {
+                  setD(() => sel ? traits.add(trait) : traits.remove(trait));
+                },
+                visualDensity: VisualDensity.compact,
+              ),
+            // Custom traits with delete
+            for (final trait in traits.where((t) => !_kDefaultTraits.contains(t)))
+              Chip(
+                key: ValueKey('custom_$trait'),
+                label: Text(trait, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                deleteIcon: const Icon(Icons.close, size: 14),
+                onDeleted: () => setD(() => traits.remove(trait)),
+                visualDensity: VisualDensity.compact,
+                backgroundColor: ctx.colorScheme.tertiaryContainer,
+              ),
+            // Add button
+            ActionChip(
+              key: const ValueKey('add_custom'),
+              avatar: const Icon(Icons.add, size: 14),
+              label: const Text('Add custom', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              visualDensity: VisualDensity.compact,
+              onPressed: () async {
+                if (_customTraitDialogOpen) return;
+                _customTraitDialogOpen = true;
+                final ctrl = TextEditingController();
+                try {
+                  final result = await showDialog<String>(
+                    context: context,
+                    builder: (dCtx) => AlertDialog(
+                      title: const Text('Add Custom Trait'),
+                      content: TextField(
+                        controller: ctrl,
+                        decoration: const InputDecoration(
+                          hintText: 'e.g. Brave, Silly, Stubborn',
+                          border: OutlineInputBorder(),
                         ),
-                  ),
-                ],
-              ),
-              // ── XP counter badge with button-in-button ──
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.15),
-                    width: 0.5,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '$_xpCurrent',
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelSmall
-                          ?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primary,
-                            fontSize: 13,
-                          ),
-                    ),
-                    const SizedBox(width: 2),
-                    Text(
-                      '/ $_xpForNextLevel XP',
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelSmall
-                          ?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textCaption,
-                            fontSize: 10,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: DesignTokens.spaceLg),
-          PremiumProgressBar(
-            value: _xpProgress,
-            height: 10,
-            progressColor: AppColors.secondary,
-            showGlow: true,
-            isGlass: true,
-          ),
-          const SizedBox(height: DesignTokens.spaceSm),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '$_levelName (Lv $_currentLevel)',
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelSmall
-                      ?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
                       ),
-                ),
-              ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dCtx),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(dCtx, ctrl.text.trim()),
+                          child: const Text('Add'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (result != null && result.isNotEmpty) {
+                    setD(() => traits.add(result));
+                  }
+                } catch (_) {
+                  // ignore
+                } finally {
+                  ctrl.dispose();
+                  _customTraitDialogOpen = false;
+                }
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildXpCard() => DashboardXpCard(evolution: _evolution);
+
+  Widget _buildQuickStatsRow() => DashboardStatsRow(evolution: _evolution);
+
+
+  Widget _buildGrowthRow() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.bentoPadding),
+      child: Row(children: [
+        if (_latestGrowth != null)
+          Expanded(child: _buildMiniGrowthCard(
+            icon: PhosphorIconsLight.scales,
+            label: 'Weight',
+            value: '${_latestGrowth!.value} ${_latestGrowth!.unit ?? 'kg'}',
+            date: _latestGrowth!.measuredAt != null
+                ? DateFormat.yMMMd().format(_latestGrowth!.measuredAt!)
+                : '',
+          )),
+        if (_latestGrowth != null && _latestHeight != null)
+          const SizedBox(width: DesignTokens.spaceSm),
+        if (_latestHeight != null)
+          Expanded(child: _buildMiniGrowthCard(
+            icon: PhosphorIconsLight.ruler,
+            label: 'Height',
+            value: '${_latestHeight!.value} ${_latestHeight!.unit ?? 'cm'}',
+            date: _latestHeight!.measuredAt != null
+                ? DateFormat.yMMMd().format(_latestHeight!.measuredAt!)
+                : '',
+          )),
+      ]),
+    );
+  }
+
+  Widget _buildMiniGrowthCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required String date,
+  }) {
+    return PremiumDoubleBezel(
+      outerRadius: DesignTokens.radiusMd,
+      gap: 3.0,
+      outerColor: context.colorScheme.primary.withValues(alpha: 0.06),
+      onTap: () => context.push('/growth-chart'),
+      child: Padding(
+        padding: const EdgeInsets.all(DesignTokens.spaceMd),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(children: [
+              Icon(icon, color: context.colorScheme.primary, size: 20),
+              const Spacer(),
+              Icon(PhosphorIconsLight.caretRight, color: context.colorScheme.primary.withValues(alpha: 0.5), size: 14),
+            ]),
+            const SizedBox(height: DesignTokens.spaceSm),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                    fontSize: 11,
+                  ),
+            ),
+            if (date.isNotEmpty)
               Text(
-                'Next: $_nextLevelName',
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall
-                    ?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textCaption,
+                date,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                       fontSize: 10,
                     ),
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickStatsRow() {
-    // Equal-weight 4-up grid using a shared BackdropFilter for performance.
-    // Instead of each PremiumStatCard applying its own blur (4 passes),
-    // the entire row is wrapped in a single ClipRRect + BackdropFilter
-    // and each card renders with isGlass=false (no per-card blur).
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-      child: BackdropFilter(
-        filter: ui.ImageFilter.blur(
-          sigmaX: DesignTokens.glassBlurLight,
-          sigmaY: DesignTokens.glassBlurLight,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.glassDark : AppColors.glassLight,
-            borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
-            border: Border.all(
-              color: isDark
-                  ? AppColors.glassDarkBorderLight
-                  : AppColors.glassBorderLight,
-              width: 0.5,
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(
-            vertical: DesignTokens.spaceXs,
-            horizontal: DesignTokens.spaceXs,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: PremiumStatCard(
-                  label: 'Milestones',
-                  value: '${_evolution?['milestoneCount'] ?? 0}',
-                  icon: PhosphorIconsLight.trophy,
-                  iconColor: AppColors.bentoGold,
-                  isGlass: false,
-                ),
-              ),
-              const SizedBox(width: DesignTokens.spaceXs),
-              Expanded(
-                child: PremiumStatCard(
-                  label: 'Feedings',
-                  value: '${_evolution?['feedLogCount'] ?? 0}',
-                  icon: PhosphorIconsLight.bowlFood,
-                  iconColor: AppColors.bentoCoral,
-                  isGlass: false,
-                ),
-              ),
-              const SizedBox(width: DesignTokens.spaceXs),
-              Expanded(
-                child: PremiumStatCard(
-                  label: 'Health',
-                  value: '${_evolution?['healthRecordCount'] ?? 0}',
-                  icon: PhosphorIconsLight.heart,
-                  iconColor: AppColors.bentoPurple,
-                  isGlass: false,
-                ),
-              ),
-              const SizedBox(width: DesignTokens.spaceXs),
-              Expanded(
-                child: PremiumStatCard(
-                  label: 'Sleep',
-                  value: '${_evolution?['sleepLogCount'] ?? 0}',
-                  icon: PhosphorIconsLight.moon,
-                  iconColor: AppColors.bentoBlue,
-                  isGlass: false,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildGrowthCard() {
-    final latest = _latestGrowth!;
-    final measuredAt = latest['measuredAt'] != null
-        ? DateFormat.yMMMd()
-            .format(DateTime.parse(parseString(latest['measuredAt'])!))
-        : '';
-    return PremiumDoubleBezel(
-      outerRadius: DesignTokens.radius2xl,
-      gap: 5.0,
-      outerColor: AppColors.accent.withValues(alpha: 0.06),
-      onTap: () => context.push('/growth-chart'),
-      child: Row(
-        children: [
-          // ── Premium icon tray with double-bezel ──
-          PremiumDoubleBezel(
-            outerRadius: DesignTokens.radiusMd + 4,
-            gap: 3.0,
-            outerColor: AppColors.accent.withValues(alpha: 0.08),
-            innerPadding: EdgeInsets.zero,
-            showInnerHighlight: false,
-            child: Container(
-              width: 48,
-              height: 48,
-              alignment: Alignment.center,
-            child: const Icon(
-              PhosphorIconsLight.scales,
-              color: AppColors.accent,
-              size: 22,
-            ),
-            ),
-          ),
-          const SizedBox(width: DesignTokens.spaceMd),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Latest Weight',
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelMedium
-                      ?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                        letterSpacing: 0.3,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${latest['value']} ${latest['unit'] ?? 'kg'}',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                      ),
-                ),
-                if (measuredAt.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      measuredAt,
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelSmall
-                          ?.copyWith(
-                            color: AppColors.textCaption,
-                            fontSize: 11,
-                          ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          // ── Button-in-Button chevron ──
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
-            ),
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
-              ),
-            child: const Icon(
-              PhosphorIconsLight.caretRight,
-              color: AppColors.accent,
-              size: 16,
-            ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBadgeSection() {
-    if (_badgeDefinitions.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: DesignTokens.spaceLg,
-          vertical: DesignTokens.spaceMd,
-        ),
-        decoration: BoxDecoration(
-          color: (Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.glassDark
-                  : AppColors.surface)
-              .withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-          border: Border.all(color: AppColors.border, width: 0.5),
-        ),
-        child: Row(
-          children: [
-            const Icon(PhosphorIconsLight.trophy,
-                color: AppColors.warning, size: 22),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Badges ($_totalUnlocked unlocked)',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
           ],
         ),
-      );
-    }
-
-    // Stable category order: known categories first, then anything new.
-    const catOrder = [
-      'milestones', 'feeding', 'sleep', 'health',
-      'growth', 'parenting', 'progression', 'traits',
-    ];
-    final sorted = <String, List<Map<String, dynamic>>>{};
-    for (final c in catOrder) {
-      if (_groupedBadges.containsKey(c)) sorted[c] = _groupedBadges[c]!;
-    }
-    for (final c in _groupedBadges.keys) {
-      if (!sorted.containsKey(c)) sorted[c] = _groupedBadges[c]!;
-    }
-
-    return PremiumCard(
-      isGlass: true,
-      padding: EdgeInsets.zero,
-      child: Material(
-        type: MaterialType.transparency,
-        child: ExpansionTile(
-          dense: true,
-          visualDensity: VisualDensity.compact,
-          tilePadding: const EdgeInsets.symmetric(
-              horizontal: DesignTokens.spaceLg, vertical: DesignTokens.spaceSm),
-          childrenPadding: const EdgeInsets.fromLTRB(
-              DesignTokens.spaceSm, 0, DesignTokens.spaceSm, DesignTokens.spaceSm),
-          initiallyExpanded: false,
-          title: Row(
-            children: [
-              const Icon(PhosphorIconsLight.trophy, size: 18, color: AppColors.warning),
-              const SizedBox(width: DesignTokens.spaceSm),
-              const Expanded(
-                child: Text(
-                  'Achievements',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.2,
-                ),
-              ),
-            ),
-            Text(
-              '$_totalUnlocked / $_totalBadges',
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: AppColors.warning,
-              ),
-            ),
-          ],
-        ),
-        children: [
-          for (final entry in sorted.entries)
-            _badgeCategoryTile(entry.key, entry.value),
-        ],
-        ),
       ),
     );
   }
 
-  /// A collapsible category tile — wraps each achievement category in an
-  /// [ExpansionTile] that's collapsed by default. Individual badges appear
-  /// inside via [_badgeGrid] when the category is expanded.
-  Widget _badgeCategoryTile(String cat, List<Map<String, dynamic>> badges) {
-    final unlocked = _unlockedInCategory(cat);
-    final total = _totalInCategory(cat);
-    return Material(
-      type: MaterialType.transparency,
-      child: ExpansionTile(
-        dense: true,
-        visualDensity: VisualDensity.compact,
-        tilePadding: const EdgeInsets.symmetric(
-            horizontal: DesignTokens.spaceSm, vertical: 0),
-        childrenPadding: const EdgeInsets.only(bottom: DesignTokens.spaceSm),
-        initiallyExpanded: false,
-        title: Row(
-          children: [
-            Icon(_categoryIcon(cat), size: 16, color: AppColors.textSecondary),
-            const SizedBox(width: DesignTokens.spaceSm),
-            Expanded(
-              child: Text(
-                '${cat[0].toUpperCase()}${cat.substring(1)}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary,
-                  letterSpacing: 0.2,
-                ),
-              ),
-            ),
-            Text(
-              '$unlocked/$total',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textCaption,
-              ),
-            ),
-          ],
-        ),
-        children: [
-          _badgeGrid(badges),
-        ],
-      ),
-    );
-  }
-
-  Widget _badgeGrid(List<Map<String, dynamic>> badges) {
-    // Unlocked first — the earned badges anchor the top of each row.
-    final sorted = [...badges]..sort((a, b) {
-        final au = a['unlocked'] == true ? 0 : 1;
-        final bu = b['unlocked'] == true ? 0 : 1;
-        return au.compareTo(bu);
-      });
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-          horizontal: DesignTokens.spaceLg),
-      child: Wrap(
-        spacing: DesignTokens.spaceSm,
-        runSpacing: DesignTokens.spaceSm,
-        children: sorted.map(_badgeChip).toList(),
-      ),
-    );
-  }
-
-  // _buildCategoryTile was removed when _buildBadgeSection was flattened
-  // into a 4×N grid. The new _badgeGrid + _badgeCategoryHeader helpers
-  // replace it.
-
-  IconData _categoryIcon(String c) {
-    switch (c) {
-      case 'milestones':
-        return PhosphorIconsLight.trophy;
-      case 'feeding':
-        return PhosphorIconsLight.bowlFood;
-      case 'sleep':
-        return PhosphorIconsLight.moon;
-      case 'health':
-        return PhosphorIconsLight.heart;
-      case 'growth':
-        return PhosphorIconsLight.scales;
-      case 'parenting':
-        return PhosphorIconsLight.users;
-      case 'progression':
-        return PhosphorIconsLight.lightning;
-      default:
-        return PhosphorIconsLight.trophy;
-    }
-  }
-
-  Widget _badgeChip(Map<String, dynamic> b) {
-    final u = b['unlocked'] == true;
-    final n = parseString(b['name']) ?? '';
-    final t = parseString(b['tier']) ?? 'BRONZE';
-    return Semantics(
-      label: n,
-      button: true,
-      child: GestureDetector(
-      onTap: () => _showBadgeDetail(b),
-      child: Tooltip(
-        message: u ? '$n\n${b['description'] ?? ''}' : '$n (Locked)',
-        child: AnimatedContainer(
-          duration: DesignTokens.durationFast,
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,              color: u
-                  ? _tierColor(t).withValues(alpha: 0.15)
-                  : (Theme.of(context).brightness == Brightness.dark ? AppColors.darkSurface : AppColors.surfaceLight),
-            border: Border.all(
-              color: u ? _tierColor(t) : AppColors.border,
-              width: u ? 2 : 1,
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            n.isNotEmpty ? n[0].toUpperCase() : '?',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: u ? _tierColor(t) : AppColors.textCaption,
-            ),
-          ),
-        ),
-      ),
-      ),
-    );
-  }
-
-  void _showBadgeDetail(Map<String, dynamic> b) {
-    final u = b['unlocked'] == true;
-    final t = parseString(b['tier']) ?? 'BRONZE';
-    final xp = parseInt(b['xpValue']) ?? 10;
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        ),
-        titlePadding: const EdgeInsets.fromLTRB(
-            DesignTokens.spaceMd, DesignTokens.spaceMd,
-            DesignTokens.spaceMd, 0),
-        title: Row(
-          children: [
-            Icon(
-              u ? PhosphorIconsLight.trophy : PhosphorIconsLight.lock,
-              color: u ? _tierColor(t) : AppColors.textCaption,
-              size: 28,
-            ),
-            const SizedBox(width: 12),
-            Expanded(                child: Text(
-                parseString(b['name']) ?? '',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _tierChip(t),
-                const SizedBox(width: 8),
-                Text(
-                  '$xp XP',
-                  style: const TextStyle(
-                    color: AppColors.warning,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              parseString(b['description']) ?? '',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: AppColors.textSecondary),
-            ),
-            if (!u) ...[
-              const SizedBox(height: 16),
-              Text(
-                'Keep tracking to unlock!',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(
-                      color: AppColors.textCaption,
-                      fontStyle: FontStyle.italic,
-                    ),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close',
-                style: TextStyle(color: AppColors.textSecondary)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _tierChip(String t) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: _tierColor(t).withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
-      ),
-      child: Text(
-        t[0] + t.substring(1).toLowerCase(),
-        style: TextStyle(                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: _tierColor(t),
-        ),
-      ),
-    );
-  }
+  Widget _buildBadgeSection() => Semantics(
+    label: 'Badges: ${_badges.length} earned',
+    child: DashboardBadgeSection(
+      badgeDefinitions: _badgeDefinitions,
+      badges: _badges,
+    ),
+  );
 
   void _showLevelUpCelebration(int newLevel) {
     showDialog<void>(
       context: context,
       barrierDismissible: true,
-      barrierColor: AppColors.textPrimary.withValues(alpha: 0.3),
+      barrierColor: context.colorScheme.onSurface.withValues(alpha: DesignTokens.opacityDim),
       builder: (ctx) => LevelUpCelebration(
         level: newLevel,
         onDismiss: () => Navigator.of(ctx).pop(),
@@ -1736,59 +1374,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   Widget _buildStageContentCard() {
     if (_stageContent == null) return const SizedBox.shrink();
-    return PremiumCard(
-      isGlass: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(PhosphorIconsLight.sparkle,
-                  color: AppColors.primary, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                parseString(_stageContent!['title']) ?? 'Stage Insights',
-                style: Theme.of(context)
-                    .textTheme
-                    .labelLarge
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
-            ],
-          ),
-          if (_stageContent!['summary'] != null) ...[
-            const SizedBox(height: DesignTokens.spaceSm),
-            Text(
-              parseString(_stageContent!['summary']) ?? '',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: AppColors.textSecondary),
-            ),
-          ],
-          if (_stageContent!['tips'] != null) ...[
-            const SizedBox(height: DesignTokens.spaceSm),
-            ...parseList(_stageContent!['tips']).map((tip) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('• ',
-                          style: TextStyle(fontWeight: FontWeight.w800)),
-                      Expanded(
-                        child: Text(
-                          tip.toString(),
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: AppColors.textSecondary),
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
-          ],
-        ],
-      ),
+    return Semantics(
+      label: 'Stage content for ${_stageContent!['title'] ?? 'current stage'}',
+      child: DashboardContentCard(stageContent: _stageContent!),
     );
   }
 

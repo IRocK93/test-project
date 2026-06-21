@@ -103,7 +103,7 @@ class LevelUpCelebration extends StatefulWidget {
     showDialog<void>(
       context: context,
       barrierDismissible: true,
-      barrierColor: AppColors.textPrimary.withValues(alpha: 0.3),
+      barrierColor: context.colorScheme.onSurface.withValues(alpha: 0.3),
       builder: (ctx) => LevelUpCelebration(
         level: newLevel,
         onDismiss: () => Navigator.of(ctx).pop(),
@@ -128,13 +128,13 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3500),
+      duration: const Duration(milliseconds: 3500), // Intentional: dramatic celebration reveal
     );
 
     // Haptic feedback on entry
     try {
       HapticFeedback.mediumImpact();
-    } catch (_) {}
+    } catch (_) { /* haptic feedback unavailable — non-critical */ }
 
     // Sequence the animation reveals
     _controller.addListener(() {
@@ -175,7 +175,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
   int get _phase => _phaseForLevel(widget.level);
 
   /// Particle type is based on the phase number:
-  /// Phase 1-2: leaf (🍃), Phase 3-4: sparkle (✨), Phase 5-6: star (⭐)
+  /// Phase 1-2: leaf (eco icon), Phase 3-4: sparkle (auto_awesome icon), Phase 5-6: star (star icon)
   IconData get _particleIcon {
     if (_phase <= 2) return Icons.eco;
     if (_phase <= 4) return Icons.auto_awesome;
@@ -212,7 +212,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
                   Positioned.fill(
                     child: Opacity(
                       opacity: (_controller.value * 0.7).clamp(0.0, 0.7),
-                      child: Container(color: AppColors.darkBackground),
+                      child: Container(color: Colors.black87),
                     ),
                   ),
                   // Content
@@ -258,8 +258,8 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
                           child: Text(
                             'Tap anywhere to continue',
                             style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textOnPrimary.withValues(alpha: 0.7),
+                              fontSize: DesignTokens.fontSm2,
+                              color: context.colorScheme.onPrimary.withValues(alpha: 0.7),
                             ),
                           ),
                         ),
@@ -303,15 +303,15 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                '⚡',
-                style: TextStyle(fontSize: 36),
+              Text(
+                'Phase ${widget.level}',
+                style: const TextStyle(fontSize: 36),
               ),
               const SizedBox(height: 2),
               Text(
                 'Lv ${widget.level}',
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: DesignTokens.fontLg,
                   fontWeight: FontWeight.w900,
                   color: Color(0xFF5D4037),
                   letterSpacing: -0.5,
@@ -351,7 +351,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
             style: TextStyle(
               fontSize: _isLuminary ? 34 : 28,
               fontWeight: FontWeight.w900,
-              color: AppColors.textOnPrimary,
+              color: context.colorScheme.onPrimary,
               letterSpacing: -1.0,
               shadows: [
                 if (showGlow)
@@ -380,9 +380,9 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '💧 Phase Milestone 💧',
+              'Phase Milestone',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: DesignTokens.fontLg,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF80DEEA).withValues(alpha: opacity.clamp(0.5, 1.0)),
                 letterSpacing: 1.0,
@@ -393,7 +393,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
               _phaseDescriptions[_phase] ?? '',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: DesignTokens.fontSm2,
                 fontWeight: FontWeight.w500,
                 color: Colors.white.withValues(alpha: 0.7),
               ),
@@ -417,8 +417,8 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
           'Keep tracking — every moment counts!',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,                              color: AppColors.textOnPrimary.withValues(alpha: 0.8),
+            fontSize: DesignTokens.fontMd,
+            fontWeight: FontWeight.w500,                              color: context.colorScheme.onPrimary.withValues(alpha: 0.8),
           ),
         ),
       ),
@@ -426,7 +426,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
   }
 
   Widget _buildLuminaryRecap(bool reducedMotion) {
-    const phases = ['🌰', '🌱', '🌿', '🌳', '🏔️', '✨'];
+    const phases = ['Seed', 'Sprout', 'Growth', 'Tree', 'Peak', 'Star'];
 
     return Padding(
       padding: const EdgeInsets.only(top: 24),
@@ -450,16 +450,16 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
             'This is the work of an amazing parent.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,                              color: AppColors.textOnPrimary.withValues(alpha: 0.9),
+              fontSize: DesignTokens.fontMd2,
+              fontWeight: FontWeight.w600,                              color: context.colorScheme.onPrimary.withValues(alpha: 0.9),
               height: 1.5,
             ),
           ),
           const SizedBox(height: 12),
           Text(
-            '⭐⭐⭐',
+            'Master Level',
             style: TextStyle(
-              fontSize: 32,
+              fontSize: DesignTokens.font3xl,
               color: const Color(0xFFFFD700).withValues(alpha: 0.8),
             ),
           ),
@@ -522,19 +522,21 @@ class _ParticleOverlayState extends State<_ParticleOverlay>
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        return CustomPaint(
-          size: Size.infinite,
-          painter: _ParticlePainter(
-            particles: _particles,
-            icon: widget.icon,
-            color: widget.color,
-            progress: _controller.value,
-          ),
-        );
-      },
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return CustomPaint(
+            size: Size.infinite,
+            painter: _ParticlePainter(
+              particles: _particles,
+              icon: widget.icon,
+              color: widget.color,
+              progress: _controller.value,
+            ),
+          );
+        },
+      ),
     );
   }
 }

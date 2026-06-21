@@ -11,11 +11,6 @@ import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
-// SharedPreferences provider
-final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) async {
-  return SharedPreferences.getInstance();
-});
-
 // Datasource
 final authRemoteDatasourceProvider = Provider<AuthRemoteDatasource>((ref) {
   final apiClient = ref.watch(apiClientProvider);
@@ -104,10 +99,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> register(String email, String password, String? name) async {
+  Future<void> register(
+    String email,
+    String password,
+    String? name,
+    DateTime dateOfBirth,
+    bool tosAccepted,
+    bool privacyAccepted,
+    bool consentToDataProcessing,
+  ) async {
     state = state.copyWith(isLoading: true);
     try {
-      final result = await _repository.register(email: email, password: password, name: name);
+      final result = await _repository.register(
+        email: email,
+        password: password,
+        name: name,
+        dateOfBirth: dateOfBirth,
+        tosAccepted: tosAccepted,
+        privacyAccepted: privacyAccepted,
+        consentToDataProcessing: consentToDataProcessing,
+      );
       state = AuthState(user: result.user, token: result.token, isEmailVerified: false);
     } catch (e) {
       state = AuthState(error: extractErrorMessage(e));
@@ -156,21 +167,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return;
       }
 
-      // TODO: Send ID token to backend for verification
-      // For now, simulate successful Google login
-      await Future<void>.delayed(const Duration(seconds: 1));
-
-      // Create a mock user for now - in production, backend returns real user
-      final user = User(
-        id: 'google-${DateTime.now().millisecondsSinceEpoch}',
-        email: 'google.user@gmail.com',
-        name: 'Google User',
-        createdAt: DateTime.now(),
-      );
-
+      final result = await _repository.googleLogin(idToken);
       state = AuthState(
-        user: user,
-        token: 'google-token-${DateTime.now().millisecondsSinceEpoch}',
+        user: result.user,
+        token: result.token,
         isEmailVerified: true, // Google emails are pre-verified
       );
     } catch (e) {
@@ -201,22 +201,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return;
       }
 
-      // TODO: Send identityToken to backend for verification
-      // For now, simulate successful Apple login
-      await Future<void>.delayed(const Duration(seconds: 1));
+      final identityToken = appleData['identityToken'] as String?;
+      if (identityToken == null || identityToken.isEmpty) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'No identity token received from Apple',
+        );
+        return;
+      }
 
-      // Create user from Apple data
-      final user = User(
-        id: 'apple-${appleData['userIdentifier'] ?? DateTime.now().millisecondsSinceEpoch}',
-        email: appleData['email'] ?? 'apple.user@privaterelay.appleid.com',
-        name: appleData['fullName'] ?? 'Apple User',
-        createdAt: DateTime.now(),
-      );
-
+      final result = await _repository.appleLogin(identityToken);
       state = AuthState(
-        user: user,
-        token: 'apple-token-${DateTime.now().millisecondsSinceEpoch}',
-        isEmailVerified: true, // Apple emails are pre-verified
+        user: result.user,
+        token: result.token,
+        isEmailVerified: true,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: extractErrorMessage(e));
@@ -235,22 +233,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return;
       }
 
-      // TODO: Send accessToken to backend for verification
-      // For now, simulate successful Facebook login
-      await Future<void>.delayed(const Duration(seconds: 1));
+      final accessToken = facebookData['accessToken'] as String?;
+      if (accessToken == null || accessToken.isEmpty) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'No access token received from Facebook',
+        );
+        return;
+      }
 
-      // Create user from Facebook data
-      final user = User(
-        id: 'facebook-${facebookData['userId'] ?? DateTime.now().millisecondsSinceEpoch}',
-        email: facebookData['email'] ?? 'facebook.user@facebook.com',
-        name: facebookData['name'] ?? 'Facebook User',
-        createdAt: DateTime.now(),
-      );
-
+      final result = await _repository.facebookLogin(accessToken);
       state = AuthState(
-        user: user,
-        token: 'facebook-token-${DateTime.now().millisecondsSinceEpoch}',
-        isEmailVerified: true, // Facebook emails are pre-verified
+        user: result.user,
+        token: result.token,
+        isEmailVerified: true,
       );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: extractErrorMessage(e));

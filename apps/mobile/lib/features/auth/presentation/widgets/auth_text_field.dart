@@ -50,9 +50,12 @@ class _AuthTextFieldState extends State<AuthTextField> {
         hintText: widget.hintText,
         prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon) : null,
         suffixIcon: widget.obscureText
-            ? IconButton(
-                icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
-                onPressed: () => setState(() => _obscureText = !_obscureText),
+            ? Semantics(
+                label: 'Toggle password visibility',
+                child: IconButton(
+                  icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
+                  onPressed: () => setState(() => _obscureText = !_obscureText),
+                ),
               )
             : widget.suffixIcon,
         border: OutlineInputBorder(

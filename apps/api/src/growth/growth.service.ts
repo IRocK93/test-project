@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessControlService } from '../common/access-control.service';
+import { GrowthType } from '@prisma/client';
 
 // WHO Growth Standards (simplified - for 0-24 months)
 const WHO_STANDARDS = {
@@ -127,7 +128,7 @@ export class GrowthService {
     const babyMon = await this.verifyAccessWithBabyMon(babyMonId, userId);
 
     const records = await this.prisma.growthRecord.findMany({
-      where: { babyMonId, type },
+      where: { babyMonId, type: type as GrowthType },
       orderBy: { measuredAt: 'asc' },
     });
 

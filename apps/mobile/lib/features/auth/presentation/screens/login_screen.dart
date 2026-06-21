@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/providers.dart';
+import 'package:baby_mon/features/auth/auth.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
@@ -55,7 +56,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _biometricsOptedIn = optedIn;
         });
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('[Login] biometrics check failed: $e'); }
   }
 
   Future<void> _saveBiometricPreference(bool enabled) async {
@@ -73,7 +74,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (ref.read(authProvider).user != null && mounted) {
         final isVerified = await ref.read(authProvider.notifier).checkEmailVerified();
         if (isVerified && mounted) {
-          context.go('/home');
+          context.go('/loading');
         } else if (mounted) {
           context.go('/verify-email?email=${Uri.encodeComponent(_emailController.text)}');
         }
@@ -103,7 +104,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           if (enable == true && mounted) await _saveBiometricPreference(true);
         }
         await ref.read(authProvider.notifier).biometricLogin();
-        if (ref.read(authProvider).user != null && mounted) context.go('/home');
+        if (ref.read(authProvider).user != null && mounted) context.go('/loading');
       }
     } catch (e) {
       if (mounted) {
@@ -237,7 +238,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             width: DesignTokens.glassBorderWidth,
                           ),
                           boxShadow: [
-                            ...DesignTokens.glassShadow(null),
+                            ...DesignTokens.glassShadow(Colors.transparent),
                           ],
                         ),
                     child: Form(
@@ -271,7 +272,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: DesignTokens.spaceXs),
                           const Text(
-                            'Sign in to continue',
+                            'Log in to continue',
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textSecondary,
@@ -331,25 +332,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                           // Login button
                           ThemeButton(
-                            text: 'Login',
+                            text: 'Log In',
                             onPressed: _login,
                             isLoading: authState.isLoading,
                             fullWidth: true,
                             trailingIcon: PhosphorIconsLight.arrowRight,
                             borderRadius: DesignTokens.radiusFull,
-                            semanticLabel: 'Login to your account',
+                            semanticLabel: 'Log in to your account',
                           ),
 
                           // Biometrics
                           if (_biometricsAvailable && _biometricsOptedIn) ...[
                             const SizedBox(height: DesignTokens.spaceMd),
                             ThemeButton(
-                            text: 'Sign in with Biometrics',
+                            text: 'Log in with Biometrics',
                             onPressed: _biometricLogin,
                             variant: ThemeButtonVariant.outlined,
                             icon: PhosphorIconsLight.fingerprint,
                             fullWidth: true,
-                            semanticLabel: 'Sign in with biometrics',
+                            semanticLabel: 'Log in with biometrics',
                           ),
                           ],
                         ],
@@ -441,10 +442,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Widget _socialCircle(IconData icon, Color color, VoidCallback onTap) {
     final label = icon == Icons.g_mobiledata
-        ? 'Sign in with Google'
+        ? 'Continue with Google'
         : icon == Icons.apple
-            ? 'Sign in with Apple'
-            : 'Sign in with Facebook';
+            ? 'Continue with Apple'
+            : 'Continue with Facebook';
     return Tooltip(
       message: label,
       preferBelow: false,

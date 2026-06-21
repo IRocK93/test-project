@@ -7,7 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/core.dart';
 import 'package:baby_mon/core/theme/theme_mode_provider.dart';
-import 'package:baby_mon/core/utils/error_handler.dart';
+import 'package:baby_mon/core/widgets/legal_document_screen.dart';
 
 const String measurementUnitsKey = 'measurement_units';
 const String _biometricsEnabledKey = 'biometrics_enabled';
@@ -50,7 +50,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         final raw = res.data;
         setState(() => _babyMon = parseJsonMap(raw));
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('Failed to load babyMon for settings: $e'); }
   }
 
   Future<void> _loadUnitPref() async {
@@ -177,7 +177,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final response = await ref.read(apiClientProvider).exportBabyMon(_babyMonId!);
       navigator.pop();
       if (mounted) {
-        await SharePlus.instance.share(ShareParams(text: response.data.toString(), subject: 'BabyMon Export'));
+        await Share.share(response.data.toString(), subject: 'BabyMon Export');
       }
     } catch (e) {
       navigator.pop();
@@ -232,7 +232,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('⚠️ Permanent Deletion'),
+          title: const Text('Permanent Deletion'),
           content: Text(
             'You are about to permanently delete "$name".\n\n'
             'This will remove ALL data including milestones, feedings, photos, '
@@ -245,9 +245,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: const Text(
+              child: Text(
                 'Delete Permanently',
-                style: TextStyle(color: AppColors.error),
+                style: TextStyle(color: ctx.colorScheme.error),
               ),
             ),
           ],
@@ -299,7 +299,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(PhosphorIconsLight.warning, color: AppColors.warning),
+              leading: Icon(PhosphorIconsLight.warning, color: ctx.colorScheme.error),
               title: const Text('Clear all allergies'),
               subtitle: const Text('Removes all allergy profiles and events'),
               onTap: () {
@@ -309,7 +309,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             const Divider(height: 1),
             ListTile(
-              leading: const Icon(PhosphorIconsLight.xCircle, color: AppColors.warning),
+              leading: Icon(PhosphorIconsLight.xCircle, color: ctx.colorScheme.error),
               title: const Text('Clear all allergy events'),
               subtitle: const Text('Removes events but keeps allergy profiles'),
               onTap: () {
@@ -340,9 +340,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
+            child: Text(
               'Clear',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: ctx.colorScheme.error),
             ),
           ),
         ],
@@ -382,9 +382,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
+            child: Text(
               'Clear',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: ctx.colorScheme.error),
             ),
           ),
         ],
@@ -420,7 +420,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text('Log out', style: TextStyle(color: AppColors.error)),
+              child: Text('Log out', style: TextStyle(color: ctx.colorScheme.error)),
           ),
         ],
       ),
@@ -466,14 +466,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     children: [
                       SettingsRow(
                         icon: PhosphorIconsLight.bell,
-                        iconColor: AppColors.primary,
+                        iconColor: context.colorScheme.primary,
                         title: 'Notification preferences',
                         subtitle: 'Push, milestone reminders, partner activity',
                         onTap: () => _showComingSoon('Notification preferences'),
                       ),
                       SettingsRow(
                         icon: PhosphorIconsLight.fingerprint,
-                        iconColor: AppColors.primary,
+                        iconColor: context.colorScheme.primary,
                         title: 'Biometric login',
                         subtitle: 'Use fingerprint or face to sign in',
                         trailing: Switch.adaptive(
@@ -483,7 +483,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                   SettingsRow(
                     icon: PhosphorIconsLight.scales,
-                    iconColor: AppColors.accent,
+                    iconColor: context.colorScheme.primary,
                     title: 'Measurement units',
                     trailing: SegmentedButton<bool>(
                         segments: const [
@@ -498,7 +498,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           textStyle: WidgetStateProperty.all(
                             const TextStyle(
-                              fontSize: 12,
+                              fontSize: DesignTokens.fontSm,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -507,7 +507,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   SettingsRow(
                     icon: PhosphorIconsLight.paintBrush,
-                    iconColor: AppColors.secondary,
+                    iconColor: context.colorScheme.secondary,
                     title: 'Visual style',
                     subtitle: 'Glass or Clay theme',
                     trailing: Consumer(
@@ -527,7 +527,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             visualDensity: VisualDensity.compact,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             textStyle: WidgetStateProperty.all(
-                              const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                              const TextStyle(fontSize: DesignTokens.fontSm, fontWeight: FontWeight.w600),
                             ),
                           ),
                         );
@@ -536,7 +536,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   SettingsRow(
                     icon: PhosphorIconsLight.sun,
-                    iconColor: AppColors.accent,
+                    iconColor: context.colorScheme.primary,
                     title: 'Theme mode',
                     subtitle: 'Light, dark, or follow system',
                     trailing: Consumer(
@@ -557,7 +557,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             visualDensity: VisualDensity.compact,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             textStyle: WidgetStateProperty.all(
-                              const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                              const TextStyle(fontSize: DesignTokens.font2xs, fontWeight: FontWeight.w600),
                             ),
                           ),
                         );
@@ -575,7 +575,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     children: [
                       SettingsRow(
                         icon: PhosphorIconsLight.baby,
-                        iconColor: AppColors.secondary,
+                        iconColor: context.colorScheme.secondary,
                         title: 'Active BabyMon',
                         subtitle: _babyMon == null
                             ? 'No BabyMon selected'
@@ -584,31 +584,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ? null
                             : Text(
                                 parseString(_babyMon!['name']) ?? 'Baby',
-                                style: const TextStyle(
-                                  fontSize: 14,
+                                style: TextStyle(
+                                  fontSize: DesignTokens.fontMd,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary,
+                                  color: context.colorScheme.onSurfaceVariant,
                                 ),
                               ),
                       ),
                       SettingsRow(
                         icon: PhosphorIconsLight.users,
-                        iconColor: AppColors.info,
+                        iconColor: context.colorScheme.primary,
                         title: 'Manage Partners',
                         subtitle: 'Co-parents & guardians with access',
                         onTap: () => context.push('/partners'),
                       ),
                       SettingsRow(
                         icon: PhosphorIconsLight.crown,
-                        iconColor: AppColors.bentoGold,
+                        iconColor: context.colorScheme.tertiary,
                         title: 'Subscription & Plan',
                         subtitle: 'Compare plans & upgrade',
                         trailing: Text(
                           parseString(_subscription?['plan']) ?? 'Free',
-                          style: const TextStyle(
-                            fontSize: 14,
+                          style: TextStyle(
+                            fontSize: DesignTokens.fontMd,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
+                            color: context.colorScheme.onSurfaceVariant,
                           ),
                         ),
                         onTap: () => context.push('/subscription'),
@@ -624,21 +624,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     children: [
                       SettingsRow(
                         icon: PhosphorIconsLight.downloadSimple,
-                        iconColor: AppColors.warning,
+                        iconColor: context.colorScheme.primary,
                         title: 'Export data',
                         subtitle: 'Download milestones, feedings, health, photos',
                         onTap: _exportData,
                       ),
                       SettingsRow(
                         icon: PhosphorIconsLight.shieldCheck,
-                        iconColor: AppColors.teal,
+                        iconColor: context.colorScheme.primary,
                         title: 'Privacy & data sharing',
                         subtitle: 'Manage analytics and partner permissions',
                         onTap: () => _showComingSoon('Privacy settings'),
                       ),
                       SettingsRow(
                         icon: PhosphorIconsLight.devices,
-                        iconColor: AppColors.indigo,
+                        iconColor: context.colorScheme.primary,
                         title: 'Sign out of all devices',
                         subtitle: 'Revoke all active sessions',
                         onTap: () => _showComingSoon('Sign out of all devices'),
@@ -649,7 +649,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: DesignTokens.spaceXl),
 
                   // ── Danger Zone ──
-                  if (_babyMonId != null) ...[
                   const SettingsSectionHeader(
                     title: 'Danger Zone',
                     danger: true,
@@ -657,24 +656,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   _SettingsCard(
                     danger: true,
                     children: [
+                      if (_babyMonId != null) ...[
                       SettingsRow(
                         icon: PhosphorIconsLight.broom,
-                        iconColor: AppColors.warning,
+                        iconColor: context.colorScheme.error,
                         title: 'Clear allergies & events',
                         subtitle: 'Remove allergy records for this BabyMon',
+                        destructive: true,
                         onTap: _showClearDataMenu,
                       ),
                       SettingsRow(
                         icon: PhosphorIconsLight.trash,
-                        iconColor: AppColors.error,
+                        iconColor: context.colorScheme.error,
                         title: 'Delete this BabyMon',
                         subtitle: 'Permanently remove all baby data',
                         destructive: true,
                         onTap: _deleteBabyMon,
                       ),
+                      ],
                       SettingsRow(
                         icon: PhosphorIconsLight.signOut,
-                        iconColor: AppColors.error,
+                        iconColor: context.colorScheme.error,
                         title: 'Log out',
                         subtitle: 'Sign out of this device',
                         destructive: true,
@@ -683,7 +685,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                     ],
                   ),
-                  ],
 
                   // ── Footer ──
                   const SizedBox(height: DesignTokens.space2xl),
@@ -699,7 +700,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 /// A simple bordered card that groups [SettingsRow] children. Provides
 /// the standard border, radius, and background. When [danger] is true,
 /// a 2px red top border is rendered and the card background uses
-/// [AppColors.errorContainer] (faded).
+/// [context.colorScheme.errorContainer] (faded).
 class _SettingsCard extends StatelessWidget {
   final List<Widget> children;
   final bool danger;
@@ -711,11 +712,11 @@ class _SettingsCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final bg = danger
-        ? AppColors.errorContainer.withValues(alpha: isDark ? 0.08 : 0.45)
-        : (isDark ? AppColors.glassDark : AppColors.surface);
+        ? Colors.transparent
+        : (isDark ? context.glass.background : context.colorScheme.surface);
     final borderColor = danger
-        ? AppColors.error.withValues(alpha: 0.35)
-        : (isDark ? AppColors.darkBorder : AppColors.border);
+        ? context.colorScheme.error.withValues(alpha: 0.4)
+        : (isDark ? context.colorScheme.outline : context.colorScheme.outline);
 
     return Container(
       margin: const EdgeInsets.symmetric(
@@ -724,20 +725,26 @@ class _SettingsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        border: Border(
-          top: danger
-              ? const BorderSide(color: AppColors.error, width: 2)
-              : BorderSide(color: borderColor, width: 0.5),
-          left: BorderSide(color: borderColor, width: 0.5),
-          right: BorderSide(color: borderColor, width: 0.5),
-          bottom: BorderSide(color: borderColor, width: 0.5),
-        ),
-        boxShadow: danger ? null : DesignTokens.shadowSm(null),
+        border: danger
+            ? Border.all(color: context.colorScheme.error.withValues(alpha: 0.4), width: 1)
+            : Border.all(color: borderColor, width: 0.5),
+        boxShadow: danger ? null : DesignTokens.shadowSm(Colors.transparent),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(children: children),
     );
   }
+
+}
+
+/// Extract a human-readable message from an error object.
+String extractErrorMessage(Object e) {
+  if (e is Exception) {
+    final msg = e.toString();
+    if (msg.startsWith('Exception: ')) return msg.substring(11);
+    return msg;
+  }
+  return e.toString();
 }
 
 /// Centered footer with version number and legal links.
@@ -746,26 +753,26 @@ class _SettingsFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         children: [
           Text(
             'BabyMon v1.0.0',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: DesignTokens.fontSm,
               fontWeight: FontWeight.w500,
-              color: AppColors.textCaption,
+              color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
             ),
           ),
-          SizedBox(height: DesignTokens.spaceSm),
+          const SizedBox(height: DesignTokens.spaceSm),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _FooterLink(label: 'Terms'),
-              _FooterDot(),
-              _FooterLink(label: 'Privacy'),
-              _FooterDot(),
-              _FooterLink(label: 'Support'),
+              _FooterLink(label: 'Terms', onTap: () => _openLegal(context, 'Terms & Conditions', _termsContent)),
+              const _FooterDot(),
+              _FooterLink(label: 'Privacy', onTap: () => _openLegal(context, 'Privacy Policy', _privacyContent)),
+              const _FooterDot(),
+              _FooterLink(label: 'Support', onTap: () => _openLegal(context, 'Support', _supportContent)),
             ],
           ),
         ],
@@ -774,27 +781,32 @@ class _SettingsFooter extends StatelessWidget {
   }
 }
 
+void _openLegal(BuildContext context, String title, String content) {
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => LegalDocumentScreen(title: title, content: content),
+    ),
+  );
+}
+
 class _FooterLink extends StatelessWidget {
   final String label;
-  const _FooterLink({required this.label});
+  final VoidCallback onTap;
+  const _FooterLink({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return TextButton(
-      onPressed: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$label — coming soon')),
-        );
-      },
+      onPressed: onTap,
       style: TextButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         minimumSize: const Size(0, 32),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        foregroundColor: Theme.of(context).brightness == Brightness.dark ? AppColors.textSecondaryDark : AppColors.textSecondary,
+        foregroundColor: Theme.of(context).brightness == Brightness.dark ? context.colorScheme.onSurfaceVariant : context.colorScheme.onSurfaceVariant,
       ),
       child: Text(
         label,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        style: const TextStyle(fontSize: DesignTokens.fontSm, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -803,11 +815,87 @@ class _FooterLink extends StatelessWidget {
 class _FooterDot extends StatelessWidget {
   const _FooterDot();
   @override
-  Widget build(BuildContext context) => const Text(
+  Widget build(BuildContext context) => Text(
         '·',
         style: TextStyle(
-          color: AppColors.textCaption,
-          fontSize: 12,
+          color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+          fontSize: DesignTokens.fontSm,
         ),
       );
 }
+
+const _termsContent = '''
+## Terms & Conditions
+
+By using BabyMon, you agree to these terms.
+
+### Medical Disclaimer
+BabyMon is NOT a medical device. All content is informational only. Always consult a qualified healthcare provider for medical concerns. In an emergency, call 911 immediately.
+
+### Age Requirement
+You must be 18+ and the parent or legal guardian of any child whose data you enter.
+
+### Subscriptions
+AI COMPANION is a paid subscription. Free trials auto-renew unless cancelled 24 hours before renewal. Cancel anytime through your app store settings.
+
+### AI Companion
+The AI Companion uses an on-device language model. AI-generated advice may be inaccurate. You are responsible for verifying all AI information with a healthcare professional.
+
+### Privacy
+Your data is stored securely. The AI Companion runs entirely on your device — no child health data is sent to external AI services.
+
+### Liability
+BabyMon is provided "as is" without warranties. We are not liable for damages arising from your use of the app or reliance on its content.
+''';
+
+const _privacyContent = '''
+## Privacy Policy
+
+### What We Collect
+Account information (email, name), child profiles (name, birth date, gender, traits), health and tracking data you enter (feeding, sleep, growth, milestones, allergies), photos you upload, device tokens for notifications.
+
+### How We Use It
+To provide app features, to personalize your AI Companion (on-device only), and to improve the app with de-identified aggregated data.
+
+### AI & Privacy
+The AI Companion runs ENTIRELY on your device. No child health data is ever sent to external AI APIs.
+
+### Third Parties
+Stripe (payments), Firebase (notifications), AWS (photo storage), Neon (database).
+
+### Your Rights
+Export your data, delete your account, or request data deletion anytime in Settings.
+
+### Children's Privacy
+We are committed to protecting children's privacy and building a secure, trustworthy environment for families.
+''';
+
+const _supportContent = '''
+## Support
+
+### Contact
+Email: support@babymon.app
+
+### Common Questions
+
+**How do I cancel?**
+Go to your device app store → Subscriptions → BabyMon → Cancel.
+
+**Is my data private?**
+Yes. Your child's health data is stored securely. The AI Companion runs on-device. No data is sold or shared.
+
+**How accurate is the AI Companion?**
+The AI Companion provides informational guidance only. It is NOT a substitute for professional medical advice. Always verify with your healthcare provider.
+
+**Can I export my data?**
+Yes. Settings → Export Data.
+
+**How do I delete my account?**
+Settings → Account → Delete Account.
+
+**What if I find incorrect advice?**
+Report to support@babymon.app. We continuously improve our content.
+
+### Emergency
+BabyMon is NOT for medical emergencies. If your child needs immediate medical attention, call 911 (US) or your local emergency number.
+''';

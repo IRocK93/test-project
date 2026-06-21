@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
 import '../theme/design_tokens.dart';
+import '../theme/glass_tokens.dart';
 import 'theme_button.dart';
 
 /// A single subscription plan card. Used to render Free and Premium plans
@@ -43,14 +43,15 @@ class PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    const accent = AppColors.accent;
+    final colorScheme = Theme.of(context).colorScheme;
+    final glass = Theme.of(context).extension<GlassTokens>()!;
+    final accent = glass.accent;
     final bg = isRecommended
-        ? accent.withValues(alpha: isDark ? 0.10 : 0.05)
-        : (isDark ? AppColors.glassDark : AppColors.surface);
+        ? accent.withValues(alpha: 0.05)
+        : glass.background;
     final borderColor = isRecommended
         ? accent.withValues(alpha: 0.6)
-        : (isDark ? AppColors.darkBorder : AppColors.border);
+        : glass.border;
 
     return Container(
       decoration: BoxDecoration(
@@ -60,7 +61,7 @@ class PlanCard extends StatelessWidget {
           color: borderColor,
           width: 0.5,
         ),
-        boxShadow: DesignTokens.shadowSm(null),
+        boxShadow: DesignTokens.shadowSm(bg),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -68,7 +69,7 @@ class PlanCard extends StatelessWidget {
         children: [
           // Accent top bar for recommended plan
           if (isRecommended)
-            const SizedBox(
+            SizedBox(
               width: double.infinity,
               height: 2,
               child: ColoredBox(color: accent),
@@ -79,7 +80,7 @@ class PlanCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (isRecommended) ...[
-                  const Text(
+                  Text(
                     'RECOMMENDED',
                     style: TextStyle(
                       fontSize: 11,
@@ -107,7 +108,7 @@ class PlanCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 36,
                         fontWeight: FontWeight.w800,
-                        color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+                        color: colorScheme.onSurface,
                         height: 1.0,
                         letterSpacing: -1.0,
                       ),
@@ -115,9 +116,9 @@ class PlanCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       '/$period',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textSecondary,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -129,7 +130,7 @@ class PlanCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -146,7 +147,7 @@ class PlanCard extends StatelessWidget {
                             width: 6,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: isRecommended ? accent : AppColors.success,
+                              color: isRecommended ? accent : context.colorScheme.tertiary,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -157,7 +158,7 @@ class PlanCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               height: 1.5,
-                              color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+                              color: colorScheme.onSurface,
                             ),
                           ),
                         ),
@@ -196,9 +197,9 @@ class PlanCard extends StatelessWidget {
                   Center(
                     child: Text(
                       footerNote!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textCaption,
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                       ),
                     ),
                   ),

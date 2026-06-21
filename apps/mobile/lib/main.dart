@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
+import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/features/auth/auth.dart';
 
 void main() async {

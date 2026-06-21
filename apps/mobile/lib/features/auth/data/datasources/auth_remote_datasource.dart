@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../core/constants/api_constants.dart';
-import '../../../../data/api_client.dart';
+import '../../../../core/data/api_client.dart';
 import '../../domain/entities/user.dart';
+import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/core/utils/json_utils.dart';
 
 class AuthRemoteDatasource {
   final ApiClient _apiClient;
@@ -20,13 +21,13 @@ class AuthRemoteDatasource {
       );
 
       if (response.statusCode == 200) {
-        final user = User.fromJson(response.data['user']);
-        final token = response.data['accessToken'] as String;
-        final refreshToken = response.data['refreshToken'] as String? ?? '';
+        final user = User.fromJson(parseJsonMap(response.data['user']) ?? {});
+        final token = parseString(response.data['accessToken']) ?? '';
+        final refreshToken = parseString(response.data['refreshToken']) ?? '';
         await _prefs.setString('accessToken', token);
         await _prefs.setString('userId', user.id);
         await _prefs.setString('userEmail', user.email);
-        await _apiClient.saveTokens(token, refreshToken, user.id);
+        await _apiClient.saveTokens(token, refreshToken ?? '', user.id);
         return (user: user, token: token);
       } else {
         throw Exception('Failed to login');
@@ -41,22 +42,34 @@ class AuthRemoteDatasource {
     required String email,
     required String password,
     String? name,
+    required DateTime dateOfBirth,
+    required bool tosAccepted,
+    required bool privacyAccepted,
+    required bool consentToDataProcessing,
   }) async {
     try {
       final response = await _apiClient.post(
         ApiConstants.register,
-        data: {'email': email, 'password': password, 'name': name},
+        data: {
+          'email': email,
+          'password': password,
+          'name': name,
+          'dateOfBirth': dateOfBirth.toIso8601String(),
+          'tosAccepted': tosAccepted,
+          'privacyAccepted': privacyAccepted,
+          'consentToDataProcessing': consentToDataProcessing,
+        },
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (response.data is Map<String, dynamic>) {
-          final user = User.fromJson(response.data['user'] ?? {});
-          final token = response.data['accessToken'] as String? ?? '';
-          final refreshToken = response.data['refreshToken'] as String? ?? '';
+          final user = User.fromJson(parseJsonMap(response.data['user']) ?? {});
+          final token = parseString(response.data['accessToken']) ?? '';
+          final refreshToken = parseString(response.data['refreshToken']) ?? '';
           await _prefs.setString('accessToken', token);
           await _prefs.setString('userId', user.id);
           await _prefs.setString('userEmail', user.email);
-          await _apiClient.saveTokens(token, refreshToken, user.id);
+          await _apiClient.saveTokens(token, refreshToken ?? '', user.id);
           return (user: user, token: token);
         } else {
           final responseType = response.data.runtimeType.toString();
@@ -95,7 +108,10 @@ class AuthRemoteDatasource {
           ApiConstants.logout,
           options: Options(headers: {'Authorization': 'Bearer $token'}),
         );
-      } catch (_) {}
+      } catch (e) { 
+        // ignore: avoid_print
+        print('Logout API call failed (non-critical): $e'); 
+      }
     }
     await clearToken();
   }
@@ -118,5 +134,53 @@ class AuthRemoteDatasource {
 
   Future<bool> isLoggedIn() async {
     return _prefs.containsKey('accessToken');
+  }
+
+  Future<({User user, String token})> googleLogin(String idToken) async {
+    final res = await _apiClient.post(ApiConstants.googleLogin, data: {'idToken': idToken, 'provider': 'google'});
+    final data = res.data as Map<String, dynamic>;
+    final user = User.fromJson(data['user'] as Map<String, dynamic>);
+    final token = data['accessToken'] as String;
+    final refreshToken = data['refreshToken'] as String?;
+    if (refreshToken != null) {
+      await _prefs.setString('refreshToken', refreshToken);
+    }
+    await _prefs.setString('accessToken', token);
+    await _prefs.setString('userId', user.id);
+    await _prefs.setString('userEmail', user.email);
+    await _apiClient.saveTokens(token, refreshToken ?? '', user.id);
+    return (user: user, token: token);
+  }
+
+  Future<({User user, String token})> appleLogin(String idToken) async {
+    final res = await _apiClient.post(ApiConstants.appleLogin, data: {'idToken': idToken, 'provider': 'apple'});
+    final data = res.data as Map<String, dynamic>;
+    final user = User.fromJson(data['user'] as Map<String, dynamic>);
+    final token = data['accessToken'] as String;
+    final refreshToken = data['refreshToken'] as String?;
+    if (refreshToken != null) {
+      await _prefs.setString('refreshToken', refreshToken);
+    }
+    await _prefs.setString('accessToken', token);
+    await _prefs.setString('userId', user.id);
+    await _prefs.setString('userEmail', user.email);
+    await _apiClient.saveTokens(token, refreshToken ?? '', user.id);
+    return (user: user, token: token);
+  }
+
+  Future<({User user, String token})> facebookLogin(String accessToken) async {
+    final res = await _apiClient.post(ApiConstants.facebookLogin, data: {'idToken': accessToken, 'provider': 'facebook'});
+    final data = res.data as Map<String, dynamic>;
+    final user = User.fromJson(data['user'] as Map<String, dynamic>);
+    final token = data['accessToken'] as String;
+    final refreshToken = data['refreshToken'] as String?;
+    if (refreshToken != null) {
+      await _prefs.setString('refreshToken', refreshToken);
+    }
+    await _prefs.setString('accessToken', token);
+    await _prefs.setString('userId', user.id);
+    await _prefs.setString('userEmail', user.email);
+    await _apiClient.saveTokens(token, refreshToken ?? '', user.id);
+    return (user: user, token: token);
   }
 }

@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BabyMonService } from './baby-mon.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../s3/s3.service';
+import { AccessControlService } from '../common/access-control.service';
 
 describe('BabyMonService', () => {
   let service: BabyMonService;
@@ -20,11 +22,21 @@ describe('BabyMonService', () => {
     badge: { findMany: jest.fn() },
   };
 
+  const mockS3 = {
+    deleteFile: jest.fn(),
+  };
+
+  const mockAccessControl = {
+    checkAccess: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BabyMonService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: S3Service, useValue: mockS3 },
+        { provide: AccessControlService, useValue: mockAccessControl },
       ],
     }).compile();
 
@@ -52,16 +64,19 @@ describe('BabyMonService', () => {
         stageStartType: 'CONCEIVED',
         conceptionDate: new Date('2024-01-01'),
       });
+      mockAccessControl.checkAccess.mockResolvedValue({ hasAccess: true });
 
-      const result = await service.calculateCurrentStage('1');
+      const result = await service.calculateCurrentStage('user-1', '1');
 
       expect(result).toBeDefined();
+      expect(mockAccessControl.checkAccess).toHaveBeenCalled();
     });
 
     it('should throw if BabyMon not found', async () => {
       mockPrisma.babyMon.findUnique.mockResolvedValue(null);
+      mockAccessControl.checkAccess.mockResolvedValue({ hasAccess: true });
 
-      await expect(service.calculateCurrentStage('1')).rejects.toThrow();
+      await expect(service.calculateCurrentStage('user-1', '1')).rejects.toThrow();
     });
   });
 });

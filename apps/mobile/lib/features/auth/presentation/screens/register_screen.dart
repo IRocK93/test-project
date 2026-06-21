@@ -34,6 +34,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  DateTime? _dateOfBirth;
+  bool _tosAccepted = false;
+  bool _privacyAccepted = false;
+  bool _consentToDataProcessing = false;
 
   @override
   void dispose() {
@@ -74,13 +78,40 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _register() async {
-    if (_formKey.currentState!.validate()) {
-      await ref.read(authProvider.notifier).register(
-            _emailController.text.trim(),
-            _passwordController.text,
-            _nameController.text.isNotEmpty ? _nameController.text.trim() : null,
-          );
+    if (!_formKey.currentState!.validate()) return;
+    if (_dateOfBirth == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select your date of birth')),
+      );
+      return;
     }
+    if (!_tosAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must accept the Terms of Service')),
+      );
+      return;
+    }
+    if (!_privacyAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must accept the Privacy Policy')),
+      );
+      return;
+    }
+    if (!_consentToDataProcessing) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must consent to data processing')),
+      );
+      return;
+    }
+    await ref.read(authProvider.notifier).register(
+          _emailController.text.trim(),
+          _passwordController.text,
+          _nameController.text.isNotEmpty ? _nameController.text.trim() : null,
+          _dateOfBirth!,
+          _tosAccepted,
+          _privacyAccepted,
+          _consentToDataProcessing,
+        );
   }
 
   Future<void> _googleLogin() async => await ref.read(authProvider.notifier).googleLogin();
@@ -137,7 +168,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             width: DesignTokens.glassBorderWidth,
                           ),
                           boxShadow: [
-                            ...DesignTokens.glassShadow(null),
+                            ...DesignTokens.glassShadow(Colors.transparent),
                           ],
                         ),
                     child: Form(
@@ -269,9 +300,131 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             validator: (value) => confirmPasswordValidator(value, _passwordController.text),
                           ),
 
-                          const SizedBox(height: DesignTokens.spaceLg),
+                          const SizedBox(height: DesignTokens.spaceMd),
 
-                          // Error
+                          // ── Date of Birth ──
+                          InkWell(
+                            onTap: () async {
+                              final now = DateTime.now();
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: _dateOfBirth ?? DateTime(now.year - 25),
+                                firstDate: DateTime(1900),
+                                lastDate: now.subtract(const Duration(days: 365 * 18)),
+                                helpText: 'Select your date of birth',
+                              );
+                              if (picked != null) {
+                                setState(() => _dateOfBirth = picked);
+                              }
+                            },
+                            child: InputDecorator(
+                              decoration: InputDecoration(
+                                labelText: 'Date of Birth',
+                                prefixIcon: const Icon(PhosphorIconsLight.calendar),
+                                suffixIcon: _dateOfBirth != null
+                                    ? IconButton(
+                                        icon: const Icon(PhosphorIconsLight.x, size: 18),
+                                        onPressed: () => setState(() => _dateOfBirth = null),
+                                      )
+                                    : null,
+                                errorText: null,
+                              ),
+                              child: Text(
+                                _dateOfBirth != null
+                                    ? '${_dateOfBirth!.month}/${_dateOfBirth!.day}/${_dateOfBirth!.year}'
+                                    : 'Tap to select',
+                                style: TextStyle(
+                                  color: _dateOfBirth != null
+                                      ? Theme.of(context).textTheme.bodyLarge?.color
+                                      : Theme.of(context).hintColor,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: DesignTokens.spaceMd),
+
+                          // ── Consent Checkboxes ──
+                          Material(
+                            type: MaterialType.transparency,
+                            child: CheckboxListTile(
+                              value: _tosAccepted,
+                              onChanged: (v) => setState(() => _tosAccepted = v ?? false),
+                              title: GestureDetector(
+                                onTap: () => context.push('/legal/tos'),
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      const TextSpan(text: 'I accept the '),
+                                      TextSpan(
+                                        text: 'Terms of Service',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: context.colorScheme.primary,
+                                          decoration: TextDecoration.underline,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ),
+                          Material(
+                            type: MaterialType.transparency,
+                            child: CheckboxListTile(
+                              value: _privacyAccepted,
+                              onChanged: (v) => setState(() => _privacyAccepted = v ?? false),
+                              title: GestureDetector(
+                                onTap: () => context.push('/legal/privacy'),
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      const TextSpan(text: 'I accept the '),
+                                      TextSpan(
+                                        text: 'Privacy Policy',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: context.colorScheme.primary,
+                                          decoration: TextDecoration.underline,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ),
+                          Material(
+                            type: MaterialType.transparency,
+                            child: CheckboxListTile(
+                              value: _consentToDataProcessing,
+                              onChanged: (v) => setState(() => _consentToDataProcessing = v ?? false),
+                              title: const Text(
+                                'I consent to processing of child health & development data',
+                                style: TextStyle(fontSize: 13),
+                              ),
+                              controlAffinity: ListTileControlAffinity.leading,
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ),
+
+                          const SizedBox(height: DesignTokens.spaceMd),
+
                           if (authState.error != null)
                             Padding(
                               padding: const EdgeInsets.only(bottom: DesignTokens.spaceMd),

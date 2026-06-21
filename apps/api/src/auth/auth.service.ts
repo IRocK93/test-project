@@ -1,5 +1,6 @@
-import { Injectable, UnauthorizedException, ConflictException, InternalServerErrorException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, InternalServerErrorException, BadRequestException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, LoginDto, RefreshTokenDto } from './dto/auth.dto';
@@ -7,20 +8,25 @@ import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { MailService } from '../mail/mail.service';
 import { randomBytes } from 'crypto';
 
-const jwtSecret = process.env.JWT_SECRET;
-if (!jwtSecret && process.env.NODE_ENV === 'production') {
-  throw new Error('FATAL: JWT_SECRET environment variable is required in production');
-}
-const safeJwtSecret = jwtSecret || 'dev-only-secret';
-
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private subscriptionsService: SubscriptionsService,
     private mailService: MailService,
+    private configService: ConfigService,
   ) {}
+
+  private get safeJwtSecret(): string {
+    const secret = this.configService.get<string>('JWT_SECRET');
+    if (!secret && this.configService.get('NODE_ENV') === 'production') {
+      throw new InternalServerErrorException('JWT_SECRET is required in production');
+    }
+    return secret || 'dev-only-secret';
+  }
 
   async register(dto: RegisterDto) {
     const existingUser = await this.prisma.user.findUnique({
@@ -51,7 +57,7 @@ export class AuthService {
           },
         });
 
-        const trialDays = parseInt(process.env.TRIAL_DAYS || '14', 10);
+        const trialDays = parseInt(this.configService.get<string>('TRIAL_DAYS') || '14', 10);
         const trialEndDate = new Date();
         trialEndDate.setDate(trialEndDate.getDate() + trialDays);
 
@@ -60,7 +66,7 @@ export class AuthService {
             userId: newUser.id,
             trialStartDate: new Date(),
             trialEndDate,
-            tier: 'CORE',
+            tier: 'FREE',
             isActive: true,
           },
         });
@@ -82,7 +88,7 @@ export class AuthService {
         message: 'Registration successful. Please check your email to verify your account.',
       };
     } catch (error) {
-      console.error('Registration error:', error);
+      this.logger.error({ err: error }, 'Registration failed');
       throw new InternalServerErrorException({
         message: 'Failed to create account',
         error: 'INTERNAL_ERROR',
@@ -140,7 +146,7 @@ export class AuthService {
   async refreshTokens(dto: RefreshTokenDto) {
     try {
       const payload = this.jwtService.verify(dto.refreshToken, {
-        secret: safeJwtSecret,
+        secret: this.safeJwtSecret,
       });
 
       if (payload.type !== 'refresh') {

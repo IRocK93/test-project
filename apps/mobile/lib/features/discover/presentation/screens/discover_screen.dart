@@ -1,4 +1,3 @@
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -26,32 +25,21 @@ class DiscoverScreen extends StatelessWidget {
                 // ── Glass icon orb ──
                 StaggeredFadeSlide(
                   index: 0,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
-                    child: BackdropFilter(
-                    filter: ui.ImageFilter.blur(
-                      sigmaX: DesignTokens.glassBlurLight,
-                      sigmaY: DesignTokens.glassBlurLight,
-                    ),
-                    child: Container(
+                  child: GlassSurface(
+                    borderRadius: DesignTokens.radius2xl,
+                    blurSigma: DesignTokens.glassBlurLight,
+                    backgroundColor: isDark ? context.glass.background : context.glass.surface,
+                    borderColor: context.glass.borderLight,
+                    child: SizedBox(
                       width: 100,
                       height: 100,
-                      decoration: BoxDecoration(
-                        color: isDark ? AppColors.glassDark : AppColors.glassLight,
-                        borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
-                        border: Border.all(
-                          color: AppColors.glassBorderLight,
-                          width: DesignTokens.glassBorderWidth,
-                        ),
-                      ),
-                      child: const Icon(
+                      child: Icon(
                         PhosphorIconsLight.compass,
                         size: 44,
-                        color: AppColors.primary,
+                        color: context.colorScheme.primary,
                       ),
                     ),
                   ),
-                ),
                 ),
                 const SizedBox(height: DesignTokens.space2xl),
 
@@ -61,15 +49,15 @@ class DiscoverScreen extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.12),
+                      color: context.colorScheme.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
                     ),
-                    child: const Text(
+                    child: Text(
                       'COMING SOON',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: DesignTokens.font2xs,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.accent,
+                        color: context.colorScheme.primary,
                         letterSpacing: 1.5,
                       ),
                     ),
@@ -112,7 +100,7 @@ class DiscoverScreen extends StatelessWidget {
                   child: PremiumDoubleBezel(
                   outerRadius: DesignTokens.radiusXl + 2,
                   gap: 3.0,
-                  outerColor: AppColors.accent.withValues(alpha: 0.06),
+                  outerColor: context.colorScheme.primary.withValues(alpha: 0.06),
                   innerPadding: const EdgeInsets.all(DesignTokens.spaceLg),
                   showInnerHighlight: false,
                   child: Row(
@@ -121,16 +109,16 @@ class DiscoverScreen extends StatelessWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppColors.accent.withValues(alpha: 0.12),
+                          color: context.colorScheme.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
                           border: Border.all(
-                            color: AppColors.accent.withValues(alpha: 0.2),
+                            color: context.colorScheme.primary.withValues(alpha: 0.2),
                             width: 0.5,
                           ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           PhosphorIconsLight.sparkle,
-                          color: AppColors.accent,
+                          color: context.colorScheme.primary,
                           size: 20,
                         ),
                       ),
@@ -144,16 +132,16 @@ class DiscoverScreen extends StatelessWidget {
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
-                                color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+                                color: isDark ? context.colorScheme.onPrimary : context.colorScheme.onSurface,
                                 letterSpacing: -0.3,
                               ),
                             ),
                             const SizedBox(height: 2),
-                            const Text(
+                            Text(
                               'We\'re working on something special',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: AppColors.textSecondary,
+                                color: context.colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -176,7 +164,7 @@ class DiscoverScreen extends StatelessWidget {
             InfoFabAction(
               tooltip: 'Notify me when ready',
               infoDescription: 'Notify',
-              backgroundColor: AppColors.accent,
+              backgroundColor: context.colorScheme.primary,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -188,12 +176,12 @@ class DiscoverScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: const Icon(PhosphorIconsLight.bell, color: AppColors.textOnPrimary),
+              child: Icon(PhosphorIconsLight.bell, color: context.colorScheme.onPrimary),
             ),
             InfoFabAction(
               tooltip: 'What\'s coming',
               infoDescription: 'Discover',
-              backgroundColor: AppColors.primary,
+              backgroundColor: context.colorScheme.primary,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -205,7 +193,7 @@ class DiscoverScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: const Icon(PhosphorIconsLight.lightbulb, color: AppColors.textOnPrimary),
+              child: Icon(PhosphorIconsLight.lightbulb, color: context.colorScheme.onPrimary),
             ),
           ],
         ),

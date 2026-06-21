@@ -6,8 +6,10 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/mixins/mixins.dart';
 import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/core/theme/design_tokens.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
+import 'package:baby_mon/features/health/domain/entities/sleep_log.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
 
 class SleepScreen extends ConsumerStatefulWidget {
@@ -27,9 +29,9 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
   @override
   Duration? get refreshCooldown => const Duration(seconds: 10);
 
-  List<Map<String, dynamic>> _sleepLogs = [];
+  List<SleepLog> _sleepLogs = [];
   DateTime _selectedDate = DateTime.now();
-  final List<String> _qualities = ['GREAT', 'GOOD', 'FAIR', 'POOR'];
+  static const _qualities = SleepQuality.values;
 
   int _chartRange = 3;
   String _chartUnit = 'Days';
@@ -39,7 +41,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
   @override
   Future<void> fetchData() async {
     final response = await ref.read(apiClientProvider).getSleepLogs(babyMonId!);
-    _sleepLogs = parseItemsTyped(response.data);
+    _sleepLogs = parseItemsTyped(response.data).map(SleepLog.fromJson).toList();
   }
 
   Future<bool> _deleteLog(String id, int index) async {
@@ -54,6 +56,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
     try {
       await ref.read(apiClientProvider).deleteSleepLog(babyMonId!, id);
       setState(() => _sleepLogs.removeAt(index));
+      ref.read(appRefreshProvider.notifier).state++;
       messenger.showSnackBar(const SnackBar(content: Text('Sleep log deleted')));
       return true;
     } catch (e) {
@@ -62,12 +65,12 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
     }
   }
 
-  List<Map<String, dynamic>> _logsForSelectedDate() {
+  List<SleepLog> _logsForSelectedDate() {
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    return _sleepLogs.where((log) => (log['startTime']?.toString() ?? '').startsWith(dateStr)).toList();
+    return _sleepLogs.where((log) => log.startTime != null && DateFormat('yyyy-MM-dd').format(log.startTime!) == dateStr).toList();
   }
 
-  List<Map<String, dynamic>> _sleepLogsByDay() {
+  List<({String date, List<SleepLog> logs, double totalMinutes})> _sleepLogsByDay() {
     final now = DateTime.now();
     DateTime cutoff;
     if (_chartUnit == 'Days') {
@@ -78,43 +81,40 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
       cutoff = DateTime(now.year, now.month - (_chartRange - 1), now.day);
     }
     final cutoffMs = cutoff.millisecondsSinceEpoch;
-    final dayGroups = <String, List<Map<String, dynamic>>>{};
+    final dayGroups = <String, List<SleepLog>>{};
     for (final log in _sleepLogs) {
-      final start = DateTime.tryParse(log['startTime']?.toString() ?? '');
+      final start = log.startTime;
       if (start == null || start.millisecondsSinceEpoch < cutoffMs) continue;
       final dayKey = DateFormat('yyyy-MM-dd').format(start);
       dayGroups.putIfAbsent(dayKey, () => []);
       dayGroups[dayKey]!.add(log);
     }
-    final allDays = <String, List<Map<String, dynamic>>>{};
+    final allDays = <String, List<SleepLog>>{};
     var current = cutoff;
     while (!current.isAfter(now)) {
       final key = DateFormat('yyyy-MM-dd').format(current);
       allDays[key] = dayGroups[key] ?? [];
       current = current.add(const Duration(days: 1));
     }
-    return allDays.entries.map((e) => {
-      'date': e.key,
-      'logs': e.value,
-      'totalMinutes': e.value.fold(0.0, (sum, log) {
-        final s = DateTime.tryParse(parseString(log['startTime']) ?? '');
-        final e2 = DateTime.tryParse(parseString(log['endTime']) ?? '');
-        return sum + (s != null && e2 != null ? e2.difference(s).inMinutes : 0.0);
+    return allDays.entries.map((e) => (
+      date: e.key,
+      logs: e.value,
+      totalMinutes: e.value.fold(0.0, (sum, log) {
+        return sum + (log.duration?.inMinutes.toDouble() ?? 0.0);
       }),
-    }).toList();
+    )).toList();
   }
 
-  String _qualityLabel(String q) { switch (q) { case '5': case 'GREAT': return 'GREAT'; case '4': case 'GOOD': return 'GOOD'; case '3': case '2': case 'FAIR': return 'FAIR'; case '1': case 'POOR': default: return 'POOR'; } }
-  Color _qualityColor(String q) { switch (q) { case 'GREAT': return AppColors.success; case 'GOOD': return AppColors.accent; case 'FAIR': return AppColors.warning; case 'POOR': return AppColors.error; default: return AppColors.textCaption; } }
 
-  Map<String, dynamic> _dailySummary(List<Map<String, dynamic>> logs) {
+
+  ({int totalMinutes, int naps, double avgQuality, int count}) _dailySummary(List<SleepLog> logs) {
     int totalMinutes = 0, naps = 0;
     for (final log in logs) {
-      final start = DateTime.tryParse(log['startTime']?.toString() ?? ''); final end = DateTime.tryParse(log['endTime']?.toString() ?? '');
+      final start = log.startTime; final end = log.endTime;
       if (start != null && end != null) { totalMinutes += end.difference(start).inMinutes; if (end.difference(start).inHours < 4 && start.hour >= 6 && start.hour < 20) naps++; }
     }
-    final avgQuality = logs.isNotEmpty ? logs.map((l) => ({'GREAT': 4, 'GOOD': 3, 'FAIR': 2, 'POOR': 1})[l['quality']?.toString() ?? 'GOOD'] ?? 3).reduce((a, b) => a + b) / logs.length : 0.0;
-    return {'totalMinutes': totalMinutes, 'naps': naps, 'avgQuality': avgQuality, 'count': logs.length};
+    final avgQuality = logs.isNotEmpty ? logs.map((l) => SleepQuality.resolve(l.quality).avgScoreValue).reduce((a, b) => a + b) / logs.length : 0.0;
+    return (totalMinutes: totalMinutes, naps: naps, avgQuality: avgQuality, count: logs.length);
   }
 
   String _formatDuration(String? s, String? e) { final sd = DateTime.tryParse(s ?? ''), ed = DateTime.tryParse(e ?? ''); if (sd == null || ed == null) return ''; final d = ed.difference(sd); return d.inHours > 0 ? '${d.inHours}h ${d.inMinutes.remainder(60)}m' : '${d.inMinutes}m'; }
@@ -134,9 +134,9 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg, vertical: 4),
         child: Row(children: [
-          const Icon(PhosphorIconsLight.moon, size: 16, color: AppColors.primary),
+          Icon(PhosphorIconsLight.moon, size: 16, color: context.colorScheme.primary),
           const SizedBox(width: 6),
           Text('24h Sleep Timeline', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
           const Spacer(),
@@ -154,19 +154,19 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? AppColors.darkSurface : AppColors.surfaceLight, borderRadius: BorderRadius.circular(DesignTokens.radiusSm)),
-              child: Text('$_chartRange $_chartUnit', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
+              decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? context.colorScheme.surface : context.colorScheme.surface, borderRadius: BorderRadius.circular(DesignTokens.radiusSm)),
+              child: Text('$_chartRange $_chartUnit', style: TextStyle(fontSize: DesignTokens.fontMd, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
             ),
           ),
           ),
         ]),
       ),
       const SizedBox(height: 4),
-      Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Row(children: _qualities.map((q) => Padding(padding: const EdgeInsets.only(right: 12), child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 10, height: 10, decoration: BoxDecoration(color: _qualityColor(q), borderRadius: BorderRadius.circular(2))),
-        const SizedBox(width: 4),                        Text(q[0] + q.substring(1).toLowerCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+      Padding(padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg), child: Row(children: _qualities.map((q) => Padding(padding: const EdgeInsets.only(right: DesignTokens.spaceMd), child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 10, height: 10, decoration: BoxDecoration(color: q.color, borderRadius: BorderRadius.circular(2))),
+        const SizedBox(width: 4),                        Text(q.label, style: const TextStyle(fontSize: DesignTokens.font2xs, fontWeight: FontWeight.w500)),
       ]))).toList())),
-      const SizedBox(height: 8),
+      const SizedBox(height: DesignTokens.spaceSm),
       SizedBox(
         height: chartHeight + topLabelHeight + 16,
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -174,7 +174,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
             Column(children: List.generate(numSlots, (si) {
               final hour = (numSlots - 1 - si) * intervalHours;
               return Container(
-                width: leftLabelWidth, height: hourHeight, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 4),                                child: Text('${hour.toString().padLeft(2, '0')}:00', style: const TextStyle(fontSize: 12, color: AppColors.textCaption)),
+                width: leftLabelWidth, height: hourHeight, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 4),                                child: Text('${hour.toString().padLeft(2, '0')}:00', style: TextStyle(fontSize: DesignTokens.fontSm, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7))),
               );
             })),
             const SizedBox(height: topLabelHeight),
@@ -187,9 +187,8 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
                   height: chartHeight,
                   child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: List.generate(days.length, (di) {
                     final day = days[di];
-                    final dateStr = parseString(day['date']) ?? '';
-                    final rawLogs = day['logs'];
-                    final logs = rawLogs is List ? List<Map<String, dynamic>>.from(rawLogs) : <Map<String, dynamic>>[];
+                    final dateStr = day.date;
+                    final logs = day.logs;
                     final isSelected = _selectedBarDate == dateStr;
                     return Semantics(
                       label: 'View sleep details for $dateStr',
@@ -199,34 +198,40 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
                       child: Container(
                         width: dayWidth, height: chartHeight,
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primary.withValues(alpha: 0.05) : null,
-                          border: Border(right: BorderSide(color: AppColors.border.withValues(alpha: 0.3))),
+                          color: isSelected ? context.colorScheme.primary.withValues(alpha: 0.05) : null,
+                          border: Border(right: BorderSide(color: context.colorScheme.outline.withValues(alpha: DesignTokens.opacityDim))),
                         ),
                         child: Stack(children: [
                           ...List.generate(numSlots + 1, (si) => Positioned(
                             top: si * hourHeight - 0.5, left: 0, right: 0,
-                            child: Container(height: 1, color: AppColors.border.withValues(alpha: 0.3)),
+                            child: Container(height: 1, color: context.colorScheme.outline.withValues(alpha: DesignTokens.opacityDim)),
                           )),
                           ...logs.map((log) {
-                            final start = DateTime.tryParse(log['startTime']?.toString() ?? '');
-                            final end = DateTime.tryParse(log['endTime']?.toString() ?? '');
+                            final start = log.startTime;
+                            final end = log.endTime;
                             if (start == null || end == null) return const SizedBox.shrink();
                             final endMin = (end.hour * 60 + end.minute).clamp(0, 24 * 60);
                             final durationMin = endMin - (start.hour * 60 + start.minute);
                             const slotMin = intervalHours * 60.0;
                             final topPos = chartHeight - (endMin / slotMin * hourHeight);
                             final barHeight = (durationMin / slotMin * hourHeight).clamp(2.0, chartHeight - topPos);
-                            final q = _qualityLabel(parseString(log['quality']) ?? '');
+                            final q = SleepQuality.resolve(log.quality);
+                            final startStr = _formatTime(log.startTime?.toIso8601String());
+                            final endStr = _formatTime(log.endTime?.toIso8601String());
+                            final dur = _formatDuration(log.startTime?.toIso8601String(), log.endTime?.toIso8601String());
                             return Positioned(
                               top: topPos, left: 2, right: 2,
-                              child: Container(
-                                height: barHeight,
-                                decoration: BoxDecoration(color: _qualityColor(q), borderRadius: BorderRadius.circular(3)),
-                                alignment: Alignment.center,
-                                child: barHeight > 18
-                                    ? Text('${_formatTime(log['startTime']?.toString())}-${_formatTime(log['endTime']?.toString())}',
-                                        style: const TextStyle(color: AppColors.textOnPrimary, fontSize: 10, fontWeight: FontWeight.w600))
-                                    : null,
+                              child: Semantics(
+                                label: '${SleepType.fromApiKey(log.type)?.label ?? 'Sleep'} $startStr to $endStr, $dur, quality: ${q.label}',
+                                child: Container(
+                                  height: barHeight,
+                                  decoration: BoxDecoration(color: q.color, borderRadius: BorderRadius.circular(3)),
+                                  alignment: Alignment.center,
+                                  child: barHeight > 18
+                                      ? Text('$startStr-$endStr',
+                                          style: TextStyle(color: context.colorScheme.onPrimary, fontSize: DesignTokens.fontXs, fontWeight: FontWeight.w600))
+                                      : null,
+                                ),
                               ),
                             );
                           }),
@@ -240,7 +245,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
                   height: topLabelHeight,
                   child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: List.generate(days.length, (di) {
                     final day = days[di];
-                    final dateStr = parseString(day['date']) ?? '';
+                    final dateStr = day.date;
                     final date = DateTime.tryParse(dateStr);
                     final label = date != null ? DateFormat('d MMM').format(date) : dateStr;
                     final isToday = dateStr == DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -253,10 +258,10 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
                       child: Container(
                         width: dayWidth, height: topLabelHeight, alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : (isToday ? AppColors.warning.withValues(alpha: 0.12) : null),
-                          border: Border(top: BorderSide(color: AppColors.border.withValues(alpha: 0.5))),
+                          color: isSelected ? context.colorScheme.primary.withValues(alpha: 0.1) : (isToday ? context.colorScheme.tertiary.withValues(alpha: 0.12) : null),
+                          border: Border(top: BorderSide(color: context.colorScheme.outline.withValues(alpha: 0.5))),
                         ),
-                        child: Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isToday ? AppColors.primary : AppColors.textSecondary)),
+                        child: Text(label, style: TextStyle(fontSize: DesignTokens.fontSm, fontWeight: FontWeight.w600, color: isToday ? context.colorScheme.primary : context.colorScheme.onSurfaceVariant)),
                       ),
                     ),
                   );
@@ -268,15 +273,14 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
         ]),
       ),
       const SizedBox(height: 4),
-      if (_selectedBarDate != null) Center(child: Text('Selected: $_selectedBarDate \u2014 tap for details', style: const TextStyle(fontSize: 13, color: AppColors.textCaption))),
+      if (_selectedBarDate != null) Center(child: Text('Selected: $_selectedBarDate \u2014 tap for details', style: TextStyle(fontSize: DesignTokens.fontSm2, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7)))),
     ]);
   }
 
-  void _showDaySleepDetails(Map<String, dynamic> day) {
-    final dateStr = parseString(day['date']) ?? '';
-    final rawLogs = day['logs'];
-    final logs = rawLogs is List ? List<Map<String, dynamic>>.from(rawLogs) : <Map<String, dynamic>>[];
-    final totalMin = (parseDouble(day['totalMinutes'] as Object?) ?? 0.0).toInt();
+  void _showDaySleepDetails(({String date, List<SleepLog> logs, double totalMinutes}) day) {
+    final dateStr = day.date;
+    final logs = day.logs;
+    final totalMin = day.totalMinutes.toInt();
     setState(() => _selectedBarDate = dateStr);
     showDialog<void>(context: context, builder: (ctx) => AlertDialog(
       title: Text('Sleep \u2014 $dateStr'),
@@ -284,12 +288,12 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
         Text('Total: ${totalMin ~/ 60}h ${totalMin % 60}m | ${logs.length} sessions', style: const TextStyle(fontWeight: FontWeight.w600)),
         const Divider(),
         ...logs.map((log) {
-          final q = _qualityLabel(parseString(log['quality']) ?? '');
+          final q = SleepQuality.resolve(log.quality);
           return Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(children: [
-            Container(width: 12, height: 12, decoration: BoxDecoration(color: _qualityColor(q), shape: BoxShape.circle)),
-            const SizedBox(width: 8),
-            Expanded(child: Text('${_formatTime(parseString(log['startTime']))} \u2192 ${_formatTime(parseString(log['endTime']))} (${_formatDuration(parseString(log['startTime']), parseString(log['endTime']))})', style: const TextStyle(fontSize: 13))),
-            Text(q[0] + q.substring(1).toLowerCase(), style: TextStyle(fontSize: 11, color: _qualityColor(q), fontWeight: FontWeight.w600)),
+            Container(width: 12, height: 12, decoration: BoxDecoration(color: q.color, shape: BoxShape.circle)),
+            const SizedBox(width: DesignTokens.spaceSm),
+            Expanded(child: Text('${_formatTime(log.startTime?.toIso8601String())} \u2192 ${_formatTime(log.endTime?.toIso8601String())} (${_formatDuration(log.startTime?.toIso8601String(), log.endTime?.toIso8601String())})', style: const TextStyle(fontSize: DesignTokens.fontSm2))),
+            Text(q.label, style: TextStyle(fontSize: DesignTokens.font2xs, color: q.color, fontWeight: FontWeight.w600)),
           ]));
         }),
       ])),
@@ -313,11 +317,12 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
               ? buildNoBabyMon()
               : RefreshIndicator(
         onRefresh: onRefresh,
-        child: SingleChildScrollView(
-          child: Column(children: [
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: Column(children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceMd, vertical: DesignTokens.spaceSm),
-              color: AppColors.surfaceLight.withValues(alpha: 0.5),
+              color: context.colorScheme.surface.withValues(alpha: 0.5),
               child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 ThemeButton.icon(icon: PhosphorIconsLight.caretLeft, onPressed: () => setState(() { _selectedDate = _selectedDate.subtract(const Duration(days: 1)); }), semanticLabel: 'Previous day', variant: ThemeButtonVariant.text),
                 Text(_selectedDate.day == DateTime.now().day && _selectedDate.month == DateTime.now().month && _selectedDate.year == DateTime.now().year ? 'Today - ${DateFormat('MMM d').format(_selectedDate)}' : DateFormat('EEEE, MMM d').format(_selectedDate),        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
@@ -327,68 +332,42 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
             PremiumCard(
               isGlass: true,
               margin: const EdgeInsets.fromLTRB(DesignTokens.spaceMd, DesignTokens.spaceSm, DesignTokens.spaceMd, DesignTokens.spaceXs),
-              child: Padding(padding: const EdgeInsets.all(16),
+              child: Padding(padding: const EdgeInsets.all(DesignTokens.spaceLg),
               child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-                _summaryStat('${(parseDouble(summary['totalMinutes']) ?? 0).toInt() ~/ 60}h ${(parseDouble(summary['totalMinutes']) ?? 0).toInt() % 60}m', 'Total'),
-                _summaryStat('${summary['naps']}', 'Naps'),
-                _summaryStat(_qualityLabelText(parseDouble(summary['avgQuality']) ?? 0.0), 'Avg'),
-                _summaryStat('${summary['count']}', 'Entries'),
+                _summaryStat('${summary.totalMinutes ~/ 60}h ${summary.totalMinutes % 60}m', 'Total'),
+                _summaryStat('${summary.naps}', 'Naps'),
+                _summaryStat(_qualityLabelText(summary.avgQuality), 'Avg'),
+                _summaryStat('${summary.count}', 'Entries'),
               ])),
             ),
             _buildTimelineChart(),
-            if (logs.isEmpty) PremiumEmptyState(
-                icon: PhosphorIconsLight.moon,
-                title: 'No sleep logs for this day',
-                subtitle: 'Tap the button below to add sleep.',
-                actionLabel: 'Add sleep',
-                onAction: _showAddSleepDialog,
-              )
-            else ListView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), padding: const EdgeInsets.all(16), itemCount: logs.length,
-              itemBuilder: (context, index) {
-                final log = logs[index]; final type = _sleepTypeLabel(log);
-                return ScrollStagger(
-                    index: index,
-                    child: Dismissible(key: Key(parseString(log['id']) ?? index.toString()), direction: DismissDirection.endToStart,                   confirmDismiss: (_) => _deleteLog(parseString(log['id']) ?? '', _sleepLogs.indexOf(log)),
-                  background: Container(alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 20), color: AppColors.error, child: const Icon(PhosphorIconsLight.trash, color: AppColors.textOnPrimary)),
-                  child: PremiumCard(
-                    isGlass: true,
-                    margin: const EdgeInsets.only(bottom: DesignTokens.spaceSm),
-                    child: ListTile(
-                    leading: CircleAvatar(backgroundColor: AppColors.primary.withValues(alpha: 0.15), child: const Icon(PhosphorIconsLight.moon, color: AppColors.primary)),
-                    title: Text(type),
-                    subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('${_formatTime(log['startTime']?.toString())} \u2192 ${_formatTime(log['endTime']?.toString())} (${_formatDuration(log['startTime']?.toString(), log['endTime']?.toString())})'),
-                      const SizedBox(height: 4),
-                      Row(children: _qualities.map((q) => Padding(padding: const EdgeInsets.only(right: 4), child: Icon(PhosphorIconsLight.circle, size: 10, color: log['quality']?.toString() == q ? _qualityColor(q) : AppColors.disabled))).toList()),
-                    ]), isThreeLine: true,
-                    trailing: log['notes'] != null && log['notes'].toString().isNotEmpty ? const Icon(PhosphorIconsLight.note, size: 16, color: AppColors.textCaption) : null,
-                  )),
-                ),
-              );
-              },
-            ),
-          ]),
+            ])),
+          ],
         ),
       ),
             ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'add_sleep',
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textOnPrimary,
-        onPressed: _showAddSleepDialog,
-        child: const Icon(PhosphorIconsLight.moon),
+      floatingActionButton: Semantics(
+        label: 'Add sleep log',
+        button: true,
+        child: FloatingActionButton(
+          heroTag: 'add_sleep',
+          backgroundColor: context.colorScheme.primary,
+          foregroundColor: context.colorScheme.onPrimary,
+          onPressed: _showAddSleepDialog,
+          child: const Icon(PhosphorIconsLight.moon),
+        ),
       ),
     );
   }
 
-  String _sleepTypeLabel(Map<String, dynamic> log) {
-    final start = DateTime.tryParse(log['startTime']?.toString() ?? ''); final end = DateTime.tryParse(log['endTime']?.toString() ?? '');
+  String _sleepTypeLabel(SleepLog log) {
+    final start = log.startTime; final end = log.endTime;
     if (start == null || end == null) return 'Sleep'; final duration = end.difference(start);
-    if (duration.inHours >= 4) return 'Night sleep'; if (start.hour >= 20 || start.hour < 6) return 'Night sleep'; return 'Nap';
+    if (duration.inHours >= 4) return SleepType.night.label; if (start.hour >= 20 || start.hour < 6) return SleepType.night.label; return SleepType.nap.label;
   }
 
-  String _qualityLabelText(double s) { if (s >= 3.5) return 'Great'; if (s >= 2.5) return 'Good'; if (s >= 1.5) return 'Fair'; if (s >= 0.5) return 'Poor'; return 'N/A'; }
-  Widget _summaryStat(String v, String l) { return Column(children: [Text(v, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)), Text(l, style: const TextStyle(fontSize: 13, color: AppColors.textCaption, height: 1.4))]); }
+  String _qualityLabelText(double s) => s >= 0.5 ? SleepQuality.fromScore(s).label : 'N/A';
+  Widget _summaryStat(String v, String l) { return Column(children: [Text(v, style: const TextStyle(fontSize: DesignTokens.fontLg2, fontWeight: FontWeight.bold)), Text(l, style: TextStyle(fontSize: DesignTokens.fontSm2, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7), height: 1.4))]); }
 
   void _showAddSleepDialog() {
     if (babyMonId == null) return;
@@ -396,24 +375,49 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
     DateTime sleepDate = _selectedDate;
     DateTime startTime = DateTime(sleepDate.year, sleepDate.month, sleepDate.day, now.hour, 0);
     DateTime? endTime = DateTime(sleepDate.year, sleepDate.month, sleepDate.day, now.hour, 0);
-    String selectedQuality = 'GOOD'; final notesController = TextEditingController();
+    SleepQuality selectedQuality = SleepQuality.good; final notesController = TextEditingController();
     bool isStillSleeping = false, isSaving = false;
     showModalBottomSheet<void>(context: context, isScrollControlled: true, builder: (ctx) => StatefulBuilder(builder: (ctx, setD) => Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 16, right: 16, top: 16),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: DesignTokens.spaceLg, right: DesignTokens.spaceLg, top: DesignTokens.spaceLg),
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text('Log Sleep', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)), const SizedBox(height: 16),
-        ListTile(leading: const Icon(PhosphorIconsLight.calendar, color: AppColors.primary),        title: Text('Date', style: TextStyle(color: Theme.of(ctx).brightness == Brightness.dark ? AppColors.textOnDark : AppColors.textPrimary)),  subtitle: Text(DateFormat('EEE, MMM d, yyyy').format(sleepDate)),
+        Text('Log Sleep', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)), const SizedBox(height: DesignTokens.spaceLg),
+        ListTile(leading: Icon(PhosphorIconsLight.calendar, color: context.colorScheme.primary),        title: Text('Date', style: TextStyle(color: Theme.of(ctx).brightness == Brightness.dark ? context.colorScheme.onPrimary : context.colorScheme.onSurface)),  subtitle: Text(DateFormat('EEE, MMM d, yyyy').format(sleepDate)),
           onTap: () async { final p = await showDatePicker(context: ctx, initialDate: sleepDate, firstDate: DateTime(2020), lastDate: DateTime.now().add(const Duration(days: 1))); if (p != null) setD(() { sleepDate = p; startTime = DateTime(p.year, p.month, p.day, startTime.hour, startTime.minute); if (endTime != null) endTime = DateTime(p.year, p.month, p.day, endTime!.hour, endTime!.minute); }); }),
-        ListTile(leading: const Icon(PhosphorIconsLight.moon, color: AppColors.primary),        title: Text('Start time', style: TextStyle(color: Theme.of(ctx).brightness == Brightness.dark ? AppColors.textOnDark : AppColors.textPrimary)), subtitle: Text(DateFormat('hh:mm a').format(startTime)),
-          onTap: () async { final tod = await WheelPickerBottomSheet.showTime(context: ctx, initialTime: TimeOfDay.fromDateTime(startTime)); if (ctx.mounted) setD(() { startTime = DateTime(sleepDate.year, sleepDate.month, sleepDate.day, tod.hour, tod.minute); }); }),
-        SwitchListTile(secondary: const Icon(PhosphorIconsLight.sun, color: AppColors.primary), title: const Text('Still sleeping'), value: isStillSleeping, onChanged: (v) => setD(() { isStillSleeping = v; if (v) endTime = null; })),
-        if (!isStillSleeping) ListTile(leading: const Icon(PhosphorIconsLight.sun, color: AppColors.primary), title: const Text('End time'), subtitle: Text(DateFormat('hh:mm a').format(endTime!)),
-          onTap: () async { final tod = await WheelPickerBottomSheet.showTime(context: ctx, initialTime: TimeOfDay.fromDateTime(endTime!)); if (ctx.mounted) setD(() { endTime = DateTime(endTime!.year, endTime!.month, endTime!.day, tod.hour, tod.minute); }); }),
-        const SizedBox(height: 12),
-        Wrap(spacing: 8, children: _qualities.map((q) => ChoiceChip(label: Text(q[0] + q.substring(1).toLowerCase()), selected: selectedQuality == q, selectedColor: _qualityColor(q).withValues(alpha: 0.3), onSelected: (_) => setD(() => selectedQuality = q))).toList()),
-        const SizedBox(height: 12),
-        TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notes (optional)'), maxLines: 2), const SizedBox(height: 16),
-        ThemeButton(text: 'Save', onPressed: () async { setD(() => isSaving = true); try { final ee = isStillSleeping ? startTime.add(const Duration(minutes: 1)) : endTime; final dur = ee?.difference(startTime) ?? const Duration(hours: 1); final t = (dur.inHours < 4 && startTime.hour >= 6 && startTime.hour < 20) ? 'NAP' : 'NIGHT';                    await ref.read(apiClientProvider).createSleepLog(babyMonId!, {'type': t, 'startTime': startTime.toIso8601String(), 'endTime': (ee ?? DateTime.now()).toIso8601String(), 'quality': {'GREAT': 5, 'GOOD': 4, 'FAIR': 2, 'POOR': 1}[selectedQuality] ?? 3, 'notes': notesController.text.isNotEmpty ? notesController.text : null}); await loadData(force: true); if (ctx.mounted) Navigator.pop(ctx); } catch (e) { setD(() => isSaving = false); if (ctx.mounted) showError(ctx, e); }}, isLoading: isSaving, fullWidth: true, semanticLabel: 'Save sleep log'),
+        ListTile(leading: Icon(PhosphorIconsLight.moon, color: context.colorScheme.primary),        title: Text('Start time', style: TextStyle(color: Theme.of(ctx).brightness == Brightness.dark ? context.colorScheme.onPrimary : context.colorScheme.onSurface)), subtitle: Text(DateFormat('hh:mm a').format(startTime)),
+          onTap: () async { final tod = await showTimePicker(context: ctx, initialTime: TimeOfDay.fromDateTime(startTime)); if (tod != null && ctx.mounted) setD(() { startTime = DateTime(sleepDate.year, sleepDate.month, sleepDate.day, tod.hour, tod.minute); }); }),
+        SwitchListTile(secondary: Icon(PhosphorIconsLight.sun, color: context.colorScheme.primary), title: const Text('Still sleeping'), value: isStillSleeping, onChanged: (v) => setD(() { isStillSleeping = v; if (v) endTime = null; })),
+        if (!isStillSleeping) ListTile(leading: Icon(PhosphorIconsLight.sun, color: context.colorScheme.primary), title: const Text('End time'), subtitle: Text(DateFormat('hh:mm a').format(endTime!)),
+          onTap: () async { final tod = await showTimePicker(context: ctx, initialTime: TimeOfDay.fromDateTime(endTime!)); if (tod != null && ctx.mounted) setD(() { endTime = DateTime(endTime!.year, endTime!.month, endTime!.day, tod.hour, tod.minute); }); }),
+        const SizedBox(height: DesignTokens.spaceMd),
+        Wrap(spacing: DesignTokens.spaceSm, children: _qualities.map((q) => ChoiceChip(label: Text(q.label), selected: selectedQuality == q, selectedColor: q.color.withValues(alpha: DesignTokens.opacityDim), onSelected: (_) => setD(() => selectedQuality = q))).toList()),
+        const SizedBox(height: DesignTokens.spaceMd),
+        TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notes (optional)'), maxLines: 2), const SizedBox(height: DesignTokens.spaceLg),
+        ThemeButton(text: 'Save', onPressed: () async {
+          setD(() => isSaving = true);
+          try {
+            final ee = isStillSleeping ? startTime.add(const Duration(minutes: 1)) : endTime;
+            final dur = ee?.difference(startTime) ?? const Duration(hours: 1);
+            final t = (dur.inHours < 4 && startTime.hour >= 6 && startTime.hour < 20) ? SleepType.nap.apiKey : SleepType.night.apiKey;
+            final result = await ref.read(apiClientProvider).createSleepLog(babyMonId!, {
+              'type': t, 'startTime': startTime.toIso8601String(),
+              'endTime': (ee ?? DateTime.now()).toIso8601String(),
+              'quality': selectedQuality.apiNumericValue,
+              'notes': notesController.text.isNotEmpty ? notesController.text : null,
+            });
+            // Close dialog immediately
+            if (ctx.mounted) Navigator.pop(ctx);
+            // Optimistic: insert locally
+            final newLog = SleepLog.fromJson({
+              'id': parseString(result.data['id']) ?? '',
+              'type': t,
+              'startTime': startTime.toIso8601String(),
+              'endTime': (ee ?? DateTime.now()).toIso8601String(),
+              'quality': selectedQuality.apiNumericValue,
+              'notes': notesController.text.isNotEmpty ? notesController.text : null,
+            });
+            setState(() => _sleepLogs.insert(0, newLog));
+          } catch (e) { setD(() => isSaving = false); if (ctx.mounted) showError(ctx, e); }
+        }, isLoading: isSaving, fullWidth: true, semanticLabel: 'Save sleep log'),
       ]),
     )));
   }

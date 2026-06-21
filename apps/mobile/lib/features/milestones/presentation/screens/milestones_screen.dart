@@ -7,6 +7,7 @@ import 'package:baby_mon/core/mixins/mixins.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
+import 'package:baby_mon/features/milestones/domain/entities/milestone.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
 import 'package:baby_mon/features/dashboard/presentation/widgets/level_up_celebration.dart';
 
@@ -22,7 +23,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   @override
   Duration? get refreshCooldown => const Duration(seconds: 10);
 
-  List _milestones = [];
+  List<Milestone> _milestones = [];
 
   @override
   void initState() {
@@ -66,7 +67,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   @override
   Future<void> fetchData() async {
     final response = await ref.read(apiClientProvider).getMilestones(babyMonId!);
-    _milestones = parseItems(response.data);
+    _milestones = parseItems(response.data).whereType<Map<String, dynamic>>().map(Milestone.fromJson).toList();
   }
 
   Future<bool> _deleteMilestone(String id, int index) async {
@@ -81,7 +82,11 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
     if (confirmed != true) return false;
     try {
       await ref.read(apiClientProvider).deleteMilestone(id);
-      if (mounted) setState(() => _milestones.removeAt(index));
+      if (mounted) {
+        final flatIdx = _milestones.indexWhere((m) => m.id == id);
+        if (flatIdx != -1) setState(() => _milestones.removeAt(flatIdx));
+      }
+      ref.read(appRefreshProvider.notifier).state++;
       messenger.showSnackBar(const SnackBar(content: Text('Milestone deleted')));
       return true;
     } catch (e) {
@@ -90,10 +95,10 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
     }
   }
 
-  List<Map<String, dynamic>> _groupedByMonth() {
-    final groups = <String, List<dynamic>>{};
+  List<({String month, List<Milestone> items})> _groupedByMonth() {
+    final groups = <String, List<Milestone>>{};
     for (final m in _milestones) {
-      final date = DateTime.tryParse(m['happenedAt']?.toString() ?? '');
+      final date = m.happenedAt;
       final key = date != null ? DateFormat('MMMM yyyy').format(date) : 'Unknown';
       groups.putIfAbsent(key, () => []);
       groups[key]!.add(m);
@@ -103,7 +108,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
       final db = DateFormat('MMMM yyyy').parse(b);
       return db.compareTo(da);
     });
-    return sortedKeys.map((k) => {'month': k, 'items': groups[k]!}).toList();
+    return sortedKeys.map((k) => (month: k, items: groups[k]!)).toList();
   }
 
   @override
@@ -130,9 +135,8 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                     itemCount: grouped.length,
                     itemBuilder: (context, groupIndex) {
                       final group = grouped[groupIndex];
-                      final month = parseString(group['month']) ?? '';
-                      final rawItems = group['items'];
-                      final items = rawItems is List ? rawItems : <dynamic>[];
+                      final month = group.month;
+                      final items = group.items;
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -148,7 +152,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                                   height: 20,
                                   margin: const EdgeInsets.only(right: DesignTokens.spaceSm),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary,
+                                    color: context.colorScheme.primary,
                                     borderRadius: BorderRadius.circular(2),
                                   ),
                                 ),
@@ -170,21 +174,19 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                           ),
                           ...items.asMap().entries.map((entry) {
                             final index = entry.key;
-                            final milestone = entry.value;
-                            final date = DateTime.tryParse(
-                                milestone['happenedAt']?.toString() ?? '');
+                            final m = entry.value;
+                            final date = m.happenedAt;
                             return MilestoneTimelineRow(
-                              title: parseString(milestone['title']) ?? '',
-                              notes: parseString(milestone['notes']),
+                              title: m.title,
+                              notes: m.notes,
                               date: date,
-                              seed: _milestones.indexOf(milestone),
+                              seed: _milestones.indexOf(m),
                               isLast: index == items.length - 1,
-                              isPendingSync:
-                                  milestone['syncStatus'] == 'PENDING',
+                              isPendingSync: m.syncStatus == 'PENDING',
                               onTap: () => _showAddMilestoneDialog(
-                                  existingMilestone: parseJsonMap(milestone)),
+                                  existingMilestone: m),
                               onConfirmDelete: () => _deleteMilestone(
-                                  parseString(milestone['id']) ?? '', index),
+                                  m.id, index),
                             );
                           }),
                           const SizedBox(height: DesignTokens.spaceMd),
@@ -194,12 +196,16 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                   ),
                 ),
               ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'add_milestone',
-        backgroundColor: AppColors.accent,
-        foregroundColor: AppColors.textOnPrimary,
-        onPressed: _showAddMilestoneDialog,
-        child: const Icon(PhosphorIconsLight.plus),
+      floatingActionButton: Semantics(
+        label: 'Add milestone',
+        button: true,
+        child: FloatingActionButton(
+          heroTag: 'add_milestone',
+          backgroundColor: context.colorScheme.primary,
+          foregroundColor: context.colorScheme.onPrimary,
+          onPressed: _showAddMilestoneDialog,
+          child: const Icon(PhosphorIconsLight.plus),
+        ),
       ),
     );
   }
@@ -209,10 +215,10 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   // 7-level-nested ClipRRect wrapping).
 
 
-  void _showAddMilestoneDialog({Map? existingMilestone}) {
-    final titleController = TextEditingController(text: parseString(existingMilestone?['title']) ?? '');
-    final notesController = TextEditingController(text: parseString(existingMilestone?['notes']) ?? '');
-    DateTime selectedDate = existingMilestone != null ? DateTime.parse(parseString(existingMilestone['happenedAt']) ?? '') : DateTime.now();
+  void _showAddMilestoneDialog({Milestone? existingMilestone}) {
+    final titleController = TextEditingController(text: existingMilestone?.title ?? '');
+    final notesController = TextEditingController(text: existingMilestone?.notes ?? '');
+    DateTime selectedDate = existingMilestone?.happenedAt ?? DateTime.now();
     bool isSaving = false;
     final isEditing = existingMilestone != null;
 
@@ -250,7 +256,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
               ),
               const SizedBox(height: DesignTokens.spaceMd),
               ListTile(
-                leading: const Icon(PhosphorIconsLight.calendar, color: AppColors.primary),
+                leading: Icon(PhosphorIconsLight.calendar, color: context.colorScheme.primary),
                   title: Text(
                     DateFormat.yMMMd().format(selectedDate),
                     style: Theme.of(context).textTheme.bodyLarge,
@@ -274,7 +280,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                   try {
                     final api = ref.read(apiClientProvider);
                     if (isEditing) {
-                      await api.updateMilestone(parseString(existingMilestone['id']) ?? '', {
+                      await api.updateMilestone(existingMilestone.id, {
                         'title': titleController.text,
                         'notes': notesController.text,
                         'happenedAt': selectedDate.toIso8601String(),
@@ -286,13 +292,21 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                         'notes': notesController.text,
                         'happenedAt': selectedDate.toIso8601String(),
                       });
+                      // Close dialog immediately
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      // Optimistic: insert locally
+                      final newM = Milestone.fromJson({
+                        'id': parseString(result.data['id']) ?? '',
+                        'title': titleController.text,
+                        'notes': notesController.text,
+                        'happenedAt': selectedDate.toIso8601String(),
+                      });
+                      setState(() => _milestones.insert(0, newM));
                       final data = result.data;
                       if (data is Map && data['leveledUp'] == true) {
-                        if (ctx.mounted) LevelUpCelebration.show(ctx, parseInt(data['newStage']) ?? 0);
+                        if (mounted) LevelUpCelebration.show(context, parseInt(data['newStage']) ?? 0);
                       }
                     }
-                    await loadData(force: true);
-                    if (ctx.mounted) Navigator.pop(ctx);
                   } catch (e) {
                     setDialogState(() => isSaving = false);
                     if (ctx.mounted) showError(ctx, e);

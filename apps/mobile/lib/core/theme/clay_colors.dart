@@ -16,7 +16,7 @@ class ClayColors {
 
   // ── Primary — Warm Terracotta ──
   /// Earthy, nurturing, warm clay-brown
-  static const Color primary = Color(0xFFC17F59);
+  static const Color primary = Color(0xFFA45D35); // darkened from #C17F59 for WCAG AA
   static const Color primaryLight = Color(0xFFD9A882);
   static const Color primaryDark = Color(0xFF8B5E3C);
   static const Color primaryContainer = Color(0xFFF5EDE4);

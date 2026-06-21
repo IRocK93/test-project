@@ -1,0 +1,13 @@
+export 'data/companion_repository.dart';
+export 'data/llm/llm_inference_service.dart';
+export 'presentation/providers/companion_provider.dart';
+export 'presentation/providers/llm_provider.dart';
+export 'presentation/screens/companion_tab.dart';
+export 'presentation/screens/daily_brief_screen.dart';
+export 'presentation/screens/routine_screen.dart';
+export 'presentation/screens/milestone_tracker_screen.dart';
+export 'presentation/screens/advice_feed_screen.dart';
+export 'presentation/screens/chat_screen.dart';
+export 'presentation/screens/model_download_screen.dart';
+export 'presentation/screens/medical_disclaimer_gate.dart';
+export 'presentation/widgets/monthly_ai_reminder.dart';

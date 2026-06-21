@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFeedLogDto, UpdateFeedLogDto } from './dto/feed-log.dto';
+import { isWithinUndoWindow } from '../common/undo-window.helper';
 import { BadgesService } from '../badges/badges.service';
 import { AccessControlService } from '../common/access-control.service';
 
@@ -91,11 +92,7 @@ export class FeedLogsService {
   async update(id: string, userId: string, dto: UpdateFeedLogDto) {
     const feedLog = await this.findOne(id, userId);
 
-    const createdAt = new Date(feedLog.createdAt);
-    const now = new Date();
-    const minutesDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-
-    if (minutesDiff <= 10) {
+    if (isWithinUndoWindow(feedLog.createdAt)) {
       return this.prisma.feedLog.update({
         where: { id },
         data: {
@@ -128,11 +125,7 @@ export class FeedLogsService {
   async delete(id: string, userId: string) {
     const feedLog = await this.findOne(id, userId);
 
-    const createdAt = new Date(feedLog.createdAt);
-    const now = new Date();
-    const minutesDiff = (now.getTime() - createdAt.getTime()) / (1000 * 60);
-
-    if (minutesDiff <= 10) {
+    if (isWithinUndoWindow(feedLog.createdAt)) {
       await this.prisma.feedLog.update({
         where: { id },
         data: { deletedAt: new Date() },

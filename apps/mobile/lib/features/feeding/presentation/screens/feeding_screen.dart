@@ -5,8 +5,10 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/mixins/mixins.dart';
 import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/core/theme/design_tokens.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
+import 'package:baby_mon/features/feeding/domain/entities/feed_log.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
 import 'package:baby_mon/features/dashboard/presentation/widgets/level_up_celebration.dart';
 
@@ -18,22 +20,11 @@ class FeedingScreen extends ConsumerStatefulWidget {
 
 class _FeedingScreenState extends ConsumerState<FeedingScreen>
     with DataScreenMixin<FeedingScreen> {
-  List _feedLogs = [];
+  List<FeedLog> _feedLogs = [];
   bool _isMetric = true;
   int _feedChartRange = 3;
   String _feedChartUnit = 'Days';
   String? _feedSelectedDate;
-
-  static const _typeColors = {
-    'BREASTMILK': AppColors.info,
-    'FORMULA': AppColors.warning,
-    'SOLID': AppColors.success,
-  };
-  static const _typeIcons = {
-    'BREASTMILK': PhosphorIconsLight.drop,
-    'FORMULA': PhosphorIconsLight.jar,
-    'SOLID': PhosphorIconsLight.bowlFood,
-  };
 
   // ─────────────────────────────────────────────────
   //  DataScreenMixin overrides
@@ -77,7 +68,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
 
     final response =
         await ref.read(apiClientProvider).getFeedLogs(babyMonId!);
-    _feedLogs = parseItems(response.data);
+    _feedLogs = parseItems(response.data).whereType<Map<String, dynamic>>().map(FeedLog.fromJson).toList();
   }
 
   // ─────────────────────────────────────────────────
@@ -128,6 +119,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
     try {
       await ref.read(apiClientProvider).deleteFeedLog(id);
       setState(() => _feedLogs.removeAt(index));
+      ref.read(appRefreshProvider.notifier).state++;
       messenger.showSnackBar(const SnackBar(content: Text('Feeding log deleted')));
       return true;
     } catch (e) {
@@ -136,26 +128,21 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
     }
   }
 
-  String _getUnitForType(String type) {
-    if (type == 'SOLID') return 'g';
-    return _isMetric ? 'ml' : 'oz';
-  }
 
   // ─────────────────────────────────────────────────
   //  Feeding chart
   // ─────────────────────────────────────────────────
 
-  void _showDayFeedDetails(String dateStr, List dayLogs) {
+  void _showDayFeedDetails(String dateStr, List<FeedLog> dayLogs) {
     final total = dayLogs.fold<double>(
       0,
-      (s, l) => s + (double.tryParse(l['amount']?.toString() ?? '0') ?? 0),
+      (s, l) => s + (l.amount ?? 0),
     );
+    final defaultUnit = _isMetric ? 'ml' : 'oz';
     final typeTotals = <String, double>{};
     for (final l in dayLogs) {
-      final t = parseString(l['type']) ?? 'BREASTMILK';
-      typeTotals[t] =
-          (typeTotals[t] ?? 0) +
-          (double.tryParse(l['amount']?.toString() ?? '0') ?? 0);
+      final t = l.type;
+      typeTotals[t] = (typeTotals[t] ?? 0) + (l.amount ?? 0);
     }
     setState(() => _feedSelectedDate = dateStr);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -165,7 +152,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
         title: Text(
           'Feeding \u2014 $dateStr',
           style: TextStyle(
-            color: isDark ? AppColors.textOnDark : AppColors.textPrimary,
+            color: isDark ? context.colorScheme.onPrimary : context.colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -176,38 +163,45 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Total: ${total % 1 == 0 ? total.toInt().toString() : total.toStringAsFixed(1)}',
+                'Total: ${total % 1 == 0 ? total.toInt().toString() : total.toStringAsFixed(1)} $defaultUnit',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
-              const Divider(color: AppColors.border),
+              Divider(color: context.colorScheme.outline),
               ...typeTotals.entries.map(
-                (e) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _typeIcons[e.key] ?? PhosphorIconsLight.forkKnife,
-                        size: 20,
-                        color: _typeColors[e.key],
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${e.key[0]}${e.key.substring(1).toLowerCase()}: ${e.value % 1 == 0 ? e.value.toInt().toString() : e.value.toStringAsFixed(1)}',
-                      ),
-                    ],
-                  ),
-                ),
+                (e) {
+                  final ft = FeedType.fromApiKey(e.key);
+                  final vt = e.value % 1 == 0 ? e.value.toInt().toString() : e.value.toStringAsFixed(1);
+                  final tu = ft?.unit(_isMetric) ?? defaultUnit;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          ft?.icon ?? PhosphorIconsLight.forkKnife,
+                          size: 20,
+                          color: ft?.color,
+                        ),
+                        const SizedBox(width: DesignTokens.spaceSm),
+                        Text(
+                          '${ft?.label ?? e.key}: $vt $tu',
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
-              const Divider(color: AppColors.border),
+              Divider(color: context.colorScheme.outline),
               ...dayLogs.map((l) {
-                final amt = double.tryParse(l['amount']?.toString() ?? '0') ?? 0;
+                final amt = l.amount ?? 0;
+                final lu = l.unit ?? FeedType.fromApiKey(l.type)?.unit(_isMetric) ?? defaultUnit;
+                final at = amt % 1 == 0 ? amt.toInt().toString() : amt.toStringAsFixed(1);
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),
                   child: Text(
-                    '${DateTime.tryParse(l['happenedAt']?.toString() ?? '')?.hour.toString().padLeft(2, '0')}:${DateTime.tryParse(l['happenedAt']?.toString() ?? '')?.minute.toString().padLeft(2, '0') ?? ''} \u2014 ${amt % 1 == 0 ? amt.toInt().toString() : amt.toStringAsFixed(1)} ${_getUnitForType(parseString(l['type']) ?? '')}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+                    '${l.happenedAt?.hour.toString().padLeft(2, '0')}:${l.happenedAt?.minute.toString().padLeft(2, '0') ?? ''} \u2014 $at $lu',
+                    style: TextStyle(
+                      fontSize: DesignTokens.fontSm,
+                      color: context.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 );
@@ -225,7 +219,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
     );
   }
 
-  Widget _buildFeedingChart() {
+  Widget _buildFeedingChart(BuildContext context) {
     if (_feedLogs.isEmpty) return const SizedBox.shrink();
     final now = DateTime.now();
     DateTime cutoff;
@@ -236,37 +230,41 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
     } else {
       cutoff = DateTime(now.year, now.month - (_feedChartRange - 1), now.day);
     }
-    final cutoffMs = cutoff.millisecondsSinceEpoch;
-    final dayGroups = <String, List<dynamic>>{};
+    final cutoffDate = DateTime(cutoff.year, cutoff.month, cutoff.day);
+    final dayGroups = <String, List<FeedLog>>{};
     for (final log in _feedLogs) {
-      final dt = DateTime.tryParse(log['happenedAt']?.toString() ?? '');
-      if (dt == null || dt.millisecondsSinceEpoch < cutoffMs) continue;
-      final dayKey = DateFormat('yyyy-MM-dd').format(dt);
+      final dt = log.happenedAt;
+      if (dt == null) continue;
+      final logDate = DateTime(dt.year, dt.month, dt.day);
+      if (logDate.isBefore(cutoffDate)) continue;
+      final dayKey = DateFormat('yyyy-MM-dd').format(logDate);
       dayGroups.putIfAbsent(dayKey, () => []);
       dayGroups[dayKey]!.add(log);
     }
     final allKeys = <String>[];
-    var current = cutoff;
-    while (!current.isAfter(now)) {
+    var current = cutoffDate;
+    final todayDate = DateTime(now.year, now.month, now.day);
+    while (!current.isAfter(todayDate)) {
       allKeys.add(DateFormat('yyyy-MM-dd').format(current));
       current = current.add(const Duration(days: 1));
     }
-    final feedTypes = ['BREASTMILK', 'FORMULA', 'SOLID'];
+    // Filter out days with no entries, unless today (keep it as placeholder)
+    final keysWithData = allKeys.where((k) => (dayGroups[k]?.isNotEmpty ?? false) || k == DateFormat('yyyy-MM-dd').format(todayDate)).toList();
+    const feedTypes = FeedType.values;
     double overallMax = 0;
-    final typeData = <String, List<MapEntry<String, double>>>{};
+    final typeData = <FeedType, List<MapEntry<String, double>>>{};
     for (final t in feedTypes) {
       typeData[t] = [];
     }
-    for (final k in allKeys) {
+    for (final k in keysWithData) {
       final logs = dayGroups[k] ?? [];
       double dayTotal = 0;
       for (final t in feedTypes) {
         final sum = logs
-            .where((l) => (l['type'] ?? 'BREASTMILK') == t)
+            .where((l) => l.type == t.apiKey)
             .fold<double>(
               0,
-              (s, l) =>
-                  s + (double.tryParse(l['amount']?.toString() ?? '0') ?? 0),
+              (s, l) => s + (l.amount ?? 0),
             );
         typeData[t]!.add(MapEntry(k, sum));
         dayTotal += sum;
@@ -275,17 +273,29 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
     }
     if (overallMax == 0) overallMax = 1.0;
 
+    // ── Y-axis labels: 5 evenly-spaced round numbers ───
+    final yStep = _niceStep(overallMax);
+    var yMax = (overallMax / yStep).ceil() * yStep;
+    if (yMax < overallMax) yMax = (overallMax / yStep).ceil() * yStep + yStep;
+    // For small values, ensure the axis is readable
+    if (yMax <= 10) yMax = 10;
+    const yLabelCount = 5;
+    final yLabels = List.generate(yLabelCount, (i) => (yMax * i / (yLabelCount - 1)).round());
+    const barHeight = 136.0;
+    const barWidth = 56.0;
+    final chartScrollController = ScrollController();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg, vertical: 4),
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 PhosphorIconsLight.bowlFood,
                 size: 16,
-                color: AppColors.accent,
+                color: context.colorScheme.primary,
               ),
               const SizedBox(width: 6),
               Text(
@@ -318,13 +328,13 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark ? AppColors.darkSurface : AppColors.surfaceLight,
+                      color: Theme.of(context).brightness == Brightness.dark ? context.colorScheme.surface : context.colorScheme.surface,
                       borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
                     ),
                     child: Text(
                       '$_feedChartRange $_feedChartUnit',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: DesignTokens.fontMd,
                         fontWeight: FontWeight.w500,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
@@ -336,12 +346,12 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg),
           child: Row(
             children: feedTypes
                 .map(
                   (t) => Padding(
-                    padding: const EdgeInsets.only(right: 12),
+                    padding: const EdgeInsets.only(right: DesignTokens.spaceMd),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -349,18 +359,15 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                           width: 10,
                           height: 10,
                           decoration: BoxDecoration(
-                            color: (_typeColors[t] ?? AppColors.textCaption)
-                                .withValues(alpha: 0.8),
+                            color: t.color.withValues(alpha: 0.8),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          t == 'BREASTMILK'
-                              ? 'Breast'
-                              : (t == 'FORMULA' ? 'Formula' : 'Solid'),
+                          t.shortLabel,
                           style: const TextStyle(
-                            fontSize: 11,
+                            fontSize: DesignTokens.font2xs,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -371,103 +378,124 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                 .toList(),
           ),
         ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 180,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: List.generate(allKeys.length, (di) {
-                final dateStr = allKeys[di];
-                final date = DateTime.tryParse(dateStr);
-                final label =
-                    date != null ? DateFormat('d/M').format(date) : dateStr;
-                final isSelected = _feedSelectedDate == dateStr;
-                final isToday = dateStr == DateFormat('yyyy-MM-dd').format(DateTime.now());
-                final dayLogs = dayGroups[dateStr] ?? [];
-                final dayTotal = dayLogs.fold<double>(
-                  0,
-                  (s, l) =>
-                      s + (double.tryParse(l['amount']?.toString() ?? '0') ?? 0),
-                );
-                double yOffset = 0;
-                return Semantics(
-                  label: 'View feed details for $dateStr',
-                  button: true,
-                  child: GestureDetector(
-                    onTap: () => _showDayFeedDetails(dateStr, dayLogs),
-                    child: Container(
-                      width: 60,
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            dayTotal % 1 == 0
-                                ? '${dayTotal.toInt()}'
-                                : dayTotal.toStringAsFixed(1),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            height: 136,
-                            width: 36,
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.primary.withValues(alpha: 0.05)
-                                  : isToday
-                                      ? AppColors.warning.withValues(alpha: 0.12)
-                                      : null,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Stack(
-                              children: feedTypes.map((t) {
-                                final amount = typeData[t]![di].value;
-                                if (amount <= 0) return const SizedBox.shrink();
-                                final segHeight =
-                                    (amount / overallMax * 136)
-                                        .clamp(2.0, 136.0 - yOffset);
-                                final segTop = yOffset;
-                                yOffset += segHeight;
-                                return Positioned(
-                                  bottom: segTop,
-                                  left: 0,
-                                  right: 0,
-                                  child: Container(
-                                    height: segHeight,
-                                    decoration: BoxDecoration(
-                                      color: (_typeColors[t] ??
-                                              AppColors.textCaption)
-                                          .withValues(alpha: 0.8),
-                                      borderRadius: BorderRadius.circular(3),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            label,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : AppColors.textSecondary,
-                              fontWeight:
-                                  isSelected ? FontWeight.w600 : FontWeight.normal,
-                            ),
-                          ),
-                        ],
+        const SizedBox(height: DesignTokens.spaceSm),
+
+        // ── Chart body: Y-axis + bars (same height, aligned) ──
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            // Y-axis
+            SizedBox(
+              width: 36,
+              height: barHeight,
+              child: Stack(
+                children: [
+                  for (int i = 0; i < yLabelCount; i++)
+                    Positioned(
+                      bottom: barHeight * i / (yLabelCount - 1) - 8,
+                      left: 0, right: 0,
+                      child: Text(
+                        yLabels[i] % 1000 == 0
+                            ? '${yLabels[i] ~/ 1000}k'
+                            : yLabels[i].toString(),
+                        textAlign: TextAlign.right,
+                        style: TextStyle(fontSize: 10, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
                       ),
                     ),
-                  ),
+                ],
+              ),
+            ),
+            Container(width: 1, height: barHeight, color: context.colorScheme.outlineVariant.withValues(alpha: 0.3)),
+            const SizedBox(width: 4),
+            // Bars + day totals
+            Expanded(
+              child: SizedBox(
+                height: barHeight + 24, // bar + day total label above
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  controller: chartScrollController,
+                  children: List.generate(keysWithData.length, (di) {
+                    final dateStr = keysWithData[di];
+                    final dayLogs = dayGroups[dateStr] ?? [];
+                    final dayTotal = dayLogs.fold<double>(0, (s, l) => s + (l.amount ?? 0));
+                    final isSelected = _feedSelectedDate == dateStr;
+                    final isToday = dateStr == DateFormat('yyyy-MM-dd').format(DateTime.now());
+                    final barSegments = <Widget>[];
+                    double cumulativeHeight = 0;
+                    final entries = feedTypes
+                      .map((t) => MapEntry(t, typeData[t]![di].value))
+                      .where((e) => e.value > 0)
+                      .toList()
+                      ..sort((a, b) => b.value.compareTo(a.value));
+                    for (final e in entries) {
+                      final h = (e.value / yMax * barHeight).clamp(2.0, barHeight - cumulativeHeight);
+                      barSegments.add(Positioned(
+                        bottom: cumulativeHeight, left: 0, right: 0,
+                        child: Container(height: h, decoration: BoxDecoration(color: e.key.color.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(3))),
+                      ));
+                      cumulativeHeight += h;
+                    }
+                    return GestureDetector(
+                      onTap: () => _showDayFeedDetails(dateStr, dayLogs),
+                      child: Container(
+                        width: barWidth,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(dayTotal % 1 == 0 ? '${dayTotal.toInt()}' : dayTotal.toStringAsFixed(1),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: DesignTokens.fontSm, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Container(
+                              height: barHeight,
+                              decoration: BoxDecoration(
+                                color: isSelected ? context.colorScheme.primary.withValues(alpha: 0.05)
+                                    : isToday ? context.colorScheme.tertiary.withValues(alpha: 0.12) : null,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Stack(children: barSegments),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        // ── X-axis line ──
+        Padding(
+          padding: const EdgeInsets.only(left: 41), // align after Y-axis + divider
+          child: Container(height: 1, color: context.colorScheme.outlineVariant.withValues(alpha: 0.3)),
+        ),
+        const SizedBox(height: 2),
+
+        // ── Date labels (separate row, below chart) ──
+        Padding(
+          padding: const EdgeInsets.only(left: 41), // align after Y-axis
+          child: SizedBox(
+            height: 22,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              controller: ScrollController(),
+              children: List.generate(keysWithData.length, (di) {
+                final dateStr = keysWithData[di];
+                final date = DateTime.tryParse(dateStr);
+                final label = date != null ? DateFormat('d/M').format(date) : dateStr;
+                final isSelected = _feedSelectedDate == dateStr;
+                return SizedBox(
+                  width: barWidth,
+                  child: Text(label, textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: DesignTokens.fontSm,
+                        color: isSelected ? context.colorScheme.primary : context.colorScheme.onSurfaceVariant,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
                 );
-              }).toList(),
+              }),
             ),
           ),
         ),
@@ -475,14 +503,47 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
           Center(
             child: Text(
               'Selected: $_feedSelectedDate \u2014 tap for details',
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textCaption,
+              style: TextStyle(
+                fontSize: DesignTokens.fontSm2,
+                color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
               ),
             ),
           ),
+        // ── Scroll to today ──
+        Align(
+          alignment: Alignment.centerRight,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 4, top: 2),
+            child: IconButton(
+              icon: const Icon(PhosphorIconsLight.calendarDot, size: 18),
+              tooltip: 'Scroll to today',
+              onPressed: () {
+                final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
+                final idx = keysWithData.indexOf(todayKey);
+                if (idx >= 0 && chartScrollController.hasClients) {
+                  chartScrollController.animateTo(
+                    idx * (barWidth + 8), // width + horizontal margin
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                  );
+                }
+              },
+            ),
+          ),
+        ),
       ],
     );
+  }
+
+  /// Returns a "nice" step size for y-axis labels (10, 20, 50, 100, 200, 500, 1000).
+  double _niceStep(double maxVal) {
+    if (maxVal <= 50) return 10;
+    if (maxVal <= 100) return 20;
+    if (maxVal <= 250) return 50;
+    if (maxVal <= 500) return 100;
+    if (maxVal <= 1000) return 200;
+    if (maxVal <= 2000) return 500;
+    return 1000;
   }
 
   // ─────────────────────────────────────────────────
@@ -502,73 +563,95 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                     child: _feedLogs.isEmpty
                         ? buildEmptyState()
                         : ListView(
-                            padding: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.only(bottom: DesignTokens.spaceLg),
                             children: [
-                              _buildFeedingChart(),
-                              const Divider(color: AppColors.border),
+                              _buildFeedingChart(context),
+                              Divider(color: context.colorScheme.outline),
                               ..._feedLogs.asMap().entries.map((entry) {
                                 final index = entry.key;
                                 final log = entry.value;
-                                final unit = parseString(log['unit']) ??
-                                    _getUnitForType(
-                                        parseString(log['type']) ?? '');
+                                final unit = log.unit ?? (FeedType.fromApiKey(log.type)?.unit(_isMetric) ?? (_isMetric ? 'ml' : 'oz'));
+                                final feedColor = FeedType.fromApiKey(log.type)?.color ?? context.colorScheme.secondary;
                                 return ScrollStagger(
                                   index: index,
                                   child: Dismissible(
                                     key: Key(
-                                        parseString(log['id']) ??
-                                            index.toString()),
+                                        log.id.isNotEmpty ? log.id : index.toString()),
                                     direction: DismissDirection.endToStart,
                                     confirmDismiss: (_) => _deleteFeedLog(
-                                        parseString(log['id']) ?? '', index),
+                                        log.id, index),
                                     background: Container(
                                       alignment: Alignment.centerRight,
                                       padding:
                                           const EdgeInsets.only(right: 20),
-                                      color: AppColors.error,                                        child: const Icon(
+                                      color: context.colorScheme.error,                                        child: Icon(
                                         PhosphorIconsLight.trash,
-                                        color: AppColors.textOnPrimary,
+                                        color: context.colorScheme.onPrimary,
                                       ),
                                     ),
                                     child: PremiumCard(
                                       isGlass: true,
+                                      backgroundColor: feedColor.withValues(alpha: 0.08),
                                       margin: const EdgeInsets.symmetric(
-                                        horizontal: DesignTokens.spaceMd,
-                                        vertical: DesignTokens.spaceXs,
+                                        horizontal: DesignTokens.spaceSm,
+                                        vertical: 1,
                                       ),
-                                      child: ListTile(
-                                        leading: CircleAvatar(
-                                          backgroundColor: AppColors.secondary
-                                              .withValues(alpha: 0.2),
-                                          child: Icon(
-                                            log['type'] == 'BREASTMILK'
-                                                ? PhosphorIconsLight.drop
-                                                : (log['type'] == 'FORMULA'
-                                                    ? PhosphorIconsLight.jar
-                                                    : PhosphorIconsLight
-                                                        .bowlFood),
-                                            color: AppColors.secondary,
+                                      child: Semantics(
+                                        label: '${FeedType.fromApiKey(log.type)?.label ?? log.type} feeding${log.amount != null ? ', ${log.amount} $unit' : ''}${log.happenedAt != null ? ', ${DateFormat.yMMMd().format(log.happenedAt!)}' : ''}',
+                                        button: true,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: DesignTokens.spaceSm,
+                                            vertical: 4,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                width: 28,
+                                                height: 28,
+                                                decoration: BoxDecoration(
+                                                  color: feedColor.withValues(alpha: 0.15),
+                                                  borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
+                                                ),
+                                                alignment: Alignment.center,
+                                                child: Icon(
+                                                  FeedType.fromApiKey(log.type)?.icon ?? PhosphorIconsLight.bowlFood,
+                                                  size: 16,
+                                                  color: feedColor,
+                                                ),
+                                              ),
+                                              const SizedBox(width: DesignTokens.spaceSm),
+                                              Expanded(
+                                                child: Text(
+                                                  FeedType.fromApiKey(log.type)?.label ?? log.type,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: feedColor,
+                                                  ),
+                                                ),
+                                              ),
+                                              Text(
+                                                '${log.happenedAt != null ? DateFormat('h:mm a').format(log.happenedAt!) : '--:--'}${log.amount != null ? '  ·  ${(log.amount! % 1 == 0) ? log.amount!.toInt().toString() : log.amount!.toStringAsFixed(1)} $unit' : ''}',
+                                                style: TextStyle(
+                                                  fontSize: DesignTokens.fontSm,
+                                                  color: context.colorScheme.onSurfaceVariant,
+                                                ),
+                                              ),
+                                              if (log.syncStatus == 'PENDING')
+                                                Padding(
+                                                  padding: const EdgeInsets.only(left: DesignTokens.spaceXs),
+                                                  child: Icon(
+                                                    PhosphorIconsLight.cloudArrowUp,
+                                                    color: context.colorScheme.tertiary,
+                                                    size: 14,
+                                                  ),
+                                                ),
+                                            ],
                                           ),
                                         ),
-                                        title: Text(
-                                            parseString(log['type']) ?? ''),
-                                        subtitle: Text(
-                                          '${DateFormat.yMMMd().format(DateTime.parse(parseString(log['happenedAt']) ?? ''))}${log['amount'] != null ? ' - ${log['amount']} $unit' : ''}',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: AppColors.textSecondary,
-                                            height: 1.4,
-                                          ),
-                                        ),
-                                        trailing: log['syncStatus'] == 'PENDING'
-                                            ? const Icon(
-                                                PhosphorIconsLight.cloudArrowUp,
-                                                color: AppColors.warning,
-                                                size: 16,
-                                              )
-                                            : null,
                                       ),
-                                    ),
+                                      ),
                                   ),
                                 );
                               }),
@@ -576,12 +659,16 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                           ),
                   ),
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'add_feeding',
-        backgroundColor: AppColors.warning,
-        foregroundColor: AppColors.textOnPrimary,
-        onPressed: _showAddFeedLogDialog,
-        child: const Icon(PhosphorIconsLight.plus),
+      floatingActionButton: Semantics(
+        label: 'Log feeding',
+        button: true,
+        child: FloatingActionButton(
+          heroTag: 'add_feeding',
+          backgroundColor: context.colorScheme.primary,
+          foregroundColor: context.colorScheme.onPrimary,
+          onPressed: _showAddFeedLogDialog,
+          child: const Icon(PhosphorIconsLight.plus),
+        ),
       ),
     );
   }
@@ -591,13 +678,14 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
   // ─────────────────────────────────────────────────
 
   void _showAddFeedLogDialog() {
-    String selectedType = 'BREASTMILK';
+    FeedType selectedType = FeedType.breastmilk;
     final amountController = TextEditingController();
     final notesController = TextEditingController();
     DateTime selectedDate = DateTime.now();
     TimeOfDay currentTime = TimeOfDay.now();
     double? selectedAmount;
     bool isSaving = false;
+    String? validationError;
 
     showModalBottomSheet<void>(
       context: context,
@@ -621,22 +709,28 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                     .titleLarge
                     ?.copyWith(fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 16),
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(
-                      value: 'BREASTMILK', label: Text('Breastmilk')),
-                  ButtonSegment(value: 'FORMULA', label: Text('Formula')),
-                  ButtonSegment(value: 'SOLID', label: Text('Solid')),
-                ],
+              const SizedBox(height: DesignTokens.spaceLg),
+              SegmentedButton<FeedType>(
+                segments: FeedType.values.map((ft) =>
+                  ButtonSegment(value: ft, label: Text(ft.label)),
+                ).toList(),
                 selected: {selectedType},
                 onSelectionChanged: (s) => setDialogState(() {
                   selectedType = s.first;
                   amountController.clear();
                   selectedAmount = null;
+                  validationError = null;
                 }),
+                showSelectedIcon: false,
+                style: ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: WidgetStateProperty.all(
+                    const TextStyle(fontSize: DesignTokens.fontSm, fontWeight: FontWeight.w600),
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: DesignTokens.spaceMd),
               Semantics(
                 label: 'Select feeding amount',
                 button: true,
@@ -645,7 +739,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                     final amount =
                         await WheelPickerBottomSheet.showFeedingAmount(
                       context: ctx,
-                      feedType: selectedType,
+                      feedType: selectedType.apiKey,
                       isMetric: _isMetric,
                       initialValue: selectedAmount,
                     );
@@ -660,31 +754,31 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                   },
                   child: InputDecorator(
                     decoration: InputDecoration(
-                      labelText: 'Amount (${_getUnitForType(selectedType)})',
-                      hintText: _getUnitForType(selectedType),
+                      labelText: 'Amount (${selectedType.unit(_isMetric)})',
+                      hintText: selectedType.unit(_isMetric),
                       suffixIcon: const Icon(PhosphorIconsLight.caretUp),
                     ),
                     child: Text(
                       selectedAmount != null
-                          ? '${selectedAmount! % 1 == 0 ? selectedAmount!.toInt().toString() : selectedAmount!.toStringAsFixed(1)} ${_getUnitForType(selectedType)}'
+                          ? '${selectedAmount! % 1 == 0 ? selectedAmount!.toInt().toString() : selectedAmount!.toStringAsFixed(1)} ${selectedType.unit(_isMetric)}'
                           : '',
-                      style: const TextStyle(fontSize: 16),
+                      style: const TextStyle(fontSize: DesignTokens.fontLg),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: DesignTokens.spaceMd),
               TextField(
                 controller: notesController,
                 decoration:
                     const InputDecoration(labelText: 'Notes (optional)'),
                 maxLines: 2,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: DesignTokens.spaceMd),
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   PhosphorIconsLight.calendar,
-                  color: AppColors.primary,
+                  color: context.colorScheme.primary,
                 ),
                 title: Text(DateFormat.yMMMd().format(selectedDate)),
                 onTap: () async {
@@ -698,33 +792,39 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                 },
               ),
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   PhosphorIconsLight.clock,
-                  color: AppColors.primary,
+                  color: context.colorScheme.primary,
                 ),
                 title: Text(currentTime.format(ctx)),
                 onTap: () async {
-                  final picked = await WheelPickerBottomSheet.showTime(
+                  final picked = await showTimePicker(
                     context: ctx,
                     initialTime: currentTime,
                   );
-                  setDialogState(() => currentTime = picked);
+                  if (picked != null) setDialogState(() => currentTime = picked);
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: DesignTokens.spaceLg),                  if (validationError != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: DesignTokens.spaceSm),
+                  child: Text(validationError!, style: TextStyle(color: context.colorScheme.error, fontSize: DesignTokens.fontSm)),
+                ),
               ThemeButton(
                 text: 'Save',
                 onPressed: () async {
-                  setDialogState(() => isSaving = true);
+                  if (selectedAmount == null || selectedAmount! <= 0) {
+                    setDialogState(() => validationError = 'Please select a feeding amount');
+                    return;
+                  }
+                  setDialogState(() { validationError = null; isSaving = true; });
                   try {
                     final api = ref.read(apiClientProvider);
                     if (babyMonId == null) return;
                     final result = await api.createFeedLog(babyMonId!, {
-                      'type': selectedType,
-                      'amount': amountController.text.isNotEmpty
-                          ? amountController.text
-                          : null,
-                      'unit': _getUnitForType(selectedType),
+                      'type': selectedType.apiKey,
+                      'amount': selectedAmount,
+                      'unit': selectedType.unit(_isMetric),
                       'notes': notesController.text,
                       'happenedAt': DateTime(
                         selectedDate.year,
@@ -734,22 +834,33 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                         currentTime.minute,
                       ).toIso8601String(),
                     });
+                    // Close dialog immediately
+                    if (context.mounted) Navigator.pop(ctx);
+                    // Optimistic: insert at top of local list
+                    final newLog = FeedLog.fromJson({
+                      'id': parseString(result.data['id']) ?? '',
+                      'type': selectedType.apiKey,
+                      'amount': selectedAmount,
+                      'unit': selectedType.unit(_isMetric),
+                      'notes': notesController.text,
+                      'happenedAt': DateTime(selectedDate.year, selectedDate.month, selectedDate.day, currentTime.hour, currentTime.minute).toIso8601String(),
+                    });
+                    setState(() => _feedLogs.insert(0, newLog));
+                    // Level-up celebration
                     final data = result.data;
                     if (data is Map && data['leveledUp'] == true) {
-                      if (ctx.mounted) LevelUpCelebration.show(ctx, parseInt(data['newStage']) ?? 0);
+                      if (mounted) LevelUpCelebration.show(context, parseInt(data['newStage']) ?? 0);
                     }
-                    await loadData(force: true);
-                    if (ctx.mounted) Navigator.pop(ctx);
                   } catch (e) {
                     setDialogState(() => isSaving = false);
-                    if (ctx.mounted) showError(ctx, e);
+                    if (context.mounted) showError(ctx, e);
                   }
                 },
                 isLoading: isSaving,
                 fullWidth: true,
                 semanticLabel: 'Save feeding log',
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: DesignTokens.spaceLg),
             ],
           ),
         ),
