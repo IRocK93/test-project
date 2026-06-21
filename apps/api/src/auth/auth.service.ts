@@ -74,7 +74,12 @@ export class AuthService {
         return newUser;
       });
 
-      await this.mailService.sendVerificationEmail(user.email, verificationToken);
+      // Send verification email (non-blocking — won't fail registration)
+      try {
+        await this.mailService.sendVerificationEmail(user.email, verificationToken);
+      } catch (mailError) {
+        this.logger.warn({ err: mailError }, 'Failed to send verification email, but registration succeeded');
+      }
       const tokens = await this.generateTokens(user.id, user.email);
 
       return {
@@ -88,9 +93,10 @@ export class AuthService {
         message: 'Registration successful. Please check your email to verify your account.',
       };
     } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
       this.logger.error({ err: error }, 'Registration failed');
       throw new InternalServerErrorException({
-        message: 'Failed to create account',
+        message: `Failed to create account: ${msg}`,
         error: 'INTERNAL_ERROR',
       });
     }

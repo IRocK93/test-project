@@ -55,7 +55,7 @@ class ApiClient {
 	        // Invalidate related GET caches on successful mutations
 	        if (method == 'POST' || method == 'PATCH' || method == 'DELETE' || method == 'PUT') {
 	          final url = response.requestOptions.path;
-	          final resource = url.replaceAll(RegExp(r'/api/v1'), '').replaceAll(RegExp(r'/[a-f0-9-]{36}'), '');
+	          final resource = url.replaceAll(RegExp(r'/api'), '').replaceAll(RegExp(r'/[a-f0-9-]{36}'), '');
 	          _cache.invalidatePattern(resource);
 	        }
 	        return handler.next(response);
@@ -77,7 +77,7 @@ class ApiClient {
       final refreshDio = Dio();
       refreshDio.httpClientAdapter = _dio.httpClientAdapter;
       final response = await refreshDio.post<dynamic>(
-        '${ApiConstants.baseUrl}/api/v1${ApiConstants.refresh}',
+        '${ApiConstants.baseUrl}/api${ApiConstants.refresh}',
         data: {'refreshToken': refreshToken},
       );
 
@@ -94,7 +94,7 @@ class ApiClient {
 
   // Auth
   Future<Response> register(String email, String password, String? name) async {
-    return _dio.post('/api/v1${ApiConstants.register}', data: {
+    return _dio.post('/api${ApiConstants.register}', data: {
       'email': email,
       'password': password,
       'name': name,
@@ -102,19 +102,19 @@ class ApiClient {
   }
 
   Future<Response> login(String email, String password) async {
-    return _dio.post('/api/v1${ApiConstants.login}', data: {
+    return _dio.post('/api${ApiConstants.login}', data: {
       'email': email,
       'password': password,
     });
   }
 
   Future<Response> getProfile() async {
-    return _dio.get('/api/v1/users/me');
+    return _dio.get('/api/users/me');
   }
 
   Future<void> logout() async {
     try {
-      await _dio.post<void>('/api/v1${ApiConstants.logout}');
+      await _dio.post<void>('/api${ApiConstants.logout}');
     } catch (e) { 
       // ignore: avoid_print
       print('Logout API call failed (non-critical): $e'); 
@@ -127,11 +127,11 @@ class ApiClient {
 
   // BabyMons
   Future<Response> getBabyMons() async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}');
+    return _dio.get('/api${ApiConstants.babyMons}');
   }
 
   Future<Response> getBabyMon(String id) async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}/$id');
+    return _dio.get('/api${ApiConstants.babyMons}/$id');
   }
 
   Future<Response> createBabyMon(Map<String, dynamic> data) async {
@@ -140,116 +140,116 @@ class ApiClient {
     final options = token != null
         ? Options(headers: {'Authorization': 'Bearer $token'})
         : null;
-    return _dio.post('/api/v1${ApiConstants.babyMons}', data: data, options: options);
+    return _dio.post('/api${ApiConstants.babyMons}', data: data, options: options);
   }
 
   Future<Response> updateBabyMon(String id, Map<String, dynamic> data) async {
-    return _dio.patch('/api/v1${ApiConstants.babyMons}/$id', data: data);
+    return _dio.patch('/api${ApiConstants.babyMons}/$id', data: data);
   }
 
   Future<Response> deleteBabyMon(String id) async {
-    return _dio.delete('/api/v1${ApiConstants.babyMons}/$id');
+    return _dio.delete('/api${ApiConstants.babyMons}/$id');
   }
 
   Future<Response> getBabyMonStage(String id) async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}/$id/stage');
+    return _dio.get('/api${ApiConstants.babyMons}/$id/stage');
   }
 
   // Milestones
   Future<Response> getMilestones(String babyMonId, {bool forceRefresh = false}) async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}/$babyMonId/milestones',
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/milestones',
       options: Options(extra: {'forceRefresh': forceRefresh}));
   }
 
   Future<Response> createMilestone(String babyMonId, Map<String, dynamic> data) async {
-    return _dio.post('/api/v1${ApiConstants.babyMons}/$babyMonId/milestones', data: data);
+    return _dio.post('/api${ApiConstants.babyMons}/$babyMonId/milestones', data: data);
   }
 
   Future<Response> updateMilestone(String id, Map<String, dynamic> data) async {
-    return _dio.patch('/api/v1/milestones/$id', data: data);
+    return _dio.patch('/api/milestones/$id', data: data);
   }
 
   Future<Response> deleteMilestone(String id) async {
-    return _dio.delete('/api/v1/milestones/$id');
+    return _dio.delete('/api/milestones/$id');
   }
 
   // Feed Logs
   Future<Response> getFeedLogs(String babyMonId, {bool forceRefresh = false}) async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}/$babyMonId/feed-logs',
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/feed-logs',
       options: Options(extra: {'forceRefresh': forceRefresh}));
   }
 
   Future<Response> createFeedLog(String babyMonId, Map<String, dynamic> data) async {
-    return _dio.post('/api/v1${ApiConstants.babyMons}/$babyMonId/feed-logs', data: data);
+    return _dio.post('/api${ApiConstants.babyMons}/$babyMonId/feed-logs', data: data);
   }
 
   Future<Response> updateFeedLog(String id, Map<String, dynamic> data) async {
-    return _dio.patch('/api/v1/feed-logs/$id', data: data);
+    return _dio.patch('/api/feed-logs/$id', data: data);
   }
 
   Future<Response> deleteFeedLog(String id) async {
-    return _dio.delete('/api/v1/feed-logs/$id');
+    return _dio.delete('/api/feed-logs/$id');
   }
 
   // Health Records
   Future<Response> getHealthRecords(String babyMonId, {bool forceRefresh = false}) async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}/$babyMonId/health-records',
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/health-records',
       options: Options(extra: {'forceRefresh': forceRefresh}));
   }
 
   Future<Response> createHealthRecord(String babyMonId, Map<String, dynamic> data) async {
-    return _dio.post('/api/v1${ApiConstants.babyMons}/$babyMonId/health-records', data: data);
+    return _dio.post('/api${ApiConstants.babyMons}/$babyMonId/health-records', data: data);
   }
 
   Future<Response> updateHealthRecord(String id, Map<String, dynamic> data) async {
-    return _dio.patch('/api/v1/health-records/$id', data: data);
+    return _dio.patch('/api/health-records/$id', data: data);
   }
 
   Future<Response> deleteHealthRecord(String id) async {
-    return _dio.delete('/api/v1/health-records/$id');
+    return _dio.delete('/api/health-records/$id');
   }
 
   // Badges
   Future<Response> getBadges(String babyMonId) async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}/$babyMonId/badges');
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/badges');
   }
 
   Future<Response> getBadgeDefinitions() async {
-    return _dio.get('/api/v1/badges/definitions');
+    return _dio.get('/api/badges/definitions');
   }
 
   // Allergies (event-based tracking)
-  Future<Response> getAllergies(String babyMonId) async => _dio.get('/api/v1/baby-mons/$babyMonId/allergies');
-  Future<Response> createAllergy(String babyMonId, Map<String, dynamic> data) async => _dio.post('/api/v1/baby-mons/$babyMonId/allergies', data: data);
-  Future<Response> addAllergyEvent(String babyMonId, String allergyId, Map<String, dynamic> data) async => _dio.post('/api/v1/baby-mons/$babyMonId/allergies/$allergyId/events', data: data);
-  Future<Response> deleteAllergyEvent(String babyMonId, String eventId) async => _dio.delete('/api/v1/baby-mons/$babyMonId/allergies/events/$eventId');
-  Future<Response> cureAllergy(String babyMonId, String allergyId) async => _dio.post('/api/v1/baby-mons/$babyMonId/allergies/$allergyId/cure');
-  Future<Response> reactivateAllergy(String babyMonId, String allergyId) async => _dio.post('/api/v1/baby-mons/$babyMonId/allergies/$allergyId/reactivate');
-  Future<Response> clearAllAllergies(String babyMonId) async => _dio.post('/api/v1/baby-mons/$babyMonId/allergies/clear-all');
-  Future<Response> clearAllAllergyEvents(String babyMonId) async => _dio.post('/api/v1/baby-mons/$babyMonId/allergies/events/clear-all');
-  Future<Response> deleteAllergy(String babyMonId, String allergyId) async => _dio.delete('/api/v1/baby-mons/$babyMonId/allergies/$allergyId');
+  Future<Response> getAllergies(String babyMonId) async => _dio.get('/api/baby-mons/$babyMonId/allergies');
+  Future<Response> createAllergy(String babyMonId, Map<String, dynamic> data) async => _dio.post('/api/baby-mons/$babyMonId/allergies', data: data);
+  Future<Response> addAllergyEvent(String babyMonId, String allergyId, Map<String, dynamic> data) async => _dio.post('/api/baby-mons/$babyMonId/allergies/$allergyId/events', data: data);
+  Future<Response> deleteAllergyEvent(String babyMonId, String eventId) async => _dio.delete('/api/baby-mons/$babyMonId/allergies/events/$eventId');
+  Future<Response> cureAllergy(String babyMonId, String allergyId) async => _dio.post('/api/baby-mons/$babyMonId/allergies/$allergyId/cure');
+  Future<Response> reactivateAllergy(String babyMonId, String allergyId) async => _dio.post('/api/baby-mons/$babyMonId/allergies/$allergyId/reactivate');
+  Future<Response> clearAllAllergies(String babyMonId) async => _dio.post('/api/baby-mons/$babyMonId/allergies/clear-all');
+  Future<Response> clearAllAllergyEvents(String babyMonId) async => _dio.post('/api/baby-mons/$babyMonId/allergies/events/clear-all');
+  Future<Response> deleteAllergy(String babyMonId, String allergyId) async => _dio.delete('/api/baby-mons/$babyMonId/allergies/$allergyId');
 
   // Medical Team (dedicated table)
-  Future<Response> getMedicalTeam(String babyMonId) async => _dio.get('/api/v1/baby-mons/$babyMonId/medical-team');
-  Future<Response> createMedicalTeamMember(String babyMonId, Map<String, dynamic> data) async => _dio.post('/api/v1/baby-mons/$babyMonId/medical-team', data: data);
-  Future<Response> deleteMedicalTeamMember(String babyMonId, String memberId) async => _dio.delete('/api/v1/baby-mons/$babyMonId/medical-team/$memberId');
+  Future<Response> getMedicalTeam(String babyMonId) async => _dio.get('/api/baby-mons/$babyMonId/medical-team');
+  Future<Response> createMedicalTeamMember(String babyMonId, Map<String, dynamic> data) async => _dio.post('/api/baby-mons/$babyMonId/medical-team', data: data);
+  Future<Response> deleteMedicalTeamMember(String babyMonId, String memberId) async => _dio.delete('/api/baby-mons/$babyMonId/medical-team/$memberId');
 
   // Evolution
   Future<Response> getEvolution(String babyMonId) async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}/$babyMonId/evolution');
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/evolution');
   }
 
   // Journal
   Future<Response> getJournal(String babyMonId, {String? type}) async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}/$babyMonId/journal', queryParameters: type != null ? {'type': type} : null);
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/journal', queryParameters: type != null ? {'type': type} : null);
   }
 
   Future<Response> getProposals(String babyMonId) async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}/$babyMonId/journal/proposals');
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/journal/proposals');
   }
 
   Future<Response> respondToProposal(String babyMonId, String proposalId, bool accept, String? reason) async {
-    return _dio.post('/api/v1${ApiConstants.babyMons}/$babyMonId/journal/proposals/$proposalId/respond', data: {
+    return _dio.post('/api${ApiConstants.babyMons}/$babyMonId/journal/proposals/$proposalId/respond', data: {
       'accept': accept,
       'reason': reason,
     });
@@ -257,23 +257,23 @@ class ApiClient {
 
   // Export
   Future<Response> exportBabyMon(String babyMonId) async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}/$babyMonId/export');
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/export');
   }
 
   // Subscription
   Future<Response> getSubscription() async {
-    return _dio.get('/api/v1${ApiConstants.subscription}');
+    return _dio.get('/api${ApiConstants.subscription}');
   }
 
   Future<Response> devOverrideTrial(int days) async {
-    return _dio.post('/api/v1${ApiConstants.devOverride}', data: {'days': days});
+    return _dio.post('/api${ApiConstants.devOverride}', data: {'days': days});
   }
 
   // Growth Records
   /// Fetches all growth records for a BabyMon, optionally filtered by metric type
   Future<Response> getGrowthRecords(String babyMonId, {String? type, bool forceRefresh = false}) async {
     return _dio.get(
-      '/api/v1${ApiConstants.babyMons}/$babyMonId/growth',
+      '/api${ApiConstants.babyMons}/$babyMonId/growth',
       queryParameters: type != null ? {'type': type} : null,
       options: Options(extra: {'forceRefresh': forceRefresh}),
     );
@@ -281,81 +281,81 @@ class ApiClient {
 
   /// Creates a new growth measurement record
   Future<Response> createGrowthRecord(String babyMonId, Map<String, dynamic> data) async {
-    return _dio.post('/api/v1${ApiConstants.babyMons}/$babyMonId/growth', data: data);
+    return _dio.post('/api${ApiConstants.babyMons}/$babyMonId/growth', data: data);
   }
 
   /// Updates an existing growth measurement record
   Future<Response> updateGrowthRecord(String babyMonId, String recordId, Map<String, dynamic> data) async {
-    return _dio.patch('/api/v1${ApiConstants.babyMons}/$babyMonId/growth/$recordId', data: data);
+    return _dio.patch('/api${ApiConstants.babyMons}/$babyMonId/growth/$recordId', data: data);
   }
 
   /// Deletes a growth measurement record by ID
   Future<Response> deleteGrowthRecord(String babyMonId, String recordId) async {
-    return _dio.delete('/api/v1${ApiConstants.babyMons}/$babyMonId/growth/$recordId');
+    return _dio.delete('/api${ApiConstants.babyMons}/$babyMonId/growth/$recordId');
   }
 
   // Partners
   /// Invites a user by email to become a partner/co-parent for a BabyMon
   Future<Response> invitePartner(String babyMonId, String email, String role) async {
-    return _dio.post('/api/v1${ApiConstants.babyMons}/$babyMonId/partners/invite', data: {'email': email, 'role': role});
+    return _dio.post('/api${ApiConstants.babyMons}/$babyMonId/partners/invite', data: {'email': email, 'role': role});
   }
 
   /// Lists all partners for a BabyMon with their status and user details
   Future<Response> getPartners(String babyMonId) async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}/$babyMonId/partners');
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/partners');
   }
 
   /// Respond to a partner invitation (ACCEPTED or DECLINED)
   Future<Response> respondToInvitation(String partnerId, String status) async {
-    return _dio.patch('/api/v1${ApiConstants.babyMons}/$partnerId/respond', data: {'status': status});
+    return _dio.patch('/api${ApiConstants.babyMons}/$partnerId/respond', data: {'status': status});
   }
 
   /// Removes a partner (or cancels an invitation) from a BabyMon
   Future<Response> removePartner(String babyMonId, String partnerId) async {
-    return _dio.delete('/api/v1${ApiConstants.babyMons}/$babyMonId/partners/$partnerId');
+    return _dio.delete('/api${ApiConstants.babyMons}/$babyMonId/partners/$partnerId');
   }
 
   // Photos
   /// Uploads a photo (base64) for a BabyMon via Cloudinary
   Future<Response> uploadPhoto(String babyMonId, Map<String, dynamic> data) async {
-    return _dio.post('/api/v1${ApiConstants.babyMons}/$babyMonId/photos', data: data);
+    return _dio.post('/api${ApiConstants.babyMons}/$babyMonId/photos', data: data);
   }
 
   /// Lists all photos for a BabyMon ordered by date
   Future<Response> getPhotos(String babyMonId) async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}/$babyMonId/photos');
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/photos');
   }
 
   /// Deletes a photo by ID (also removes from Cloudinary)
   Future<Response> deletePhoto(String id) async {
-    return _dio.delete('/api/v1${ApiConstants.babyMons}/photos/$id');
+    return _dio.delete('/api${ApiConstants.babyMons}/photos/$id');
   }
 
   // Sleep Logs
   /// Fetches all sleep logs for a BabyMon, ordered by startTime descending
   Future<Response> getSleepLogs(String babyMonId, {bool forceRefresh = false}) async {
-    return _dio.get('/api/v1${ApiConstants.babyMons}/$babyMonId/sleep-logs',
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/sleep-logs',
       options: Options(extra: {'forceRefresh': forceRefresh}));
   }
 
   /// Creates a new sleep log entry
   Future<Response> createSleepLog(String babyMonId, Map<String, dynamic> data) async {
-    return _dio.post('/api/v1${ApiConstants.babyMons}/$babyMonId/sleep-logs', data: data);
+    return _dio.post('/api${ApiConstants.babyMons}/$babyMonId/sleep-logs', data: data);
   }
 
   /// Updates an existing sleep log entry
   Future<Response> updateSleepLog(String babyMonId, String id, Map<String, dynamic> data) async {
-    return _dio.patch('/api/v1/sleep-logs/$id', data: data);
+    return _dio.patch('/api/sleep-logs/$id', data: data);
   }
 
   /// Deletes a sleep log entry by ID
   Future<Response> deleteSleepLog(String babyMonId, String id) async {
-    return _dio.delete('/api/v1/sleep-logs/$id');
+    return _dio.delete('/api/sleep-logs/$id');
   }
 
   // Stage Content
   Future<Response> getStageContent(String stageKey) async {
-    return _dio.get('/api/v1/stage-content/$stageKey');
+    return _dio.get('/api/stage-content/$stageKey');
   }
 
   // Storage
@@ -502,9 +502,9 @@ class ApiClient {
   }
 
   String _resolvePath(String path) {
-    if (path.startsWith('/api/v1/')) return path;
-    if (path.startsWith('/api/')) return path.replaceFirst('/api/', '/api/v1/');
-    if (path.startsWith('/')) return '/api/v1$path';
-    return '/api/v1/$path';
+    if (path.startsWith('/api/')) return path;
+    if (path.startsWith('/api/')) return path.replaceFirst('/api/', '/api/');
+    if (path.startsWith('/')) return '/api$path';
+    return '/api/$path';
   }
 }

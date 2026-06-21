@@ -168,6 +168,25 @@
       ]
     },
     {
+      "name": "audioplayers",
+      "version": "6.7.1",
+      "dependencies": [
+        "audioplayers_android",
+        "audioplayers_darwin",
+        "audioplayers_linux",
+        "audioplayers_platform_interface",
+        "audioplayers_web",
+        "audioplayers_windows",
+        "file",
+        "flutter",
+        "http",
+        "meta",
+        "path_provider",
+        "synchronized",
+        "uuid"
+      ]
+    },
+    {
       "name": "llamadart",
       "version": "0.5.4",
       "dependencies": [
@@ -912,6 +931,89 @@
       ]
     },
     {
+      "name": "uuid",
+      "version": "4.5.3",
+      "dependencies": [
+        "crypto",
+        "fixnum"
+      ]
+    },
+    {
+      "name": "synchronized",
+      "version": "3.4.1",
+      "dependencies": []
+    },
+    {
+      "name": "http",
+      "version": "1.6.0",
+      "dependencies": [
+        "async",
+        "http_parser",
+        "meta",
+        "web"
+      ]
+    },
+    {
+      "name": "file",
+      "version": "7.0.1",
+      "dependencies": [
+        "meta",
+        "path"
+      ]
+    },
+    {
+      "name": "audioplayers_windows",
+      "version": "4.3.1",
+      "dependencies": [
+        "audioplayers_platform_interface",
+        "flutter"
+      ]
+    },
+    {
+      "name": "audioplayers_web",
+      "version": "5.2.1",
+      "dependencies": [
+        "audioplayers_platform_interface",
+        "flutter",
+        "flutter_web_plugins",
+        "web"
+      ]
+    },
+    {
+      "name": "audioplayers_platform_interface",
+      "version": "7.1.1",
+      "dependencies": [
+        "collection",
+        "flutter",
+        "meta",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "audioplayers_linux",
+      "version": "4.2.1",
+      "dependencies": [
+        "audioplayers_platform_interface",
+        "flutter"
+      ]
+    },
+    {
+      "name": "audioplayers_darwin",
+      "version": "6.4.0",
+      "dependencies": [
+        "audioplayers_platform_interface",
+        "flutter"
+      ]
+    },
+    {
+      "name": "audioplayers_android",
+      "version": "5.2.1",
+      "dependencies": [
+        "audioplayers_platform_interface",
+        "flutter"
+      ]
+    },
+    {
       "name": "dinja",
       "version": "1.0.0",
       "dependencies": [
@@ -953,16 +1055,6 @@
       "dependencies": []
     },
     {
-      "name": "http",
-      "version": "1.6.0",
-      "dependencies": [
-        "async",
-        "http_parser",
-        "meta",
-        "web"
-      ]
-    },
-    {
       "name": "ffi",
       "version": "2.2.0",
       "dependencies": []
@@ -988,14 +1080,6 @@
       "version": "0.0.0",
       "dependencies": [
         "flutter"
-      ]
-    },
-    {
-      "name": "file",
-      "version": "7.0.1",
-      "dependencies": [
-        "meta",
-        "path"
       ]
     },
     {
@@ -1640,6 +1724,16 @@
       "dependencies": []
     },
     {
+      "name": "webdriver",
+      "version": "3.1.0",
+      "dependencies": [
+        "matcher",
+        "path",
+        "stack_trace",
+        "sync_http"
+      ]
+    },
+    {
       "name": "fuchsia_remote_debug_protocol",
       "version": "0.0.0",
       "dependencies": [
@@ -1724,14 +1818,6 @@
         "collection",
         "meta",
         "pub_semver"
-      ]
-    },
-    {
-      "name": "uuid",
-      "version": "4.5.3",
-      "dependencies": [
-        "crypto",
-        "fixnum"
       ]
     },
     {
@@ -1903,6 +1989,20 @@
       ]
     },
     {
+      "name": "sync_http",
+      "version": "0.3.1",
+      "dependencies": []
+    },
+    {
+      "name": "process",
+      "version": "5.0.5",
+      "dependencies": [
+        "file",
+        "path",
+        "platform"
+      ]
+    },
+    {
       "name": "sqflite_common",
       "version": "2.5.11",
       "dependencies": [
@@ -1954,106 +2054,6 @@
         "meta",
         "pub_semver"
       ]
-    },
-    {
-      "name": "synchronized",
-      "version": "3.4.1",
-      "dependencies": []
-    },
-    {
-      "name": "audioplayers",
-      "version": "6.7.1",
-      "dependencies": [
-        "audioplayers_android",
-        "audioplayers_darwin",
-        "audioplayers_linux",
-        "audioplayers_platform_interface",
-        "audioplayers_web",
-        "audioplayers_windows",
-        "file",
-        "flutter",
-        "http",
-        "meta",
-        "path_provider",
-        "synchronized",
-        "uuid"
-      ]
-    },
-    {
-      "name": "audioplayers_windows",
-      "version": "4.3.1",
-      "dependencies": [
-        "audioplayers_platform_interface",
-        "flutter"
-      ]
-    },
-    {
-      "name": "audioplayers_web",
-      "version": "5.2.1",
-      "dependencies": [
-        "audioplayers_platform_interface",
-        "flutter",
-        "flutter_web_plugins",
-        "web"
-      ]
-    },
-    {
-      "name": "audioplayers_platform_interface",
-      "version": "7.1.1",
-      "dependencies": [
-        "collection",
-        "flutter",
-        "meta",
-        "plugin_platform_interface"
-      ]
-    },
-    {
-      "name": "audioplayers_linux",
-      "version": "4.2.1",
-      "dependencies": [
-        "audioplayers_platform_interface",
-        "flutter"
-      ]
-    },
-    {
-      "name": "audioplayers_darwin",
-      "version": "6.4.0",
-      "dependencies": [
-        "audioplayers_platform_interface",
-        "flutter"
-      ]
-    },
-    {
-      "name": "audioplayers_android",
-      "version": "5.2.1",
-      "dependencies": [
-        "audioplayers_platform_interface",
-        "flutter"
-      ]
-    },
-    {
-      "name": "process",
-      "version": "5.0.5",
-      "dependencies": [
-        "file",
-        "path",
-        "platform"
-      ]
-    },
-    {
-      "name": "webdriver",
-      "version": "3.1.0",
-      "dependencies": [
-        "matcher",
-        "path",
-        "stack_trace",
-        "sync_http"
-      ]
-    },
-    {
-      "name": "sync_http",
-      "version": "0.3.1",
-      "dependencies": []
     }
   ],
   "configVersion": 1

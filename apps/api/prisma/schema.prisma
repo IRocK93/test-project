@@ -491,10 +491,17 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+enum SubscriptionTier {
+  FREE
+  CORE
+  PREMIUM
+  AI_COMPANION
+}
+
 model Subscription {
-  id                   String    @id @default(uuid())
+  id                   String           @id @default(uuid())
   userId               String
-  tier                 String    @default("FREE")
+  tier                 SubscriptionTier @default(FREE)
   stripeCustomerId     String?
   stripeSubscriptionId String?
   stripePriceId        String?
