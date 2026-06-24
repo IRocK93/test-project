@@ -2,6 +2,7 @@ import { Controller, Post, Get, Body, UseGuards, Req, HttpCode, HttpStatus, RawB
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
 import { StripeService } from './stripe.service';
+import { CreateCheckoutSessionDto } from './dto/stripe.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -37,7 +38,7 @@ export class StripeController {
   @ApiOperation({ summary: 'Create Stripe checkout session' })
   async createCheckoutSession(
     @CurrentUser('id') userId: string,
-    @Body() body: { priceId: string },
+    @Body() dto: CreateCheckoutSessionDto,
   ) {
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const successUrl = `${baseUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`;
@@ -45,7 +46,7 @@ export class StripeController {
 
     const session = await this.stripeService.createCheckoutSession(
       userId,
-      body.priceId,
+      dto.priceId,
       successUrl,
       cancelUrl,
     );

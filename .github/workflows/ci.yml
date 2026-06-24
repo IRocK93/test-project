@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   lint-and-test:
@@ -41,7 +41,7 @@ jobs:
 
       - name: Run linter
         working-directory: ./apps/api
-        run: npm run lint || true
+        run: npm run lint
 
       - name: Run typecheck
         working-directory: ./apps/api
@@ -179,6 +179,10 @@ jobs:
         working-directory: ./apps/mobile
         run: flutter test --exclude-tags golden
 
+      - name: Verify Flutter build compiles
+        working-directory: ./apps/mobile
+        run: flutter build apk --debug
+
       - name: Upload golden failure diffs
         if: failure()
         uses: actions/upload-artifact@v4
@@ -267,5 +271,5 @@ jobs:
         run: |
           docker run -d --name test-api -p 3001:3000 babymon/api:${{ github.sha }}
           sleep 15
-          curl -f http://localhost:3001/health || exit 1
+          curl -f http://localhost:3001/api/health || exit 1
           docker stop test-api

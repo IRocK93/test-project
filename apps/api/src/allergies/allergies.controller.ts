@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AllergiesService } from './allergies.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { CreateAllergyDto, CreateAllergyEventDto } from './dto/allergy.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @ApiTags('allergies')
 @ApiBearerAuth()
@@ -12,20 +14,20 @@ export class AllergiesController {
 
   @Get('baby-mons/:babyMonId/allergies')
   @ApiOperation({ summary: 'Get all allergies with events for a BabyMon' })
-  async findAll(@Param('babyMonId') babyMonId: string, @Request() req: any) {
-    return this.allergiesService.findAll(babyMonId, req.user.id);
+  async findAll(@Param('babyMonId') babyMonId: string, @Request() req: any, @Query() pagination?: PaginationDto) {
+    return this.allergiesService.findAll(babyMonId, req.user.id, pagination?.skip, pagination?.take);
   }
 
   @Post('baby-mons/:babyMonId/allergies')
   @ApiOperation({ summary: 'Add a new allergy (or reactivate + record event if exists)' })
-  async create(@Param('babyMonId') babyMonId: string, @Request() req: any, @Body() body: any) {
-    return this.allergiesService.create(babyMonId, req.user.id, body);
+  async create(@Param('babyMonId') babyMonId: string, @Request() req: any, @Body() dto: CreateAllergyDto) {
+    return this.allergiesService.create(babyMonId, req.user.id, dto);
   }
 
   @Post('baby-mons/:babyMonId/allergies/:allergyId/events')
   @ApiOperation({ summary: 'Record a new allergy event for an existing allergy' })
-  async addEvent(@Param('babyMonId') babyMonId: string, @Param('allergyId') allergyId: string, @Request() req: any, @Body() body: any) {
-    return this.allergiesService.addEvent(babyMonId, req.user.id, allergyId, body);
+  async addEvent(@Param('babyMonId') babyMonId: string, @Param('allergyId') allergyId: string, @Request() req: any, @Body() dto: CreateAllergyEventDto) {
+    return this.allergiesService.addEvent(babyMonId, req.user.id, allergyId, dto);
   }
 
   @Delete('baby-mons/:babyMonId/allergies/events/:eventId')

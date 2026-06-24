@@ -1,10 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:baby_mon/core/data/api_client.dart';
 import '../../data/repositories/health_repository.dart';
 import '../../domain/entities/health_record.dart';
 import '../../../milestones/presentation/providers/milestones_provider.dart';
 
 final healthRepositoryProvider = Provider<HealthRepository>((ref) {
-  return HealthRepository();
+  return HealthRepository(ApiClient());
 });
 
 final healthProvider =
@@ -45,7 +46,7 @@ class HealthNotifier extends StateNotifier<AsyncValue<List<HealthRecord>>> {
 
   Future<void> addHealthRecord(HealthRecord record) async {
     try {
-      final created = await _repository.createHealthRecord(record);
+      final created = await _repository.createHealthRecord(_babyMonId!, record.toJson());
       state.whenData((records) {
         state = AsyncValue.data([created, ...records]);
       });

@@ -4,6 +4,7 @@ import 'package:baby_mon/core/utils/json_utils.dart';
 import '../../core/constants/api_constants.dart';
 import 'response_cache.dart';
 import 'retry_interceptor.dart';
+import 'backoff_interceptor.dart';
 
 class ApiClient {
   late final Dio _dio;
@@ -26,7 +27,19 @@ class ApiClient {
     }
     _dio = dio;
 
-	    _dio.interceptors.add(InterceptorsWrapper(
+    // ── API versioning: transparently upgrade /api/ → /api/v1/ ──
+    final v1 = '/api/v1';
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        final path = options.path;
+        if (path.startsWith('/api/') && !path.startsWith('$v1/')) {
+          options.path = path.replaceFirst('/api/', '$v1/');
+        }
+        return handler.next(options);
+      },
+    ));
+
+		    _dio.interceptors.add(InterceptorsWrapper(
 	      onRequest: (options, handler) async {
 	        final token = await _storage.read(key: StorageKeys.accessToken);
 	        if (token != null) {
@@ -55,13 +68,21 @@ class ApiClient {
 	        // Invalidate related GET caches on successful mutations
 	        if (method == 'POST' || method == 'PATCH' || method == 'DELETE' || method == 'PUT') {
 	          final url = response.requestOptions.path;
-	          final resource = url.replaceAll(RegExp(r'/api'), '').replaceAll(RegExp(r'/[a-f0-9-]{36}'), '');
+	          // Strip /api prefix and action suffixes (with preceding UUID), keep resource UUIDs intact
+	          // so the pattern matches GET cache keys. Normalize trailing slashes.
+	          final resource = url
+	              .replaceAll(RegExp(r'^/api(/v1)?'), '')
+	              .replaceAll(RegExp(r'/[a-f0-9-]{36}/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
+	              .replaceAll(RegExp(r'/routine/[^/]+/complete$'), '/routine')
+	              .replaceAll(RegExp(r'/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
+	              .replaceAll(RegExp(r'/+$'), '');
 	          _cache.invalidatePattern(resource);
 	        }
 	        return handler.next(response);
 	      },
 	    ));
 
+    _dio.interceptors.add(BackoffInterceptor());
     _dio.interceptors.add(RetryInterceptor(
       storage: _storage,
       dio: _dio,
@@ -74,10 +95,10 @@ class ApiClient {
       final refreshToken = await _storage.read(key: StorageKeys.refreshToken);
       if (refreshToken == null) return false;
 
-      final refreshDio = Dio();
-      refreshDio.httpClientAdapter = _dio.httpClientAdapter;
-      final response = await refreshDio.post<dynamic>(
-        '${ApiConstants.baseUrl}/api${ApiConstants.refresh}',
+	      final refreshDio = Dio();
+	      refreshDio.httpClientAdapter = _dio.httpClientAdapter;
+	      final response = await refreshDio.post<dynamic>(
+	        '${ApiConstants.baseUrl}/api/v1${ApiConstants.refresh}',
         data: {'refreshToken': refreshToken},
       );
 
@@ -235,8 +256,14 @@ class ApiClient {
   Future<Response> deleteMedicalTeamMember(String babyMonId, String memberId) async => _dio.delete('/api/baby-mons/$babyMonId/medical-team/$memberId');
 
   // Evolution
-  Future<Response> getEvolution(String babyMonId) async {
-    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/evolution');
+  Future<Response> getEvolution(String babyMonId, {bool forceRefresh = false}) async {
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/evolution',
+      options: Options(extra: {'forceRefresh': forceRefresh}));
+  }
+
+  // ── Dashboard Aggregation (collapses 8+ requests into 1) ──
+  Future<Response> getDashboard(String babyMonId) async {
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/dashboard');
   }
 
   // Journal
@@ -356,6 +383,10 @@ class ApiClient {
   // Stage Content
   Future<Response> getStageContent(String stageKey) async {
     return _dio.get('/api/stage-content/$stageKey');
+  }
+
+  Future<Response> getStageContentForBabyMon(String babyMonId) async {
+    return _dio.get('/api/stage-content/baby-mon/$babyMonId');
   }
 
   // Storage
@@ -502,8 +533,8 @@ class ApiClient {
   }
 
   String _resolvePath(String path) {
+    // Ensure the path has /api prefix — versioning interceptor handles /v1
     if (path.startsWith('/api/')) return path;
-    if (path.startsWith('/api/')) return path.replaceFirst('/api/', '/api/');
     if (path.startsWith('/')) return '/api$path';
     return '/api/$path';
   }

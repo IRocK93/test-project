@@ -43,7 +43,9 @@ class XpProgressBar extends StatelessWidget {
           duration: const Duration(milliseconds: 800),
           curve: Curves.easeOutCubic,
           builder: (context, value, child) {
-            return Container(
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                return Container(
               height: 12,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
@@ -54,12 +56,12 @@ class XpProgressBar extends StatelessWidget {
                 child: Stack(
                   children: [
                     Container(
-                      width: MediaQuery.of(context).size.width * value,
+                      width: constraints.maxWidth * value,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
                             Theme.of(context).colorScheme.primary,
-                            Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                            Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
                           ],
                         ),
                       ),
@@ -67,6 +69,8 @@ class XpProgressBar extends StatelessWidget {
                   ],
                 ),
               ),
+            );
+              },
             );
           },
         ),

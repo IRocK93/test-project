@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../data/api_client.dart';
+import 'package:baby_mon/core/data/api_client.dart';
 import '../../data/repositories/feeding_repository.dart';
 import '../../domain/entities/feed_log.dart';
 import '../../../milestones/presentation/providers/milestones_provider.dart';
@@ -29,7 +29,7 @@ class FeedingNotifier extends StateNotifier<AsyncValue<List<FeedLog>>> {
     state = const AsyncValue.loading();
     try {
       final logs = await _repository.getFeedLogs(babyMonId);
-      logs.sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+      logs.sort((a, b) => (b.happenedAt ?? DateTime(2000)).compareTo(a.happenedAt ?? DateTime(2000)));
       state = AsyncValue.data(logs);
     } catch (e, st) {
       state = AsyncValue.error(e, st);

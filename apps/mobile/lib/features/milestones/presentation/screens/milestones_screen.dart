@@ -1,4 +1,6 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' as semantics;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -10,21 +12,16 @@ import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/features/milestones/domain/entities/milestone.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
 import 'package:baby_mon/features/dashboard/presentation/widgets/level_up_celebration.dart';
-
 class MilestonesScreen extends ConsumerStatefulWidget {
   const MilestonesScreen({super.key});
-
   @override
   ConsumerState<MilestonesScreen> createState() => _MilestonesScreenState();
 }
-
 class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
     with DataScreenMixin<MilestonesScreen> {
   @override
   Duration? get refreshCooldown => const Duration(seconds: 10);
-
   List<Milestone> _milestones = [];
-
   @override
   void initState() {
     super.initState();
@@ -48,28 +45,21 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
       }
     });
   }
-
   @override
   IconData get emptyIcon => PhosphorIconsLight.sparkle;
-
   @override
   String get emptyTitle => 'No milestones yet';
-
   @override
   String get emptySubtitle => 'Tap the button below to add your first milestone.';
-
   @override
   String get emptyActionLabel => 'Add milestone';
-
   @override
   void onEmptyAction() => _showAddMilestoneDialog();
-
   @override
   Future<void> fetchData() async {
     final response = await ref.read(apiClientProvider).getMilestones(babyMonId!);
     _milestones = parseItems(response.data).whereType<Map<String, dynamic>>().map(Milestone.fromJson).toList();
   }
-
   Future<bool> _deleteMilestone(String id, int index) async {
     // Capture messenger upfront so we can safely use it after async gaps
     // (avoids `use_build_context_synchronously` warnings if the widget
@@ -88,13 +78,13 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
       }
       ref.read(appRefreshProvider.notifier).state++;
       messenger.showSnackBar(const SnackBar(content: Text('Milestone deleted')));
+      semantics.SemanticsService.announce('Milestone deleted', ui.TextDirection.ltr);
       return true;
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
       return false;
     }
   }
-
   List<({String month, List<Milestone> items})> _groupedByMonth() {
     final groups = <String, List<Milestone>>{};
     for (final m in _milestones) {
@@ -110,11 +100,9 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
     });
     return sortedKeys.map((k) => (month: k, items: groups[k]!)).toList();
   }
-
   @override
   Widget build(BuildContext context) {
     final grouped = _groupedByMonth();
-
     return Scaffold(
       body: PremiumBackground(
         child: isLoading
@@ -196,32 +184,30 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                   ),
                 ),
               ),
-      floatingActionButton: Semantics(
-        label: 'Add milestone',
-        button: true,
-        child: FloatingActionButton(
-          heroTag: 'add_milestone',
-          backgroundColor: context.colorScheme.primary,
-          foregroundColor: context.colorScheme.onPrimary,
-          onPressed: _showAddMilestoneDialog,
-          child: const Icon(PhosphorIconsLight.plus),
-        ),
-      ),
+      floatingActionButton: hasBabyMon
+          ? Semantics(
+              label: 'Add milestone',
+              button: true,
+              child: FloatingActionButton(
+                heroTag: 'add_milestone',
+                backgroundColor: context.colorScheme.primary,
+                foregroundColor: context.colorScheme.onPrimary,
+                onPressed: _showAddMilestoneDialog,
+                child: const Icon(PhosphorIconsLight.plus),
+              ),
+            )
+          : null,
     );
   }
-
   // _buildTimelineItem was removed when milestones were migrated to the
   // MilestoneTimelineRow widget (no per-row BackdropFilter, no
   // 7-level-nested ClipRRect wrapping).
-
-
   void _showAddMilestoneDialog({Milestone? existingMilestone}) {
     final titleController = TextEditingController(text: existingMilestone?.title ?? '');
     final notesController = TextEditingController(text: existingMilestone?.notes ?? '');
     DateTime selectedDate = existingMilestone?.happenedAt ?? DateTime.now();
     bool isSaving = false;
     final isEditing = existingMilestone != null;
-
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,

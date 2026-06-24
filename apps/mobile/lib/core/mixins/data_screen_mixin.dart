@@ -72,7 +72,10 @@ mixin DataScreenMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   }
 
   /// Whether this screen should listen to [appRefreshProvider] for global refreshes.
-  bool get listenToAppRefresh => true;
+  /// Default: false. Only enable for screens that need to react to global events
+  /// (BabyMon creation/deletion, partner changes, settings changes).
+  /// Routine data mutations should use [listenToTabRefresh] instead.
+  bool get listenToAppRefresh => false;
 
   /// Whether this screen should listen to its [tabRefreshProvider] for tab-specific refreshes.
   int? get listenToTabRefresh => null;

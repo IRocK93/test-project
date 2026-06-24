@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
-import 'package:baby_mon/core/widgets/premium_card.dart';
+import 'package:baby_mon/core/widgets/premium_double_bezel.dart';
 
 /// Achievements / badge section with collapsible categories.
 class DashboardBadgeSection extends StatelessWidget {
@@ -63,19 +63,10 @@ class DashboardBadgeSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (badgeDefinitions.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: DesignTokens.spaceLg,
-          vertical: DesignTokens.spaceMd,
-        ),
-        decoration: BoxDecoration(
-          color: (Theme.of(context).brightness == Brightness.dark
-                  ? context.glass.background
-                  : context.colorScheme.surface)
-              .withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-          border: Border.all(color: context.colorScheme.outline, width: 0.5),
-        ),
+      return PremiumDoubleBezel(
+        outerRadius: DesignTokens.radius2xl,
+        gap: 5.0,
+        outerColor: context.colorScheme.primary.withValues(alpha: 0.06),
         child: Row(
           children: [
             Icon(PhosphorIconsLight.trophy,
@@ -108,9 +99,10 @@ class DashboardBadgeSection extends StatelessWidget {
       if (!sorted.containsKey(c)) sorted[c] = _groupedBadges[c]!;
     }
 
-    return PremiumCard(
-      isGlass: true,
-      padding: EdgeInsets.zero,
+    return PremiumDoubleBezel(
+      outerRadius: DesignTokens.radius2xl,
+      gap: 5.0,
+      outerColor: context.colorScheme.primary.withValues(alpha: 0.06),
       child: Material(
         type: MaterialType.transparency,
         child: ExpansionTile(
@@ -217,6 +209,7 @@ class DashboardBadgeSection extends StatelessWidget {
     final u = b['unlocked'] == true;
     final n = parseString(b['name']) ?? '';
     final t = parseString(b['tier']) ?? 'BRONZE';
+    final iconPath = parseString(b['iconPath']) ?? parseString(b['icon']);
     return Semantics(
       label: '$n${u ? ', ${t.toLowerCase()} tier' : ', locked'}',
       button: true,
@@ -237,13 +230,12 @@ class DashboardBadgeSection extends StatelessWidget {
             ),
           ),
           alignment: Alignment.center,
-          child: Text(
-            n.isNotEmpty ? n[0].toUpperCase() : '?',
-            style: TextStyle(
-              fontSize: DesignTokens.fontLg,
-              fontWeight: FontWeight.w800,
-              color: u ? _tierColor(t) : context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-            ),
+          child: u && iconPath != null
+              ? ClipOval(child: Image.asset(iconPath, width: 32, height: 32, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Text(
+                  n.isNotEmpty ? n[0].toUpperCase() : '?',
+                  style: TextStyle(fontSize: DesignTokens.fontLg, fontWeight: FontWeight.w800, color: _tierColor(t)),
+                )))
+              : Text(n.isNotEmpty ? n[0].toUpperCase() : '?', style: TextStyle(fontSize: DesignTokens.fontLg, fontWeight: FontWeight.w800, color: u ? _tierColor(t) : context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7)),
           ),          ),
       ),
     );
@@ -253,79 +245,70 @@ class DashboardBadgeSection extends StatelessWidget {
     final u = b['unlocked'] == true;
     final t = parseString(b['tier']) ?? 'BRONZE';
     final xp = parseInt(b['xpValue']) ?? 10;
+    final iconPath = parseString(b['iconPath']) ?? parseString(b['icon']);
+    final tierColor = _tierColor(t);
+
+    if (!u) {
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusLg)),
+          title: Row(children: [
+            Icon(PhosphorIconsLight.lock, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7), size: 28),
+            const SizedBox(width: 12),
+            Expanded(child: Text(parseString(b['name']) ?? '', style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700))),
+          ]),
+          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [_tierChip(t), const SizedBox(width: 8), Text('$xp XP', style: TextStyle(color: context.colorScheme.tertiary, fontWeight: FontWeight.bold))]),
+            const SizedBox(height: 12),
+            Text(parseString(b['description']) ?? '', style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(color: context.colorScheme.onSurfaceVariant)),
+            const SizedBox(height: 16),
+            Text('Keep tracking to unlock!', style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7), fontStyle: FontStyle.italic)),
+          ]),
+          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Close', style: TextStyle(color: context.colorScheme.onSurfaceVariant)))],
+        ),
+      );
+      return;
+    }
+
+    // Celebratory transparent overlay for unlocked badges
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-        ),
-        titlePadding: const EdgeInsets.fromLTRB(
-            DesignTokens.spaceMd, DesignTokens.spaceMd,
-            DesignTokens.spaceMd, 0),
-        title: Row(
-          children: [
-            Icon(
-              u ? PhosphorIconsLight.trophy : PhosphorIconsLight.lock,
-              color: u ? _tierColor(t) : context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-              size: 28,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                parseString(b['name']) ?? '',
-                style: Theme.of(ctx)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _tierChip(t),
-                const SizedBox(width: 8),
-                Text(
-                  '$xp XP',
-                  style: TextStyle(
-                    color: context.colorScheme.tertiary,
-                    fontWeight: FontWeight.bold,
+      barrierColor: Colors.black87,
+      builder: (ctx) => Stack(
+        children: [
+          GestureDetector(onTap: () => Navigator.pop(ctx)),
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Container(
+                  width: 160, height: 160,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(color: tierColor.withValues(alpha: 0.4), blurRadius: 32, spreadRadius: 4),
+                      BoxShadow(color: tierColor.withValues(alpha: 0.15), blurRadius: 64, spreadRadius: 8),
+                    ],
+                  ),
+                  child: ClipOval(
+                    child: iconPath != null
+                        ? Image.asset(iconPath, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(PhosphorIconsLight.trophy, color: tierColor, size: 80))
+                        : Icon(PhosphorIconsLight.trophy, color: tierColor, size: 80),
                   ),
                 ),
-              ],
+                const SizedBox(height: 24),
+                Text(parseString(b['name']) ?? '', textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, fontFamily: 'Syne', color: tierColor, height: 1.1, letterSpacing: -0.5)),
+                const SizedBox(height: 16),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  _tierChip(t),
+                  const SizedBox(width: 10),
+                  Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), decoration: BoxDecoration(color: const Color(0xFF2E7D32).withValues(alpha: 0.25), borderRadius: BorderRadius.circular(DesignTokens.radiusFull)), child: Text('+$xp XP', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF66BB6A)))),
+                ]),
+                const SizedBox(height: 20),
+                Container(constraints: const BoxConstraints(maxWidth: 300), child: Text(parseString(b['description']) ?? '', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.75), height: 1.5))),
+              ]),
             ),
-            const SizedBox(height: 12),
-            Text(
-              parseString(b['description']) ?? '',
-              style: Theme.of(ctx)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: context.colorScheme.onSurfaceVariant),
-            ),
-            if (!u) ...[
-              const SizedBox(height: 16),
-              Text(
-                'Keep tracking to unlock!',
-                style: Theme.of(ctx)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(
-                      color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                      fontStyle: FontStyle.italic,
-                    ),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Close',
-                style: TextStyle(color: context.colorScheme.onSurfaceVariant)),
           ),
         ],
       ),

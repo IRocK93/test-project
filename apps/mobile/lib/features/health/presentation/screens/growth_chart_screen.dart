@@ -1,5 +1,7 @@
-
+// ignore_for_file: unused_element, unused_local_variable
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' as semantics;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -12,14 +14,11 @@ import 'package:baby_mon/core/utils/utils.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/features/health/domain/entities/growth_record.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
-
 class GrowthChartScreen extends ConsumerStatefulWidget {
   const GrowthChartScreen({super.key});
-
   @override
   ConsumerState<GrowthChartScreen> createState() => _GrowthChartScreenState();
 }
-
 class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
     with DataScreenMixin<GrowthChartScreen> {
   List<GrowthRecord> _records = [];
@@ -28,10 +27,8 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
   double _windowEnd = 1.0;
   final List<String> _metrics = ['WEIGHT', 'HEIGHT', 'HEAD_CIRCUMFERENCE'];
   bool _spotDialogOpen = false;
-
   @override
   bool get autoInit => true;
-
   @override
   Future<void> fetchData() async {
     final response = await ref
@@ -44,7 +41,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
     _windowStart = 0.0;
     _windowEnd = 1.0;
   }
-
   Future<bool> _deleteRecord(String recordId, int index) async {
     final confirmed = await ConfirmDeleteDialog.show(
       context,
@@ -61,6 +57,7 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Growth record deleted')));
+      semantics.SemanticsService.announce('Growth record deleted', ui.TextDirection.ltr);
       }
       return true;
     } catch (e) {
@@ -70,7 +67,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
       return false;
     }
   }
-
   void _showSpotActions(GrowthRecord record) {
     _spotDialogOpen = true;
     final d = record.measuredAt;
@@ -106,7 +102,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
       ),
     );
   }
-
   Future<void> _deleteSpotRecord(BuildContext ctx, GrowthRecord record) async {
     Navigator.pop(ctx); // close spot actions dialog
     _spotDialogOpen = false;
@@ -129,7 +124,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
       if (ctx.mounted) showError(ctx, e);
     }
   }
-
   void _showEditRecordDialog(GrowthRecord record) {
     final valueController = TextEditingController(text: record.value.toString());
     final notesController = TextEditingController(text: record.notes ?? '');
@@ -137,7 +131,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
     String editMetric = record.type;
     bool isSaving = false;
     String? validationError;
-
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -231,7 +224,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
         return m;
     }
   }
-
   String _metricUnit(String m) {
     switch (m) {
       case 'WEIGHT':
@@ -244,7 +236,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
         return '';
     }
   }
-
   String _metricChipLabel(String m) {
     switch (m) {
       case 'WEIGHT':
@@ -257,7 +248,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
         return m;
     }
   }
-
   List<FlSpot> get _spots {
     if (_records.isEmpty) return [];
     final sorted = List<GrowthRecord>.from(_records)
@@ -269,7 +259,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
             r.value))
         .toList();
   }
-
   double get _fullMinX => _spots.isEmpty
       ? 0.0
       : _spots.map((s) => s.x).reduce((a, b) => a < b ? a : b);
@@ -277,7 +266,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
       ? 1.0
       : _spots.map((s) => s.x).reduce((a, b) => a > b ? a : b);
   double get _fullRange => _fullMaxX - _fullMinX;
-
   Widget _buildChart() {
     final spots = _spots;
     final hasData = _records.isNotEmpty;
@@ -287,7 +275,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
     final minX = fullMinX + fullRange * _windowStart;
     final maxX = minX + fullRange * windowLen;
     final visibleRange = maxX - minX;
-
     final visibleSpots =
         spots.where((s) => s.x >= minX && s.x <= maxX).toList();
     final values = visibleSpots.isNotEmpty
@@ -295,7 +282,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
         : <double>[0, 10]; // default range when no data
     final minY = values.isEmpty ? 0 : (values.reduce((a, b) => a < b ? a : b) * 0.9);
     final maxY = values.isEmpty ? 10 : (values.reduce((a, b) => a > b ? a : b) * 1.1);
-
     const oneDayMs = 86400000.0;
     final horizontalInterval = visibleRange <= 14 * oneDayMs
         ? oneDayMs
@@ -304,7 +290,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
             : visibleRange <= 365 * oneDayMs
                 ? 30 * oneDayMs
                 : 90 * oneDayMs;
-
     return Semantics(
       label: 'Growth chart, ${spots.length} data points, ${_metricLabel(_selectedMetric)}, swipe to pan',
       child: GestureDetector(
@@ -447,7 +432,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
       ),
     );
   }
-
   void _zoomIn() {
     final l = (_windowEnd - _windowStart) / 1.5;
     final c = (_windowStart + _windowEnd) / 2;
@@ -457,7 +441,6 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
       _windowEnd = (_windowStart + l).clamp(l - 0.15, 1.15);
     });
   }
-
   void _zoomOut() {
     final l = (_windowEnd - _windowStart) * 1.5;
     final c = (_windowStart + _windowEnd) / 2;
@@ -467,14 +450,12 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
       _windowEnd = (_windowStart + l).clamp(l - 0.15, 1.15);
     });
   }
-
   void _resetZoom() {
     setState(() {
       _windowStart = 0.0;
       _windowEnd = 1.0;
     });
   }
-
   @override
   Widget build(BuildContext context) {
     final zoomLevel =
@@ -536,28 +517,29 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
                     const SizedBox(height: 4),
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(DesignTokens.spaceXs, 0, DesignTokens.spaceMd, 0),
+                        padding: const EdgeInsets.fromLTRB(DesignTokens.spaceXs, 0, DesignTokens.spaceMd, 20),
                         child: _buildChart(),
                       ),
                     ),
                   ],
                 ),
       ),
-      floatingActionButton: Semantics(
-        label: 'Add growth record',
-        button: true,
-        child: FadeScaleIn(
-          child: FloatingActionButton(
-            heroTag: 'add_growth',
-            backgroundColor: context.colorScheme.primary,
-            onPressed: _showAddRecordDialog,
-            child: Icon(PhosphorIconsLight.scales, color: context.colorScheme.onPrimary),
-          ),
-        ),
-      ),
+      floatingActionButton: hasBabyMon
+          ? Semantics(
+              label: 'Add growth record',
+              button: true,
+              child: FadeScaleIn(
+                child: FloatingActionButton(
+                  heroTag: 'add_growth',
+                  backgroundColor: context.colorScheme.primary,
+                  onPressed: _showAddRecordDialog,
+                  child: Icon(PhosphorIconsLight.scales, color: context.colorScheme.onPrimary),
+                ),
+              ),
+            )
+          : null,
     );
   }
-
   void _showAddRecordDialog() {
     final valueController = TextEditingController(),
         notesController = TextEditingController();

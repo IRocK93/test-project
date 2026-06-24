@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -13,20 +12,16 @@ import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 class CreateBabyMonScreen extends ConsumerStatefulWidget {
   const CreateBabyMonScreen({super.key});
-
   @override
   ConsumerState<CreateBabyMonScreen> createState() =>
       _CreateBabyMonScreenState();
 }
-
 class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     with TickerProviderStateMixin {
   int _currentStep = 0;
   static const int _totalSteps = 5;
-
   final _nameController = TextEditingController();
   String _stageType = 'BORN';
   DateTime? _birthDate;
@@ -36,13 +31,10 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
   final List<String> _selectedTraits = [];
   final _specialMoveController = TextEditingController();
   bool _isLoading = false;
-
   // ── MJ Voice System ──
   String _mjMessage = '';
-
   // ── Flavor Text System ──
   String? _lastTappedTrait;
-
   // ── Splash Animation ──
   late final AnimationController _orbController;
   late final Animation<double> _orbPulse;
@@ -51,23 +43,18 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
   late final Animation<double> _splashLine2Opacity;
   late final Animation<double> _splashButtonOpacity;
   bool _splashAnimationStarted = false;
-
   // ── Naming chime debounce ──
   bool _chimePlayed = false;
-
   // ── Splash debounce ──
   bool _splashTransitioning = false;
-
   // ── Review step active ──
   bool _isCompleting = false;
   late final AnimationController _particleController;
   bool _showParticles = false;
-
   // ── Loading phase ──
   bool _loadingStep = false;
   int _loadingMessageIndex = 0;
   Timer? _loadingTimer;
-
   static const List<String> _loadingMessages = [
     'Weaving the nest…',
     'Gathering tiny blankets…',
@@ -76,11 +63,9 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     'Writing the first lullaby…',
     'Almost ready…',
   ];
-
   // ── Calendar state ──
   DateTime _calendarMonth =
       DateTime(DateTime.now().year, DateTime.now().month);
-
   static const List<String> _traitOptions = [
     'Curious',
     'Peaceful',
@@ -89,7 +74,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     'Adventurous',
     'Creative',
   ];
-
   static const Map<String, String> traitFlavorText = {
     'Curious': 'Curious — always exploring the world with wide eyes.',
     'Peaceful':
@@ -99,7 +83,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     'Adventurous': 'Adventurous — ready to discover something new every day.',
     'Creative': 'Creative — seeing the world differently, beautifully.',
   };
-
   // ── Suggested name rotation ──
   static const List<String> _suggestedNames = [
     'Luna',
@@ -115,18 +98,15 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     'Sky',
     'Juno',
   ];
-
   List<String> get _rotatedNames {
     final now = DateTime.now();
     final seed = now.day + now.month * 31;
     final start = seed % (_suggestedNames.length - 3);
     return _suggestedNames.sublist(start, start + 3);
   }
-
   @override
   void initState() {
     super.initState();
-
     // ── Orb pulse animation ──
     _orbController = AnimationController(
       vsync: this,
@@ -135,7 +115,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     _orbPulse = Tween<double>(begin: 1.0, end: 1.05).animate(
       CurvedAnimation(parent: _orbController, curve: Curves.easeInOut),
     );
-
     // ── Splash fade animation ──
     _splashFadeController = AnimationController(
       vsync: this,
@@ -159,14 +138,12 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         curve: const Interval(0.55, 0.8, curve: Curves.easeOut),
       ),
     );
-
     // ── Particle burst controller ──
     _particleController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
   }
-
   @override
   void dispose() {
     _nameController.dispose();
@@ -177,20 +154,16 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     _loadingTimer?.cancel();
     super.dispose();
   }
-
   // ═══════════════════════════════════════
   //  THEME-AWARE TEXT COLOR HELPER
   // ═══════════════════════════════════════
-
   /// Returns the resolved on-surface color from the current theme.
   /// This is the correct text-on-background color for both light and dark modes.
   /// Use with [withValues] for alpha-tinted secondary text.
   Color get _textColor => Theme.of(context).colorScheme.onSurface;
-
   // ═══════════════════════════════════════
   //  MJ MESSAGE SYSTEM
   // ═══════════════════════════════════════
-
   String _getMjMessage() {
     switch (_currentStep) {
       case 0:
@@ -207,7 +180,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         return '';
     }
   }
-
   Widget _buildMjMessage() {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 350),
@@ -245,11 +217,9 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       ),
     );
   }
-
   // ═══════════════════════════════════════
   //  VALIDATION
   // ═══════════════════════════════════════
-
   bool get _canProceed {
     switch (_currentStep) {
       case 0:
@@ -258,7 +228,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         return _nameController.text.trim().isNotEmpty;
       case 2:
         if (_stageType == 'BORN') return _birthDate != null;
-        if (_stageType == 'CONCEIVED') return _conceptionDate != null;
+        if (_stageType == 'INCUBATING') return _conceptionDate != null;
         return _ideaDate != null;
       case 3:
         return true;
@@ -268,7 +238,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         return false;
     }
   }
-
   void _nextStep() {
     if (_currentStep < _totalSteps - 1) {
       setState(() {
@@ -280,7 +249,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       }
     }
   }
-
   void _prevStep() {
     if (_currentStep > 0) {
       setState(() {
@@ -289,11 +257,9 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       });
     }
   }
-
   // ═══════════════════════════════════════
   //  CREATE BABY MON — IDENTICAL
   // ═══════════════════════════════════════
-
   Future<void> _createBabyMon() async {
     setState(() {
       _isLoading = true;
@@ -301,7 +267,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       _showParticles = true;
     });
     _particleController.forward(from: 0);
-
     try {
       final data = <String, dynamic>{
         'name': _nameController.text.trim(),
@@ -313,21 +278,19 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       };
       if (_stageType == 'BORN' && _birthDate != null) {
         data['birthDate'] = DateFormat('yyyy-MM-dd').format(_birthDate!);
-      } else if (_stageType == 'CONCEIVED' && _conceptionDate != null) {
+      } else if (_stageType == 'INCUBATING' && _conceptionDate != null) {
         final dateStr = DateFormat('yyyy-MM-dd').format(_conceptionDate!);
         data['conceptionDate'] = dateStr;
         data['lmpDate'] = dateStr;
-      } else if (_stageType == 'IDEA' && _ideaDate != null) {
+      } else if (_stageType == 'PLAN' && _ideaDate != null) {
         data['ideaDate'] = DateFormat('yyyy-MM-dd').format(_ideaDate!);
       }
-
       final response =
           await ref.read(apiClientProvider).post('/baby-mons', data: data);
       await ref
           .read(apiClientProvider)
           .setSelectedBabyMonId(parseString(response.data['id']));
       ref.read(appRefreshProvider.notifier).state++;
-
       // ── Loading phase: cycle messages for ~6 seconds ──
       setState(() {
         _loadingStep = true;
@@ -336,7 +299,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         _showParticles = false;
       });
       _particleController.reset();
-
       _loadingMessageIndex = 0;
       _loadingTimer = Timer.periodic(const Duration(milliseconds: 1200), (timer) {
         if (!mounted) {
@@ -347,7 +309,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
           _loadingMessageIndex = (_loadingMessageIndex + 1) % _loadingMessages.length;
         });
       });
-
       // Navigate home after the loading phase
       await Future<void>.delayed(const Duration(milliseconds: 6200));
       _loadingTimer?.cancel();
@@ -358,7 +319,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         _showParticles = false;
       });
       _particleController.reset();
-
       String message = 'Failed to create BabyMon';
       if (e is DioException) {
         if (e.response?.statusCode == 404) {
@@ -390,11 +350,9 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       }
     }
   }
-
   // ═══════════════════════════════════════
   //  STEP INDICATOR (updated to 5 dots)
   // ═══════════════════════════════════════
-
   Widget _buildStepIndicator() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -483,17 +441,14 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       ),
     );
   }
-
   // ═══════════════════════════════════════
   //  STEP 0 — SPLASH
   // ═══════════════════════════════════════
-
   Widget _buildSplash() {
     if (!_splashAnimationStarted) {
       _splashAnimationStarted = true;
       _splashFadeController.forward();
     }
-
     return AnimatedBuilder(
       animation: _splashFadeController,
       builder: (context, child) {
@@ -605,7 +560,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       },
     );
   }
-
   void _onSplashBegin() {
     if (_splashTransitioning) return;
     setState(() => _splashTransitioning = true);
@@ -619,11 +573,9 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       }
     });
   }
-
   // ═══════════════════════════════════════
   //  STEP 1 — NAME YOUR BABYMON
   // ═══════════════════════════════════════
-
   Widget _buildNameStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg),
@@ -764,14 +716,12 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       ),
     );
   }
-
   // ═══════════════════════════════════════
   //  STEP 2 — WHEN DOES YOUR JOURNEY START?
   // ═══════════════════════════════════════
-
   Widget _buildStageStep() {
     final pageController = PageController(
-      initialPage: _stageType == 'BORN' ? 0 : _stageType == 'CONCEIVED' ? 1 : 2,
+      initialPage: _stageType == 'BORN' ? 0 : _stageType == 'INCUBATING' ? 1 : 2,
       viewportFraction: 0.82,
     );
     return SingleChildScrollView(
@@ -787,7 +737,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
               controller: pageController,
               onPageChanged: (i) {
                 setState(() {
-                  _stageType = i == 0 ? 'BORN' : i == 1 ? 'CONCEIVED' : 'IDEA';
+                  _stageType = i == 0 ? 'BORN' : i == 1 ? 'INCUBATING' : 'PLAN';
                 });
               },
               children: [
@@ -799,14 +749,14 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                   subText: 'Your BabyMon is already in the wild.\nWhen did you first meet?',
                 ),
                 _buildStageCard(
-                  value: 'CONCEIVED',
+                  value: 'INCUBATING',
                   icon: PhosphorIconsLight.heart,
                   title: 'Incubating',
                   description: 'A beautiful surprise.\nThe journey began in stillness.',
                   subText: 'Expecting a surprise!\nWhen is it due?',
                 ),
                 _buildStageCard(
-                  value: 'IDEA',
+                  value: 'PLAN',
                   icon: PhosphorIconsLight.lightbulb,
                   title: 'Plan',
                   description: 'A heartfelt wish.\nLong before they existed,\nthey were loved.',
@@ -820,7 +770,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(3, (i) {
-              final active = i == (_stageType == 'BORN' ? 0 : _stageType == 'CONCEIVED' ? 1 : 2);
+              final active = i == (_stageType == 'BORN' ? 0 : _stageType == 'INCUBATING' ? 1 : 2);
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -842,7 +792,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       ),
     );
   }
-
   Widget _buildStageCard({
     required String value,
     required IconData icon,
@@ -952,35 +901,29 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       ),
     );
   }
-
   Widget _buildCalendarGrid() {
     final selectedDate = _stageType == 'BORN'
         ? _birthDate
-        : _stageType == 'CONCEIVED'
+        : _stageType == 'INCUBATING'
             ? _conceptionDate
             : _ideaDate;
-
     final year = _calendarMonth.year;
     final month = _calendarMonth.month;
     final firstDayOfMonth = DateTime(year, month, 1);
     final lastDayOfMonth = DateTime(year, month + 1, 0);
     final firstWeekday = firstDayOfMonth.weekday % 7;
     final daysInMonth = lastDayOfMonth.day;
-
     final today = DateTime.now();
     final isCurrentMonth = year == today.year && month == today.month;
-
     final now = DateTime.now();
     // Incubating allows future dates up to ~40 weeks (due date range)
     // Plan allows up to a year in the future
-    final maxAllowed = _stageType == 'CONCEIVED'
+    final maxAllowed = _stageType == 'INCUBATING'
         ? DateTime(now.year, now.month, now.day).add(const Duration(days: 280))
-        : _stageType == 'IDEA'
+        : _stageType == 'PLAN'
             ? DateTime(now.year, now.month, now.day).add(const Duration(days: 365))
             : DateTime(now.year, now.month, now.day);
-
     const weekdayHeaders = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-
     return PremiumDoubleBezel(
       outerRadius: DesignTokens.radius2xl,
       gap: 5.0,
@@ -1068,16 +1011,14 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                   date.day == today.day;
               final isFuture = date.isAfter(maxAllowed);
               final isPast = date.isBefore(DateTime(2020, 1, 1));
-
               final bool canSelect = !isFuture && !isPast;
-
               return GestureDetector(
                 onTap: canSelect
                     ? () {
                         setState(() {
                           if (_stageType == 'BORN') {
                             _birthDate = date;
-                          } else if (_stageType == 'CONCEIVED') {
+                          } else if (_stageType == 'INCUBATING') {
                             _conceptionDate = date;
                           } else {
                             _ideaDate = date;
@@ -1134,7 +1075,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                   setState(() {
                     if (_stageType == 'BORN') {
                       _birthDate = todayDate;
-                    } else if (_stageType == 'CONCEIVED') {
+                    } else if (_stageType == 'INCUBATING') {
                       _conceptionDate = todayDate;
                     } else {
                       _ideaDate = todayDate;
@@ -1154,11 +1095,9 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       ),
     );
   }
-
   // ═══════════════════════════════════════
   //  STEP 3 — DISCOVER THEIR SPIRIT
   // ═══════════════════════════════════════
-
   Widget _buildSpiritStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg),
@@ -1333,7 +1272,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       ),
     );
   }
-
   Widget _buildGenderOrb({
     required String value,
     required String label,
@@ -1405,17 +1343,14 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       ),
     );
   }
-
   // ═══════════════════════════════════════
   //  STEP 4 — REVIEW & BEGIN
   // ═══════════════════════════════════════
-
   Widget _buildReviewStep() {
     // ── Loading phase overlay ──
     if (_loadingStep) {
       return _buildLoadingPhase();
     }
-
     return Stack(
       children: [
         SingleChildScrollView(
@@ -1544,7 +1479,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       ],
     );
   }
-
   Widget _buildLoadingPhase() {
     final msg = _loadingMessages[_loadingMessageIndex];
     return Center(
@@ -1632,20 +1566,17 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       ),
     );
   }
-
   String _formatPoeticDate() {
     final date = _stageType == 'BORN'
         ? _birthDate
-        : _stageType == 'CONCEIVED'
+        : _stageType == 'INCUBATING'
             ? _conceptionDate
             : _ideaDate;
     if (date == null) return 'The journey has begun';
-
     final hour = date.hour;
     final weekday = DateFormat('EEEE').format(date);
     final month = DateFormat('MMMM').format(date);
     final day = DateFormat('d').format(date);
-
     String timeOfDay;
     if (hour >= 5 && hour < 12) {
       timeOfDay = 'morning';
@@ -1656,23 +1587,20 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     } else {
       timeOfDay = 'night';
     }
-
     return 'A $weekday $timeOfDay · $month $day';
   }
-
   String get _stageDescriptor {
     switch (_stageType) {
       case 'BORN':
         return 'A gentle arrival';
-      case 'CONCEIVED':
+      case 'INCUBATING':
         return 'A beautiful surprise';
-      case 'IDEA':
+      case 'PLAN':
         return 'A heartfelt wish';
       default:
         return '';
     }
   }
-
   Widget _reviewRow(IconData icon, String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: DesignTokens.spaceSm),
@@ -1724,9 +1652,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       ),
     );
   }
-
   // ── Particle burst ──
-
   Widget _buildParticleBurst() {
     return AnimatedBuilder(
       animation: _particleController,
@@ -1745,15 +1671,12 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       },
     );
   }
-
   // ═══════════════════════════════════════
   //  CURRENT STEP DISPATCH
   // ═══════════════════════════════════════
-
   Widget _buildCurrentStep() {
     if (_currentStep == 0) return _buildSplash();
     if (_currentStep == 4) return _buildReviewStep();
-
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg),
       child: Column(
@@ -1774,7 +1697,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       ),
     );
   }
-
   Color get _bezelTint {
     switch (_currentStep) {
       case 0:
@@ -1791,7 +1713,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         return context.colorScheme.primary.withValues(alpha: DesignTokens.opacityGhost);
     }
   }
-
   Widget _buildInnerStep() {
     switch (_currentStep) {
       case 1:
@@ -1804,7 +1725,6 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         return const SizedBox.shrink();
     }
   }
-
   // ═══════════════════════════════════════
   //  CUSTOM TRAIT DIALOG
   // ═══════════════════════════════════════
@@ -1845,11 +1765,9 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       ),
     );
   }
-
   // ═══════════════════════════════════════
   //  BUILD
   // ═══════════════════════════════════════
-
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -1976,42 +1894,33 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     );
   }
 }
-
 // ═══════════════════════════════════════════════════════════════════
 //  PARTICLE BURST PAINTER
 // ═══════════════════════════════════════════════════════════════════
-
 class _ParticleBurstPainter extends CustomPainter {
   final double progress;
   final Color color;
-
   _ParticleBurstPainter({required this.progress, required this.color});
-
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final rng = math.Random(42);
     const particleCount = 30;
-
     for (int i = 0; i < particleCount; i++) {
       final angle =
           (i / particleCount) * 2 * math.pi + rng.nextDouble() * 0.3;
       final distance = 40 + rng.nextDouble() * 120 * progress;
       final x = center.dx + math.cos(angle) * distance;
       final y = center.dy + math.sin(angle) * distance - 40;
-
       final radius =
           (2.0 + rng.nextDouble() * 3.0) * (1.0 - progress * 0.5);
       final opacity = (1.0 - progress).clamp(0.0, 1.0);
-
       final paint = Paint()
         ..color = color.withValues(alpha: opacity * 0.7)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
-
       canvas.drawCircle(Offset(x, y), radius, paint);
     }
   }
-
   @override
   bool shouldRepaint(covariant _ParticleBurstPainter oldDelegate) {
     return oldDelegate.progress != progress ||

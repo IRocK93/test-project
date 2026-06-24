@@ -30,8 +30,7 @@ class SettingsSectionHeader extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+	  Widget build(BuildContext context) {
     final bg = danger
         ? context.colorScheme.error
         : Colors.transparent;
@@ -48,7 +47,7 @@ class SettingsSectionHeader extends StatelessWidget {
         DesignTokens.spaceLg,
         DesignTokens.spaceLg,
         DesignTokens.spaceLg,
-        DesignTokens.spaceSm,
+        DesignTokens.spaceLg,
       ),
       decoration: BoxDecoration(
         color: bg,

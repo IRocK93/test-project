@@ -12,9 +12,9 @@ node_modules/
 dist/
 build/
 
-# Docker
-Dockerfile*
-docker-compose*.yml
+# Docker (local-only variants)
+Dockerfile.local*
+docker-compose.local*.yml
 !.dockerignore
 
 # Logs
@@ -44,3 +44,4 @@ coverage/
 # Temporary files
 tmp/
 temp/
+/nul

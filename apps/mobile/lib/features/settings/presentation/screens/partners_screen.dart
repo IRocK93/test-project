@@ -6,14 +6,11 @@ import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
-
 class PartnersScreen extends ConsumerStatefulWidget {
   const PartnersScreen({super.key});
-
   @override
   ConsumerState<PartnersScreen> createState() => _PartnersScreenState();
 }
-
 class _PartnersScreenState extends ConsumerState<PartnersScreen> {
   String? _babyMonId;
   List<Map<String, dynamic>> _partners = [];
@@ -21,7 +18,6 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
   DateTime? _lastDataRefresh;
   static const _refreshCooldown = Duration(seconds: 10);
   final List<String> _roles = ['PARENT', 'GUARDIAN', 'GRANDPARENT'];
-
   @override
   void initState() {
     super.initState();
@@ -30,7 +26,6 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
       if (prev != next) _loadData();
     });
   }
-
   Future<void> _loadData({bool force = false}) async {
     if (!force && _lastDataRefresh != null && _babyMonId != null) {
       final elapsed = DateTime.now().difference(_lastDataRefresh!);
@@ -47,7 +42,6 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
     await _fetchPartners();
     _lastDataRefresh = DateTime.now();
   }
-
   Future<void> _fetchPartners() async {
     final messenger = ScaffoldMessenger.of(context);
     if (_babyMonId == null) return;
@@ -66,7 +60,6 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
     }
   }
-
   Future<void> _invitePartner(String email, String role) async {
     final messenger = ScaffoldMessenger.of(context);
     if (_babyMonId == null) {
@@ -81,7 +74,6 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
     }
   }
-
   Future<void> _respondToInvitation(String partnerId, String status) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -92,7 +84,6 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
     }
   }
-
   Future<void> _removePartner(String partnerId, int index) async {
     final messenger = ScaffoldMessenger.of(context);
     final confirmed = await ConfirmDeleteDialog.show(
@@ -110,11 +101,9 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
     }
   }
-
   Color _statusColor(String status) {
     switch (status) { case 'ACCEPTED': return AppColors.success; case 'PENDING': return AppColors.warning; case 'DECLINED': return AppColors.textCaption; default: return AppColors.textCaption; }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -234,17 +223,16 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
             ),
           ),
       floatingActionButton: FadeScaleIn(
-              child: FloatingActionButton.extended(
-                heroTag: 'add_partner',
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                onPressed: _showInviteDialog,
-                icon: const Icon(PhosphorIconsLight.userPlus, color: AppColors.textOnPrimary),
-                label: const Text('Invite Partner', style: TextStyle(color: AppColors.textOnPrimary)),
-              ),
-            ),
+        child: FloatingActionButton(
+          heroTag: 'add_partner',
+          backgroundColor: context.colorScheme.primary,
+          foregroundColor: context.colorScheme.onPrimary,
+          onPressed: _showInviteDialog,
+          child: const Icon(PhosphorIconsLight.userPlus),
+        ),
+      ),
     );
   }
-
   void _showInviteDialog() {
     final emailController = TextEditingController();
     String selectedRole = 'PARENT';

@@ -69,7 +69,7 @@ export class NotificationsService {
   async unregisterDevice(deviceToken: string) {
     await this.prisma.device.delete({
       where: { deviceToken },
-    }).catch(() => {});
+    }).catch((err) => this.logger.warn({ err }, 'Device unregister failed (non-critical)'));
 
     return { message: 'Device unregistered' };
   }
@@ -172,5 +172,15 @@ export class NotificationsService {
         data: { babymonId, type: 'proposal' },
       });
     }
+  }
+
+  async notifyPaymentFailed(userId: string, attemptCount: number) {
+    await this.sendPushNotification(userId, {
+      title: 'Payment Failed',
+      body: attemptCount >= 3
+        ? 'Your subscription payment has failed multiple times. Please update your payment method.'
+        : 'There was an issue processing your subscription payment.',
+      data: { type: 'payment_failed', attemptCount: attemptCount.toString() },
+    });
   }
 }

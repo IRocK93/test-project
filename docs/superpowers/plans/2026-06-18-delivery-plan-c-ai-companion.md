@@ -71,7 +71,7 @@ git commit -m "fix(companion): integrate companion seed into main seed pipeline"
 - [ ] **Step 1: Generate real SHA-256 of the actual GGUF model file**
 
 ```bash
-sha256sum path/to/gemma4-e2b-v1-q4km.gguf
+sha256sum path/to/SmolLM2-360M-Instruct-Q4_K_M.gguf
 ```
 
 - [ ] **Step 2: Replace the placeholder**

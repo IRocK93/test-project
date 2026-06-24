@@ -44,112 +44,204 @@ class AppRouter {
   static const String _termsOfServiceContent = '''
 ## Terms of Service
 
-Last updated: June 2026
+**Effective Date:** June 2026
 
 ### 1. Acceptance of Terms
-By creating an account and using BabyMon, you agree to these Terms of Service. If you do not agree, do not use the app.
+By creating an account and using BabyMon, you agree to these Terms. You must be at least 18 years old.
 
 ### 2. Description of Service
-BabyMon is a parenting companion app that helps you track your child's growth, milestones, feeding, health records, and provides AI-powered parenting guidance. The AI Companion runs entirely on-device and is not a substitute for professional medical advice.
+BabyMon is a parenting companion app for tracking your child's growth, milestones, feeding, health records, and receiving AI-powered stage guidance.
 
-### 3. User Accounts
-- You must be at least 18 years old to create an account
-- You are responsible for maintaining the confidentiality of your login credentials
-- You must provide accurate and complete information during registration
+### 3. Account & Parental Affirmation
+- You must provide accurate registration information
+- When creating a baby profile, you affirm you are the parent or legal guardian
+- You are responsible for maintaining account security
 
-### 4. Acceptable Use
-You agree not to:
-- Use the app for any unlawful purpose
-- Attempt to access another user's account
-- Interfere with the app's operation or security
-- Use the AI Companion for emergency medical situations
+### 4. Subscriptions & Payment
+- Free tier: basic tracking, 1 baby profile, 7-day history
+- Premium tier (\$4.99/mo): AI Companion, unlimited history, multiple babies, photo album
+- 14-day free trial; cancel anytime via Settings → Subscription
+- Payments processed by Stripe (PCI-DSS Level 1)
 
-### 5. Disclaimer of Medical Advice
-BabyMon is NOT a medical device. It does not diagnose, treat, cure, or prevent any disease or condition. Always consult a qualified healthcare provider for medical advice.
+### 5. Medical Disclaimer
+**BabyMon is not a medical device.** It does not provide medical advice. Always consult your pediatrician or qualified healthcare provider. In an emergency, call your local emergency number.
 
-### 6. Limitation of Liability
-BabyMon and its developers shall not be liable for any damages arising from your use of the app. The app is provided "as is" without warranty of any kind.
+### 6. Acceptable Use
+Do not: use the app unlawfully, access other accounts, reverse engineer, or upload harmful content.
 
-### 7. Changes to Terms
-We reserve the right to modify these terms at any time. You will be notified of material changes via email or in-app notification.
+### 7. User Content
+You retain ownership of your data. You grant BabyMon a limited license to process your data solely to provide the service.
 
-### 8. Contact
-For questions about these terms, contact: support@babymon.app
+### 8. Co-parent Features
+Invite-based sharing. Owner controls access. BabyMon is not responsible for co-parent disputes.
+
+### 9. Intellectual Property
+BabyMon's code, design, gamification system, and AI content are owned by BabyMon.
+
+### 10. Limitation of Liability
+The app is provided "as is." Our liability is limited to the amount paid in the last 12 months.
+
+### 11. Termination
+We may suspend accounts for Terms violations. You may delete your account at any time.
+
+### 12. Changes
+We notify you 30 days before material changes via in-app notification and email.
+
+### 13. Governing Law
+These Terms are governed by applicable consumer protection laws in your jurisdiction.
+
+### 14. Contact
+For questions: support@babymon.app
+For legal notices: legal@babymon.app
+Full terms: docs/legal/terms-and-conditions.md
 ''';
 
   static const String _privacyPolicyContent = '''
 ## Privacy Policy
 
-Last updated: June 2026
+**Effective Date:** June 2026
 
-### 1. Information We Collect
-- Account information: email address, name, date of birth
-- Child information: name, birth date, growth measurements, health records, feeding logs, sleep patterns, milestones
-- Device information: device model, OS version (for AI compatibility)
+### 1. Introduction
+BabyMon is a gamified baby-tracking app. This policy explains how we handle your data. We do NOT sell your data or use it for advertising.
 
-### 2. How We Use Your Information
-- To provide and improve the BabyMon service
-- To generate growth charts and parenting insights
-- To enable the on-device AI Companion
-- To send account-related notifications
-- To comply with legal obligations
+### 2. Information We Collect
+| Category | Examples | Purpose |
+|----------|----------|---------|
+| Account | Email, name, password (hashed) | Authentication |
+| Child Profile | Name, gender, birth date, blood group, traits | Tracking |
+| Health & Growth | Weight, height, allergies, health records | Monitoring |
+| Developmental | Milestones, feeding, sleep logs | Gamification |
+| Photos/Videos | Child media | Memory album |
+| Device | Platform, FCM token | Push notifications |
+| Payment | Stripe customer ID only | Subscription |
 
-### 3. Data Storage and Security
-- Your child's health data is stored securely on our servers
-- All AI Companion inference runs entirely on-device — no child health data is sent to external AI services
-- We use industry-standard encryption for data in transit and at rest
+### 3. How We Use Your Data
+- Service delivery (tracking, charts, AI Companion)
+- Gamification (XP, badges, evolution stages)
+- Co-parent sharing (only with accounts you invite)
+- Push notifications (can be disabled)
+- Account management (auth, password reset)
+- Security (audit logging, abuse prevention)
 
-### 4. Data Retention
-We retain your data for as long as your account is active. You may request deletion of your account and associated data at any time.
+### 4. Sub-processors
+| Provider | Data | Purpose |
+|----------|------|---------|
+| Neon.tech | Database | Hosting |
+| AWS S3 | Photos | Media storage |
+| Stripe | Customer ID | Payments |
+| SendGrid | Email | Transactional email |
+| Firebase | Device token | Notifications |
+| Google/Apple/Facebook | OAuth | Optional login |
+| Sentry | Error data | Optional tracking |
 
-### 5. Third-Party Services
-We use:
-- Stripe for payment processing (subscription data only)
-- AWS S3 for media storage (photos, documents)
-- SendGrid for transactional emails
-- Neon (PostgreSQL) for database hosting
+All sub-processors are under Data Processing Agreements.
 
-### 6. Your Rights
-You have the right to:
-- Access your personal data
-- Correct inaccurate data
-- Delete your account and data
-- Export your data
-- Withdraw consent at any time
+### 5. Data Security
+- bcrypt password hashing (12 rounds)
+- JWT access tokens (15 min) with refresh rotation
+- TLS 1.3 encryption in transit
+- S3 server-side encryption at rest
+- Rate limiting, input validation, audit logging
+- Helmet security headers (CSP, HSTS, X-Frame-Options)
 
-### 7. Children's Privacy
-BabyMon is designed for parents to track their children's development. We do not knowingly collect data directly from children under 13.
+### 6. Data Retention
+| Data | Retention |
+|------|----------|
+| Account | Until deletion |
+| Child profiles | Until deletion |
+| Photos/videos | Until deletion |
+| Audit logs | 7 years (pseudonymized after deletion) |
 
-### 8. Changes to This Policy
-We will notify you of material changes via email or in-app notification.
+### 7. Your Rights
+- **Access**: Export your data (JSON/CSV) via Settings
+- **Correction**: Edit any entry at any time
+- **Deletion**: Delete account (Settings → Delete Account)
+- **Portability**: Download all your data
+- **Consent withdrawal**: Disable features or delete account
+- **Opt-out**: Disable notifications; unsubscribe from emails
 
-### 9. Contact
-For privacy inquiries, contact: privacy@babymon.app
+### 8. GDPR Rights (EEA/UK)
+Additional rights under GDPR Art. 15-22 including erasure, restriction, objection, and complaint to your supervisory authority. Legal bases: contractual necessity, explicit consent (health data), legitimate interest.
+
+### 9. CCPA Rights (California)
+Right to know, delete, opt-out of sale (we do not sell data), and non-discrimination.
+
+### 10. Children's Privacy
+BabyMon is for parents, not children. No data is collected directly from children under 16. Parents create and manage all child profiles. See our full Children's Privacy Notice.
+
+### 11. International Transfers
+Data is hosted in the US with Standard Contractual Clauses for EEA/UK transfers.
+
+### 12. Breach Notification
+We notify affected users and supervisory authorities as required by GDPR Art. 33-34.
+
+### 13. Contact
+- Support: support@babymon.app
+- Privacy inquiries: privacy@babymon.app
+- Data Protection Officer: dpo@babymon.app
+- Full policy: docs/legal/privacy-policy.md
 ''';
 
-  static GoRouter router(bool isLoggedIn) {
-    return GoRouter(
-      initialLocation: '/',
-      redirect: (context, state) {
-        final loggedIn = isLoggedIn;
-        final onAuth = state.matchedLocation == '/login' || state.matchedLocation == '/register';
-        final onSplash = state.matchedLocation == '/';
-        final onVerify = state.matchedLocation == '/verify-email';
-        final onLegal = state.matchedLocation == '/legal/tos' || state.matchedLocation == '/legal/privacy';
-        final onLoading = state.matchedLocation == '/loading';
-        
-        if (!loggedIn && !onAuth && !onSplash && !onVerify && !onLegal && !onLoading) {
-          return '/login';
-        }
-        if (loggedIn && onAuth) {
-          return '/loading';
-        }
-        if (loggedIn && onSplash) {
-          return '/loading';
-        }
-        return null;
-      },
-      routes: [
+  static const String _childrensPrivacyContent = '''
+## Children's Privacy Notice
+
+BabyMon is designed for parents, not children.
+
+### We do NOT:
+- Allow children under 16 to create accounts
+- Collect data directly from children
+- Target advertising to children or parents
+- Enable public profiles for children
+- Share child data with third parties for marketing
+
+### Parental Controls:
+- All child data is entered by you, the parent
+- You control who sees it (via co-parent invitations)
+- You can delete any entry at any time
+- You can delete the entire baby profile
+- You can export all data for your healthcare provider
+
+### Parental Affirmation:
+When creating a baby profile, you affirm you are the parent or legal guardian. This affirmation is timestamped and stored.
+
+### Deletion:
+Deleting a baby profile or your account permanently removes all child data from our servers, including photos from AWS S3.
+
+### Contact:
+For questions about children's privacy: privacy@babymon.app
+Full notice: docs/legal/childrens-privacy-notice.md
+''';
+
+  static bool _isLoggedIn = false;
+
+  /// Call this when login state changes (e.g., from app.dart via ref.watch).
+  /// Keeps GoRouter as a singleton instead of recreating on every auth change.
+  static void updateLoginState(bool loggedIn) {
+    _isLoggedIn = loggedIn;
+  }
+
+  static final GoRouter instance = GoRouter(
+    initialLocation: '/',
+    redirect: (context, state) {
+      final loggedIn = _isLoggedIn;
+      final onAuth = state.matchedLocation == '/login' || state.matchedLocation == '/register';
+      final onSplash = state.matchedLocation == '/';
+      final onVerify = state.matchedLocation == '/verify-email';
+      final onLegal = state.matchedLocation == '/legal/tos' || state.matchedLocation == '/legal/privacy' || state.matchedLocation == '/legal/childrens-privacy';
+      final onLoading = state.matchedLocation == '/loading';
+
+      if (!loggedIn && !onAuth && !onSplash && !onVerify && !onLegal && !onLoading) {
+        return '/login';
+      }
+      if (loggedIn && onAuth) {
+        return '/loading';
+      }
+      if (loggedIn && onSplash) {
+        return '/loading';
+      }
+      return null;
+    },
+    routes: [
         GoRoute(path: '/', pageBuilder: (context, state) => _pageTransition(context: context, state: state, child: const SplashScreen())),
         GoRoute(path: '/login', pageBuilder: (context, state) => _pageTransition(context: context, state: state, child: const LoginScreen())),
         GoRoute(path: '/loading', pageBuilder: (context, state) => _pageTransition(context: context, state: state, child: const PostLoginLoadingScreen())),
@@ -178,12 +270,25 @@ For privacy inquiries, contact: privacy@babymon.app
         GoRoute(path: '/partners', pageBuilder: (context, state) => _pageTransition(context: context, state: state, child: const PartnersScreen())),
         GoRoute(path: '/subscription', pageBuilder: (context, state) => _pageTransition(context: context, state: state, child: const SubscriptionScreen())),
         GoRoute(path: '/discover', pageBuilder: (context, state) => _pageTransition(context: context, state: state, child: const DiscoverScreen())),
+        // Route without babyMonId — shows inline "Create BabyMon" empty state
+        GoRoute(
+          path: '/companion',
+          pageBuilder: (context, state) => _pageTransition(
+            context: context,
+            state: state,
+            child: const CompanionTab(babyMonId: ''),
+          ),
+        ),
         GoRoute(
           path: '/companion/:babyMonId',
           pageBuilder: (context, state) => _pageTransition(
             context: context,
             state: state,
-            child: CompanionTab(babyMonId: state.pathParameters['babyMonId']!),
+            child: CompanionTab(
+              babyMonId: state.pathParameters['babyMonId']!,
+              openChat: state.uri.queryParameters['openChat'] == 'true',
+              initialTab: int.tryParse(state.uri.queryParameters['initialTab'] ?? ''),
+            ),
           ),
         ),
         GoRoute(
@@ -208,7 +313,17 @@ For privacy inquiries, contact: privacy@babymon.app
             ),
           ),
         ),
+        GoRoute(
+          path: '/legal/childrens-privacy',
+          pageBuilder: (context, state) => _pageTransition(
+            context: context,
+            state: state,
+            child: LegalDocumentScreen(
+              title: "Children's Privacy",
+              content: _childrensPrivacyContent,
+            ),
+          ),
+        ),
       ],
     );
-  }
 }

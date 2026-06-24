@@ -1,29 +1,28 @@
 import 'package:dio/dio.dart';
-import '../../../../data/services/api_service.dart';
+import '../../../../core/data/api_client.dart';
 import '../../domain/entities/journal_entry.dart';
 
+/// @migrated — now uses ApiClient instead of deprecated ApiService
 class JournalRepository {
-  final ApiService _apiService = ApiService();
+  final ApiClient _api;
+
+  JournalRepository(this._api);
 
   Future<List<JournalEntry>> getJournalEntries(String babyMonId) async {
     try {
-      // Fetch all three sources in parallel
       final results = await Future.wait([
         _fetchMilestones(babyMonId),
         _fetchFeedLogs(babyMonId),
         _fetchHealthRecords(babyMonId),
       ]);
 
-      // Flatten and merge all entries
       final List<JournalEntry> allEntries = [
-        ...results[0], // milestones
-        ...results[1], // feed logs
-        ...results[2], // health records
+        ...results[0],
+        ...results[1],
+        ...results[2],
       ];
 
-      // Sort by date descending (newest first)
       allEntries.sort((a, b) => b.date.compareTo(a.date));
-
       return allEntries;
     } on DioException catch (e) {
       throw Exception('Failed to load journal entries: ${e.message}');
@@ -32,45 +31,28 @@ class JournalRepository {
 
   Future<List<JournalEntry>> _fetchMilestones(String babyMonId) async {
     try {
-      final response = await _apiService.get(
-        '/milestones',
-        queryParameters: {'babyMonId': babyMonId},
-      );
-      final List<dynamic> data = response.data as List<dynamic>? ?? [];
-      return data.map((json) => JournalEntry.fromMilestone(json)).toList();
-    } catch (e) {
-      // Return empty list if milestones fetch fails
-      return [];
-    }
+      final response = await _api.get('/api/baby-mons/$babyMonId/milestones');
+      final data = response.data;
+      final items = data is Map ? (data['items'] as List<dynamic>? ?? []) : (data as List<dynamic>? ?? []);
+      return items.map((json) => JournalEntry.fromMilestone(json)).toList();
+    } catch (_) { return []; }
   }
 
   Future<List<JournalEntry>> _fetchFeedLogs(String babyMonId) async {
     try {
-      final response = await _apiService.get(
-        '/feed-logs',
-        queryParameters: {'babyMonId': babyMonId},
-      );
-      final List<dynamic> data = response.data is List 
-          ? response.data 
-          : (response.data['data'] ?? []);
-      return data.map((json) => JournalEntry.fromFeedLog(json)).toList();
-    } catch (e) {
-      // Return empty list if feed logs fetch fails
-      return [];
-    }
+      final response = await _api.get('/api/baby-mons/$babyMonId/feed-logs');
+      final data = response.data;
+      final items = data is Map ? (data['items'] as List<dynamic>? ?? []) : (data as List<dynamic>? ?? []);
+      return items.map((json) => JournalEntry.fromFeedLog(json)).toList();
+    } catch (_) { return []; }
   }
 
   Future<List<JournalEntry>> _fetchHealthRecords(String babyMonId) async {
     try {
-      final response = await _apiService.get(
-        '/health-records',
-        queryParameters: {'babyMonId': babyMonId},
-      );
-      final List<dynamic> data = response.data as List<dynamic>? ?? [];
-      return data.map((json) => JournalEntry.fromHealthRecord(json)).toList();
-    } catch (e) {
-      // Return empty list if health records fetch fails
-      return [];
-    }
+      final response = await _api.get('/api/baby-mons/$babyMonId/health-records');
+      final data = response.data;
+      final items = data is Map ? (data['items'] as List<dynamic>? ?? []) : (data as List<dynamic>? ?? []);
+      return items.map((json) => JournalEntry.fromHealthRecord(json)).toList();
+    } catch (_) { return []; }
   }
 }

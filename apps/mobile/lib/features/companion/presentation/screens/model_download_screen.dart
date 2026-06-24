@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -72,11 +73,11 @@ class _ModelDownloadScreenState extends ConsumerState<ModelDownloadScreen> {
         const SizedBox(height: DesignTokens.space3xl),
         const Text('Download AI Model', style: TextStyle(fontSize: DesignTokens.fontXl2, fontWeight: FontWeight.w700)),
         const SizedBox(height: DesignTokens.spaceMd),
-        Text('The AI Companion needs to download a language model (~${_formatSize(widget.sizeBytes ?? 1288490188)}) to provide personalized guidance on your device.', textAlign: TextAlign.center, style: TextStyle(fontSize: DesignTokens.fontMd2, color: context.textSecondary, height: 1.5)),
+        Text('The AI Companion needs to download a language model (~${_formatSize(widget.sizeBytes ?? 3427873600)}) to provide personalized guidance on your device.', textAlign: TextAlign.center, style: TextStyle(fontSize: DesignTokens.fontMd2, color: context.textSecondary, height: 1.5)),
         const SizedBox(height: DesignTokens.spaceSm),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(PhosphorIconsLight.shieldCheck, size: 16, color: context.colorScheme.primary), const SizedBox(width: 6), Text('Runs entirely on your device', style: TextStyle(fontSize: DesignTokens.fontSm2, color: context.colorScheme.primary, fontWeight: FontWeight.w600))]),
         const SizedBox(height: DesignTokens.space3xl),
-        SizedBox(width: double.infinity, height: 52, child: ElevatedButton(onPressed: () => notifier.startDownload(url: widget.url, destinationPath: widget.destinationPath, expectedSha256: widget.sha256, version: widget.version), style: ElevatedButton.styleFrom(backgroundColor: context.colorScheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd))), child: const Text('Start Download', style: TextStyle(fontSize: DesignTokens.fontLg, fontWeight: FontWeight.w600, color: Colors.white)))),
+        SizedBox(width: double.infinity, height: 52, child: ElevatedButton(onPressed: () { debugPrint('[DOWNLOAD] Start Download tapped: ${widget.url}'); notifier.startDownload(url: widget.url, destinationPath: widget.destinationPath, expectedSha256: widget.sha256, version: widget.version); }, style: ElevatedButton.styleFrom(backgroundColor: context.colorScheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd))), child: const Text('Start Download', style: TextStyle(fontSize: DesignTokens.fontLg, fontWeight: FontWeight.w600, color: Colors.white)))),
         const SizedBox(height: DesignTokens.spaceMd),
         TextButton(onPressed: () => Navigator.pop(context), child: Text('Skip for now', style: TextStyle(color: context.textCaption))),
       ],

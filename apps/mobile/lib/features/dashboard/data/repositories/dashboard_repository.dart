@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../../../../data/api_client.dart';
+import 'package:baby_mon/core/data/api_client.dart';
 
 class DashboardRepository {
   final ApiClient _apiClient;

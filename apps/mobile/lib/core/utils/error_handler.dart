@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'tier_required_exception.dart';
 
 /// Extracts a user-friendly error message from any error type.
 ///
@@ -31,6 +32,8 @@ String extractErrorMessage(dynamic error) {
             return 'Invalid request. Please check your input.';
           case 401:
             return 'Session expired. Please log in again.';
+          case 402:
+            return 'This feature requires a Premium subscription.';
           case 403:
             return 'You don\'t have permission to do that.';
           case 404:
@@ -52,6 +55,23 @@ String extractErrorMessage(dynamic error) {
   }
   // Generic fallback — never show '$e' directly
   return 'Something went wrong. Please try again.';
+}
+
+/// Returns true if [error] is a DioException signalling that the user
+/// needs to upgrade to PREMIUM (HTTP 402 with code UPGRADE_REQUIRED).
+///
+/// Use this to decide whether to show an upgrade prompt versus a
+/// generic error state. Re-throw as [TierRequiredException] for the
+/// cleanest integration with Riverpod FutureProvider error handling.
+bool isTierRequiredError(dynamic error) {
+  if (error is TierRequiredException) return true;
+  if (error is DioException) {
+    final statusCode = error.response?.statusCode;
+    final code =
+        error.response?.data is Map ? error.response?.data['code'] : null;
+    return statusCode == 402 || code == 'UPGRADE_REQUIRED';
+  }
+  return false;
 }
 
 /// Shows a user-friendly error snackbar.

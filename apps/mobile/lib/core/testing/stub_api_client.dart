@@ -68,7 +68,13 @@ class StubApiClient implements ApiClient {
   @override Future<Response> deleteMedicalTeamMember(String id, String m) async => _ok();
 
   // ── Evolution ──
-  @override Future<Response> getEvolution(String id) async => _ok();
+  @override Future<Response> getEvolution(String id, {bool forceRefresh = false}) async => _ok();
+
+  // ── Dashboard Aggregation ──
+  @override Future<Response> getDashboard(String id) async => _ok();
+
+  // ── Stage Content ──
+  @override Future<Response> getStageContentForBabyMon(String id) async => _ok();
 
   // ── Journal ──
   @override Future<Response> getJournal(String id, {String? type}) async => _ok();

@@ -1,10 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../s3/s3.service';
 import { UpdateUserDto, DeleteAccountDto } from './dto/user.dto';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(UsersService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private s3Service: S3Service,
+  ) {}
 
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUnique({
@@ -13,8 +20,10 @@ export class UsersService {
         id: true,
         email: true,
         name: true,
+        phone: true,
         createdAt: true,
         verifiedAt: true,
+        // Excluded: passwordHash, verificationToken, verificationExpires
       },
     });
 
@@ -41,11 +50,13 @@ export class UsersService {
       data: {
         name: dto.name,
         email: dto.email,
+        phone: dto.phone,
       },
       select: {
         id: true,
         email: true,
         name: true,
+        phone: true,
         createdAt: true,
         verifiedAt: true,
       },
@@ -62,20 +73,21 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    // Import bcrypt here to avoid circular dependency
-    const bcrypt = require('bcryptjs');
-    const isValid = await bcrypt.compare(dto.password, user.passwordHash || '');
-
-    if (!isValid) {
-      throw new BadRequestException('Invalid password');
+    // OAuth-only users have no password — allow deletion without password check
+    const isOAuthUser = !user.passwordHash;
+    if (!isOAuthUser) {
+      const bcrypt = require('bcryptjs');
+      const isValid = await bcrypt.compare(dto.password || '', user.passwordHash || '');
+      if (!isValid) {
+        throw new BadRequestException('Invalid password');
+      }
     }
 
-    // Soft delete user and all related data
+    // Hard-delete PII and all related data
+    const anonymizedEmail = `deleted-${randomBytes(8).toString('hex')}@deleted.babymon.app`;
     const result = await this.prisma.$transaction(async (tx) => {
       // Delete refresh tokens
-      await tx.refreshToken.deleteMany({
-        where: { userId },
-      });
+      await tx.refreshToken.deleteMany({ where: { userId } });
 
       // Get all babyMons owned by user
       const babyMons = await tx.babyMon.findMany({
@@ -83,53 +95,51 @@ export class UsersService {
         select: { id: true },
       });
 
+      // Delete S3 objects for all media associated with each BabyMon (fire-and-forget per file)
+      for (const bm of babyMons) {
+        const mediaItems = await tx.media.findMany({
+          where: { babyMonId: bm.id },
+          select: { s3Key: true },
+        });
+        for (const m of mediaItems) {
+          this.s3Service.deleteFile(m.s3Key).catch((err) =>
+            this.logger.warn({ err, key: m.s3Key }, 'S3 cleanup failed (non-critical)'),
+          );
+        }
+      }
+
       // Delete all related data for each BabyMon
       for (const bm of babyMons) {
-        await tx.entryChangeProposal.deleteMany({
-          where: { babymonId: bm.id },
-        });
-        await tx.auditLog.deleteMany({
-          where: { babymonId: bm.id },
-        });
-        await tx.badge.deleteMany({
-          where: { babymonId: bm.id },
-        });
-        await tx.stageContent.deleteMany({
-          where: { babymonId: bm.id },
-        });
-        await tx.milestone.deleteMany({
-          where: { babymonId: bm.id },
-        });
-        await tx.feedLog.deleteMany({
-          where: { babymonId: bm.id },
-        });
-        await tx.healthRecord.deleteMany({
-          where: { babymonId: bm.id },
-        });
-        await tx.linkedBabyMon.deleteMany({
-          where: { babymonId: bm.id },
-        });
-        await tx.babyMon.delete({
-          where: { id: bm.id },
-        });
+        await tx.media.deleteMany({ where: { babyMonId: bm.id } });
+        await tx.entryChangeProposal.deleteMany({ where: { babymonId: bm.id } });
+        await tx.auditLog.deleteMany({ where: { babymonId: bm.id } });
+        await tx.badge.deleteMany({ where: { babymonId: bm.id } });
+        await tx.stageContent.deleteMany({ where: { babymonId: bm.id } });
+        await tx.milestone.deleteMany({ where: { babymonId: bm.id } });
+        await tx.feedLog.deleteMany({ where: { babymonId: bm.id } });
+        await tx.healthRecord.deleteMany({ where: { babymonId: bm.id } });
+        await tx.linkedBabyMon.deleteMany({ where: { babymonId: bm.id } });
+        await tx.babyMon.delete({ where: { id: bm.id } });
       }
 
       // Delete linked accounts
       await tx.linkedAccount.deleteMany({
-        where: {
-          OR: [{ userAId: userId }, { userBId: userId }],
-        },
+        where: { OR: [{ userAId: userId }, { userBId: userId }] },
       });
 
       // Delete subscriptions
-      await tx.subscription.deleteMany({
-        where: { userId },
-      });
+      await tx.subscription.deleteMany({ where: { userId } });
 
-      // Soft delete user
+      // Hard-delete PII: overwrite email, name, passwordHash; keep deletedAt for audit
       await tx.user.update({
         where: { id: userId },
-        data: { deletedAt: new Date() },
+        data: {
+          email: anonymizedEmail,
+          name: null,
+          passwordHash: null,
+          phone: null,
+          deletedAt: new Date(),
+        },
       });
 
       return { message: 'Account deleted successfully' };

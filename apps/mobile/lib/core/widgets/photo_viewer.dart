@@ -148,25 +148,27 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
                   );
                 },
               ),
-              // Top-close button
+              // Back button — visible arrow to return to album
               Positioned(
-                top: 8,
-                left: 8,
-                    child: Semantics(
-                      label: 'Close',
-                      child: GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(PhosphorIconsLight.x, color: Colors.white, size: 20),
-                        ),
+                top: 12,
+                left: 12,
+                child: Semantics(
+                  label: 'Back to album',
+                  child: Material(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        child: const Icon(PhosphorIconsLight.arrowLeft, color: Colors.white, size: 22),
                       ),
                     ),
+                  ),
+                ),
               ),
               // Bottom: dismiss hint + page indicator
               Positioned(
@@ -177,7 +179,7 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Tap anywhere to dismiss',
+                      'Swipe to browse  •  Tap to go back',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.6),

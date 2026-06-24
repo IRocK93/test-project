@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -6,15 +5,12 @@ import 'package:baby_mon/features/auth/auth.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
-
 class ResetPasswordScreen extends ConsumerStatefulWidget {
   final String token;
   const ResetPasswordScreen({super.key, required this.token});
-
   @override
   ConsumerState<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
-
 class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _newPasswordController = TextEditingController();
@@ -22,14 +18,12 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
   bool _isResetting = false;
-
   @override
   void dispose() {
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
-
   Future<void> _resetPassword() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isResetting = true);
@@ -46,7 +40,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -105,7 +98,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14),
                               ),
                               const SizedBox(height: DesignTokens.space2xl),
-
                               // ── New Password ──
                               TextFormField(
                                 controller: _newPasswordController,
@@ -128,7 +120,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                                     : null,
                               ),
                               const SizedBox(height: DesignTokens.spaceMd),
-
                               // ── Confirm Password ──
                               TextFormField(
                                 controller: _confirmPasswordController,
@@ -152,7 +143,6 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                                     : null,
                               ),
                               const SizedBox(height: DesignTokens.space2xl),
-
                               // ── Reset Button ──
                               ThemeButton(
                                 text: 'Reset Password',

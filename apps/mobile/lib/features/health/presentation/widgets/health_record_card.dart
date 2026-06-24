@@ -8,9 +8,21 @@ class HealthRecordCard extends StatelessWidget {
 
   const HealthRecordCard({super.key, required this.record, required this.onDelete});
 
+  String _emojiForCategory(String cat) {
+    switch (cat) {
+      case 'CHECKUP': return '\u{1FA7A}';
+      case 'VACCINE': return '\u{1F489}';
+      case 'MEDICATION': return '\u{1F48A}';
+      case 'MEASUREMENT': return '\u{1F4CF}';
+      default: return '\u{1F3E5}';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final dateStr = DateFormat('MMM d, yyyy').format(record.date);
+    final dateStr = record.happenedAt != null
+        ? DateFormat('MMM d, yyyy').format(record.happenedAt!)
+        : 'No date';
 
     return Dismissible(
       key: Key(record.id),
@@ -39,70 +51,27 @@ class HealthRecordCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         color: const Color(0xFF1E1E1E),
         child: ExpansionTile(
-          leading: Text(record.typeEmoji, style: const TextStyle(fontSize: 28)),
+          leading: Text(_emojiForCategory(record.category), style: const TextStyle(fontSize: 28)),
           title: Text(
-            record.type.name.replaceAll('_', ' '),
+            record.title ?? record.category,
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
           ),
           subtitle: Text(dateStr, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
-          trailing: _statusBadge(record.status),
+          trailing: record.value != null
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(color: Colors.teal.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+                  child: Text('${record.value}${record.unit ?? ''}', style: const TextStyle(color: Colors.tealAccent, fontSize: 11)),
+                )
+              : null,
           children: [
-            if (record.doctorName != null && record.doctorName!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.person, color: Colors.grey, size: 16),
-                    const SizedBox(width: 8),
-                    Text('Dr. ${record.doctorName}', style: TextStyle(color: Colors.grey[300])),
-                  ],
-                ),
-              ),
-            if (record.location != null && record.location!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.location_on, color: Colors.grey, size: 16),
-                    const SizedBox(width: 8),
-                    Text(record.location!, style: TextStyle(color: Colors.grey[300])),
-                  ],
-                ),
-              ),
             if (record.notes != null && record.notes!.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                padding: const EdgeInsets.all(16),
                 child: Text(record.notes!, style: TextStyle(color: Colors.grey[300])),
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _statusBadge(HealthRecordStatus status) {
-    Color color;
-    switch (status) {
-      case HealthRecordStatus.COMPLETED:
-        color = Colors.green;
-        break;
-      case HealthRecordStatus.SCHEDULED:
-        color = Colors.amber;
-        break;
-      case HealthRecordStatus.CANCELLED:
-        color = Colors.red;
-        break;
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        status.name,
-        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
       ),
     );
   }

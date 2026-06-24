@@ -1,13 +1,21 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { BadgesService } from '../badges/badges.service';
+import { XpService } from '../xp/xp.service';
 import { AccessControlService } from '../common/access-control.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { CreateSleepLogDto, UpdateSleepLogDto } from './dto/sleep-log.dto';
+import { buildHistoryDateFilter } from '../common/history-filter.helper';
+import { trackDailyActivity } from '../common/daily-activity.helper';
 
 @Injectable()
 export class SleepLogsService {
   constructor(
     private prisma: PrismaService,
+    private badgesService: BadgesService,
+    private xpService: XpService,
     private accessControl: AccessControlService,
+    private subscriptionsService: SubscriptionsService,
   ) {}
 
   async create(babymonId: string, userId: string, dto: CreateSleepLogDto) {
@@ -41,15 +49,31 @@ export class SleepLogsService {
       data: { currentXp: { increment: 5 } },
     });
 
+    await trackDailyActivity(this.prisma, babymonId, 'sleepLog');
+
+    await this.xpService.checkAndProcessLevelUp(babymonId);
+
+    await this.badgesService.checkAndAwardBadges(babymonId, userId);
+
+    // Audit log
+    await this.prisma.auditLog.create({
+      data: { babymonId, actorUserId: userId, eventType: 'SLEEP_LOG_CREATED', payloadJson: JSON.stringify({ sleepLogId: sleepLog.id, type: sleepLog.type }) },
+    });
+
     return sleepLog;
   }
 
   async findAll(babymonId: string, userId: string, skip: number = 0, take: number = 20) {
     await this.accessControl.checkAccess(userId, babymonId);
 
+    // FREE tier: only show limited history
+    const dateFilter = await buildHistoryDateFilter(this.subscriptionsService, userId, 'startTime');
+
+    const baseWhere = { babymonId, deletedAt: null, ...dateFilter };
+
     const [items, total] = await Promise.all([
       this.prisma.sleepLog.findMany({
-        where: { babymonId, deletedAt: null },
+        where: baseWhere,
         skip,
         take,
         orderBy: { startTime: 'desc' },
@@ -58,7 +82,7 @@ export class SleepLogsService {
         },
       }),
       this.prisma.sleepLog.count({
-        where: { babymonId, deletedAt: null },
+        where: baseWhere,
       }),
     ]);
 

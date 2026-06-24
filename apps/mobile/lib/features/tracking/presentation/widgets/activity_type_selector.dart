@@ -37,7 +37,7 @@ class ActivityTypeSelector extends StatelessWidget {
         label: Text(label),
         selected: isSelected,
         onSelected: (_) => onTypeSelected(type),
-        selectedColor: AppColors.primary.withOpacity(0.2),
+        selectedColor: AppColors.primary.withValues(alpha: 0.2),
         checkmarkColor: AppColors.primary,
       ),
     );

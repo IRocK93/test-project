@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuditService } from './common/audit.service';
+import { StageCalculatorService } from './common/stage-calculator.service';
+import configuration from './config/configuration';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { BabyMonModule } from './baby-mon/baby-mon.module';
@@ -15,6 +18,7 @@ import { MedicalTeamModule } from './medical-team/medical-team.module';
 import { BadgesModule } from './badges/badges.module';
 import { EvolutionModule } from './evolution/evolution.module';
 import { StageContentModule } from './stage-content/stage-content.module';
+import { CompanionModule } from './companion/companion.module';
 import { JournalModule } from './journal/journal.module';
 import { ExportModule } from './export/export.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
@@ -28,12 +32,19 @@ import { GrowthModule } from './growth/growth.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { MailModule } from './mail/mail.module';
 import { AdminModule } from './admin/admin.module';
+import { XpModule } from './xp/xp.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+    }),
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.LOG_LEVEL || 'info',
+        genReqId: () => require('crypto').randomUUID(),
+        autoLogging: true,
       },
     }),
     ThrottlerModule.forRoot([
@@ -53,6 +64,7 @@ import { AdminModule } from './admin/admin.module';
     BadgesModule,
     EvolutionModule,
     StageContentModule,
+    CompanionModule,
     JournalModule,
     ExportModule,
     SubscriptionsModule,
@@ -66,10 +78,12 @@ import { AdminModule } from './admin/admin.module';
     NotificationsModule,
     MailModule,
     AdminModule,
+    XpModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     AuditService,
+    StageCalculatorService,
   ],
 })
 export class AppModule {}

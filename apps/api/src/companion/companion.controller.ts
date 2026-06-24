@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Query, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CompanionService } from './companion.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -14,15 +14,18 @@ export class CompanionController {
   constructor(private companionService: CompanionService) {}
 
   @Get('daily-brief')
-  @ApiOperation({ summary: 'Get personalized daily brief for AI_COMPANION subscribers' })
+  @ApiOperation({ summary: 'Get personalized daily brief for PREMIUM subscribers' })
   async getDailyBrief(@Param('babyMonId') babyMonId: string) {
     return this.companionService.getDailyBrief(babyMonId);
   }
 
   @Get('routine')
   @ApiOperation({ summary: 'Get adaptive daily routine' })
-  async getRoutine(@Param('babyMonId') babyMonId: string) {
-    return this.companionService.getRoutine(babyMonId);
+  async getRoutine(
+    @Param('babyMonId') babyMonId: string,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.companionService.getRoutine(babyMonId, userId);
   }
 
   @Post('routine/:stepLabel/complete')
@@ -32,6 +35,15 @@ export class CompanionController {
     @Param('stepLabel') stepLabel: string,
   ) {
     return this.companionService.completeRoutineStep(babyMonId, stepLabel);
+  }
+
+  @Put('routine/sync')
+  @ApiOperation({ summary: 'Sync completed steps in one batch (local-first pattern)' })
+  async syncRoutine(
+    @Param('babyMonId') babyMonId: string,
+    @Body('completedSteps') completedSteps: string[],
+  ) {
+    return this.companionService.syncRoutineSteps(babyMonId, completedSteps);
   }
 
   @Get('milestones/expected')
@@ -51,6 +63,15 @@ export class CompanionController {
     @CurrentUser('id') userId: string,
   ) {
     return this.companionService.achieveMilestone(babyMonId, expectationId, userId);
+  }
+
+  @Delete('milestones/:expectationId/achieve')
+  @ApiOperation({ summary: 'Undo a milestone achievement' })
+  async unachieveMilestone(
+    @Param('babyMonId') babyMonId: string,
+    @Param('expectationId') expectationId: string,
+  ) {
+    return this.companionService.unachieveMilestone(babyMonId, expectationId);
   }
 
   @Get('advice')

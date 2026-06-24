@@ -10,7 +10,7 @@ class MilestoneCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = DateFormat('MMM d, yyyy').format(milestone.date);
+    final dateStr = DateFormat('MMM d, yyyy').format(milestone.happenedAt ?? DateTime(2000));
 
     return Dismissible(
       key: Key(milestone.id),
@@ -39,19 +39,19 @@ class MilestoneCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         color: const Color(0xFF1E1E1E),
         child: ExpansionTile(
-          leading: Text(milestone.categoryEmoji, style: const TextStyle(fontSize: 28)),
+          leading: Text("🎯", style: const TextStyle(fontSize: 28)),
           title: Text(milestone.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
           subtitle: Text(dateStr, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(color: Colors.deepPurple.withOpacity(0.3), borderRadius: BorderRadius.circular(12)),
-            child: Text('+${milestone.xpAwarded} XP', style: const TextStyle(color: Colors.deepPurpleAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+            decoration: BoxDecoration(color: Colors.deepPurple.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(12)),
+            child: Text('+${5} XP', style: const TextStyle(color: Colors.deepPurpleAccent, fontSize: 12, fontWeight: FontWeight.bold)),
           ),
           children: [
-            if (milestone.description != null && milestone.description!.isNotEmpty)
+            if (milestone.notes != null && milestone.notes!.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: Text(milestone.description!, style: TextStyle(color: Colors.grey[300])),
+                child: Text(milestone.notes!, style: TextStyle(color: Colors.grey[300])),
               ),
           ],
         ),

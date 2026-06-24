@@ -1,13 +1,56 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
+import * as Sentry from '@sentry/nestjs';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { Logger } from 'nestjs-pino';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { AuditService } from './common/audit.service';
+import { IdempotencyMiddleware } from './common/middleware/idempotency.middleware';
+import helmet from 'helmet';
+import compression from 'compression';
 
 async function bootstrap() {
+  // Sentry error tracking (disabled if SENTRY_DSN not set)
+  if (process.env.SENTRY_DSN) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      environment: process.env.NODE_ENV || 'development',
+      tracesSampleRate: 0.1,
+    });
+  }
+
   const app = await NestFactory.create(AppModule, {
     rawBody: true,
   });
+
+  // Security headers
+  app.use(helmet());
+
+  // Response compression
+  app.use(compression());
+
+  // Rate limit headers (Retry-After) on 429 responses
+  app.use((req: any, res: any, next: () => void) => {
+    const originalSend = res.json;
+    res.json = function (body: any) {
+      if (res.statusCode === 429) {
+        res.setHeader('Retry-After', '60');
+      }
+      return originalSend.call(this, body);
+    };
+    next();
+  });
+
+  // Idempotency key support for mutation endpoints
+  app.use(new IdempotencyMiddleware().use.bind(new IdempotencyMiddleware()));
+
+  // Global exception filter (maps Prisma errors to proper HTTP codes)
+  app.useGlobalFilters(new GlobalExceptionFilter());
+
+  // Global audit interceptor (logs every request with method, URL, userId, duration)
+  app.useGlobalInterceptors(new AuditInterceptor(app.get(AuditService)));
 
   // Use pino logger
   app.useLogger(app.get(Logger));
@@ -27,6 +70,9 @@ async function bootstrap() {
     }
     next();
   });
+
+  // API versioning
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
   // Global prefix
   app.setGlobalPrefix('api');

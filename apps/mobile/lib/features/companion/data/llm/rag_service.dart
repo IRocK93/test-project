@@ -13,6 +13,7 @@ class RagService {
   static const String _keyTitle = 'title';
   static const String _keySummary = 'summary';
   static const int _maxCards = 3;
+  static const double _minScore = 0.05;
   static const int _minWordLength = 2;
 
   final CompanionRepository _repository;
@@ -57,7 +58,7 @@ class RagService {
         final double idf = _idf(nDocs, postings.length);
         score += tf * idf;
       }
-      if (score > 0) scored.add(_ScoredCard(card: cards[i], score: score));
+      if (score > _minScore) scored.add(_ScoredCard(card: cards[i], score: score));
     }
 
     scored.sort((_ScoredCard a, _ScoredCard b) => b.score.compareTo(a.score));
@@ -83,14 +84,15 @@ class RagService {
   }
 
   /// Split text into lower-case tokens, filtering out short words.
-  Set<String> _tokenize(String text) => text
+  /// Returns a List (not Set) so term frequency actually varies.
+  List<String> _tokenize(String text) => text
       .toLowerCase()
       .split(RegExp(r'[^a-z0-9]+'))
       .where((String w) => w.length >= _minWordLength)
-      .toSet();
+      .toList();
 
   /// Normalised term frequency: raw count / max count in document.
-  Map<String, double> _computeTf(Set<String> tokens) {
+  Map<String, double> _computeTf(List<String> tokens) {
     final Map<String, int> raw = {};
     for (final t in tokens) {
       raw[t] = (raw[t] ?? 0) + 1;
@@ -99,7 +101,7 @@ class RagService {
     if (maxFreq == 0) return {};
     final Map<String, double> tf = {};
     for (final entry in raw.entries) {
-      tf[entry.key] = entry.value / maxFreq; // augmented TF: 0.5 + 0.5 * ...
+      tf[entry.key] = 0.5 + 0.5 * (entry.value / maxFreq);
     }
     return tf;
   }

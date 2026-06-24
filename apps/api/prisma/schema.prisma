@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
 enum AdviceCategory {
@@ -21,12 +22,16 @@ enum ContentSource {
   DEVELOPMENT
   EXPERT
   PARENT_COMMUNITY
+  GENERAL
 }
 
 enum MilestoneDomain {
   MOTOR
+  GROSS_MOTOR
+  FINE_MOTOR
   COGNITIVE
   LANGUAGE
+  LANGUAGE_COMMUNICATION
   SOCIAL_EMOTIONAL
   SELF_HELP
 }
@@ -178,6 +183,7 @@ model SavedAdvice {
 
   user   User             @relation(fields: [userId], references: [id])
   advice ExpertAdviceCard @relation(fields: [adviceCardId], references: [id])
+  babyMon BabyMon?        @relation("BabyMonSavedAdvice", fields: [babyMonId], references: [id], onDelete: SetNull)
 
   @@unique([userId, adviceCardId])
   @@index([userId])
@@ -204,6 +210,7 @@ model User {
   email               String    @unique
   passwordHash        String?
   name                String?
+  phone               String?
   role                String    @default("USER") // USER, ADMIN
   isActive            Boolean   @default(true)
   verificationToken   String?
@@ -212,6 +219,20 @@ model User {
   updatedAt           DateTime  @updatedAt
   verifiedAt          DateTime?
   deletedAt           DateTime?
+
+  tosAcceptedAt       DateTime?
+  tosVersion          String?
+  privacyAcceptedAt   DateTime?
+  privacyVersion      String?
+  consentDataAt       DateTime?
+
+  notificationsEnabled Boolean  @default(true)
+  pushMilestones       Boolean  @default(true)  // push: milestone alerts
+  pushBadges           Boolean  @default(true)  // push: badge unlocks
+  pushGrowth           Boolean  @default(true)  // push: growth analysis
+  pushProposals        Boolean  @default(true)  // push: co-parent proposals
+  quietHoursStart      String?  // HH:mm format, e.g. "22:00"
+  quietHoursEnd        String?  // HH:mm format, e.g. "07:00"
 
   babyMons            BabyMon[]
   linkedAccountsAsA   LinkedAccount[]       @relation("UserA")
@@ -235,6 +256,7 @@ model User {
   UserRoutine         UserRoutine[]
   SavedAdvice         SavedAdvice[]
   AdviceRating        AdviceRating[]
+  journalProposed     JournalProposal[] @relation("JournalProposer")
 }
 
 model PasswordResetToken {
@@ -245,6 +267,8 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Device {
@@ -311,16 +335,22 @@ model BabyMon {
   conceptionDate   DateTime?
   lmpDate          DateTime?
   birthDate        DateTime?
+  gestationalAgeAtBirth Int? // weeks at birth (<37 = premature)
+  dueDate          DateTime?
   ideaDate         DateTime?
   gender           String
   traits           String[]
+  traitsUpdatedAt   DateTime? // tracks when traits were last changed (for badge criteria)
   specialMove      String?
   biologicalMother String?
   biologicalFather String?
   bloodGroup       String?
   eyeColor         String?
+  siblingGroupId   String? // shared ID for twins/multiples
   currentXp        Int       @default(0)
   currentStage     Int       @default(1)
+  isGraduated       Boolean   @default(false) // archived after 24 months
+  graduatedAt       DateTime?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   deletedAt        DateTime?
@@ -343,9 +373,12 @@ model BabyMon {
   medicalTeams     MedicalTeam[]
   allergyEvents    AllergyEvent[]
   BabyMilestone    BabyMilestone[]
+  savedAdvice      SavedAdvice[]         @relation("BabyMonSavedAdvice")
+  dailyActivities  DailyActivity[]
 
   @@index([ownerUserId])
   @@index([deletedAt])
+  @@index([siblingGroupId])
 }
 
 model Milestone {
@@ -370,6 +403,7 @@ model Milestone {
   @@index([authorUserId])
   @@index([happenedAt])
   @@index([deletedAt])
+  @@index([babymonId, happenedAt])
 }
 
 model FeedLog {
@@ -395,6 +429,7 @@ model FeedLog {
   @@index([authorUserId])
   @@index([happenedAt])
   @@index([deletedAt])
+  @@index([babymonId, happenedAt])
 }
 
 model HealthRecord {
@@ -403,6 +438,8 @@ model HealthRecord {
   authorUserId   String
   category       String
   title          String
+  value          String?
+  unit           String?
   notes          String?
   happenedAt     DateTime
   localMediaRefs String[]
@@ -419,6 +456,7 @@ model HealthRecord {
   @@index([authorUserId])
   @@index([happenedAt])
   @@index([deletedAt])
+  @@index([babymonId, happenedAt])
 }
 
 model SleepLog {
@@ -463,18 +501,18 @@ model Badge {
 }
 
 model StageContent {
-  id                String  @id @default(uuid())
-  babymonId         String
+  id                String   @id @default(uuid())
+  babymonId         String?
   stageKey          String
   weekNumber        Int?
   monthNumber       Int?
-  isPostBirth       Boolean @default(false)
+  isPostBirth       Boolean  @default(false)
   summaryText       String
   nurturingText     String
   encouragementText String
-  xpThreshold       Int     @default(0)
+  xpThreshold       Int      @default(0)
 
-  babymon BabyMon @relation(fields: [babymonId], references: [id], onDelete: Cascade)
+  babymon BabyMon? @relation(fields: [babymonId], references: [id], onDelete: Cascade)
 
   @@unique([babymonId, stageKey])
   @@index([stageKey])
@@ -489,13 +527,13 @@ model RefreshToken {
   revokedAt DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum SubscriptionTier {
   FREE
-  CORE
   PREMIUM
-  AI_COMPANION
 }
 
 model Subscription {
@@ -515,6 +553,8 @@ model Subscription {
   updatedAt            DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model AuditLog {
@@ -522,13 +562,18 @@ model AuditLog {
   babymonId   String?
   actorUserId String
   eventType   String
-  payloadJson String
+  payloadJson Json?
   ipAddress   String?
   userAgent   String?
   createdAt   DateTime @default(now())
 
   babymon BabyMon? @relation(fields: [babymonId], references: [id])
   actor   User     @relation(fields: [actorUserId], references: [id])
+
+  @@index([babymonId])
+  @@index([actorUserId])
+  @@index([createdAt])
+  @@index([eventType])
 }
 
 model EntryChangeProposal {
@@ -549,6 +594,10 @@ model EntryChangeProposal {
 
   babymon  BabyMon @relation("BabyMonProposal", fields: [babymonId], references: [id], onDelete: Cascade)
   proposer User    @relation("Proposer", fields: [proposerUserId], references: [id])
+
+  @@index([babymonId])
+  @@index([proposerUserId])
+  @@index([status])
 }
 
 model StripeEvent {
@@ -599,6 +648,11 @@ model JournalProposal {
   resolvedById   String?
 
   babymon BabyMon @relation(fields: [babymonId], references: [id], onDelete: Cascade)
+  proposer User    @relation("JournalProposer", fields: [proposedById], references: [id], onDelete: Cascade)
+
+  @@index([babymonId])
+  @@index([proposedById])
+  @@index([status])
 }
 
 model GrowthRecord {
@@ -610,6 +664,7 @@ model GrowthRecord {
   unit       String // cm, kg, in, lb
   measuredAt DateTime
   notes      String?
+  deletedAt  DateTime?
   createdAt  DateTime @default(now())
 
   babymon BabyMon @relation(fields: [babyMonId], references: [id], onDelete: Cascade)
@@ -617,6 +672,7 @@ model GrowthRecord {
 
   @@index([babyMonId])
   @@index([measuredAt])
+  @@index([deletedAt])
 }
 
 model Allergy {
@@ -649,6 +705,7 @@ model AllergyEvent {
   userId     String
   happenedAt DateTime @default(now())
   notes      String?
+  deletedAt  DateTime?
   createdAt  DateTime @default(now())
 
   allergy Allergy @relation(fields: [allergyId], references: [id], onDelete: Cascade)
@@ -679,4 +736,22 @@ model MedicalTeam {
   @@index([babyMonId])
   @@index([facility])
   @@index([specialty])
+}
+
+/// Tracks one row per baby per day with activity — enables streak detection
+model DailyActivity {
+  id         String   @id @default(uuid())
+  babymonId  String
+  date       DateTime // date-only (time is always 00:00:00)
+  hasMilestone Boolean @default(false)
+  hasFeedLog   Boolean @default(false)
+  hasSleepLog  Boolean @default(false)
+  hasHealthRecord Boolean @default(false)
+  hasGrowthRecord Boolean @default(false)
+  createdAt  DateTime @default(now())
+
+  babymon BabyMon @relation(fields: [babymonId], references: [id], onDelete: Cascade)
+
+  @@unique([babymonId, date])
+  @@index([babymonId])
 }

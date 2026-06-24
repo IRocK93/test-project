@@ -2,6 +2,8 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { BabyMonService } from '../baby-mon/baby-mon.service';
 import { AccessControlService } from '../common/access-control.service';
+import { xpForNextLevel } from '../xp/xp.service';
+import { StageCalculatorService } from '../common/stage-calculator.service';
 
 @Injectable()
 export class EvolutionService {
@@ -14,7 +16,9 @@ export class EvolutionService {
   async getEvolution(babyMonId: string, userId: string) {
     const babyMon = await this.prisma.babyMon.findFirst({
       where: { id: babyMonId, deletedAt: null },
-      include: { badges: { orderBy: { unlockedAt: 'desc' } } },
+      include: {
+        badges: { orderBy: { unlockedAt: 'desc' } },
+      },
     });
 
     if (!babyMon) {
@@ -26,11 +30,19 @@ export class EvolutionService {
       throw new ForbiddenException('Access denied');
     }
 
+    // Count non-deleted records manually — Prisma _count doesn't support where filters
+    const [milestoneCount, feedLogCount, healthRecordCount, sleepLogCount] = await Promise.all([
+      this.prisma.milestone.count({ where: { babymonId: babyMonId, deletedAt: null } }),
+      this.prisma.feedLog.count({ where: { babymonId: babyMonId, deletedAt: null } }),
+      this.prisma.healthRecord.count({ where: { babymonId: babyMonId, deletedAt: null } }),
+      this.prisma.sleepLog.count({ where: { babymonId: babyMonId, deletedAt: null } }),
+    ]);
+
     const stageInfo = await this.babyMonService.calculateCurrentStage(userId, babyMonId);
 
     // Calculate XP progress to next stage
-    const xpForNextLevel = (babyMon.currentStage + 1) * 100;
-    const xpProgress = (babyMon.currentXp / xpForNextLevel) * 100;
+    const xpNeeded = xpForNextLevel(babyMon.currentStage);
+    const xpProgress = (babyMon.currentXp / xpNeeded) * 100;
 
     return {
       babyMon: {
@@ -38,10 +50,18 @@ export class EvolutionService {
         name: babyMon.name,
         currentXp: babyMon.currentXp,
         currentStage: babyMon.currentStage,
+        stageKey: stageInfo.stageKey,
       },
       badges: babyMon.badges,
       stageInfo,
       xpProgress: Math.min(xpProgress, 100),
+      milestoneCount,
+      feedLogCount,
+      healthRecordCount,
+      sleepLogCount,
+      correctedAge: babyMon.gestationalAgeAtBirth && babyMon.gestationalAgeAtBirth < 37
+        ? StageCalculatorService.computeAge({ birthDate: babyMon.birthDate, gestationalAgeAtBirth: babyMon.gestationalAgeAtBirth })
+        : null,
     };
   }
 

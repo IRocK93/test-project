@@ -530,29 +530,29 @@ void main() {
         expect(baby.referenceDate, DateTime(2024, 6, 15));
       });
 
-      test('returns conceptionDate for CONCEIVED stage', () {
+      test('returns conceptionDate for INCUBATING stage', () {
         final baby = BabyMon(
           id: 'bm-5',
-          stageStartType: 'CONCEIVED',
+          stageStartType: 'INCUBATING',
           birthDate: DateTime(2024, 6, 15),
           conceptionDate: DateTime(2024, 1, 1),
         );
         expect(baby.referenceDate, DateTime(2024, 1, 1));
       });
 
-      test('falls back to lmpDate for CONCEIVED when no conceptionDate', () {
+      test('falls back to lmpDate for INCUBATING when no conceptionDate', () {
         final baby = BabyMon(
           id: 'bm-6',
-          stageStartType: 'CONCEIVED',
+          stageStartType: 'INCUBATING',
           lmpDate: DateTime(2024, 1, 8),
         );
         expect(baby.referenceDate, DateTime(2024, 1, 8));
       });
 
-      test('returns ideaDate for IDEA stage', () {
+      test('returns ideaDate for PLAN stage', () {
         final baby = BabyMon(
           id: 'bm-7',
-          stageStartType: 'IDEA',
+          stageStartType: 'PLAN',
           ideaDate: DateTime(2023, 12, 15),
           birthDate: DateTime(2024, 6, 15),
         );
@@ -573,7 +573,7 @@ void main() {
           gender: 'MONIOUS',
           traits: ['brave'],
           specialMove: 'Sunflare',
-          stageStartType: 'CONCEIVED',
+          stageStartType: 'INCUBATING',
           conceptionDate: DateTime(2024, 1, 1),
           birthDate: DateTime(2024, 6, 15),
           bloodGroup: 'A+',
@@ -588,7 +588,7 @@ void main() {
         expect(json['gender'], 'MONIOUS');
         expect(json['traits'], ['brave']);
         expect(json['specialMove'], 'Sunflare');
-        expect(json['stageStartType'], 'CONCEIVED');
+        expect(json['stageStartType'], 'INCUBATING');
         expect(json['conceptionDate'], '2024-01-01T00:00:00.000');
         expect(json['birthDate'], '2024-06-15T00:00:00.000');
         expect(json['bloodGroup'], 'A+');

@@ -1,16 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-
-// ── Stage calculation constants ──
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
-const MS_PER_WEEK = MS_PER_DAY * 7;
-const MS_PER_MONTH = MS_PER_DAY * 30; // approximate 30-day month for age display
-const DAYS_PER_MONTH = 30;
-const DAYS_PER_WEEK = 7;
-const MAX_PREGNANCY_WEEKS = 40;
-const MAX_BABY_MONTHS = 24;
-const WEEK_TO_MONTH_THRESHOLD = 3; // switch from week-based to month-based stage keys
-const NEWBORN_DAYS_THRESHOLD = 30; // days before switching to month display
+import { StageCalculatorService } from '../common/stage-calculator.service';
 
 // Trimester boundaries (weeks)
 const FIRST_TRIMESTER_END = 13;
@@ -23,16 +13,19 @@ const LATE_INFANT_END = 12;
 
 @Injectable()
 export class CompanionService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private stageCalculator: StageCalculatorService,
+  ) {}
 
   async getDailyBrief(babyMonId: string) {
     const babyMon = await this.prisma.babyMon.findUnique({
       where: { id: babyMonId },
-      select: { id: true, name: true, stageStartType: true, birthDate: true, conceptionDate: true, currentStage: true },
+      select: { id: true, name: true, stageStartType: true, birthDate: true, conceptionDate: true, currentStage: true, gender: true },
     });
     if (!babyMon) throw new NotFoundException('BabyMon not found');
 
-    const stageKey = this.calculateStageKey(babyMon);
+    const stageKey = StageCalculatorService.computeStageKey(babyMon);
     const stageName = this.getStageName(stageKey, babyMon);
 
     // Get today's advice card (rotates by priority)
@@ -65,7 +58,8 @@ export class CompanionService {
 
     return {
       babyName: babyMon.name,
-      age: this.calculateAge(babyMon),
+      gender: babyMon.gender,
+      age: StageCalculatorService.computeAge(babyMon),
       stageKey,
       stageName,
       focusOfWeek: tipOfDay?.title || 'Your baby is growing and developing every day',
@@ -95,14 +89,14 @@ export class CompanionService {
     };
   }
 
-  async getRoutine(babyMonId: string) {
+  async getRoutine(babyMonId: string, userId: string) {
     const babyMon = await this.prisma.babyMon.findUnique({
       where: { id: babyMonId },
       select: { id: true, stageStartType: true, birthDate: true, conceptionDate: true },
     });
     if (!babyMon) throw new NotFoundException('BabyMon not found');
 
-    const stageKey = this.calculateStageKey(babyMon);
+    const stageKey = StageCalculatorService.computeStageKey(babyMon);
     const template = await this.prisma.routineTemplate.findUnique({
       where: { stageKey },
     });
@@ -124,6 +118,7 @@ export class CompanionService {
     if (!userRoutine) {
       userRoutine = await this.prisma.userRoutine.create({
         data: {
+          userId,
           babyMonId,
           routineDate: today,
           templateId: template.id,
@@ -148,7 +143,7 @@ export class CompanionService {
       },
       userRoutine: {
         id: userRoutine.id,
-        completedSteps: userRoutine.completedSteps,
+        completedSteps: this.normalizeJsonArray(userRoutine.completedSteps),
         customizations: userRoutine.customizations,
       },
     };
@@ -162,14 +157,34 @@ export class CompanionService {
     });
     if (!userRoutine) throw new NotFoundException('No routine found for today');
 
-    const completedSteps = (userRoutine.completedSteps as any[]).includes(stepLabel)
-      ? userRoutine.completedSteps
-      : [...(userRoutine.completedSteps as any[]), stepLabel];
+    const steps = this.normalizeJsonArray(userRoutine.completedSteps);
+    const completedSteps = steps.includes(stepLabel)
+      ? steps.filter((s: string) => s !== stepLabel)
+      : [...steps, stepLabel];
 
     return this.prisma.userRoutine.update({
       where: { id: userRoutine.id },
       data: { completedSteps },
     });
+  }
+
+  async syncRoutineSteps(babyMonId: string, completedSteps: string[]) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let userRoutine = await this.prisma.userRoutine.findUnique({
+      where: { babyMonId_routineDate: { babyMonId, routineDate: today } },
+    });
+    if (!userRoutine) {
+      userRoutine = await this.prisma.userRoutine.create({
+        data: { babyMonId, routineDate: today, templateId: 'default', userId: '', completedSteps },
+      });
+    } else {
+      userRoutine = await this.prisma.userRoutine.update({
+        where: { id: userRoutine.id },
+        data: { completedSteps },
+      });
+    }
+    return { completedSteps: userRoutine.completedSteps };
   }
 
   async getMilestones(babyMonId: string, status?: string) {
@@ -179,7 +194,7 @@ export class CompanionService {
     });
     if (!babyMon) throw new NotFoundException('BabyMon not found');
 
-    const stageKey = this.calculateStageKey(babyMon);
+    const stageKey = StageCalculatorService.computeStageKey(babyMon);
     const where: Record<string, unknown> = { stageKey };
     if (status && status !== 'ACHIEVED') {
       where.status = status;
@@ -241,6 +256,29 @@ export class CompanionService {
     return { achieved: true, xpAwarded: expectation?.xpReward || 0 };
   }
 
+  async unachieveMilestone(babyMonId: string, expectationId: string) {
+    const existing = await this.prisma.babyMilestone.findUnique({
+      where: { babyMonId_expectationId: { babyMonId, expectationId } },
+    });
+    if (!existing) return { notFound: true };
+
+    await this.prisma.babyMilestone.delete({
+      where: { id: existing.id },
+    });
+
+    const expectation = await this.prisma.milestoneExpectation.findUnique({
+      where: { id: expectationId },
+    });
+    if (expectation?.xpReward) {
+      await this.prisma.babyMon.update({
+        where: { id: babyMonId },
+        data: { currentXp: { decrement: expectation.xpReward } },
+      });
+    }
+
+    return { unachieved: true };
+  }
+
   async getAdvice(babyMonId: string, category?: string, skip = 0, take = 10) {
     const babyMon = await this.prisma.babyMon.findUnique({
       where: { id: babyMonId },
@@ -248,7 +286,7 @@ export class CompanionService {
     });
     if (!babyMon) throw new NotFoundException('BabyMon not found');
 
-    const stageKey = this.calculateStageKey(babyMon);
+    const stageKey = StageCalculatorService.computeStageKey(babyMon);
     const where: Record<string, unknown> = { stageKey };
     if (category) where.category = category;
 
@@ -307,40 +345,20 @@ export class CompanionService {
 
   // ─── Helpers ───
 
-  private calculateStageKey(babyMon: { stageStartType: string; conceptionDate?: Date | string | null; birthDate?: Date | string | null; ideaDate?: Date | string | null }): string {
-    if (babyMon.stageStartType === 'IDEA') {
-      return 'idea';
+  /** Normalize a JSON column value (string or already-parsed array) to a plain array. */
+  private normalizeJsonArray(value: unknown): string[] {
+    if (Array.isArray(value)) return value as string[];
+    if (typeof value === 'string') {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return parsed as string[];
+      } catch { /* fall through */ }
     }
-    if (babyMon.stageStartType === 'CONCEIVED' && babyMon.conceptionDate) {
-      const weeks = Math.floor((Date.now() - new Date(babyMon.conceptionDate).getTime()) / MS_PER_WEEK);
-      return `preg_week_${Math.min(weeks, MAX_PREGNANCY_WEEKS)}`;
-    }
-    if (babyMon.stageStartType === 'BORN' && babyMon.birthDate) {
-      const months = Math.floor((Date.now() - new Date(babyMon.birthDate).getTime()) / MS_PER_MONTH);
-      if (months < WEEK_TO_MONTH_THRESHOLD) {
-        const weeks = Math.floor((Date.now() - new Date(babyMon.birthDate).getTime()) / MS_PER_WEEK);
-        return `born_week_${weeks}`;
-      }
-      return `born_month_${Math.min(months, MAX_BABY_MONTHS)}`;
-    }
-    return 'born_week_0';
+    return [];
   }
 
-  private calculateAge(babyMon: { birthDate?: Date | string | null; conceptionDate?: Date | string | null }): string {
-    if (babyMon.birthDate) {
-      const days = Math.floor((Date.now() - new Date(babyMon.birthDate).getTime()) / MS_PER_DAY);
-      if (days < NEWBORN_DAYS_THRESHOLD) return `${days} days old`;
-      const months = Math.floor(days / DAYS_PER_MONTH);
-      const remainingDays = days % DAYS_PER_MONTH;
-      const weeks = Math.floor(remainingDays / DAYS_PER_WEEK);
-      return `${months} month${months > 1 ? 's' : ''}${weeks > 0 ? `, ${weeks} week${weeks > 1 ? 's' : ''}` : ''} old`;
-    }
-    if (babyMon.conceptionDate) {
-      const weeks = Math.floor((Date.now() - new Date(babyMon.conceptionDate).getTime()) / MS_PER_WEEK);
-      return `${weeks} weeks pregnant`;
-    }
-    return 'Just getting started';
-  }
+  // Stage calculation and age display delegated to StageCalculatorService
+  // (see common/stage-calculator.service.ts — computeStageKey, computeAge)
 
   private getStageName(stageKey: string, babyMon: { name?: string | null; stageStartType?: string | null }): string {
     if (stageKey.startsWith('preg_week_')) {
@@ -360,7 +378,7 @@ export class CompanionService {
       if (month <= 18) return 'Young Toddler';
       return 'Older Toddler';
     }
-    if (babyMon.stageStartType === 'IDEA') return 'Pre-conception';
+    if (babyMon.stageStartType === 'PLAN') return 'Pre-conception';
     return 'Getting Started';
   }
 }

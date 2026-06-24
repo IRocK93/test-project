@@ -1,24 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../domain/entities/baby_mon_summary.dart';
 import 'evolution_visualizer.dart';
 import 'xp_progress_bar.dart';
-
 class BabyMonCard extends StatelessWidget {
   final BabyMonSummary babyMon;
   final VoidCallback? onTap;
-
   const BabyMonCard({
     super.key,
     required this.babyMon,
     this.onTap,
   });
-
   String _formatAge(DateTime birthDate) {
     final now = DateTime.now();
     final difference = now.difference(birthDate);
     final days = difference.inDays;
-
     if (days < 7) {
       return '$days days old';
     } else if (days < 30) {
@@ -29,7 +24,6 @@ class BabyMonCard extends StatelessWidget {
       return '$months ${months == 1 ? 'month' : 'months'} old';
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Card(

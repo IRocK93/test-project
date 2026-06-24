@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../../../../data/api_client.dart';
+import 'package:baby_mon/core/data/api_client.dart';
 import '../../domain/entities/feed_log.dart';
 
 class FeedingRepository {

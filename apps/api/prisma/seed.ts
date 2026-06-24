@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { seedCompanion } from './seed-companion';
 
 const prisma = new PrismaClient();
 
@@ -107,6 +108,36 @@ async function main() {
   }
 
   console.log('Database seeded successfully!');
+  console.log('Running companion seed...');
+  await seedCompanion();
+  console.log('Companion seed complete!');
+
+  // ── Dev: Give premium user PREMIUM tier ──
+  const premiumEmail = process.env.PREMIUM_USER_EMAIL || 'premium-user@babymon.app';
+  const premiumUser = await prisma.user.findUnique({ where: { email: premiumEmail } });
+  if (premiumUser) {
+    const farFuture = new Date();
+    farFuture.setFullYear(farFuture.getFullYear() + 10);
+    await prisma.subscription.upsert({
+      where: { id: `premium-${premiumUser.id}` },
+      create: {
+        id: `premium-${premiumUser.id}`,
+        userId: premiumUser.id,
+        tier: 'PREMIUM',
+        trialStartDate: new Date(),
+        trialEndDate: farFuture,
+        isActive: true,
+      },
+      update: {
+        tier: 'PREMIUM',
+        trialEndDate: farFuture,
+        isActive: true,
+      },
+    });
+    console.log(`Granted PREMIUM tier to ${premiumEmail}`);
+  } else {
+    console.log(`Premium user ${premiumEmail} not found yet — will need to re-seed after registration`);
+  }
 }
 
 main()

@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { LinkedAccountsService } from './linked-accounts.service';
 import { InvitePartnerDto, RespondToInvitationDto, LinkBabyMonDto } from './dto/linked-accounts.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 /**
  * User-level co-parent routes (retained for admin / non-mobile callers and
@@ -18,8 +19,8 @@ export class LinkedAccountsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all linked accounts for current user' })
-  async getLinkedAccounts(@CurrentUser('id') userId: string) {
-    return this.linkedAccountsService.getLinkedAccounts(userId);
+  async getLinkedAccounts(@CurrentUser('id') userId: string, @Query() pagination?: PaginationDto) {
+    return this.linkedAccountsService.getLinkedAccounts(userId, pagination?.skip, pagination?.take);
   }
 
   @Get('invitations')

@@ -1,5 +1,5 @@
-import { IsString, IsOptional, IsArray, IsDateString, IsEnum } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsOptional, IsArray, IsDateString } from 'class-validator';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 
 export class CreateMilestoneDto {
   @ApiProperty({ example: 'First smile' })
@@ -26,24 +26,4 @@ export class CreateMilestoneDto {
   isCustom?: boolean;
 }
 
-export class UpdateMilestoneDto {
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  title?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  notes?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsDateString()
-  happenedAt?: string;
-
-  @ApiProperty({ required: false, type: [String] })
-  @IsOptional()
-  @IsArray()
-  localMediaRefs?: string[];
-}
+export class UpdateMilestoneDto extends PartialType(CreateMilestoneDto) {}

@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { GrowthService } from './growth.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { CreateGrowthRecordDto } from './dto/growth.dto';
 
 @ApiTags('growth')
 @ApiBearerAuth()
@@ -16,16 +17,16 @@ export class GrowthController {
   async add(
     @CurrentUser('id') userId: string,
     @Param('babyMonId') babyMonId: string,
-    @Body() body: { type: 'HEIGHT' | 'WEIGHT' | 'HEAD_CIRCUMFERENCE'; value: number; unit: string; measuredAt: string; notes?: string },
+    @Body() dto: CreateGrowthRecordDto,
   ) {
     return this.growthService.addGrowthRecord(
       userId,
       babyMonId,
-      body.type,
-      body.value,
-      body.unit,
-      new Date(body.measuredAt),
-      body.notes,
+      dto.type,
+      dto.value,
+      dto.unit,
+      new Date(dto.measuredAt),
+      dto.notes,
     );
   }
 
@@ -37,6 +38,17 @@ export class GrowthController {
     @Query('type') type?: string,
   ) {
     return this.growthService.getGrowthRecords(babyMonId, userId, type);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update growth record' })
+  async update(
+    @CurrentUser('id') userId: string,
+    @Param('babyMonId') babyMonId: string,
+    @Param('id') id: string,
+    @Body() dto: CreateGrowthRecordDto,
+  ) {
+    return this.growthService.updateGrowthRecord(id, babyMonId, userId, dto);
   }
 
   @Get('analysis')

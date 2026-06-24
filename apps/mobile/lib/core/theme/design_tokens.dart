@@ -75,11 +75,11 @@ class DesignTokens {
   //  GLASSMORPHISM TOKENS
   // ═══════════════════════════════════════
   /// Standard frosted glass blur intensity (in sigma pixels)
-  static const double glassBlurLight = 8.0;
+  static const double glassBlurLight = 4.0;
   /// Medium frosted glass blur
-  static const double glassBlurMd = 15.0;
+  static const double glassBlurMd = 8.0;
   /// Heavy frosted glass blur
-  static const double glassBlurHeavy = 24.0;
+  static const double glassBlurHeavy = 12.0;
   /// Glass border width
   static const double glassBorderWidth = 0.5;
   /// Glass border width (elevated)
@@ -285,4 +285,14 @@ extension QuickThemeAccess on BuildContext {
   ColorScheme get colorScheme => Theme.of(this).colorScheme;
   GlassTokens get glass => Theme.of(this).extension<GlassTokens>()!;
   Color get dividerColor => Theme.of(this).dividerColor;
+}
+
+// ── Accessibility: WCAG 2.1 minimum touch target (48dp) ────────
+class TouchTargets {
+  /// Minimum touch target size per WCAG 2.1 SC 2.5.5 (Level AAA).
+  static const double minSize = 48.0;
+
+  /// Convenience: constrains a widget to minimum touch target size.
+  static BoxConstraints get minConstraints =>
+      const BoxConstraints(minWidth: minSize, minHeight: minSize);
 }

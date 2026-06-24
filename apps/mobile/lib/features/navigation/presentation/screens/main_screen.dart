@@ -1,5 +1,4 @@
 import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,23 +11,19 @@ import 'package:baby_mon/features/dashboard/dashboard.dart';
 import 'package:baby_mon/features/milestones/milestones.dart';
 import 'package:baby_mon/features/feeding/feeding.dart';
 import 'package:baby_mon/features/health/health.dart';
-import 'package:baby_mon/features/companion/companion.dart';
 import 'package:baby_mon/core/core.dart';
-
+import 'package:baby_mon/l10n/l10n_ext.dart';
 /// Main navigation shell — redesigned with 5-tab bottom nav, floating AppBar,
 /// premium drawer, and cross-fade tab transitions.
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
-
   @override
   ConsumerState<MainScreen> createState() => _MainScreenState();
 }
-
 class _MainScreenState extends ConsumerState<MainScreen> {
   int _currentIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final _visitedTabs = <int>{0}; // dashboard starts visited
-
   // ═══ BabyMon selector ═══
   String? _activeBabyMonId;
   String _activeBabyMonName = '';
@@ -36,20 +31,17 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   List<Map<String, dynamic>> _allBabyMons = [];
   bool _selectorLoading = true;
   bool _switchInProgress = false;
-
   // ═══ Scroll-aware tab label ═══
   final Set<int> _scrolledTabs = {};
-
   // Navigation configuration
   static const _tabCount = 5;
-  static const List<_NavTab> _tabs = [
-    _NavTab(PhosphorIconsLight.gauge, PhosphorIconsLight.gauge, 'Dashboard'),
-    _NavTab(PhosphorIconsLight.trophy, PhosphorIconsLight.trophy, 'Milestones'),
-    _NavTab(PhosphorIconsLight.bowlFood, PhosphorIconsLight.bowlFood, 'Feeding'),
-    _NavTab(PhosphorIconsLight.heart, PhosphorIconsLight.heart, 'Health'),
+  List<_NavTab> _buildTabs(BuildContext context) => [
+    _NavTab(PhosphorIconsLight.gauge, PhosphorIconsLight.gauge, context.l10n.dashboard),
+    _NavTab(PhosphorIconsLight.trophy, PhosphorIconsLight.trophy, context.l10n.milestones),
+    _NavTab(PhosphorIconsLight.bowlFood, PhosphorIconsLight.bowlFood, context.l10n.feeding),
+    _NavTab(PhosphorIconsLight.heart, PhosphorIconsLight.heart, context.l10n.health),
     _NavTab(PhosphorIconsLight.dotsSixVertical, PhosphorIconsLight.dotsSixVertical, 'More'),
   ];
-
   /// Returns the real screen for visited tabs, [SizedBox.shrink] for others.
   /// IndexedStack builds all children eagerly — deferring unvisited tabs
   /// prevents their API calls from racing on first render.
@@ -64,7 +56,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       const SizedBox.shrink(),
     ];
   }
-
   /// Wraps a tab screen in [ScrollAware] to track scroll offset for the pill.
   Widget _scrollAware(int tabIndex, Widget screen) {
     return ScrollAware(
@@ -84,7 +75,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       child: screen,
     );
   }
-
   @override
   void initState() {
     super.initState();
@@ -93,9 +83,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       if (prev != next) _loadSelectorData();
     });
   }
-
   // ═══ BabyMon selector ═══
-
   Future<void> _loadSelectorData() async {
     try {
       final api = ref.read(apiClientProvider);
@@ -132,7 +120,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       if (mounted) setState(() => _selectorLoading = false);
     }
   }
-
   Future<void> _switchBabyMon(String newId) async {
     if (_switchInProgress || newId == _activeBabyMonId) return;
     _switchInProgress = true;
@@ -144,43 +131,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       _switchInProgress = false;
     }
   }
-
   void _openCompanion(BuildContext context) {
-    if (_activeBabyMonId != null) {
-      context.push('/companion/$_activeBabyMonId');
-      return;
-    }
-    // No BabyMon yet — prompt the user to create one
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('BabyMon Profile Required'),
-        content: const Text(
-          'Create a BabyMon profile first to unlock the AI Companion — '
-          'personalised routines, milestones, and parenting guidance.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              context.push('/create-baby-mon');
-            },
-            child: const Text('Create Profile'),
-          ),
-        ],
-      ),
-    );
+    context.push('/companion/${_activeBabyMonId ?? ''}');
   }
-
   // ═══ Gender helpers ═══
-
   String _genderEmoji(String? g) =>
       g == 'MONIESE' ? '♀' : g == 'MONIOUS' ? '♂' : '';
-
   Color _genderBg(String? g) {
     switch (g) {
       case 'MONIESE': return AppColors.genderMoniese;
@@ -188,7 +144,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       default: return AppColors.genderNeutral;
     }
   }
-
   Color _genderAccent(String? g) {
     switch (g) {
       case 'MONIESE': return AppColors.genderMonieseAccent;
@@ -196,18 +151,14 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       default: return AppColors.genderNeutralAccent;
     }
   }
-
   // ═══ AppBar — Floating island BabyMon selector ═══
-
   Widget _buildAppBarSelector() {
     if (_selectorLoading) {
       return const ButtonLoading(size: 24);
     }
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = _genderBg(_activeBabyMonGender);
     final accent = _genderAccent(_activeBabyMonGender);
-
     if (_allBabyMons.length <= 1) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -234,7 +185,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         ),
       );
     }
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
@@ -276,29 +226,26 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       ),
     );
   }
-
   // ═══ More Menu Sheet ═══
-
   void _showMoreMenu() {
     final moreItems = [
-      _MoreItem(PhosphorIconsLight.images, 'Album', AppColors.bentoPurple, () {
+      _MoreItem(PhosphorIconsLight.images, context.l10n.album, AppColors.bentoPurple, () {
         Navigator.pop(context);
         context.push('/album');
       }),
-      _MoreItem(PhosphorIconsLight.bookOpen, 'Journal', AppColors.bentoGold, () {
+      _MoreItem(PhosphorIconsLight.bookOpen, context.l10n.journal, AppColors.bentoGold, () {
         Navigator.pop(context);
         context.push('/journal');
       }),
-      _MoreItem(PhosphorIconsLight.compass, 'Discover', AppColors.bentoTeal, () {
+      _MoreItem(PhosphorIconsLight.compass, context.l10n.discover, AppColors.bentoTeal, () {
         Navigator.pop(context);
         context.push('/discover');
       }),
-      _MoreItem(PhosphorIconsLight.magicWand, 'AI Companion', AppColors.bentoIndigo, () {
+      _MoreItem(PhosphorIconsLight.magicWand, context.l10n.companion, AppColors.bentoIndigo, () {
         Navigator.pop(context);
         _openCompanion(context);
       }),
     ];
-
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -358,7 +305,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       ),
     );
   }
-
   Widget _buildMoreGridItem(BuildContext ctx, _MoreItem item) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return ScalePress(
@@ -413,39 +359,32 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       ),
     );
   }
-
-
-
   // ═══ Helpers ═══
-
   void _triggerTabRefresh(int index) {
     ref.read(tabRefreshProvider(index).notifier).state++;
   }
-
   // ═══ Drawer ═══
-
   Widget _buildDrawer() {
     final navItems = [
-      const _DrawerSection('Main', [
-        _DrawerItem(PhosphorIconsLight.house, 'Dashboard', 0),
-        _DrawerItem(PhosphorIconsLight.trophy, 'Milestones', 1),
-        _DrawerItem(PhosphorIconsLight.bowlFood, 'Feeding', 2),
-        _DrawerItem(PhosphorIconsLight.heart, 'Health', 3),
+      _DrawerSection('Main', [
+        _DrawerItem(PhosphorIconsLight.house, context.l10n.dashboard, 0),
+        _DrawerItem(PhosphorIconsLight.trophy, context.l10n.milestones, 1),
+        _DrawerItem(PhosphorIconsLight.bowlFood, context.l10n.feeding, 2),
+        _DrawerItem(PhosphorIconsLight.heart, context.l10n.health, 3),
       ]),
       _DrawerSection('More', [
-        _DrawerItem(PhosphorIconsLight.images, 'Album', null, () =>
+        _DrawerItem(PhosphorIconsLight.images, context.l10n.album, null, () =>
             _drawerNavigate(() => GoRouter.of(context).push('/album'))),
-        _DrawerItem(PhosphorIconsLight.bookOpen, 'Journal', null, () =>
+        _DrawerItem(PhosphorIconsLight.bookOpen, context.l10n.journal, null, () =>
             _drawerNavigate(() => GoRouter.of(context).push('/journal'))),
-        _DrawerItem(PhosphorIconsLight.moon, 'Sleep', null, () =>
+        _DrawerItem(PhosphorIconsLight.moon, context.l10n.sleep, null, () =>
             _drawerNavigate(() => GoRouter.of(context).push('/sleep'))),
-        _DrawerItem(PhosphorIconsLight.compass, 'Discover', null, () =>
+        _DrawerItem(PhosphorIconsLight.compass, context.l10n.discover, null, () =>
             _drawerNavigate(() => GoRouter.of(context).push('/discover'))),
-        _DrawerItem(PhosphorIconsLight.magicWand, 'AI Companion', null, () =>
+        _DrawerItem(PhosphorIconsLight.magicWand, context.l10n.companion, null, () =>
             _drawerNavigate(() => _openCompanion(context))),
       ]),
     ];
-
     return Drawer(
       width: MediaQuery.of(context).size.width * 0.70, // Material Design max drawer width
       child: Column(
@@ -504,7 +443,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               ],
             ),
           ),
-
           // Nav items
           Expanded(
             child: ListView(
@@ -531,13 +469,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   for (final item in section.items)
                     _buildDrawerItem(item),
                 ],
-
                 const Divider(
                   height: DesignTokens.space3xl,
                   indent: DesignTokens.spaceLg,
                   endIndent: DesignTokens.spaceLg,
                 ),
-
                 // Secondary actions
                 _buildDrawerTile(
                   PhosphorIconsLight.gear,
@@ -555,9 +491,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                     () => GoRouter.of(context).push('/partners'),
                   ),
                 ),
-
                 const SizedBox(height: DesignTokens.spaceLg),
-
                 // Logout
                 _buildDrawerTile(
                   PhosphorIconsLight.signOut,
@@ -565,12 +499,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   context.colorScheme.error,
                   () => _logout(),
                 ),
-
                 const SizedBox(height: DesignTokens.space3xl),
               ],
             ),
           ),
-
           // Footer
           Container(
             padding: const EdgeInsets.all(DesignTokens.spaceLg),
@@ -600,7 +532,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       ),
     );
   }
-
   Widget _buildDrawerItem(_DrawerItem item) {
     final index = item.index;
     if (index != null && index < _tabCount) {
@@ -628,7 +559,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       item.onTap,
     );
   }
-
   Widget _buildDrawerTile(
     IconData icon,
     String label,
@@ -664,14 +594,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       ),
     );
   }
-
   void _drawerNavigate(VoidCallback action) {
     Navigator.pop(context);
     action();
   }
-
   // ═══ Logout ═══
-
   Future<void> _logout() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -698,9 +625,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       if (mounted) context.go('/login');
     }
   }
-
   // ═══ Build ═══
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -708,10 +633,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final navBorder = isDark
         ? context.glass.border.withValues(alpha: 0.6)
         : context.glass.border.withValues(alpha: 0.6);
-
     return Scaffold(
       key: _scaffoldKey,
-
       // ── Floating pill AppBar with enhanced frosted glass + premium shadow ──
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(64),
@@ -734,7 +657,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             ),
             child: GlassSurface(
               borderRadius: DesignTokens.radiusXl,
-              blurSigma: DesignTokens.glassBlurHeavy,
+              blurSigma: DesignTokens.glassBlurLight,
               child: AppBar(
                   backgroundColor: navBg,
                   surfaceTintColor: Colors.transparent,
@@ -809,7 +732,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                                     ),
                                   ),
                                   child: Text(
-                                    _tabs[_currentIndex].label,
+                                    _buildTabs(context)[_currentIndex].label,
                                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -832,16 +755,13 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           ),
         ),
       ),
-
       // ── Drawer ──
       drawer: _buildDrawer(),
-
       // ── Body — IndexedStack preserves state across tab switches ──
       body: IndexedStack(
         index: _currentIndex < _tabCount - 1 ? _currentIndex : 0,
         children: _buildScreenList(),
       ),
-
       // ── Bottom Nav — Floating Glass Pill ──
       bottomNavigationBar: Padding(
         padding: EdgeInsets.only(
@@ -853,8 +773,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
           child: BackdropFilter(
             filter: ui.ImageFilter.blur(
-              sigmaX: DesignTokens.glassBlurHeavy,
-              sigmaY: DesignTokens.glassBlurHeavy,
+              sigmaX: DesignTokens.glassBlurLight,
+              sigmaY: DesignTokens.glassBlurLight,
             ),
             child: Container(
               decoration: BoxDecoration(
@@ -880,7 +800,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: List.generate(_tabCount - 1, (index) {
                   final isSelected = _currentIndex == index;
-                  final tab = _tabs[index];
+                  final tab = _buildTabs(context)[index];
                   return _FloatingNavItem(
                     icon: tab.outlinedIcon,
                     activeIcon: tab.filledIcon,
@@ -908,7 +828,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         ),
       ),
     ),
-
       // ── FAB ──
       floatingActionButton: _currentIndex == 0
           ? InfoFab(
@@ -986,18 +905,15 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     );
   }
 }
-
 // ═══════════════════════════════════════
 //  Floating Nav Item
 // ═══════════════════════════════════════
-
 class _FloatingNavItem extends StatelessWidget {
   final IconData icon;
   final IconData activeIcon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
-
   const _FloatingNavItem({
     required this.icon,
     required this.activeIcon,
@@ -1005,7 +921,6 @@ class _FloatingNavItem extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
   });
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1013,7 +928,6 @@ class _FloatingNavItem extends StatelessWidget {
     final inactiveColor = isDark
         ? context.colorScheme.onSurface.withValues(alpha: 0.55)
         : context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7);
-
     return Semantics(
       label: '$label tab',
       button: true,
@@ -1074,40 +988,31 @@ class _FloatingNavItem extends StatelessWidget {
     );
   }
 }
-
 // ═══════════════════════════════════════
 //  Supporting classes
 // ═══════════════════════════════════════
-
 class _NavTab {
   final IconData outlinedIcon;
   final IconData filledIcon;
   final String label;
-
   const _NavTab(this.outlinedIcon, this.filledIcon, this.label);
 }
-
 class _DrawerSection {
   final String title;
   final List<_DrawerItem> items;
-
   const _DrawerSection(this.title, this.items);
 }
-
 class _DrawerItem {
   final IconData icon;
   final String label;
   final int? index;
   final VoidCallback? onTap;
-
   const _DrawerItem(this.icon, this.label, this.index, [this.onTap]);
 }
-
 class _MoreItem {
   final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
-
   const _MoreItem(this.icon, this.label, this.color, this.onTap);
 }

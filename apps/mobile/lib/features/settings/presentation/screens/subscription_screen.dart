@@ -3,33 +3,30 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/core.dart';
-
 class SubscriptionScreen extends ConsumerStatefulWidget {
   const SubscriptionScreen({super.key});
-
   @override
   ConsumerState<SubscriptionScreen> createState() =>
       _SubscriptionScreenState();
 }
-
 class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
-  String _currentPlan = 'CORE';
+  String _currentPlan = 'FREE';
   int? _trialDaysRemaining;
   bool _isLoading = true;
   bool _isUpgrading = false;
-
   // Plan definitions.
   // Prices are kept in a single list so a future remote-config
   // upgrade is a one-line change. Number formatting happens at
   // render-time so the values stay parseable.
   static const List<_PlanSpec> _plans = [
     _PlanSpec(
-      name: 'CORE',
+      name: 'Free',
       price: '\$0',
       period: 'forever',
-      tierName: 'CORE',
+      tierName: 'FREE',
       isRecommended: false,
       features: [
         'Basic tracking (milestones, feeding, health)',
@@ -41,12 +38,12 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       ],
     ),
     _PlanSpec(
-      name: 'AI_COMPANION',
+      name: 'Premium',
       price: '\$4.99',
       period: 'month',
-      tierName: 'AI_COMPANION',
+      tierName: 'PREMIUM',
       isRecommended: true,
-      premiumHeader: 'Everything in CORE, plus:',
+      premiumHeader: 'Everything in Free, plus:',
       features: [
         'AI-powered stage content & tips',
         'Unlimited history',
@@ -56,10 +53,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
         'Evolution narratives',
         'Photo album (S3 storage)',
       ],
-      footerNote: 'Cancel anytime \u00b7 30-day refund',
+      footerNote: '\$4.99/month, auto-renews. Cancel at least 24 hours before renewal.',
     ),
   ];
-
   // Feature comparison matrix.
   static const List<_ComparisonRow> _comparison = [
     _ComparisonRow('Milestones, feeding, health', true, true),
@@ -71,13 +67,11 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     _ComparisonRow('Unlimited history', false, true),
     _ComparisonRow('Cloud photo album', false, true),
   ];
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadSubscription());
   }
-
   Future<void> _loadSubscription() async {
     setState(() => _isLoading = true);
     try {
@@ -87,8 +81,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       final data = parseJsonMap(raw) ?? <String, dynamic>{};
       if (mounted) {
         setState(() {
-          _currentPlan = parseString(data['plan']) ?? 'CORE';
-          _trialDaysRemaining = parseInt(data['trialDaysRemaining']);
+          _currentPlan = parseString(data['tier']) ?? 'FREE';
+          _trialDaysRemaining = parseInt(data['daysRemaining']);
           _isLoading = false;
         });
       }
@@ -96,41 +90,77 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-
-  Future<void> _upgradeToAiCompanion() async {
+  Future<void> _upgradeToPremium() async {
     if (_isUpgrading) return;
     setState(() => _isUpgrading = true);
     HapticFeedback.lightImpact();
     final messenger = ScaffoldMessenger.of(context);
     try {
-      await ref
-          .read(apiClientProvider)
-          .post('/subscriptions/upgrade', data: {'plan': 'PREMIUM'});
-      await _loadSubscription();
-      if (mounted) {
-        messenger.showSnackBar(
-          const SnackBar(content: Text('Upgraded to AI Companion!')),
-        );
+      // Fetch plans to get the Stripe price ID from the backend
+      final plansResp = await ref.read(apiClientProvider).get('/subscriptions/plans');
+      final plansData = plansResp.data is Map ? plansResp.data as Map<String, dynamic> : <String, dynamic>{};
+      final plans = (plansData['plans'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      final premium = plans.firstWhere(
+        (p) => p['tier'] == 'PREMIUM',
+        orElse: () => <String, dynamic>{},
+      );
+      final priceId = premium['stripePriceId'] as String?;
+      if (priceId == null || priceId.isEmpty) {
+        if (mounted) {
+          messenger.showSnackBar(
+            const SnackBar(content: Text('Payment is not configured yet. Please try again later.')),
+          );
+        }
+        return;
+      }
+      // Create Stripe checkout session
+      final checkoutResp = await ref.read(apiClientProvider).post(
+        '/subscriptions/create-checkout-session',
+        data: {'priceId': priceId},
+      );
+      final checkoutData = checkoutResp.data is Map ? checkoutResp.data as Map<String, dynamic> : <String, dynamic>{};
+      final url = checkoutData['url'] as String?;
+      if (url != null && url.isNotEmpty) {
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      } else {
+        if (mounted) {
+          messenger.showSnackBar(
+            const SnackBar(content: Text('Could not start checkout. Please try again.')),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text('Could not upgrade. Please try again.'),
-          ),
+          const SnackBar(content: Text('Could not upgrade. Please try again.')),
         );
       }
     } finally {
       if (mounted) setState(() => _isUpgrading = false);
     }
   }
-
-  void _showComingSoon(String feature) {
+  Future<void> _restorePurchases() async {
+    // Restore purchases is handled by the store's account settings.
+    // iOS: Settings > Apple ID > Subscriptions
+    // Android: Play Store > Payments & subscriptions > Subscriptions
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature — coming soon')),
+      const SnackBar(
+        content: Text('To restore a purchase, go to your app store account settings and tap Restore.'),
+        duration: Duration(seconds: 4),
+      ),
     );
   }
-
+  void _openSupport() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Contact us at support@babymon.app'),
+        duration: Duration(seconds: 3),
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -152,14 +182,12 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                   // ── Hero ──
                   const _Hero(),
                   const SizedBox(height: DesignTokens.spaceXl),
-
                   // ── Current Plan Banner ──
                   _CurrentPlanBanner(
                     currentPlan: _currentPlan,
                     trialDaysRemaining: _trialDaysRemaining,
                   ),
                   const SizedBox(height: DesignTokens.spaceXl),
-
                   // ── Plan Cards (stacked) ──
                   ...List.generate(_plans.length, (i) {
                     final spec = _plans[i];
@@ -181,19 +209,18 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                         isBusy: _isUpgrading,
                         primaryActionLabel: isCurrent
                             ? null
-                            : (spec.tierName == 'AI_COMPANION'
-                                ? 'Upgrade to AI Companion'
-                                : 'Choose CORE'),
+                            : (spec.tierName == 'PREMIUM'
+                                ? 'Upgrade to Premium'
+                                : 'Choose Free'),
                         onPrimaryAction: isCurrent
                             ? null
-                            : (spec.tierName == 'AI_COMPANION'
-                                ? _upgradeToAiCompanion
+                            : (spec.tierName == 'PREMIUM'
+                                ? _upgradeToPremium
                                 : null),
                         footerNote: spec.footerNote,
                       ),
                     );
                   }),
-
                   // ── Comparison Matrix ──
                   const _SectionTitle('Compare features'),
                   const SizedBox(height: DesignTokens.spaceSm),
@@ -231,17 +258,16 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                     ),
                   ),
                   const SizedBox(height: DesignTokens.spaceXl),
-
                   // ── Trust Band ──
                   const _TrustBand(),
                   const SizedBox(height: DesignTokens.space2xl),
-
                   // ── Footer ──
                   _SubscriptionFooter(
-                    onRestore: () => _showComingSoon('Restore purchases'),
-                    onTerms: () => _showComingSoon('Terms'),
-                    onPrivacy: () => _showComingSoon('Privacy'),
-                    onSupport: () => _showComingSoon('Support'),
+                    onRestore: () => _restorePurchases(),
+                    onTerms: () => context.push('/legal/tos'),
+                    onPrivacy: () => context.push('/legal/privacy'),
+                    onChildrensPrivacy: () => context.push('/legal/childrens-privacy'),
+                    onSupport: () => _openSupport(),
                   ),
                 ],
               ),
@@ -249,11 +275,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     );
   }
 }
-
 // ═══════════════════════════════════════════════
 //  Plan Spec (local)
 // ═══════════════════════════════════════════════
-
 class _PlanSpec {
   final String name;
   final String price;
@@ -263,7 +287,6 @@ class _PlanSpec {
   final String? premiumHeader;
   final List<String> features;
   final String? footerNote;
-
   const _PlanSpec({
     required this.name,
     required this.price,
@@ -275,26 +298,21 @@ class _PlanSpec {
     this.footerNote,
   });
 }
-
 class _ComparisonRow {
   final String feature;
   final bool freeIncluded;
   final bool premiumIncluded;
-
   const _ComparisonRow(
     this.feature,
     this.freeIncluded,
     this.premiumIncluded,
   );
 }
-
 // ═══════════════════════════════════════════════
 //  Local sub-widgets (private)
 // ═══════════════════════════════════════════════
-
 class _Hero extends StatelessWidget {
   const _Hero();
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -320,23 +338,19 @@ class _Hero extends StatelessWidget {
     );
   }
 }
-
 class _CurrentPlanBanner extends StatelessWidget {
   final String currentPlan;
   final int? trialDaysRemaining;
-
   const _CurrentPlanBanner({
     required this.currentPlan,
     required this.trialDaysRemaining,
   });
-
   @override
   Widget build(BuildContext context) {
-    final isAiCompanion = currentPlan == 'AI_COMPANION';
+    final isPremium = currentPlan == 'PREMIUM';
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isAiCompanion ? context.colorScheme.primary : context.colorScheme.primary;
+    final accent = isPremium ? context.colorScheme.primary : context.colorScheme.primary;
     final bg = accent.withValues(alpha: isDark ? 0.10 : 0.06);
-
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: DesignTokens.spaceLg,
@@ -365,7 +379,7 @@ class _CurrentPlanBanner extends StatelessWidget {
             ),
             alignment: Alignment.center,
             child: Icon(
-              isAiCompanion
+              isPremium
                   ? PhosphorIconsLight.crown
                   : PhosphorIconsLight.gift,
               size: 22,
@@ -378,7 +392,7 @@ class _CurrentPlanBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isAiCompanion ? 'AI Companion' : 'CORE plan',
+                  isPremium ? 'Premium' : 'Free plan',
                   style: TextStyle(
                     fontSize: DesignTokens.fontLg,
                     fontWeight: FontWeight.w700,
@@ -388,7 +402,7 @@ class _CurrentPlanBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  isAiCompanion ? 'Renews monthly' : 'Free forever',
+                  isPremium ? 'Renews monthly' : 'Free forever',
                   style: TextStyle(
                     fontSize: DesignTokens.fontSm2,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -424,11 +438,9 @@ class _CurrentPlanBanner extends StatelessWidget {
     );
   }
 }
-
 class _SectionTitle extends StatelessWidget {
   final String text;
   const _SectionTitle(this.text);
-
   @override
   Widget build(BuildContext context) {
     return Text(
@@ -441,7 +453,6 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
-
 class _ComparisonHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -487,10 +498,8 @@ class _ComparisonHeader extends StatelessWidget {
     );
   }
 }
-
 class _TrustBand extends StatelessWidget {
   const _TrustBand();
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -526,7 +535,7 @@ class _TrustBand extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '30-day money-back guarantee · Cancel anytime',
+            '30-day money-back guarantee · Cancel anytime through your app store settings. Auto-renews at \$4.99/month unless cancelled 24 hours before renewal.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: DesignTokens.fontSm,
@@ -539,20 +548,19 @@ class _TrustBand extends StatelessWidget {
     );
   }
 }
-
 class _SubscriptionFooter extends StatelessWidget {
   final VoidCallback onRestore;
   final VoidCallback onTerms;
   final VoidCallback onPrivacy;
+  final VoidCallback onChildrensPrivacy;
   final VoidCallback onSupport;
-
   const _SubscriptionFooter({
     required this.onRestore,
     required this.onTerms,
     required this.onPrivacy,
+    required this.onChildrensPrivacy,
     required this.onSupport,
   });
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -568,6 +576,8 @@ class _SubscriptionFooter extends StatelessWidget {
               _FooterLink(label: 'Terms', onTap: onTerms),
               const _FooterDot(),
               _FooterLink(label: 'Privacy', onTap: onPrivacy),
+              const _FooterDot(),
+              _FooterLink(label: 'Children', onTap: onChildrensPrivacy),
             ],
           ),
           const SizedBox(height: DesignTokens.spaceSm),
@@ -588,12 +598,10 @@ class _SubscriptionFooter extends StatelessWidget {
     );
   }
 }
-
 class _FooterLink extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   const _FooterLink({required this.label, required this.onTap});
-
   @override
   Widget build(BuildContext context) {
     return TextButton(
@@ -611,7 +619,6 @@ class _FooterLink extends StatelessWidget {
     );
   }
 }
-
 class _FooterDot extends StatelessWidget {
   const _FooterDot();
   @override

@@ -68,8 +68,8 @@ export const envValidationSchema = Joi.object({
   FIREBASE_CONFIG: Joi.string().optional().allow(''),
 
   // ── AI Companion ─────────────────────────────────────────────
-  COMPANION_MODEL_URL: Joi.string().uri().default(
-    'https://cdn.babymon.app/models/gemma4-e2b-v1-q4km.gguf',
+  COMPANION_MODEL_URL: Joi.string().default(
+    '/api/models/companion-llm/download',
   ),
   COMPANION_MODEL_SHA256: Joi.string().optional().allow('', null),
 

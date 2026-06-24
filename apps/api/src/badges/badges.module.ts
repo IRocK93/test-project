@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { BadgesService } from './badges.service';
 import { BadgesController, BabyMonBadgesController } from './badges.controller';
 

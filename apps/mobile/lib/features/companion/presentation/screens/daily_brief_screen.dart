@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/core/utils/tier_required_exception.dart';
 import 'package:baby_mon/features/companion/presentation/providers/companion_provider.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
+import 'package:baby_mon/features/companion/presentation/widgets/upgrade_prompt.dart';
 
 class DailyBriefScreen extends ConsumerWidget {
   final String babyMonId;
@@ -17,25 +19,30 @@ class DailyBriefScreen extends ConsumerWidget {
     return briefAsync.when(
       data: (data) => _buildContent(context, data),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(PhosphorIconsLight.warning, size: 48, color: context.textSecondary),
-            const SizedBox(height: 16),
-            Text(
-              'Unable to load companion',
-	            style: TextStyle(color: context.textSecondary),
-	            ),
-	            const SizedBox(height: 16),
-	            TextButton.icon(
-	              onPressed: () => ref.invalidate(dailyBriefProvider(babyMonId)),
-	              icon: const Icon(PhosphorIconsLight.arrowCounterClockwise, size: 18),
-	              label: const Text('Retry'),
-	            ),
-          ],
-        ),
-      ),
+      error: (error, _) {
+        if (error is TierRequiredException) {
+          return const UpgradePromptWidget(featureName: 'Daily Brief');
+        }
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(PhosphorIconsLight.warning, size: 48, color: context.textSecondary),
+              const SizedBox(height: 16),
+              Text(
+                'Unable to load companion',
+                style: TextStyle(color: context.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              TextButton.icon(
+                onPressed: () => ref.invalidate(dailyBriefProvider(babyMonId)),
+                icon: const Icon(PhosphorIconsLight.arrowCounterClockwise, size: 18),
+                label: const Text('Retry'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

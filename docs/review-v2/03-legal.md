@@ -107,9 +107,9 @@
 
 **Location:** `model-manifest.controller.ts`, `llamadart_engine.dart`
 
-**What:** App redistributes Gemma 4 E2B as downloadable GGUF from `cdn.babymon.app`. Gemma's license imposes specific use restrictions, attribution requirements, and prohibited use cases. No evidence of license compliance.
+**What:** App offers downloadable LLM models (SmolLM2 360M / SmolLM3 3B) via HuggingFace. Both are Apache 2.0 licensed — permissive for commercial redistribution with attribution. No use restrictions beyond the standard Apache 2.0 terms.
 
-**Recommended Action:** Review and comply with Gemma's license terms. Include required attribution and license notices. Address prohibited use cases in ToS.
+**Recommended Action:** Include Apache 2.0 attribution in app legal notices. SmolLM2/SmolLM3 are from HuggingFace — attribution requirement satisfied by mentioning the model name and license in-app.
 
 ---
 

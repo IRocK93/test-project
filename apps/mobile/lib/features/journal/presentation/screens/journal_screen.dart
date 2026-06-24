@@ -8,30 +8,23 @@ import 'package:baby_mon/core/core.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/mixins/mixins.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
-
 class JournalScreen extends ConsumerStatefulWidget {
   const JournalScreen({super.key});
-
   @override
   ConsumerState<JournalScreen> createState() => _JournalScreenState();
 }
-
 class _JournalScreenState extends ConsumerState<JournalScreen>
     with DataScreenMixin<JournalScreen> {
   @override
   bool get autoInit => true;
-
   @override
   int? get listenToTabRefresh => 4;
-
   @override
   Duration? get refreshCooldown => const Duration(seconds: 10);
-
   List _entries = [];
   List _proposals = [];
   String _selectedFilterKey = 'ALL';
   final Map<String, int> _filterCounts = {'ALL': 0};
-
   // Filter definitions with display labels and stable keys.
   static const List<_FilterSpec> _filters = [
     _FilterSpec('All', 'ALL'),
@@ -40,7 +33,6 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
     _FilterSpec('Health', 'HEALTH_RECORD'),
     _FilterSpec('System', 'SYSTEM'),
   ];
-
   @override
   Future<void> fetchData() async {
     final api = ref.read(apiClientProvider);
@@ -58,7 +50,6 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
       _filterCounts['ALL'] = _entries.length;
     }
   }
-
   Future<void> _refreshAllCount() async {
     if (babyMonId == null) return;
     try {
@@ -74,13 +65,11 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
       debugPrint('Failed to refresh filter counts: $e');
     }
   }
-
   Future<void> _selectFilter(String key) async {
     if (key == _selectedFilterKey) return;
     setState(() => _selectedFilterKey = key);
     await loadData();
   }
-
   Future<void> _respondToProposal(
       String proposalId, bool accept) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -98,11 +87,11 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
       }
     }
   }
-
   Future<void> _deleteEntry(Map<String, dynamic> entry) async {
     final messenger = ScaffoldMessenger.of(context);
     final id = entry['id']?.toString();
     if (id == null) return;
+    final entryType = entry['entryType']?.toString();
     final confirmed = await ConfirmDeleteDialog.show(
       context,
       title: 'Delete entry?',
@@ -111,9 +100,21 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
     );
     if (!confirmed) return;
     try {
-      await ref
-          .read(apiClientProvider)
-          .delete('/api/journal-entries/$id');
+      final api = ref.read(apiClientProvider);
+      // Route delete to the correct source table based on entry type
+      switch (entryType) {
+        case 'MILESTONE':
+          await api.deleteMilestone(id);
+          break;
+        case 'FEED_LOG':
+          await api.deleteFeedLog(id);
+          break;
+        case 'HEALTH_RECORD':
+          await api.deleteHealthRecord(id);
+          break;
+        default:
+          await api.delete('/api/journal-entries/$id'); // fallback
+      }
       await loadData();
       if (mounted) {
         messenger.showSnackBar(
@@ -130,21 +131,18 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
       }
     }
   }
-
   // ── Date grouping ──
   List<MapEntry<String, List<Map<String, dynamic>>>> _groupEntriesByDate() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final weekStart = today.subtract(Duration(days: now.weekday - 1));
-
     final groups = <String, List<Map<String, dynamic>>>{
       'TODAY': [],
       'YESTERDAY': [],
       'THIS WEEK': [],
     };
     final monthlyGroups = <String, List<Map<String, dynamic>>>{};
-
     for (final raw in _entries) {
       final entry = parseJsonMap(raw) ?? <String, dynamic>{};
       final dateStr = entry['happenedAt'] ?? entry['createdAt'];
@@ -154,7 +152,6 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
       final date = DateTime.tryParse(dateStr.toString())?.toLocal();
       if (date == null) continue;
       final d = DateTime(date.year, date.month, date.day);
-
       if (d == today) {
         groups['TODAY']!.add(entry);
       } else if (d == yesterday) {
@@ -166,7 +163,6 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
         monthlyGroups.putIfAbsent(key, () => []).add(entry);
       }
     }
-
     final ordered = <MapEntry<String, List<Map<String, dynamic>>>>[];
     for (final key in ['TODAY', 'YESTERDAY', 'THIS WEEK']) {
       final items = groups[key]!;
@@ -184,7 +180,6 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
     }
     return ordered;
   }
-
   DateTime _entryDate(Map<String, dynamic> entry) {
     final dateStr = entry['happenedAt'] ?? entry['createdAt'];
     // The server returns ISO-8601 timestamps in UTC. Convert to local time
@@ -192,9 +187,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
     return (DateTime.tryParse(dateStr?.toString() ?? '') ?? DateTime.now())
         .toLocal();
   }
-
   String _formatTime(DateTime d) => DateFormat.jm().format(d);
-
   String _entrySubtitle(Map<String, dynamic> entry) {
     final type = JournalEntryType.fromString(entry['entryType']?.toString());
     if (type == JournalEntryType.feedLog) {
@@ -217,20 +210,17 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
     }
     return type.label;
   }
-
   String _entryTitle(Map<String, dynamic> entry) {
     final explicit = entry['title']?.toString();
     if (explicit != null && explicit.isNotEmpty) return explicit;
     return JournalEntryType.fromString(entry['entryType']?.toString())
         .label;
   }
-
   // ── Build ──
   @override
   Widget build(BuildContext context) {
     final loading = isLoading && _entries.isEmpty && _proposals.isEmpty;
     final groups = _groupEntriesByDate();
-
     return Scaffold(
       appBar: ScreenHeader(
         title: 'Journey Journal',
@@ -253,7 +243,6 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
                           onReview: () => _showProposalsSheet(),
                         ),
                       ),
-
                     // ── Filter Chips ──
                     SliverToBoxAdapter(
                       child: Padding(
@@ -285,7 +274,6 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
                         ),
                       ),
                     ),
-
                     // ── Empty State ──
                     if (_entries.isEmpty)
                       SliverFillRemaining(
@@ -324,7 +312,6 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
                           childCount: groups.length,
                         ),
                       ),
-
                     const SliverToBoxAdapter(
                       child: SizedBox(height: DesignTokens.space4xl),
                     ),
@@ -334,7 +321,6 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
       ),
     );
   }
-
   void _showProposalsSheet() {
     showModalBottomSheet<void>(
       context: context,
@@ -397,30 +383,25 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
     );
   }
 }
-
 // ═══════════════════════════════════════════════
 //  Local sub-widgets
 // ═══════════════════════════════════════════════
-
 class _FilterSpec {
   final String label;
   final String key;
   const _FilterSpec(this.label, this.key);
 }
-
 class _FilterPill extends StatelessWidget {
   final String label;
   final int count;
   final bool selected;
   final VoidCallback onTap;
-
   const _FilterPill({
     required this.label,
     required this.count,
     required this.selected,
     required this.onTap,
   });
-
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -491,14 +472,12 @@ class _FilterPill extends StatelessWidget {
     );
   }
 }
-
 class _JournalEntryTile extends StatelessWidget {
   final Map<String, dynamic> entry;
   final String title;
   final String subtitle;
   final String time;
   final VoidCallback onDelete;
-
   const _JournalEntryTile({
     required this.entry,
     required this.title,
@@ -506,13 +485,11 @@ class _JournalEntryTile extends StatelessWidget {
     required this.time,
     required this.onDelete,
   });
-
   @override
   Widget build(BuildContext context) {
     final type =
         JournalEntryType.fromString(entry['entryType']?.toString());
     final isPending = entry['syncStatus'] == 'PENDING';
-
     return Padding(
       // Mirror the row's outer margin so the swipe background aligns
       // edge-to-edge with the rounded card.
@@ -566,18 +543,15 @@ class _JournalEntryTile extends StatelessWidget {
     );
   }
 }
-
 class _ProposalRow extends StatelessWidget {
   final Map<String, dynamic> proposal;
   final VoidCallback onAccept;
   final VoidCallback onDecline;
-
   const _ProposalRow({
     required this.proposal,
     required this.onAccept,
     required this.onDecline,
   });
-
   @override
   Widget build(BuildContext context) {
     final proposer =

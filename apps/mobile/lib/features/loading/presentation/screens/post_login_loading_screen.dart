@@ -1,53 +1,42 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
-
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
-
 /// Full-screen branded loading experience shown after sign-in.
 ///
 /// Pre-fetches dashboard data into the [ResponseCache] while displaying
 /// an animated splash for a minimum of 6 seconds, then navigates to /home.
 class PostLoginLoadingScreen extends ConsumerStatefulWidget {
   const PostLoginLoadingScreen({super.key});
-
   @override
   ConsumerState<PostLoginLoadingScreen> createState() =>
       _PostLoginLoadingScreenState();
 }
-
 class _PostLoginLoadingScreenState
     extends ConsumerState<PostLoginLoadingScreen> {
   static const _minDisplaySeconds = 6;
   static const _messageCycleSeconds = 2;
-
   final List<String> _messages = const [
     'Welcome back!',
     'Loading your BabyMon…',
     'Preparing your dashboard…',
     'Almost ready…',
   ];
-
   int _messageIndex = 0;
   Timer? _messageTimer;
-
   @override
   void initState() {
     super.initState();
     _start();
   }
-
   @override
   void dispose() {
     _messageTimer?.cancel();
     super.dispose();
   }
-
   Future<void> _start() async {
     // Cycle loading messages
     _messageTimer = Timer.periodic(
@@ -58,15 +47,12 @@ class _PostLoginLoadingScreenState
         }
       },
     );
-
     // Run pre-fetch and minimum timer in parallel
     final results = await Future.wait([
       _prefetchData(),
       Future.delayed(const Duration(seconds: _minDisplaySeconds)),
     ]);
-
     final prefetchOk = results[0] as bool;
-
     if (mounted) {
       _messageTimer?.cancel();
       // Brief pause so the user sees the final state
@@ -81,7 +67,6 @@ class _PostLoginLoadingScreenState
       }
     }
   }
-
   /// Pre-fetches essential dashboard data to warm the ResponseCache.
   /// Returns true if the critical path (BabyMon ID + BabyMon) succeeded.
   Future<bool> _prefetchData() async {
@@ -90,7 +75,6 @@ class _PostLoginLoadingScreenState
       // Step 1: get selected BabyMon ID
       final id = await api.getSelectedBabyMonId();
       if (id == null) return false; // No BabyMon yet — dashboard shows welcome
-
       // Step 2: parallel fetch all essential dashboard data
       await Future.wait([
         _safeFetch(() => api.getBabyMon(id)),
@@ -100,13 +84,11 @@ class _PostLoginLoadingScreenState
         _safeFetch(() => api.getAllergies(id)),
         _safeFetch(() => api.getProfile()),
       ]);
-
       return true;
     } catch (_) {
       return false;
     }
   }
-
   Future<void> _safeFetch(Future<dynamic> Function() fetch) async {
     try {
       await fetch();
@@ -114,12 +96,10 @@ class _PostLoginLoadingScreenState
       // Silently ignore — dashboard will re-fetch on its own
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final cs = context.colorScheme;
     final msg = _messages[_messageIndex % _messages.length];
-
     return Scaffold(
       body: PremiumBackground(
         showOrnaments: true,

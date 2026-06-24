@@ -5,8 +5,8 @@ import { PrismaService } from '../prisma/prisma.service';
 export class MedicalTeamService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(babyMonId: string) {
-    return this.prisma.medicalTeam.findMany({ where: { babyMonId, deletedAt: null }, orderBy: { createdAt: 'desc' } });
+  async findAll(babyMonId: string, skip?: number, take?: number) {
+    return this.prisma.medicalTeam.findMany({ where: { babyMonId, deletedAt: null }, orderBy: { createdAt: 'desc' }, skip, take });
   }
 
   async create(babyMonId: string, userId: string, d: any) {

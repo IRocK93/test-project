@@ -2,6 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/api_constants.dart';
 
+/// @Deprecated('Use ApiClient from core/data/api_client.dart instead. ApiClient has typed methods, proper retry logic, and unified token management.')
+///
+/// This service is used by 3 repositories (milestones, journal, health).
+/// Migration plan: replace with ApiClient typed methods in each repository.
 class ApiService {
   late Dio _dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();

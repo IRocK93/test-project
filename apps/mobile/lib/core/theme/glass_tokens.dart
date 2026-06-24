@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:baby_mon/core/constants/app_colors.dart';
+import 'package:baby_mon/core/theme/clay_colors.dart';
 
 /// Glassmorphism design tokens exposed as a [ThemeExtension].
 ///
@@ -46,12 +47,12 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
 
   /// Clay theme tokens — softer, warmer equivalents.
   factory GlassTokens.clay() => const GlassTokens(
-        background: Color(0xFFF5EDE4),
-        surface: Colors.white,
-        border: Color(0xFFD4C5B2),
-        borderLight: Color(0xFFE8DCD0),
-        shadow: Color(0xFFB8A088),
-        accent: Color(0xFFA45D35),
+        background: ClayColors.background,
+        surface: ClayColors.surface,
+        border: ClayColors.border,
+        borderLight: ClayColors.divider,
+        shadow: ClayColors.primaryDark,
+        accent: ClayColors.accent,
       );
 
   @override

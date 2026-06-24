@@ -479,23 +479,23 @@ companion/
 - **No data leaves the phone** — all inference happens locally, ensuring complete privacy of children's health data
 - **No server costs** — zero per-query API fees, sustainable at any user scale
 
-**Model Selection (2B–4B parameter range, updated June 2026):**
+**Model Selection (updated June 2026):**
 
-| Candidate | Size | Strengths | Considerations |
+| Candidate | Q4_K_M Size | Strengths | Considerations |
 |---|---|---|---|
-| **Gemma 4 E2B** | ~1.2 GB (INT4) | **Top choice.** 2.3B effective params, native text+image+audio multimodal, co-optimized with Qualcomm/MediaTek/Pixel, Apache 2.0, 128K context, configurable thinking mode | Purpose-built for mobile — fastest inference, lowest battery drain |
-| **Gemma 4 E4B** | ~1.8 GB (INT4) | 4.5B effective, same multimodal + mobile optimizations as E2B, higher reasoning quality | Premium option for 8 GB+ devices |
-| **Qwen3.5-4B** | ~2.5 GB (INT4) | 262K context (expandable to 1M), thinking mode, strong multilingual, Apache 2.0 | Best for long-document processing; larger file |
-| **Phi-4-mini** | 2.49 GB (Q4) | 3.8B, strongest English reasoning in class (ARC-C 83.7%, GSM8K 88.6%), MIT license, lowest RAM requirement | Text-only, no multimodal |
-| **Llama 3.2 3B** | ~2 GB (INT4) | Largest ecosystem, function calling, Llama Community License | Text-only, older generation |
+| **SmolLM2 360M** ★ | **~271 MB** | **Default choice.** 0.36B params, standard `llama` architecture, Apache 2.0, ARM-optimized quants, instant download | Small model — best paired with RAG for factual accuracy |
+| **SmolLM3 3B** | **~1.92 GB** | **Premium upgrade.** 3B params, 128K context, dual-mode reasoning (think/no_think), Apache 2.0, fits 4 GB phones | 10 min download on Wi-Fi |
+| Gemma 4 E2B | ~3.11 GB | 2.3B effective, text+image+audio multimodal, 128K context, Apache 2.0 | Too large for 4 GB phones (OOM risk); relegated to future when 6 GB+ is baseline |
+| Qwen 2.5 1.5B | ~0.9 GB | Lightweight, Apache 2.0, decent quality | Good alternative if SmolLM2 is insufficient |
 
-**Recommended default:** Gemma 4 E2B (INT4 quantized) — best overall balance of quality, speed, multimodal capability, and device compatibility. The app downloads the model on first AI_COMPANION activation (~1.2 GB download, one-time). Gemma 4 E4B available as optional premium download for 8 GB+ devices.
+**Recommended default:** SmolLM2 360M Instruct (Q4_K_M, 271 MB) — guaranteed to run on every 4 GB Android phone, instant download, clean license. Backed by RAG over 500 curated parenting cards for factual accuracy. SmolLM3 3B available as optional premium download for deeper reasoning.
 
 **Runtime Engine:**
-- **llama.cpp** via `dart_llama_cpp` or `flutter_llama` Flutter plugin
-- INT4 quantization (GGUF format) for efficient on-device inference
-- GPU acceleration via Metal (iOS) and Vulkan/OpenCL (Android)
-- Target inference speed: 5-15 tokens/second on modern phones (iPhone 14+/Pixel 7+)
+- **llamadart** v0.6.11 — Flutter/Dart wrapper around llama.cpp, zero-config Pure Native Assets
+- GGUF format (Q4_K_M quantization) for efficient on-device inference
+- GPU acceleration via Metal (iOS) and Vulkan (Android)
+- Target inference speed: 10-25 tokens/second on modern phones (iPhone 14+/Pixel 7+)
+- Supports Gemma 4 architecture as of v0.6.10
 
 **System Prompt Design (optimized for small models):**
 ```

@@ -7,6 +7,8 @@ import 'package:baby_mon/features/companion/presentation/widgets/chat_bubble.dar
 import 'package:baby_mon/features/companion/presentation/widgets/chat_input_bar.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/thinking_indicator.dart';
 import 'package:baby_mon/features/companion/presentation/providers/companion_provider.dart';
+import 'package:baby_mon/features/companion/presentation/providers/llm_provider.dart';
+import 'package:baby_mon/features/companion/data/llm/safety_classifier.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
@@ -24,6 +26,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   bool _isGenerating = false;
   String _babyName = '';
   String _ageInfo = '';
+  String _genderInfo = '';
   String _stageInfo = '';
   String _focusInfo = '';
 
@@ -98,6 +101,40 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void initState() {
     super.initState();
     _loadBabyContext();
+    _loadModelIfNeeded();
+  }
+
+  Future<void> _loadModelIfNeeded() async {
+    final inferenceService = ref.read(llmInferenceServiceProvider);
+    if (inferenceService.contentOnlyMode) return; // Basic mode — skip
+
+    final modelManager = await ref.read(modelManagerProvider.future);
+    final modelPath = await modelManager.getActiveModelPath();
+    if (modelPath == null) return; // No active model
+
+    final engine = ref.read(llamadartEngineProvider);
+    if (!engine.isLoaded) {
+      try {
+        await engine.loadModel(modelPath);
+      } catch (_) {
+        // Failed to load — fall back to content-only
+        inferenceService.contentOnlyMode = true;
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Couldn\'t load model. Switched to Basic mode.')),
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    // Unload model to free RAM when leaving chat
+    final engine = ref.read(llamadartEngineProvider);
+    if (engine.isLoaded) engine.unload();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadBabyContext() async {
@@ -106,15 +143,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     setState(() {
       _babyName = briefData['babyName'] as String? ?? 'your baby';
       _ageInfo = briefData['age'] as String? ?? '';
+      _genderInfo = briefData['gender'] as String? ?? '';
       _stageInfo = briefData['stageName'] as String? ?? '';
       _focusInfo = briefData['focusOfWeek'] as String? ?? '';
     });
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
   }
 
   void _sendMessage(String text) {
@@ -154,6 +186,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       userMessage: text,
       babyName: _babyName,
       age: _ageInfo,
+      gender: _genderInfo,
       stageName: _stageInfo,
       focusOfWeek: _focusInfo,
     ).listen(
@@ -162,6 +195,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         if (mounted) setState(() => _messages[assistantIndex] = ChatMessage(role: ChatRole.assistant, content: responseBuffer.toString(), timestamp: assistantMessage.timestamp));
       },
       onDone: () {
+        // Run safety classifier on completed response
+        final fullResponse = responseBuffer.toString();
+        final safety = SafetyClassifier.check(fullResponse);
+        if (safety.flagged && mounted) {
+          setState(() {
+            _messages[assistantIndex] = ChatMessage(
+              role: ChatRole.assistant,
+              content: '$fullResponse\n\n⚠️ ${safety.warning}',
+              timestamp: assistantMessage.timestamp,
+            );
+          });
+        }
         if (mounted) setState(() => _isGenerating = false);
         _scrollToBottom();
       },

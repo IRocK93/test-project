@@ -16,7 +16,7 @@ class DashboardXpCard extends StatelessWidget {
     final progress = evolution!['xpProgress'];
     if (progress != null) return (progress as num).toDouble() / 100.0;
     final xp = (parseDouble(evolution!['currentXp']) ?? 0.0);
-    final needed = parseDouble(evolution!['xpForNextLevel']) ?? 50;
+    final needed = parseDouble(evolution!['xpForNextLevel']) ?? _xpForStage(_currentLevel).toDouble();
     return needed > 0 ? (xp / needed).clamp(0.0, 1.0) : 0.0;
   }
 
@@ -25,12 +25,22 @@ class DashboardXpCard extends StatelessWidget {
   int get _xpForNextLevel {
     final numVal = parseDouble(evolution?['xpForNextLevel']);
     if (numVal != null && numVal > 0) return numVal.round();
-    return 50;
+    return _xpForStage(_currentLevel);
   }
 
   int get _currentLevel => parseInt(evolution?['currentLevel']) ?? 1;
   String get _levelName => parseString(evolution?['levelName']) ?? 'Level $_currentLevel';
   String get _nextLevelName => parseString(evolution?['nextLevelName']) ?? 'Level ${_currentLevel + 1}';
+
+  /// Stage-based XP thresholds — matches backend xp.service.ts XP_BRACKETS.
+  static int _xpForStage(int stage) {
+    if (stage <= 5) return 50;
+    if (stage <= 15) return 75;
+    if (stage <= 25) return 100;
+    if (stage <= 35) return 150;
+    if (stage <= 45) return 200;
+    return 250;
+  }
 
   @override
   Widget build(BuildContext context) {

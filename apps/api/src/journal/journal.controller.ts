@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Param, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JournalService } from './journal.service';
 import { JournalProposalsService } from './journal-proposals.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { PaginationDto } from '../common/dto/pagination.dto';
 
 @ApiTags('journal')
 @ApiBearerAuth()
@@ -21,8 +22,9 @@ export class JournalController {
     @Request() req: any,
     @Param('babyMonId') babyMonId: string,
     @Query('type') type?: string,
+    @Query() pagination?: PaginationDto,
   ): Promise<any> {
-    return this.journalService.getJournal(babyMonId, req.user.id, type);
+    return this.journalService.getJournal(babyMonId, req.user.id, type, pagination?.skip, pagination?.take);
   }
 
   @Get('journal/proposals')

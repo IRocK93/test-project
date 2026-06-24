@@ -1,9 +1,9 @@
-import { IsEnum, IsString, IsOptional, IsArray, IsDateString, ArrayMaxSize, MaxLength, ValidateIf } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsEnum, IsString, IsOptional, IsArray, IsDateString, ArrayMaxSize, ValidateIf } from 'class-validator';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 
 export enum StageType {
-  IDEA = 'IDEA',
-  CONCEIVED = 'CONCEIVED',
+  IDEA = 'PLAN',
+  CONCEIVED = 'INCUBATING',
   BORN = 'BORN',
 }
 
@@ -33,12 +33,12 @@ export class CreateBabyMonDto {
   stageStartType: StageType;
 
   @ApiProperty({ required: false })
-  @ValidateIf(o => o.stageStartType === 'CONCEIVED')
+  @ValidateIf(o => o.stageStartType === 'INCUBATING')
   @IsDateString()
   conceptionDate?: string;
 
   @ApiProperty({ required: false })
-  @ValidateIf(o => o.stageStartType === 'CONCEIVED')
+  @ValidateIf(o => o.stageStartType === 'INCUBATING')
   @IsDateString()
   lmpDate?: string;
 
@@ -48,7 +48,7 @@ export class CreateBabyMonDto {
   birthDate?: string;
 
   @ApiProperty({ required: false })
-  @ValidateIf(o => o.stageStartType === 'IDEA')
+  @ValidateIf(o => o.stageStartType === 'PLAN')
   @IsDateString()
   ideaDate?: string;
 
@@ -89,55 +89,5 @@ export class CreateBabyMonDto {
   eyeColor?: string;
 }
 
-export class UpdateBabyMonDto {
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  name?: string;
+export class UpdateBabyMonDto extends PartialType(CreateBabyMonDto) {}
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  middleName?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  lastName?: string;
-
-  @ApiProperty({ required: false, enum: Gender })
-  @IsOptional()
-  @IsEnum(Gender)
-  gender?: Gender;
-
-  @ApiProperty({ required: false, type: [String] })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  traits?: string[];
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  specialMove?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  biologicalMother?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  biologicalFather?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  bloodGroup?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  eyeColor?: string;
-}

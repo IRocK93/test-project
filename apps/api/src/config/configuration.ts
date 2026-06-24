@@ -75,7 +75,7 @@ export default function configuration(): AppConfig {
 
     jwt: {
       secret: process.env.JWT_SECRET || '',
-      fallbackDevSecret: 'babymon-jwt-dev-secret-do-not-use-in-production',
+      fallbackDevSecret: process.env.JWT_DEV_SECRET || 'dev-secret-change-me',
     },
 
     trialDays: parseInt(process.env.TRIAL_DAYS || '14', 10),
@@ -109,7 +109,7 @@ export default function configuration(): AppConfig {
   companion: {
     modelUrl:
       process.env.COMPANION_MODEL_URL ||
-      'https://cdn.babymon.app/models/gemma4-e2b-v1-q4km.gguf',
+      '/api/models/companion-llm/download',
     modelSha256: process.env.COMPANION_MODEL_SHA256 || null,
   },
 

@@ -1,16 +1,25 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFeedLogDto, UpdateFeedLogDto } from './dto/feed-log.dto';
+import { buildHistoryDateFilter } from '../common/history-filter.helper';
+import { trackDailyActivity } from '../common/daily-activity.helper';
 import { isWithinUndoWindow } from '../common/undo-window.helper';
+import { PROPOSAL_EXPIRY_DAYS } from '../common/app-constants';
 import { BadgesService } from '../badges/badges.service';
+import { XpService } from '../xp/xp.service';
 import { AccessControlService } from '../common/access-control.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 
 @Injectable()
 export class FeedLogsService {
+  private readonly logger = new Logger(FeedLogsService.name);
+
   constructor(
     private prisma: PrismaService,
     private badgesService: BadgesService,
+    private xpService: XpService,
     private accessControlService: AccessControlService,
+    private subscriptionsService: SubscriptionsService,
   ) {}
 
   async create(babymonId: string, userId: string, dto: CreateFeedLogDto) {
@@ -30,7 +39,7 @@ export class FeedLogsService {
         amount: dto.amount,
         unit: dto.unit,
         notes: dto.notes,
-        happenedAt: new Date(dto.happenedAt),
+        happenedAt: new Date(dto.happenedAt || dto.loggedAt || new Date()),
         localMediaRefs: dto.localMediaRefs || [],
         syncStatus: 'SYNCED',
         xpAwarded: 5,
@@ -41,6 +50,10 @@ export class FeedLogsService {
       where: { id: babymonId },
       data: { currentXp: { increment: 5 } },
     });
+
+    await trackDailyActivity(this.prisma, babymonId, 'feedLog');
+
+    await this.xpService.checkAndProcessLevelUp(babymonId);
 
     await this.badgesService.checkAndAwardBadges(babymonId, userId);
 
@@ -59,9 +72,14 @@ export class FeedLogsService {
   async findAll(babymonId: string, userId: string, skip: number = 0, take: number = 20) {
     await this.verifyAccess(babymonId, userId);
 
+    // FREE tier: only show limited history
+    const dateFilter = await buildHistoryDateFilter(this.subscriptionsService, userId);
+
+    const baseWhere = { babymonId, deletedAt: null, ...dateFilter };
+
     const [items, total] = await Promise.all([
       this.prisma.feedLog.findMany({
-        where: { babymonId, deletedAt: null },
+        where: baseWhere,
         orderBy: { happenedAt: 'desc' },
         skip,
         take,
@@ -107,7 +125,7 @@ export class FeedLogsService {
     }
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    expiresAt.setDate(expiresAt.getDate() + PROPOSAL_EXPIRY_DAYS);
 
     return this.prisma.entryChangeProposal.create({
       data: {
@@ -125,34 +143,37 @@ export class FeedLogsService {
   async delete(id: string, userId: string) {
     const feedLog = await this.findOne(id, userId);
 
-    if (isWithinUndoWindow(feedLog.createdAt)) {
-      await this.prisma.feedLog.update({
-        where: { id },
-        data: { deletedAt: new Date() },
-      });
+    // Always soft-delete the feed log
+    await this.prisma.feedLog.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
 
-      await this.prisma.babyMon.update({
-        where: { id: feedLog.babymonId },
-        data: { currentXp: { decrement: feedLog.xpAwarded } },
-      });
+    await this.prisma.babyMon.update({
+      where: { id: feedLog.babymonId },
+      data: { currentXp: { decrement: feedLog.xpAwarded } },
+    });
 
-      return { message: 'Feed log deleted successfully' };
+    // If outside the undo window, also create a proposal for partner review
+    if (!isWithinUndoWindow(feedLog.createdAt)) {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + PROPOSAL_EXPIRY_DAYS);
+
+      // Fire-and-forget: create proposal in background, don't block the response
+      this.prisma.entryChangeProposal.create({
+        data: {
+          babymonId: feedLog.babymonId,
+          proposerUserId: userId,
+          entryType: 'FEED_LOG',
+          entryId: id,
+          proposalType: 'DELETE',
+          proposedPayloadJson: JSON.stringify({}),
+          expiresAt,
+        },
+      }).catch((err) => this.logger.warn?.({ err }, 'Proposal creation failed (non-critical)'));
     }
 
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    return this.prisma.entryChangeProposal.create({
-      data: {
-        babymonId: feedLog.babymonId,
-        proposerUserId: userId,
-        entryType: 'FEED_LOG',
-        entryId: id,
-        proposalType: 'DELETE',
-        proposedPayloadJson: JSON.stringify({}),
-        expiresAt,
-      },
-    });
+    return { message: 'Feed log deleted successfully' };
   }
 
   private async verifyAccess(babymonId: string, userId: string) {

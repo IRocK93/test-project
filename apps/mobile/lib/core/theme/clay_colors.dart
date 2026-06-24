@@ -58,7 +58,8 @@ class ClayColors {
   static const Color textOnDark = Color(0xFFF0EDE8);
 
   static const Color divider = Color(0xFFE8E3DB);
-  static const Color border = Color(0xFFDDD7CF);
+  /// WCAG AA: 3:1 for UI component boundaries (darkened from #DDD7CF for visibility)
+  static const Color border = Color(0xFFB8AFA0);
   static const Color disabled = Color(0xFFD0CBC3);
 
   // ── Extended Neutrals ──

@@ -78,11 +78,13 @@ class ModelManager {
     return null;
   }
 
-  Future<void> setActiveVersion(String version) async {
+  Future<void> setActiveVersion(String? version) async {
     final registry = await _readRegistry();
-    final installed = registry['installedVersions'] as List<dynamic>? ?? [];
-    final found = installed.any((entry) => entry is Map && entry['version'] == version);
-    if (!found) throw ArgumentError('Version "$version" is not installed. Call addInstalledVersion() first.');
+    if (version != null) {
+      final installed = registry['installedVersions'] as List<dynamic>? ?? [];
+      final found = installed.any((entry) => entry is Map && entry['version'] == version);
+      if (!found) throw ArgumentError('Version "$version" is not installed. Call addInstalledVersion() first.');
+    }
     registry['activeVersion'] = version;
     await _writeRegistry(registry);
   }

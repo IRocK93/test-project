@@ -1,5 +1,5 @@
 import { IsEnum, IsString, IsOptional, IsArray, IsDateString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 
 export enum HealthCategory {
   VACCINATION = 'VACCINATION',
@@ -31,6 +31,16 @@ export class CreateHealthRecordDto {
   @IsString()
   notes?: string;
 
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  value?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  unit?: string;
+
   @ApiProperty()
   @IsDateString()
   happenedAt: string;
@@ -41,29 +51,5 @@ export class CreateHealthRecordDto {
   localMediaRefs?: string[];
 }
 
-export class UpdateHealthRecordDto {
-  @ApiProperty({ required: false, enum: HealthCategory })
-  @IsOptional()
-  @IsEnum(HealthCategory)
-  category?: HealthCategory;
+export class UpdateHealthRecordDto extends PartialType(CreateHealthRecordDto) {}
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  title?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsString()
-  notes?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsDateString()
-  happenedAt?: string;
-
-  @ApiProperty({ required: false, type: [String] })
-  @IsOptional()
-  @IsArray()
-  localMediaRefs?: string[];
-}

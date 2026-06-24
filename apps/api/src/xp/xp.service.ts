@@ -107,43 +107,42 @@ export class XpService {
     levelName?: string;
     isPhaseMilestone?: boolean;
   }> {
-    const babyMon = await this.prisma.babyMon.findUnique({
-      where: { id: babymonId },
+    // Use interactive transaction for atomic read-modify-write
+    return this.prisma.$transaction(async (tx) => {
+      const babyMon = await tx.babyMon.findUnique({
+        where: { id: babymonId },
+      });
+
+      if (!babyMon) return { leveledUp: false };
+
+      let currentXp = babyMon.currentXp;
+      let currentStage = babyMon.currentStage;
+      let hasAdvanced = false;
+      let hitMilestone = false;
+
+      while (currentStage < MAX_LEVEL) {
+        const needed = xpForNextLevel(currentStage);
+        if (currentXp < needed) break;
+
+        currentXp -= needed;
+        currentStage++;
+        hasAdvanced = true;
+        if (isPhaseMilestone(currentStage)) hitMilestone = true;
+      }
+
+      if (!hasAdvanced) return { leveledUp: false };
+
+      await tx.babyMon.update({
+        where: { id: babymonId },
+        data: { currentStage, currentXp },
+      });
+
+      return {
+        leveledUp: true,
+        newStage: currentStage,
+        levelName: getLevelName(currentStage),
+        isPhaseMilestone: hitMilestone,
+      };
     });
-
-    if (!babyMon) return { leveledUp: false };
-
-    let currentXp = babyMon.currentXp;
-    let currentStage = babyMon.currentStage;
-    let hasAdvanced = false;
-    let hitMilestone = false;
-
-    // Loop while XP exceeds threshold and we haven't hit the cap
-    while (currentStage < MAX_LEVEL) {
-      const needed = xpForNextLevel(currentStage);
-      if (currentXp < needed) break;
-
-      currentXp -= needed;
-      currentStage++;
-      hasAdvanced = true;
-      if (isPhaseMilestone(currentStage)) hitMilestone = true;
-    }
-
-    if (!hasAdvanced) return { leveledUp: false };
-
-    await this.prisma.babyMon.update({
-      where: { id: babymonId },
-      data: {
-        currentStage,
-        currentXp,
-      },
-    });
-
-    return {
-      leveledUp: true,
-      newStage: currentStage,
-      levelName: getLevelName(currentStage),
-      isPhaseMilestone: hitMilestone,
-    };
   }
 }

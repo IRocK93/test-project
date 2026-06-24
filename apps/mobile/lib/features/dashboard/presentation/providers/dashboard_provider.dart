@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../data/api_client.dart';
+import 'package:baby_mon/core/data/api_client.dart';
 import '../../data/repositories/dashboard_repository.dart';
 import '../../domain/entities/dashboard_data.dart';
 import '../../domain/entities/baby_mon_summary.dart';

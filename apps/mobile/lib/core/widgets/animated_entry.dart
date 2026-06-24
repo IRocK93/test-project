@@ -302,12 +302,19 @@ class _ScalePressState extends State<ScalePress>
   }
 
   void _onTapDown(_) {
+    final reduce = MediaQuery.of(context).disableAnimations;
+    if (reduce) return;
     _isPressed = true;
     _controller.duration = widget.pressDuration ?? const Duration(milliseconds: 200);
     _controller.forward();
   }
 
   void _onTapUp(_) {
+    final reduce = MediaQuery.of(context).disableAnimations;
+    if (reduce) {
+      widget.onTap?.call();
+      return;
+    }
     _isPressed = false;
     if (widget.releaseDuration != null) {
       _controller.duration = widget.releaseDuration;

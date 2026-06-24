@@ -7,6 +7,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/features/auth/auth.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
+import 'package:baby_mon/core/widgets/responsive_wrapper.dart';
 import '../../../../core/utils/validators.dart';
 
 /// Register screen with matching auth card layout, password strength indicator,
@@ -121,6 +122,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final cs = Theme.of(context).colorScheme;
 
     // Navigate after successful registration
     ref.listen<AuthState>(authProvider, (previous, next) {
@@ -132,12 +134,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     });
 
     return Scaffold(
-      body: Container(
+      body: ResponsiveWrapper(
+        scrollable: false,
+        landscapeLayout: _buildLandscapeBody(cs, authState),
+        child: SingleChildScrollView(
+        child: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.primary, AppColors.primaryDark],
+            colors: [AppColors.primary, AppColors.primaryDark], // Gradient uses branded palette
           ),
         ),
         child: SafeArea(
@@ -180,32 +186,32 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
-                              color: AppColors.primaryContainer,
+                              color: cs.primaryContainer,
                               borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               PhosphorIconsLight.baby,
                               size: 36,
-                              color: AppColors.primary,
+                              color: cs.primary,
                             ),
                           ),
                           const SizedBox(height: DesignTokens.spaceLg),
 
                           // Title
-                          const Text(
+                          Text(
                             'Create Account',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                              color: cs.onSurface,
                             ),
                           ),
                           const SizedBox(height: DesignTokens.spaceXs),
-                          const Text(
+                          Text(
                             'Join BabyMon today',
                             style: TextStyle(
                               fontSize: 14,
-                              color: AppColors.textSecondary,
+                              color: cs.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: DesignTokens.space2xl),
@@ -430,7 +436,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               padding: const EdgeInsets.only(bottom: DesignTokens.spaceMd),
                               child: Text(
                                 authState.error!,
-                                style: const TextStyle(color: AppColors.error, fontSize: 13),
+                                style: TextStyle(color: cs.error, fontSize: 13),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -528,6 +534,232 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ),
         ),
       ),
+    ),
+    ));
+  }
+
+  /// Landscape layout: branding panel on left, scrollable form on right.
+  Widget _buildLandscapeBody(ColorScheme cs, dynamic authState) {
+    return Row(
+      children: [
+        // ── Left: branding ──
+        Expanded(
+          flex: 4,
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.primary, AppColors.primaryDark],
+              ),
+            ),
+            child: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(DesignTokens.space2xl),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: cs.primaryContainer,
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                        ),
+                        child: Icon(PhosphorIconsLight.baby, size: 40, color: cs.primary),
+                      ),
+                      const SizedBox(height: DesignTokens.spaceLg),
+                      const Text(
+                        'Create Account',
+                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white),
+                      ),
+                      const SizedBox(height: DesignTokens.spaceXs),
+                      const Text(
+                        'Join BabyMon today',
+                        style: TextStyle(fontSize: 15, color: Colors.white70),
+                      ),
+                      const SizedBox(height: DesignTokens.space2xl),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _socialCircle(Icons.g_mobiledata, AppColors.warning, _googleLogin),
+                          const SizedBox(width: DesignTokens.spaceMd),
+                          _socialCircle(Icons.apple, Colors.white, _appleLogin),
+                          const SizedBox(width: DesignTokens.spaceMd),
+                          _socialCircle(Icons.facebook, const Color(0xFF1877F2), _facebookLogin),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        // ── Right: form ──
+        Expanded(
+          flex: 6,
+          child: Container(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(DesignTokens.space2xl),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Glass form card
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
+                      child: BackdropFilter(
+                        filter: ui.ImageFilter.blur(
+                          sigmaX: DesignTokens.glassBlurMd,
+                          sigmaY: DesignTokens.glassBlurMd,
+                        ),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(DesignTokens.space2xl),
+                          decoration: BoxDecoration(
+                            color: AppColors.glassWhite,
+                            borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
+                            border: Border.all(
+                              color: AppColors.glassBorder,
+                              width: DesignTokens.glassBorderWidth,
+                            ),
+                          ),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              children: [
+                                // Name
+                                TextFormField(
+                                  controller: _nameController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Name (optional)',
+                                    prefixIcon: Icon(PhosphorIconsLight.user),
+                                  ),
+                                ),
+                                const SizedBox(height: DesignTokens.spaceMd),
+                                // Email
+                                TextFormField(
+                                  controller: _emailController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Email',
+                                    prefixIcon: Icon(PhosphorIconsLight.envelope),
+                                  ),
+                                  keyboardType: TextInputType.emailAddress,
+                                  validator: emailValidator,
+                                ),
+                                const SizedBox(height: DesignTokens.spaceMd),
+                                // Password
+                                TextFormField(
+                                  controller: _passwordController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Password',
+                                    prefixIcon: const Icon(PhosphorIconsLight.lock),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(_obscurePassword ? PhosphorIconsLight.eyeSlash : PhosphorIconsLight.eye),
+                                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                    ),
+                                  ),
+                                  obscureText: _obscurePassword,
+                                  onChanged: (_) => setState(() {}),
+                                  validator: passwordValidator,
+                                ),
+                                // Password strength
+                                if (_passwordController.text.isNotEmpty) ...[
+                                  const SizedBox(height: DesignTokens.spaceSm),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(2),
+                                    child: SizedBox(
+                                      height: 3,
+                                      child: FractionallySizedBox(
+                                        widthFactor: _passwordStrength,
+                                        child: Container(color: _strengthColor),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: DesignTokens.spaceMd),
+                                // Confirm Password
+                                TextFormField(
+                                  controller: _confirmPasswordController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Confirm Password',
+                                    prefixIcon: const Icon(PhosphorIconsLight.lock),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(_obscureConfirmPassword ? PhosphorIconsLight.eyeSlash : PhosphorIconsLight.eye),
+                                      onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                                    ),
+                                  ),
+                                  obscureText: _obscureConfirmPassword,
+                                  validator: (v) => confirmPasswordValidator(v, _passwordController.text),
+                                ),
+                                const SizedBox(height: DesignTokens.spaceMd),
+                                // Consent
+                                CheckboxListTile(
+                                  value: _consentToDataProcessing,
+                                  onChanged: (v) => setState(() => _consentToDataProcessing = v ?? false),
+                                  title: const Text(
+                                    'I consent to processing of child health & development data',
+                                    style: TextStyle(fontSize: 13),
+                                  ),
+                                  controlAffinity: ListTileControlAffinity.leading,
+                                  contentPadding: EdgeInsets.zero,
+                                  dense: true,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                                // Error
+                                if (authState.error != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: DesignTokens.spaceMd),
+                                    child: Text(
+                                      authState.error!,
+                                      style: TextStyle(color: cs.error, fontSize: 13),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                const SizedBox(height: DesignTokens.spaceMd),
+                                // Sign Up button
+                                ThemeButton(
+                                  text: 'Sign Up',
+                                  onPressed: _register,
+                                  isLoading: authState.isLoading,
+                                  fullWidth: true,
+                                  trailingIcon: PhosphorIconsLight.heart,
+                                  borderRadius: DesignTokens.radiusFull,
+                                  semanticLabel: 'Create your account',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: DesignTokens.spaceLg),
+                    // Login link
+                    GestureDetector(
+                      onTap: () => context.go('/login'),
+                      child: RichText(
+                        text: const TextSpan(
+                          style: TextStyle(fontSize: 14),
+                          children: [
+                            TextSpan(text: 'Already have an account? '),
+                            TextSpan(
+                              text: 'Login',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

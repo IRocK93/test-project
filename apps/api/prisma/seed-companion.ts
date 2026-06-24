@@ -1,15 +1,17 @@
 import { PrismaClient, AdviceCategory, ContentSource, MilestoneDomain, MilestoneStatus } from '@prisma/client';
+import * as crypto from 'crypto';
 import { seedPregnancyAdviceCards } from './seed-companion-batch3-pregnancy';
 import { seedInfantAdviceCards } from './seed-companion-batch3-infant';
 import { seedToddlerAdviceCards } from './seed-companion-batch3-toddler';
 import { seedMoreMilestones } from './seed-more-milestones';
 import { seedPregnancyFillCards } from './seed-companion-batch4-pregnancy-fill';
 import { seedNewbornFillCards } from './seed-companion-batch4-newborn-fill';
+import { seedBatch5FillCards } from './seed-companion-batch5-fill';
 
 const prisma = new PrismaClient();
 
 export async function seedCompanion() {
-  console.log('Seeding AI_COMPANION content...');
+  console.log('Seeding companion content...');
 
   // ─── Pregnancy Week 0 — Welcome / Just Discovered ───
   // preg_week_0 = user just set conception date; first impression
@@ -176,14 +178,14 @@ export async function seedCompanion() {
     sampleSchedule: [
       { time: '6-7 AM', activity: 'Wake, feed, burp, diaper change', durationMins: 45 },
       { time: '7-7:30 AM', activity: 'Brief awake time (tummy time on chest, face-to-face gazing)', durationMins: 15 },
-      { time: '7:30-9:30 AM', activity: 'Nap', durationMins: 120 },
-      { time: '9:30 AM', activity: 'Feed, burp, diaper', durationMins: 45 },
+      { time: '7:30-9:30 AM', activity: 'Nap — morning', durationMins: 120 },
+      { time: '9:30 AM', activity: 'Feed, burp, diaper — morning', durationMins: 45 },
       { time: '10 AM', activity: 'Awake time (high-contrast images, parent singing/talking)', durationMins: 15 },
-      { time: '10:30 AM-12:30 PM', activity: 'Nap', durationMins: 120 },
-      { time: '12:30 PM', activity: 'Feed, burp, diaper', durationMins: 45 },
+      { time: '10:30 AM-12:30 PM', activity: 'Nap — midday', durationMins: 120 },
+      { time: '12:30 PM', activity: 'Feed, burp, diaper — midday', durationMins: 45 },
       { time: '1 PM', activity: 'Brief awake time (gentle massage)', durationMins: 10 },
-      { time: '1:30-3:30 PM', activity: 'Nap', durationMins: 120 },
-      { time: '3:30 PM', activity: 'Feed, burp, diaper', durationMins: 45 },
+      { time: '1:30-3:30 PM', activity: 'Nap — afternoon', durationMins: 120 },
+      { time: '3:30 PM', activity: 'Feed, burp, diaper — afternoon', durationMins: 45 },
       { time: '4 PM', activity: 'Awake time (tummy time, sensory play)', durationMins: 15 },
       { time: '4:30-6 PM', activity: 'Nap or cluster feeding begins', durationMins: 90 },
       { time: '6-9 PM', activity: 'Cluster feeding zone — baby may feed very frequently. Partner support critical.', durationMins: 180 },
@@ -384,16 +386,16 @@ export async function seedCompanion() {
       { time: '6:30-7:00 AM', activity: 'Wake, feed', durationMins: 30 },
       { time: '7:00-8:00 AM', activity: 'Play — tummy time, face-to-face gazing, singing', durationMins: 60 },
       { time: '8:00-9:30 AM', activity: 'Nap 1', durationMins: 90 },
-      { time: '9:30 AM', activity: 'Feed', durationMins: 30 },
+      { time: '9:30 AM', activity: 'Feed — mid-morning', durationMins: 30 },
       { time: '10:00-11:00 AM', activity: 'Play — baby gym, reading, go for a walk', durationMins: 60 },
       { time: '11:00 AM-12:30 PM', activity: 'Nap 2', durationMins: 90 },
-      { time: '12:30 PM', activity: 'Feed', durationMins: 30 },
+      { time: '12:30 PM', activity: 'Feed — midday', durationMins: 30 },
       { time: '1:00-2:00 PM', activity: 'Play — sensory play, baby massage', durationMins: 60 },
       { time: '2:00-3:00 PM', activity: 'Nap 3', durationMins: 60 },
-      { time: '3:00 PM', activity: 'Feed', durationMins: 30 },
+      { time: '3:00 PM', activity: 'Feed — mid-afternoon', durationMins: 30 },
       { time: '3:30-4:30 PM', activity: 'Play — outdoor time, baby-wearing', durationMins: 60 },
       { time: '4:30-5:15 PM', activity: 'Nap 4 (catnap — hardest nap of the day)', durationMins: 45 },
-      { time: '5:15 PM', activity: 'Feed', durationMins: 30 },
+      { time: '5:15 PM', activity: 'Feed — late afternoon', durationMins: 30 },
       { time: '5:45-6:15 PM', activity: 'Quiet play', durationMins: 30 },
       { time: '6:15 PM', activity: 'Bedtime routine — bath, massage, pajamas, feed, book', durationMins: 45 },
       { time: '7:00-7:30 PM', activity: 'Bedtime', durationMins: 0 },
@@ -492,13 +494,13 @@ export async function seedCompanion() {
       { time: '6:30-7:00 AM', activity: 'Wake, feed', durationMins: 30 },
       { time: '7:00-8:15 AM', activity: 'Play — tummy time, rolling practice, baby gym', durationMins: 75 },
       { time: '8:15-9:45 AM', activity: 'Nap 1 (longest nap of the day)', durationMins: 90 },
-      { time: '9:45 AM', activity: 'Feed', durationMins: 30 },
+      { time: '9:45 AM', activity: 'Feed — mid-morning', durationMins: 30 },
       { time: '10:15-11:30 AM', activity: 'Play — reading, reaching for toys, outdoor walk', durationMins: 75 },
       { time: '11:30 AM-1:00 PM', activity: 'Nap 2', durationMins: 90 },
-      { time: '1:00 PM', activity: 'Feed', durationMins: 30 },
+      { time: '1:00 PM', activity: 'Feed — early afternoon', durationMins: 30 },
       { time: '1:30-2:45 PM', activity: 'Play — sensory play, singing, peek-a-boo', durationMins: 75 },
       { time: '2:45-3:45 PM', activity: 'Nap 3', durationMins: 60 },
-      { time: '3:45 PM', activity: 'Feed', durationMins: 30 },
+      { time: '3:45 PM', activity: 'Feed — mid-afternoon', durationMins: 30 },
       { time: '4:15-5:15 PM', activity: 'Play — floor time, baby massage, partner play', durationMins: 60 },
       { time: '5:15-5:45 PM', activity: 'Nap 4 (catnap — dropping this is the 4→3 transition)', durationMins: 30 },
       { time: '5:45 PM', activity: 'Feed (top-up feed before bedtime routine)', durationMins: 20 },
@@ -516,6 +518,57 @@ export async function seedCompanion() {
     create: midInfantRoutine,
   });
   console.log('Seeded mid-infant routine template');
+
+  // ─── Month 4 Routine (4-Month Sleep Regression) ───
+  const month4Routine = {
+    stageKey: 'born_month_4', title: 'Month 4 Rhythm: Rolling, Laughing, and the Big Sleep Shift', description: 'At 4 months, your baby undergoes a permanent neurological sleep reorganization — sleep cycles mature from newborn two-stage to adult-like four-stage cycles. Wake windows stretch to 90-120 minutes. Your baby is rolling, laughing, grabbing objects, and showing social engagement. The 4th nap is becoming a daily battle — the 4→3 nap transition is on the horizon. This is a phase of rapid developmental progress hidden inside sleep disruption.', wakeWindowMins: 105, napCount: 4, totalNapHours: 4.5, nightSleepHours: 11.0, feedFrequency: 'Every 3-4 hours (5-7 milk feeds per 24 hours). Solids not yet — baby\'s gut and oral motor skills are still maturing.',
+    sampleSchedule: [
+      { time: '6:30-7:00 AM', activity: 'Wake, breast/bottle feed. Open curtains — morning light anchors circadian rhythm.', durationMins: 30 },
+      { time: '7:00-8:30 AM', activity: 'Awake time — tummy time (chest elevated on rolled towel), rolling practice, baby gym with hanging toys at varied heights.', durationMins: 90 },
+      { time: '8:30-10:00 AM', activity: 'Nap 1 — longest nap. Dark room, white noise. Swaddle transitioning to sleep sack if rolling.', durationMins: 90 },
+      { time: '10:00 AM', activity: 'Feed, burp.', durationMins: 30 },
+      { time: '10:30 AM-12:00 PM', activity: 'Awake time — reading board books (baby will pat and mouth them), peek-a-boo, face-to-face play, outdoor walk in stroller or carrier.', durationMins: 90 },
+      { time: '12:00-1:00 PM', activity: 'Nap 2.', durationMins: 60 },
+      { time: '1:00 PM', activity: 'Feed.', durationMins: 30 },
+      { time: '1:30-2:45 PM', activity: 'Awake time — reaching and grasping practice (lightweight rattles, textured balls), midline play holding toys at center chest, sing songs with hand motions.', durationMins: 75 },
+      { time: '2:45-3:45 PM', activity: 'Nap 3.', durationMins: 60 },
+      { time: '3:45 PM', activity: 'Feed.', durationMins: 30 },
+      { time: '4:15-5:15 PM', activity: 'Awake time — gentle floor play, baby massage, partner connection time. Keep last wake window calm.', durationMins: 60 },
+      { time: '5:15-5:45 PM', activity: 'Nap 4 — catnap (30 min max). If this nap is a battle every day for a week, your baby may be ready for the 4→3 transition. Cap it rather than drop cold turkey.', durationMins: 30 },
+      { time: '5:45 PM', activity: 'Feed (top-up feed).', durationMins: 20 },
+      { time: '6:15-6:45 PM', activity: 'Bedtime routine — warm bath (2-3x/week), gentle massage, pajamas, sleep sack, 1-2 board books, lullaby.', durationMins: 30 },
+      { time: '6:45-7:00 PM', activity: 'Final feed with dim light. Into crib drowsy but awake.', durationMins: 15 },
+      { time: '7:00 PM', activity: 'Bedtime — white noise on, room completely dark. Put down drowsy but awake for at least one sleep per day to build self-settling.', durationMins: 0 },
+    ],
+    bedtimeRitual: ['Warm bath (2-3 times per week)', 'Gentle massage with baby lotion', 'Pajamas and sleep sack (transition from swaddle if rolling)', 'Read 1-2 board books — let baby pat and mouth them', 'Sing the same lullaby every night', 'Final feed with dim light — no TV, no phone', 'White noise on, room completely darkened', 'Place in crib drowsy but awake — on back, alone, firm flat surface', 'If baby stirs during sleep cycle transition (~45 min in), wait 3-5 minutes before responding — this is when self-settling is learned'],
+    flexible: true,
+  };
+  await prisma.routineTemplate.upsert({ where: { stageKey: 'born_month_4' }, update: month4Routine, create: month4Routine });
+  console.log('Seeded month-4 routine template');
+
+  // ─── Month 5 Routine (Rolling Both Ways, 3-Nap Schedule) ───
+  const month5Routine = {
+    stageKey: 'born_month_5', title: 'Month 5 Rhythm: Reaching, Rolling, and the 3-Nap Landing', description: 'At 5 months, wake windows stretch to 2-2.5 hours and most babies have dropped the 4th nap. Your baby is rolling both ways, sitting with support, babbling with consonants ("ba-ba"), responding to their own name, and transferring objects between hands. Interest in your food may appear — but wait until 6 months for solids unless your pediatrician advises otherwise. Late afternoon can still be the hardest part of the day — keep the final wake window calm.', wakeWindowMins: 135, napCount: 3, totalNapHours: 3.75, nightSleepHours: 11.0, feedFrequency: 'Every 3-4 hours (5-6 milk feeds per 24 hours). If showing all readiness signs (sitting with support, lost tongue-thrust reflex, interest in food), discuss starting solids at the upcoming 6-month visit.',
+    sampleSchedule: [
+      { time: '6:30-7:00 AM', activity: 'Wake, breast/bottle feed. Open curtains fully — morning light is the strongest circadian anchor.', durationMins: 30 },
+      { time: '7:00-9:00 AM', activity: 'Awake time — tummy time with toys just out of reach (encourages rolling and pivoting), practice sitting with nursing pillow support, baby gym, reading board books.', durationMins: 120 },
+      { time: '9:00-10:30 AM', activity: 'Nap 1 — longest nap (1.5 hours). Put down at first tired sign — eye rubbing, red eyebrows, staring off.', durationMins: 90 },
+      { time: '10:30 AM', activity: 'Feed. — mid-morning', durationMins: 30 },
+      { time: '11:00 AM-12:45 PM', activity: 'Awake time — transferring-objects practice (hand toy in one hand, offer second toy same side), singing with hand motions, outdoor walk, sensory play with different textures.', durationMins: 105 },
+      { time: '12:45-2:00 PM', activity: 'Nap 2 (1-1.25 hours).', durationMins: 75 },
+      { time: '2:00 PM', activity: 'Feed. — early afternoon', durationMins: 30 },
+      { time: '2:30-4:15 PM', activity: 'Awake time — supported sitting for play, mirror play (baby loves faces), respond-to-name games (call from different spots, celebrate when they turn), baby-wearing for household tasks.', durationMins: 105 },
+      { time: '4:15-5:00 PM', activity: 'Nap 3 — catnap (30-45 min). This is the hardest nap. Do not skip it — overtired babies fight sleep. Dark room, white noise, brief wind-down.', durationMins: 45 },
+      { time: '5:00 PM', activity: 'Feed (top-up before bedtime routine).', durationMins: 20 },
+      { time: '5:20-6:15 PM', activity: 'Quiet play and bedtime routine — warm bath (2-3x/week), gentle massage, pajamas, sleep sack, 1-2 board books, lullaby. Keep the last wake window low-key.', durationMins: 55 },
+      { time: '6:15-6:45 PM', activity: 'Final feed with dim light. Burp thoroughly. Into crib drowsy but awake.', durationMins: 30 },
+      { time: '6:45-7:00 PM', activity: 'Bedtime — white noise on, room completely dark. Say goodnight and leave. If baby cries, brief check-ins (30-60 seconds, same phrase).', durationMins: 15 },
+    ],
+    bedtimeRitual: ['Warm bath (2-3 times per week)', 'Gentle massage with baby lotion', 'Pajamas and sleep sack (arms out now if rolling)', 'Read 1-2 board books — baby may help turn pages', 'Sing the same lullaby every night — consistency is security', 'Final feed with dim light — no screens', 'White noise on, room completely darkened', 'Place in crib drowsy but awake — say goodnight and leave', 'Brief check-ins if needed — 30-60 seconds, same reassuring phrase, no picking up'],
+    flexible: true,
+  };
+  await prisma.routineTemplate.upsert({ where: { stageKey: 'born_month_5' }, update: month5Routine, create: month5Routine });
+  console.log('Seeded month-5 routine template');
 
   const midInfantMilestones = [
     { stageKey: 'born_month_3', domain: 'GROSS_MOTOR' as MilestoneDomain, title: 'Rolls from tummy to back', description: 'Your baby can roll from their stomach to their back, usually starting accidentally during tummy time and becoming intentional by 4-5 months.', status: 'EXPECTED' as MilestoneStatus, activityPrompt: 'During tummy time, place a favorite toy to one side just out of reach. Gently rock your baby\'s hips side to side to model the motion. Celebrate every roll — even the accidental ones!', xpReward: 15 },
@@ -558,13 +611,64 @@ export async function seedCompanion() {
   const lateInfantRoutine = {
     stageKey: 'born_month_6', title: 'Late Infant Rhythm (6-12 Months): On the Move', description: 'At 6-12 months, wake windows stretch to 2.5-3.5 hours. Your baby is transitioning from 3 naps toward 2. Solids are now 3 meals per day alongside milk feeds spaced every 3-4 hours.', wakeWindowMins: 150, napCount: 3, totalNapHours: 4.0, nightSleepHours: 11.0, feedFrequency: 'Every 3-4 hours (4-5 milk feeds + 3 solid meals per 24 hours)',
     sampleSchedule: [
-      { time: '6:30-7:00 AM', activity: 'Wake, breast/bottle feed', durationMins: 30 }, { time: '7:00-7:30 AM', activity: 'Breakfast — solids', durationMins: 30 }, { time: '7:30-9:30 AM', activity: 'Play — floor time, crawling, treasure basket, walk', durationMins: 120 }, { time: '9:30-11:00 AM', activity: 'Nap 1 (longest nap)', durationMins: 90 }, { time: '11:00 AM', activity: 'Breast/bottle feed', durationMins: 30 }, { time: '11:30 AM-12:00 PM', activity: 'Lunch — solids', durationMins: 30 }, { time: '12:00-1:30 PM', activity: 'Play — container play, books, music', durationMins: 90 }, { time: '1:30-2:30 PM', activity: 'Nap 2', durationMins: 60 }, { time: '2:30 PM', activity: 'Breast/bottle feed', durationMins: 30 }, { time: '3:00-4:15 PM', activity: 'Play — sensory, pulling to stand, errands', durationMins: 75 }, { time: '4:15-4:45 PM', activity: 'Nap 3 (catnap — drops during 3→2 transition)', durationMins: 30 }, { time: '4:45-5:15 PM', activity: 'Dinner — solids', durationMins: 30 }, { time: '5:15-6:15 PM', activity: 'Play — quiet, bath on bath nights', durationMins: 60 }, { time: '6:15-6:45 PM', activity: 'Bedtime routine', durationMins: 30 }, { time: '6:45-7:00 PM', activity: 'Final feed, into crib drowsy', durationMins: 15 }, { time: '7:00 PM', activity: 'Bedtime', durationMins: 0 },
+      { time: '6:30-7:00 AM', activity: 'Wake, breast/bottle feed', durationMins: 30 }, { time: '7:00-7:30 AM', activity: 'Breakfast — solids', durationMins: 30 }, { time: '7:30-9:30 AM', activity: 'Play — floor time, crawling, treasure basket, walk', durationMins: 120 }, { time: '9:30-11:00 AM', activity: 'Nap 1 (longest nap)', durationMins: 90 }, { time: '11:00 AM', activity: 'Breast/bottle feed — mid-morning', durationMins: 30 }, { time: '11:30 AM-12:00 PM', activity: 'Lunch — solids', durationMins: 30 }, { time: '12:00-1:30 PM', activity: 'Play — container play, books, music', durationMins: 90 }, { time: '1:30-2:30 PM', activity: 'Nap 2', durationMins: 60 }, { time: '2:30 PM', activity: 'Breast/bottle feed — afternoon', durationMins: 30 }, { time: '3:00-4:15 PM', activity: 'Play — sensory, pulling to stand, errands', durationMins: 75 }, { time: '4:15-4:45 PM', activity: 'Nap 3 (catnap — drops during 3→2 transition)', durationMins: 30 }, { time: '4:45-5:15 PM', activity: 'Dinner — solids', durationMins: 30 }, { time: '5:15-6:15 PM', activity: 'Play — quiet, bath on bath nights', durationMins: 60 }, { time: '6:15-6:45 PM', activity: 'Bedtime routine', durationMins: 30 }, { time: '6:45-7:00 PM', activity: 'Final feed, into crib drowsy', durationMins: 15 }, { time: '7:00 PM', activity: 'Bedtime', durationMins: 0 },
     ],
     bedtimeRitual: ['Warm bath (2-3 times per week)', 'Gentle massage', 'Pajamas and sleep sack', 'Read two board books', 'Sing same lullaby', 'Final feed with dim light', 'White noise on, dark room', 'Place in crib drowsy but awake', 'Say goodnight and leave'],
     flexible: true,
   };
   await prisma.routineTemplate.upsert({ where: { stageKey: 'born_month_6' }, update: lateInfantRoutine, create: lateInfantRoutine });
   console.log('Seeded late-infant routine template');
+
+  // ─── Month 7 Routine (Sitting, Scooting, Solids Established) ───
+  const month7Routine = {
+    stageKey: 'born_month_7', title: 'Month 7 Rhythm: Sitting Up and Seeing the World Differently', description: 'At 7 months, your baby sits independently without support — freeing both hands for exploration. Army crawling or scooting begins, babbling with consonants ("ba-ba, da-da") is in full swing, and object permanence solidifies (they look for dropped toys). Solids are now 2-3 meals per day alongside 4-5 milk feeds. Wake windows are 2-2.5 hours and the 3→2 nap transition is approaching — watch for signs: the third nap becoming a battle, early morning waking, or shorter naps.', wakeWindowMins: 150, napCount: 3, totalNapHours: 3.25, nightSleepHours: 11.0, feedFrequency: '4-5 milk feeds + 2-3 solid meals per 24 hours. Introduce a sippy cup with water at meals. Continue introducing single-ingredient foods and allergens (one at a time, 3-5 days between new foods).',
+    sampleSchedule: [
+      { time: '6:30-7:00 AM', activity: 'Wake, breast/bottle feed. Open curtains — morning light anchors circadian rhythm.', durationMins: 30 },
+      { time: '7:00-7:30 AM', activity: 'Breakfast — solids. Iron-rich options: fortified baby oatmeal, scrambled egg pieces, yogurt with soft fruit. Offer sippy cup with water.', durationMins: 30 },
+      { time: '7:30-9:30 AM', activity: 'Active play — independent sitting with toys, floor time for scooting/army crawling practice, treasure basket exploration, outdoor walk or playground (baby swings).', durationMins: 120 },
+      { time: '9:30-11:00 AM', activity: 'Nap 1 — longer morning nap (1-1.5 hours). Dark room, white noise.', durationMins: 90 },
+      { time: '11:00 AM', activity: 'Wake, breast/bottle feed. — mid-morning', durationMins: 30 },
+      { time: '11:30 AM-12:00 PM', activity: 'Lunch — solids. Purees or soft finger foods: steamed carrot sticks, avocado spears, shredded chicken, well-cooked pasta.', durationMins: 30 },
+      { time: '12:00-1:30 PM', activity: 'Play — container play (in-and-out schema), peek-a-boo with variations, music and dancing, books with textures. Narrate your day — receptive language far outpaces expressive.', durationMins: 90 },
+      { time: '1:30-2:30 PM', activity: 'Nap 2.', durationMins: 60 },
+      { time: '2:30 PM', activity: 'Wake, breast/bottle feed. — afternoon', durationMins: 30 },
+      { time: '3:00-4:30 PM', activity: 'Afternoon play — errands together (narrate everything), water play (supervised splashing), outdoor time. Social games: pat-a-cake, itsy bitsy spider.', durationMins: 90 },
+      { time: '4:30-5:00 PM', activity: 'Nap 3 — catnap (20-30 min max). If this nap is consistently refused for 1-2 weeks, your baby may be ready for the 3→2 transition.', durationMins: 30 },
+      { time: '5:00-5:30 PM', activity: 'Dinner — solids. Serve what the family eats (modified for safety). Encourage self-feeding exploration.', durationMins: 30 },
+      { time: '5:30-6:15 PM', activity: 'Quiet play and wind-down — bath (2-3x/week), dim lights, calm floor play, books.', durationMins: 45 },
+      { time: '6:15-6:45 PM', activity: 'Bedtime routine — pajamas, sleep sack, 2 board books, lullaby, final breast/bottle feed with dim light.', durationMins: 30 },
+      { time: '6:45-7:00 PM', activity: 'Into crib drowsy but awake. White noise, dark room. Say goodnight and leave.', durationMins: 15 },
+    ],
+    bedtimeRitual: ['Warm bath (2-3 times per week)', 'Gentle massage — good for calming before bed', 'Pajamas and sleep sack', 'Read 2 board books — let baby turn pages and pat textures', 'Sing the same lullaby every night', 'Final feed with dim light — no screens', 'White noise on, room completely darkened', 'Place in crib drowsy but awake', 'Brief boring check-ins if needed — 30-60 seconds, same phrase, no picking up'],
+    flexible: true,
+  };
+  await prisma.routineTemplate.upsert({ where: { stageKey: 'born_month_7' }, update: month7Routine, create: month7Routine });
+  console.log('Seeded month-7 routine template');
+
+  // ─── Month 8 Routine (Crawling, Pulling Up, Separation Anxiety) ───
+  const month8Routine = {
+    stageKey: 'born_month_8', title: 'Month 8 Rhythm: On the Move and Full of Feelings', description: 'At 8 months, your baby is mobile — crawling on hands and knees, pulling to stand, and possibly cruising along furniture. The pincer grasp is emerging, unlocking true self-feeding with finger foods. Separation anxiety peaks as object permanence fully solidifies — your baby protests when you leave the room because they now know you continue to exist. The 8-10 month sleep regression is driven by these converging cognitive leaps. Most babies are firmly on 2 naps with 2.5-3 hour wake windows. Babyproofing is no longer optional — anchor furniture, install baby gates, lower the crib mattress to the lowest setting.', wakeWindowMins: 150, napCount: 2, totalNapHours: 3.0, nightSleepHours: 11.0, feedFrequency: '3 meals + 1-2 snacks + 3-4 breastmilk/formula feeds per day. Finger foods are the focus — let baby self-feed as much as possible. Sippy cup with water at all meals.',
+    sampleSchedule: [
+      { time: '6:30-7:00 AM', activity: 'Wake, breast/bottle feed. Open curtains — morning light anchors circadian rhythm.', durationMins: 30 },
+      { time: '7:00-7:30 AM', activity: 'Breakfast — solids. Finger foods: scrambled egg pieces, soft fruit chunks, toast strips with thin nut butter, yogurt with a pre-loaded spoon.', durationMins: 30 },
+      { time: '7:30-9:30 AM', activity: 'Active play — crawling obstacle course (pillows, tunnels), pulling-to-stand at low furniture, cruising practice, treasure basket, outdoor playground (swings, grass crawling).', durationMins: 120 },
+      { time: '9:30-11:00 AM', activity: 'Nap 1 — longer morning nap (1-1.5 hours). Dark room, white noise. Brief check-ins if standing in crib and cannot get down.', durationMins: 90 },
+      { time: '11:00 AM', activity: 'Wake, breast/bottle feed.', durationMins: 30 },
+      { time: '11:30 AM-12:00 PM', activity: 'Lunch — finger foods: steamed carrot coins, avocado chunks, shredded chicken, soft cheese cubes, well-cooked pasta. Include one familiar food and one new food.', durationMins: 30 },
+      { time: '12:00-1:30 PM', activity: 'Play — container play (filling and dumping), stacking cups, musical instruments, reading interactive books. Practice standing-to-sitting transition during play — this helps when baby gets "stuck" standing in the crib.', durationMins: 90 },
+      { time: '1:30-3:00 PM', activity: 'Nap 2 — afternoon nap (1-1.5 hours). Both naps should be restorative.', durationMins: 90 },
+      { time: '3:00 PM', activity: 'Wake, breast/bottle feed + afternoon snack (rice cakes, soft fruit, yogurt melts).', durationMins: 30 },
+      { time: '3:30-5:00 PM', activity: 'Afternoon play — errands together (narrate!), pincer grasp practice (safe finger foods on high-chair tray), peek-a-boo and hide-and-reveal games to support separation anxiety, family photos for pointing and naming.', durationMins: 90 },
+      { time: '5:00-5:30 PM', activity: 'Dinner — serve what the family eats (modified for safety). Encourage self-feeding. Family meals together are powerful for modeling eating and social connection.', durationMins: 30 },
+      { time: '5:30-6:15 PM', activity: 'Quiet play and wind-down — bath (2-3x/week), dim lights, books. Avoid roughhousing in the last 30 minutes — it can overstimulate and make bedtime harder.', durationMins: 45 },
+      { time: '6:15-6:45 PM', activity: 'Bedtime routine — pajamas, sleep sack, 2-3 board books (let baby turn pages), lullaby, final feed with dim light. Separation games during the day help bedtime: peek-a-boo, "in and out" the room.', durationMins: 30 },
+      { time: '6:45-7:00 PM', activity: 'Into crib drowsy but awake. White noise, dark room. Say a quick, loving goodbye — never sneak away. If baby cries, brief check-ins.', durationMins: 15 },
+    ],
+    bedtimeRitual: ['Warm bath (2-3 times per week)', 'Brush teeth with rice-grain-size fluoride toothpaste', 'Pajamas and sleep sack', 'Read 2-3 board books — let baby turn pages and point', 'Sing the same lullaby every night — consistency is security during separation anxiety', 'Final feed with dim light — no screens', 'White noise on, room completely darkened', 'Place in crib awake — say a quick, loving goodbye', 'Brief boring check-ins if needed — 30-60 seconds, same phrase, no picking up', 'Practice standing-to-sitting during daytime so baby can self-settle if they pull up in crib'],
+    flexible: true,
+  };
+  await prisma.routineTemplate.upsert({ where: { stageKey: 'born_month_8' }, update: month8Routine, create: month8Routine });
+  console.log('Seeded month-8 routine template');
 
   const lateInfantMilestones = [
     { stageKey: 'born_month_6', domain: 'GROSS_MOTOR' as MilestoneDomain, title: 'Sits independently without support', description: 'Your baby can sit on the floor with a straight back, hands free for play, no tripod support needed. This frees the hands for fine motor exploration.', status: 'EXPECTED' as MilestoneStatus, activityPrompt: 'Place your baby on the floor with a nursing pillow behind them as a crash pad. Sit face-to-face and offer toys at chest level. Gradually reduce support as trunk control strengthens.', xpReward: 20 },
@@ -895,7 +999,7 @@ export async function seedCompanion() {
     },
     {
       stageKey: 'born_month_1', title: 'One Month Rhythm: Emerging Patterns', description: 'At one month, your baby is more alert and wake windows stretch to 45-60 minutes. An eat-play-sleep rhythm begins to emerge. Tummy time, social interaction, and gentle sensory play enter the routine.', wakeWindowMins: 60, napCount: 5, totalNapHours: 6, nightSleepHours: 9, feedFrequency: 'Every 2-3 hours during day; may stretch 3-4 hours at night',
-      sampleSchedule: [{ time: '6:30 AM', activity: 'Wake — feed, burp, diaper change. Open curtains fully — morning light is the strongest circadian cue.', durationMins: 30 }, { time: '7:00-7:45 AM', activity: 'Awake time — tummy time (3-5 min sessions, 2-3 times), face-to-face gazing, singing.', durationMins: 45 }, { time: '7:45-9:15 AM', activity: 'Nap 1 — often the longest nap. Birthing parent: sleep or rest.', durationMins: 90 }, { time: '9:15 AM', activity: 'Feed, burp, diaper change.', durationMins: 30 }, { time: '9:45-10:30 AM', activity: 'Awake time — high-contrast play, read aloud, or walk in carrier/stroller.', durationMins: 45 }, { time: '10:30 AM-12:00 PM', activity: 'Nap 2.', durationMins: 90 }, { time: '12:00 PM', activity: 'Feed, burp, diaper change. Birthing parent: eat nourishing lunch.', durationMins: 30 }, { time: '12:30-1:15 PM', activity: 'Awake time — baby massage, sensory play with different textures.', durationMins: 45 }, { time: '1:15-2:45 PM', activity: 'Nap 3. Birthing parent: rest or nap. Swaddle, white noise, dark room help.', durationMins: 90 }, { time: '2:45 PM', activity: 'Feed, burp, diaper change.', durationMins: 30 }, { time: '3:15-4:00 PM', activity: 'Awake time — tummy time with mirror, partner play, or baby-wearing.', durationMins: 45 }, { time: '4:00-5:00 PM', activity: 'Nap 4 — shortest nap (30-45 min). Do not skip; overtired babies fight sleep.', durationMins: 60 }, { time: '5:00 PM', activity: 'Feed, burp, diaper change. Evening cluster feeding may begin.', durationMins: 30 }, { time: '5:30-6:15 PM', activity: 'Quiet awake time — dim lights slightly, low-key interaction.', durationMins: 45 }, { time: '6:15 PM', activity: 'Begin bedtime routine — warm bath, gentle massage, pajamas, sleep sack, feed in dim light, one board book.', durationMins: 45 }, { time: '7:00-7:30 PM', activity: 'Bedtime — into bassinet drowsy but awake. White noise on, dark room.', durationMins: 0 }],
+      sampleSchedule: [{ time: '6:30 AM', activity: 'Wake — feed, burp, diaper change. Open curtains fully — morning light is the strongest circadian cue.', durationMins: 30 }, { time: '7:00-7:45 AM', activity: 'Awake time — tummy time (3-5 min sessions, 2-3 times), face-to-face gazing, singing.', durationMins: 45 }, { time: '7:45-9:15 AM', activity: 'Nap 1 — often the longest nap. Birthing parent: sleep or rest.', durationMins: 90 }, { time: '9:15 AM', activity: 'Feed, burp, diaper change. — morning', durationMins: 30 }, { time: '9:45-10:30 AM', activity: 'Awake time — high-contrast play, read aloud, or walk in carrier/stroller.', durationMins: 45 }, { time: '10:30 AM-12:00 PM', activity: 'Nap 2.', durationMins: 90 }, { time: '12:00 PM', activity: 'Feed, burp, diaper change. Birthing parent: eat nourishing lunch.', durationMins: 30 }, { time: '12:30-1:15 PM', activity: 'Awake time — baby massage, sensory play with different textures.', durationMins: 45 }, { time: '1:15-2:45 PM', activity: 'Nap 3. Birthing parent: rest or nap. Swaddle, white noise, dark room help.', durationMins: 90 }, { time: '2:45 PM', activity: 'Feed, burp, diaper change. — afternoon', durationMins: 30 }, { time: '3:15-4:00 PM', activity: 'Awake time — tummy time with mirror, partner play, or baby-wearing.', durationMins: 45 }, { time: '4:00-5:00 PM', activity: 'Nap 4 — shortest nap (30-45 min). Do not skip; overtired babies fight sleep.', durationMins: 60 }, { time: '5:00 PM', activity: 'Feed, burp, diaper change. Evening cluster feeding may begin.', durationMins: 30 }, { time: '5:30-6:15 PM', activity: 'Quiet awake time — dim lights slightly, low-key interaction.', durationMins: 45 }, { time: '6:15 PM', activity: 'Begin bedtime routine — warm bath, gentle massage, pajamas, sleep sack, feed in dim light, one board book.', durationMins: 45 }, { time: '7:00-7:30 PM', activity: 'Bedtime — into bassinet drowsy but awake. White noise on, dark room.', durationMins: 0 }],
       bedtimeRitual: ['Warm bath — 2-3 times per week', 'Gentle massage with baby-safe lotion', 'Pajamas and sleep sack (room 68-72°F)', 'Feed with dim light — avoid screens', 'Read one board book — same book builds familiarity', 'White noise on, room darkened', 'Sing same lullaby every night — consistency is security', 'Place in bassinet drowsy but awake — on back, alone, firm flat surface'],
       flexible: true,
     },
@@ -1102,10 +1206,13 @@ export async function seedCompanion() {
   await seedPregnancyFillCards();
   await seedNewbornFillCards();
 
+  // ─── Batch 5 — fill thin stages to minimum 5 cards each (~78 cards) ───
+  await seedBatch5FillCards();
+
   // ─── 39 additional milestone expectations to reach 200 ───
   await seedMoreMilestones();
 
-  console.log('AI_COMPANION content seeded successfully!');
+  console.log('Companion content seeded successfully!');
 }
 
 // Run directly only when invoked as standalone script (not imported)

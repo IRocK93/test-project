@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/features/companion/presentation/screens/daily_brief_screen.dart';
 import 'package:baby_mon/features/companion/presentation/screens/routine_screen.dart';
@@ -10,31 +11,62 @@ import 'package:baby_mon/features/companion/presentation/screens/advice_feed_scr
 import 'package:baby_mon/features/companion/presentation/screens/saved_cards_screen.dart';
 import 'package:baby_mon/features/companion/presentation/screens/model_download_screen.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/monthly_ai_reminder.dart';
+import 'package:baby_mon/features/companion/data/sync_persistence.dart';
 import 'package:baby_mon/features/companion/presentation/providers/companion_provider.dart';
 import 'package:baby_mon/features/companion/presentation/providers/llm_provider.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
 import 'package:baby_mon/core/constants/api_constants.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/core/widgets/premium_empty_state.dart';
 
 class CompanionTab extends ConsumerStatefulWidget {
   final String babyMonId;
+  final int? initialTab;
+  final bool openChat;
 
-  const CompanionTab({super.key, required this.babyMonId});
+  const CompanionTab({super.key, required this.babyMonId, this.initialTab, this.openChat = false});
 
   @override
   ConsumerState<CompanionTab> createState() => _CompanionTabState();
 }
 
 class _CompanionTabState extends ConsumerState<CompanionTab>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late final TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 5, vsync: this);
+    _restorePendingState();
+    // Retry any previously failed sync
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncAll(widget.babyMonId));
+    if (widget.initialTab != null) _tabController.index = widget.initialTab!;
+    if (widget.openChat) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _openChat());
+    }
     _checkReminder();
   }
+
+  Future<void> _restorePendingState() async {
+    final babyMonId = widget.babyMonId;
+    if (babyMonId.isEmpty) return; // no-op for empty/placeholder ID
+    final routine = await SyncPersistence.loadRoutine(babyMonId);
+    if (routine.isNotEmpty) {
+      ref.read(pendingRoutineStepsProvider(babyMonId).notifier).state = routine;
+    }
+    final achieve = await SyncPersistence.loadAchievements(babyMonId);
+    if (achieve.isNotEmpty) {
+      ref.read(pendingMilestoneAchievementsProvider(babyMonId).notifier).state = achieve;
+    }
+    final unachieve = await SyncPersistence.loadUnachievements(babyMonId);
+    if (unachieve.isNotEmpty) {
+      ref.read(pendingMilestoneUnachievementsProvider(babyMonId).notifier).state = unachieve;
+    }
+  }
+
+  void _openChat() => _tabController.index = 3;
 
   Future<void> _checkReminder() async {
     // Small delay to let the tab render first
@@ -245,12 +277,138 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _syncAll(widget.babyMonId);
     _tabController.dispose();
     super.dispose();
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.resumed) {
+      _syncAll(widget.babyMonId);
+    }
+  }
+
+  /// Merges the server's completed steps with pending toggles to produce the
+  /// full authoritative list of completed activity names to send to the backend.
+  List<String> _buildRoutineSyncPayload(String babyMonId, Set<String> pendingKeys) {
+    try {
+      final data = ref.read(routineProvider(babyMonId)).valueOrNull;
+      if (data == null) return [];
+      final template = data['template'] as Map<String, dynamic>?;
+      if (template == null) return [];
+      final schedule = (template['sampleSchedule'] as List<dynamic>?) ?? [];
+      final ritual = (template['bedtimeRitual'] as List<dynamic>?)?.cast<String>() ?? [];
+
+      // Build key↔activity mappings
+      final keyToActivity = <String, String>{};
+      for (var i = 0; i < schedule.length; i++) {
+        final a = schedule[i]['activity'] as String?;
+        if (a?.isNotEmpty == true) keyToActivity['s$i'] = a!;
+      }
+      for (var i = 0; i < ritual.length; i++) {
+        keyToActivity['b$i'] = ritual[i];
+      }
+      final activityToKey = {for (final e in keyToActivity.entries) e.value: e.key};
+
+      // Read server state and convert activity names to keys
+      final userRoutine = data['userRoutine'] as Map<String, dynamic>? ?? {};
+      final serverNames =
+          (userRoutine['completedSteps'] as List<dynamic>?)?.cast<String>() ?? [];
+      final effectiveKeys = serverNames
+          .map((a) => activityToKey[a])
+          .whereType<String>()
+          .where(keyToActivity.containsKey)
+          .toSet();
+
+      // Apply pending toggles
+      for (final k in pendingKeys) {
+        if (effectiveKeys.contains(k)) {
+          effectiveKeys.remove(k);
+        } else {
+          effectiveKeys.add(k);
+        }
+      }
+
+      // Convert back to activity names for the backend
+      return effectiveKeys.map((k) => keyToActivity[k]!).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> _syncAll(String babyMonId) async {
+    final hasPending = await SyncPersistence.hasPending(babyMonId);
+    final steps = ref.read(pendingRoutineStepsProvider(babyMonId));
+    final achieve = ref.read(pendingMilestoneAchievementsProvider(babyMonId));
+    final unachieve = ref.read(pendingMilestoneUnachievementsProvider(babyMonId));
+    if (!hasPending && steps.isEmpty && achieve.isEmpty && unachieve.isEmpty) return;
+
+    ref.read(syncStatusProvider(babyMonId).notifier).state = SyncStatus.syncing;
+    final repo = ref.read(companionRepositoryProvider);
+    var allOk = true;
+
+    if (steps.isNotEmpty) {
+      try {
+        // Build the FULL merged list of completed activity names (server + pending
+        // toggles) and send as the authoritative list to the backend.
+        final fullActivities = _buildRoutineSyncPayload(babyMonId, steps);
+        if (fullActivities.isNotEmpty) {
+          await repo.syncRoutine(babyMonId, fullActivities);
+          // Only clear pending after a successful send with a real payload
+          ref.read(pendingRoutineStepsProvider(babyMonId).notifier).state = <String>{};
+          await SyncPersistence.saveRoutine(babyMonId, <String>{});
+        }
+      } catch (_) {
+        allOk = false;
+      }
+    }
+    for (final id in achieve.toList()) {
+      try {
+        await repo.achieveMilestone(babyMonId, id);
+        final s = {...ref.read(pendingMilestoneAchievementsProvider(babyMonId))}; s.remove(id);
+        ref.read(pendingMilestoneAchievementsProvider(babyMonId).notifier).state = s;
+        await SyncPersistence.saveAchievements(babyMonId, s);
+      } catch (_) { allOk = false; break; }
+    }
+    for (final id in unachieve.toList()) {
+      try {
+        await repo.unachieveMilestone(babyMonId, id);
+        final s = {...ref.read(pendingMilestoneUnachievementsProvider(babyMonId))}; s.remove(id);
+        ref.read(pendingMilestoneUnachievementsProvider(babyMonId).notifier).state = s;
+        await SyncPersistence.saveUnachievements(babyMonId, s);
+      } catch (_) { allOk = false; break; }
+    }
+
+    if (allOk) {
+      ref.read(syncStatusProvider(babyMonId).notifier).state = SyncStatus.idle;
+      ref.invalidate(routineProvider(babyMonId));
+      ref.invalidate(milestonesProvider(babyMonId));
+      ref.invalidate(dailyBriefProvider(babyMonId));
+    } else {
+      ref.read(syncStatusProvider(babyMonId).notifier).state = SyncStatus.error;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // No BabyMon yet — show the same empty state as other feature screens
+    if (widget.babyMonId.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Companion'), centerTitle: false),
+        body: PremiumEmptyState(
+          icon: PhosphorIconsLight.baby,
+          title: 'Welcome to BabyMon!',
+          subtitle:
+              'Create your first BabyMon to unlock the AI Companion — '
+              'personalised routines, milestones, and parenting guidance.',
+          actionLabel: 'Create BabyMon',
+          onAction: () => GoRouter.of(context).push('/create-baby-mon'),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Companion'),

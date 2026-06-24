@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: babymon-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-babymon}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-babymon_dev_password}
+      POSTGRES_DB: ${DB_NAME:-babymon}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U babymon -d babymon"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - babymon-network
+
+  backend:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: babymon-api
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://babymon:babymon_dev_password@postgres:5432/babymon?schema=public}
+      NODE_ENV: development
+    env_file:
+      - apps/api/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - babymon-network
+
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: babymon-db-test
+    environment:
+      POSTGRES_USER: ${TEST_DB_USER:-test}
+      POSTGRES_PASSWORD: ${TEST_DB_PASSWORD:-test}
+      POSTGRES_DB: ${TEST_DB_NAME:-babymon_test}
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d babymon_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - babymon-network
+
+volumes:
+  postgres_data:
+
+networks:
+  babymon-network:
+    driver: bridge

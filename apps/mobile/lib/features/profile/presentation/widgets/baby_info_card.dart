@@ -19,7 +19,7 @@ class BabyInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: AppColors.surfaceWhite,
+      color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -30,7 +30,7 @@ class BabyInfoCard extends StatelessWidget {
                 CircleAvatar(
                   radius: 32,
                   backgroundColor: AppColors.primaryLight,
-                  child: Icon(Icons.child_care, size: 32, color: AppColors.surfaceWhite),
+                  child: Icon(Icons.child_care, size: 32, color: Colors.white),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

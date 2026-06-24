@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsString, IsOptional, IsDateString, IsNumber, Min, Max, IsEnum } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -34,32 +34,4 @@ export class CreateSleepLogDto {
   quality?: number;
 }
 
-export class UpdateSleepLogDto {
-  @ApiPropertyOptional({ enum: SleepType })
-  @IsOptional()
-  @IsEnum(SleepType)
-  type?: SleepType;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsDateString()
-  startTime?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsDateString()
-  endTime?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  notes?: string;
-
-  @ApiPropertyOptional({ description: 'Sleep quality rating 1-5' })
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Max(5)
-  @Transform(({ value }) => (value !== undefined ? Number(value) : undefined))
-  quality?: number;
-}
+export class UpdateSleepLogDto extends PartialType(CreateSleepLogDto) {}

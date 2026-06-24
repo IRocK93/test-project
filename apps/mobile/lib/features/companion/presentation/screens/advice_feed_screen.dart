@@ -5,6 +5,7 @@ import 'package:baby_mon/core/theme/design_tokens.dart';
 import 'package:baby_mon/core/widgets/glass_surface.dart';
 import 'package:baby_mon/features/companion/presentation/providers/advice_feed_provider.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
+import 'package:baby_mon/features/companion/presentation/widgets/upgrade_prompt.dart';
 
 // ─── Category definitions (file-private) ──────────────────────────
 
@@ -141,8 +142,15 @@ class AdviceFeedScreen extends ConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Error state with retry
+    // Error state with retry (or upgrade prompt for tier errors)
     if (state.error != null && state.cards.isEmpty) {
+      if (state.isTierError) {
+        return const UpgradePromptWidget(
+          featureName: 'Expert Advice',
+          description: 'Upgrade to Premium to get stage-specific expert advice, '
+              'clinical guidance, and personalized parenting tips.',
+        );
+      }
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(DesignTokens.space3xl),

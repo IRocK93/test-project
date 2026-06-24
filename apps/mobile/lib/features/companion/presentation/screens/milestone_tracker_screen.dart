@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
 import 'package:baby_mon/features/companion/presentation/providers/companion_provider.dart';
+import 'package:baby_mon/features/companion/data/sync_persistence.dart';
+import 'package:baby_mon/features/companion/presentation/widgets/sync_banner.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
 
 class MilestoneTrackerScreen extends ConsumerStatefulWidget {
@@ -11,11 +13,16 @@ class MilestoneTrackerScreen extends ConsumerStatefulWidget {
   const MilestoneTrackerScreen({super.key, required this.babyMonId});
 
   @override
-  ConsumerState<MilestoneTrackerScreen> createState() => _MilestoneTrackerScreenState();
+  ConsumerState<MilestoneTrackerScreen> createState() => MilestoneTrackerScreenState();
 }
 
-class _MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen> {
+class MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   String? _selectedDomain;
+  Set<String> _validMilestoneIds = {};
+  Map<String, dynamic>? _lastData;
 
   static const _domains = [
     {'key': null, 'label': 'All', 'icon': PhosphorIconsLight.star},
@@ -67,11 +74,29 @@ class _MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen>
         ? allMilestones
         : allMilestones.where((m) => m['_domain'] == _selectedDomain).toList();
 
-    final achieved = filtered.where((m) => m['status'] == 'ACHIEVED').length;
+    final allMilestoneIds = allMilestones.map((m) => m['id'] as String).toSet();
+    _validMilestoneIds = allMilestoneIds;
+    // Filter out orphaned pending IDs (stale data from previous sessions / BabyMons)
+    final achieveSet = ref.watch(pendingMilestoneAchievementsProvider(widget.babyMonId))
+        .where(allMilestoneIds.contains)
+        .toSet();
+    final unachieveSet = ref.watch(pendingMilestoneUnachievementsProvider(widget.babyMonId))
+        .where(allMilestoneIds.contains)
+        .toSet();
+    // Prune orphaned IDs from the providers so stale data doesn't accumulate
+    _pruneOrphanedPendingIds(allMilestoneIds);
+    final achieved = filtered.where((m) {
+      final id = m['id'] as String;
+      return (m['status'] == 'ACHIEVED' || achieveSet.contains(id)) && !unachieveSet.contains(id);
+    }).length;
     final total = filtered.length;
 
     return Column(
       children: [
+        SyncBanner(
+          babyMonId: widget.babyMonId,
+          onRetry: () => ref.read(syncStatusProvider(widget.babyMonId).notifier).state = SyncStatus.syncing,
+        ),
         // Progress header
         Container(
           padding: const EdgeInsets.all(DesignTokens.spaceLg),
@@ -178,7 +203,15 @@ class _MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen>
   }
 
   Widget _buildMilestoneCard(Map<String, dynamic> milestone) {
-    final isAchieved = milestone['status'] == 'ACHIEVED';
+    final id = milestone['id'] as String;
+    final achieveSet = ref.watch(pendingMilestoneAchievementsProvider(widget.babyMonId))
+        .where(_validMilestoneIds.contains)
+        .toSet();
+    final unachieveSet = ref.watch(pendingMilestoneUnachievementsProvider(widget.babyMonId))
+        .where(_validMilestoneIds.contains)
+        .toSet();
+    final isAchieved = (milestone['status'] == 'ACHIEVED' || achieveSet.contains(id))
+        && !unachieveSet.contains(id);
     final redFlagText = milestone['redFlagText'] as String?;
     final activityPrompt = milestone['activityPrompt'] as String?;
 
@@ -198,7 +231,7 @@ class _MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen>
         ),
       ),
       child: InkWell(
-        onTap: isAchieved ? null : () => _achieveMilestone(milestone),
+        onTap: () => _toggleMilestone(milestone),
         borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
         child: Padding(
           padding: const EdgeInsets.all(DesignTokens.spaceLg),
@@ -207,7 +240,7 @@ class _MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen>
             children: [
               // Checkbox
               GestureDetector(
-                onTap: () => isAchieved ? null : _achieveMilestone(milestone),
+                onTap: () => _toggleMilestone(milestone),
                 child: Semantics(
                   label: isAchieved ? 'Achieved: ${milestone['title']}' : 'Mark achieved: ${milestone['title']}',
                   child: Container(
@@ -317,28 +350,44 @@ class _MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen>
     );
   }
 
-  Future<void> _achieveMilestone(Map<String, dynamic> milestone) async {
-    final repo = ref.read(companionRepositoryProvider);
+  /// Remove pending IDs that don't match any milestone in the current stage.
+  /// Prevents phantom achievements from stale SharedPreferences data.
+  void _pruneOrphanedPendingIds(Set<String> validIds) {
+    final aNotifier = ref.read(pendingMilestoneAchievementsProvider(widget.babyMonId).notifier);
+    if (aNotifier.state.any((id) => !validIds.contains(id))) {
+      aNotifier.state = aNotifier.state.where(validIds.contains).toSet();
+    }
+    final uNotifier = ref.read(pendingMilestoneUnachievementsProvider(widget.babyMonId).notifier);
+    if (uNotifier.state.any((id) => !validIds.contains(id))) {
+      uNotifier.state = uNotifier.state.where(validIds.contains).toSet();
+    }
+  }
+
+  void _toggleMilestone(Map<String, dynamic> milestone) {
     final id = milestone['id'] as String;
-    try {
-      await repo.achieveMilestone(widget.babyMonId, id);
-      ref.invalidate(milestonesProvider(widget.babyMonId));
-      ref.invalidate(dailyBriefProvider(widget.babyMonId));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Milestone achieved! +${milestone['xpReward'] ?? 10} XP'),
-            backgroundColor: context.colorScheme.primary,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save milestone')),
-        );
-      }
+    final achieveNotifier = ref.read(pendingMilestoneAchievementsProvider(widget.babyMonId).notifier);
+    final unachieveNotifier = ref.read(pendingMilestoneUnachievementsProvider(widget.babyMonId).notifier);
+    final a = {...achieveNotifier.state};
+    final u = {...unachieveNotifier.state};
+    final isChecked = (milestone['status'] == 'ACHIEVED' || a.contains(id)) && !u.contains(id);
+
+    if (isChecked) {
+      if (milestone['status'] == 'ACHIEVED') { u.add(id); } else { a.remove(id); }
+    } else {
+      if (milestone['status'] == 'ACHIEVED') { u.remove(id); } else { a.add(id); }
+    }
+    achieveNotifier.state = a;
+    unachieveNotifier.state = u;
+    SyncPersistence.saveAchievements(widget.babyMonId, a);
+    SyncPersistence.saveUnachievements(widget.babyMonId, u);
+    ref.read(syncStatusProvider(widget.babyMonId).notifier).state = SyncStatus.pending;
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(isChecked ? 'Milestone undone' : 'Milestone achieved!'),
+        backgroundColor: isChecked ? context.textSecondary : context.colorScheme.primary,
+        duration: const Duration(seconds: 2),
+      ));
     }
   }
 }

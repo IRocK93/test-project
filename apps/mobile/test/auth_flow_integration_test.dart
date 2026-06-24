@@ -84,6 +84,10 @@ class _MockAuthRepository extends AuthRepository {
 
   @override
   Future<void> logout() async {}
+  @override Future<String?> getAccessToken() async => null;
+  @override Future<({String token, User user})> appleLogin(String idToken) async => throw UnimplementedError();
+  @override Future<({String token, User user})> facebookLogin(String accessToken) async => throw UnimplementedError();
+  @override Future<({String token, User user})> googleLogin(String idToken) async => throw UnimplementedError();
 
   @override
   Future<User?> getCurrentUser() async => null;

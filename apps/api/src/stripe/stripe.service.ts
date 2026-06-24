@@ -1,5 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import Stripe from 'stripe';
 
 @Injectable()
@@ -7,7 +8,10 @@ export class StripeService {
   private readonly logger = new Logger(StripeService.name);
   private stripe: Stripe;
 
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {
     const apiKey = process.env.STRIPE_SECRET_KEY;
     if (apiKey) {
       this.stripe = new Stripe(apiKey, {
@@ -263,7 +267,29 @@ export class StripeService {
   }
 
   private async handlePaymentFailed(invoice: Stripe.Invoice) {
-    this.logger.log(`Payment failed for invoice ${invoice.id}`);
+    const customerId = invoice.customer as string;
+    const attemptCount = invoice.attempt_count || 1;
+
+    this.logger.warn(`Payment failed for invoice ${invoice.id} — customer ${customerId}, attempt ${attemptCount}, amount ${(invoice.amount_due || 0) / 100}`);
+
+    // Mark subscription payment status
+    if (invoice.subscription) {
+      const subId = invoice.subscription as string;
+      await this.prisma.subscription.updateMany({
+        where: { stripeSubscriptionId: subId },
+        data: { isActive: invoice.attempt_count < 4 }, // deactivate after 4 failed attempts
+      });
+
+      // Look up user and send push notification
+      const subscription = await this.prisma.subscription.findFirst({
+        where: { stripeSubscriptionId: subId },
+        select: { userId: true },
+      });
+      if (subscription?.userId) {
+        this.notifications.notifyPaymentFailed(subscription.userId, attemptCount)
+          .catch((err) => this.logger.warn({ err }, 'Failed to send payment failure notification'));
+      }
+    }
   }
 
   private getTierFromPriceId(priceId: string): 'FREE' | 'PREMIUM' {

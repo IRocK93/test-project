@@ -9,35 +9,44 @@ export class JournalService {
     private accessControl: AccessControlService,
   ) {}
 
-  async getJournal(babymonId: string, userId: string, type?: string) {
+  async getJournal(babymonId: string, userId: string, type?: string, skip: number = 0, take: number = 20) {
     const { hasAccess } = await this.accessControl.checkAccess(userId, babymonId);
     if (!hasAccess) throw new ForbiddenException('Access denied');
 
-    const where: any = { babymonId, deletedAt: null };
-    if (type) {
-      where.type = type;
-    }
+    // Fetch take entries from each source — enough to fill a page after merge
+    const queryTake = take + skip;
 
-    // Get all entries
-    const [milestones, feedLogs, healthRecords, proposals, auditLogs] = await Promise.all([
-      this.prisma.milestone.findMany({ where: { babymonId, deletedAt: null }, orderBy: { happenedAt: 'desc' } }),
-      this.prisma.feedLog.findMany({ where: { babymonId, deletedAt: null }, orderBy: { happenedAt: 'desc' } }),
-      this.prisma.healthRecord.findMany({ where: { babymonId, deletedAt: null }, orderBy: { happenedAt: 'desc' } }),
-      this.prisma.entryChangeProposal.findMany({ where: { babymonId: babymonId, status: 'PENDING' }, orderBy: { createdAt: 'desc' } }),
-      this.prisma.auditLog.findMany({ where: { babymonId: babymonId }, orderBy: { createdAt: 'desc' }, take: 50 }),
+    const [milestones, feedLogs, healthRecords, proposals] = await Promise.all([
+      (!type || type === 'MILESTONE')
+        ? this.prisma.milestone.findMany({ where: { babymonId, deletedAt: null }, orderBy: { happenedAt: 'desc' }, take: queryTake })
+        : Promise.resolve([] as any[]),
+      (!type || type === 'FEED_LOG')
+        ? this.prisma.feedLog.findMany({ where: { babymonId, deletedAt: null }, orderBy: { happenedAt: 'desc' }, take: queryTake })
+        : Promise.resolve([] as any[]),
+      (!type || type === 'HEALTH_RECORD')
+        ? this.prisma.healthRecord.findMany({ where: { babymonId, deletedAt: null }, orderBy: { happenedAt: 'desc' }, take: queryTake })
+        : Promise.resolve([] as any[]),
+      this.prisma.entryChangeProposal.findMany({ where: { babymonId, status: 'PENDING' }, orderBy: { createdAt: 'desc' }, take: 10 }),
     ]);
 
-    // Combine and sort
-    const entries = [
+    // Merge all entry types, sort by date descending
+    const allEntries = [
       ...milestones.map(m => ({ ...m, entryType: 'MILESTONE', sortDate: m.happenedAt })),
       ...feedLogs.map(f => ({ ...f, entryType: 'FEED_LOG', sortDate: f.happenedAt })),
       ...healthRecords.map(h => ({ ...h, entryType: 'HEALTH_RECORD', sortDate: h.happenedAt })),
     ].sort((a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime());
 
+    const total = allEntries.length;
+    const entries = allEntries.slice(skip, skip + take);
+    const hasMore = skip + take < total;
+
     return {
       entries,
       proposals,
-      recentActivity: auditLogs.slice(0, 10),
+      total,
+      skip,
+      take,
+      hasMore,
     };
   }
 

@@ -93,7 +93,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get journal => 'Journal';
 
   @override
-  String get companion => 'Companion';
+  String get companion => 'AI Companion';
 
   @override
   String get profile => 'Profile';
@@ -588,13 +588,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currentPlan => 'Current Plan';
 
   @override
-  String get corePlan => 'CORE';
+  String get freePlan => 'Free';
 
   @override
-  String get aiCompanionPlan => 'AI Companion';
+  String get premiumPlan => 'Premium';
 
   @override
-  String get upgradeToAi => 'Upgrade to AI Companion';
+  String get upgradeToPremium => 'Upgrade to Premium';
 
   @override
   String get trialActive => 'Trial Active';

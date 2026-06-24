@@ -24,10 +24,7 @@ class AuthRemoteDatasource {
         final user = User.fromJson(parseJsonMap(response.data['user']) ?? {});
         final token = parseString(response.data['accessToken']) ?? '';
         final refreshToken = parseString(response.data['refreshToken']) ?? '';
-        await _prefs.setString('accessToken', token);
-        await _prefs.setString('userId', user.id);
-        await _prefs.setString('userEmail', user.email);
-        await _apiClient.saveTokens(token, refreshToken ?? '', user.id);
+        await _apiClient.saveTokens(token, refreshToken, user.id);
         return (user: user, token: token);
       } else {
         throw Exception('Failed to login');
@@ -66,10 +63,7 @@ class AuthRemoteDatasource {
           final user = User.fromJson(parseJsonMap(response.data['user']) ?? {});
           final token = parseString(response.data['accessToken']) ?? '';
           final refreshToken = parseString(response.data['refreshToken']) ?? '';
-          await _prefs.setString('accessToken', token);
-          await _prefs.setString('userId', user.id);
-          await _prefs.setString('userEmail', user.email);
-          await _apiClient.saveTokens(token, refreshToken ?? '', user.id);
+          await _apiClient.saveTokens(token, refreshToken, user.id);
           return (user: user, token: token);
         } else {
           final responseType = response.data.runtimeType.toString();
@@ -133,7 +127,12 @@ class AuthRemoteDatasource {
   }
 
   Future<bool> isLoggedIn() async {
-    return _prefs.containsKey('accessToken');
+    final token = await _apiClient.getAccessToken();
+    return token != null;
+  }
+
+  Future<String?> getAccessToken() async {
+    return await _apiClient.getAccessToken();
   }
 
   Future<({User user, String token})> googleLogin(String idToken) async {
@@ -142,12 +141,6 @@ class AuthRemoteDatasource {
     final user = User.fromJson(data['user'] as Map<String, dynamic>);
     final token = data['accessToken'] as String;
     final refreshToken = data['refreshToken'] as String?;
-    if (refreshToken != null) {
-      await _prefs.setString('refreshToken', refreshToken);
-    }
-    await _prefs.setString('accessToken', token);
-    await _prefs.setString('userId', user.id);
-    await _prefs.setString('userEmail', user.email);
     await _apiClient.saveTokens(token, refreshToken ?? '', user.id);
     return (user: user, token: token);
   }
@@ -158,12 +151,6 @@ class AuthRemoteDatasource {
     final user = User.fromJson(data['user'] as Map<String, dynamic>);
     final token = data['accessToken'] as String;
     final refreshToken = data['refreshToken'] as String?;
-    if (refreshToken != null) {
-      await _prefs.setString('refreshToken', refreshToken);
-    }
-    await _prefs.setString('accessToken', token);
-    await _prefs.setString('userId', user.id);
-    await _prefs.setString('userEmail', user.email);
     await _apiClient.saveTokens(token, refreshToken ?? '', user.id);
     return (user: user, token: token);
   }
@@ -174,12 +161,6 @@ class AuthRemoteDatasource {
     final user = User.fromJson(data['user'] as Map<String, dynamic>);
     final token = data['accessToken'] as String;
     final refreshToken = data['refreshToken'] as String?;
-    if (refreshToken != null) {
-      await _prefs.setString('refreshToken', refreshToken);
-    }
-    await _prefs.setString('accessToken', token);
-    await _prefs.setString('userId', user.id);
-    await _prefs.setString('userEmail', user.email);
     await _apiClient.saveTokens(token, refreshToken ?? '', user.id);
     return (user: user, token: token);
   }

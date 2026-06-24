@@ -1,15 +1,17 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AllergiesService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(babyMonId: string, userId: string) {
+  async findAll(babyMonId: string, userId: string, skip?: number, take?: number) {
     return this.prisma.allergy.findMany({
       where: { babyMonId, deletedAt: null },
       include: { events: { orderBy: { happenedAt: 'desc' } } },
       orderBy: { createdAt: 'desc' },
+      skip,
+      take,
     });
   }
 

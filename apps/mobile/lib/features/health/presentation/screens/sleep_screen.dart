@@ -1,4 +1,7 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+// ignore_for_file: unused_element
+import 'package:flutter/semantics.dart' as semantics;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
@@ -11,39 +14,33 @@ import 'package:baby_mon/core/utils/json_utils.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/features/health/domain/entities/sleep_log.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
-
 class SleepScreen extends ConsumerStatefulWidget {
   const SleepScreen({super.key});
   @override
   ConsumerState<SleepScreen> createState() => _SleepScreenState();
 }
-
 class _SleepScreenState extends ConsumerState<SleepScreen>
     with DataScreenMixin<SleepScreen> {
   @override
   bool get autoInit => true;
-
   @override
   int? get listenToTabRefresh => 4;
-
   @override
   Duration? get refreshCooldown => const Duration(seconds: 10);
-
   List<SleepLog> _sleepLogs = [];
   DateTime _selectedDate = DateTime.now();
   static const _qualities = SleepQuality.values;
-
-  int _chartRange = 3;
+  int _chartRange = 7;
   String _chartUnit = 'Days';
   String? _selectedBarDate;
-
-
+  final _chartScrollController = ScrollController();
+  double _chartDragStartX = 0;
+  double _chartScrollStartOffset = 0;
   @override
   Future<void> fetchData() async {
     final response = await ref.read(apiClientProvider).getSleepLogs(babyMonId!);
     _sleepLogs = parseItemsTyped(response.data).map(SleepLog.fromJson).toList();
   }
-
   Future<bool> _deleteLog(String id, int index) async {
     // Capture messenger upfront so we can safely use it after async gaps.
     final messenger = ScaffoldMessenger.of(context);
@@ -58,18 +55,17 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
       setState(() => _sleepLogs.removeAt(index));
       ref.read(appRefreshProvider.notifier).state++;
       messenger.showSnackBar(const SnackBar(content: Text('Sleep log deleted')));
+      semantics.SemanticsService.announce('Sleep log deleted', ui.TextDirection.ltr);
       return true;
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
       return false;
     }
   }
-
   List<SleepLog> _logsForSelectedDate() {
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
     return _sleepLogs.where((log) => log.startTime != null && DateFormat('yyyy-MM-dd').format(log.startTime!) == dateStr).toList();
   }
-
   List<({String date, List<SleepLog> logs, double totalMinutes})> _sleepLogsByDay() {
     final now = DateTime.now();
     DateTime cutoff;
@@ -104,9 +100,6 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
       }),
     )).toList();
   }
-
-
-
   ({int totalMinutes, int naps, double avgQuality, int count}) _dailySummary(List<SleepLog> logs) {
     int totalMinutes = 0, naps = 0;
     for (final log in logs) {
@@ -116,13 +109,10 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
     final avgQuality = logs.isNotEmpty ? logs.map((l) => SleepQuality.resolve(l.quality).avgScoreValue).reduce((a, b) => a + b) / logs.length : 0.0;
     return (totalMinutes: totalMinutes, naps: naps, avgQuality: avgQuality, count: logs.length);
   }
-
   String _formatDuration(String? s, String? e) { final sd = DateTime.tryParse(s ?? ''), ed = DateTime.tryParse(e ?? ''); if (sd == null || ed == null) return ''; final d = ed.difference(sd); return d.inHours > 0 ? '${d.inHours}h ${d.inMinutes.remainder(60)}m' : '${d.inMinutes}m'; }
   String _formatTime(String? iso) { final dt = DateTime.tryParse(iso ?? ''); return dt == null ? '' : DateFormat('HH:mm').format(dt); }
-
   Widget _buildTimelineChart() {
     final days = _sleepLogsByDay();
-
     const hourHeight = 28.0;
     const dayWidth = 120.0;
     const topLabelHeight = 24.0;
@@ -131,7 +121,6 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
     const intervalHours = 2;
     const numSlots = totalHours ~/ intervalHours;
     const chartHeight = numSlots * hourHeight + 8;
-
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg, vertical: 4),
@@ -180,8 +169,23 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
             const SizedBox(height: topLabelHeight),
           ]),
           Expanded(
-            child: SingleChildScrollView(
+            child: GestureDetector(
+              onHorizontalDragStart: (d) {
+                _chartDragStartX = d.globalPosition.dx;
+                _chartScrollStartOffset = _chartScrollController.offset;
+              },
+              onHorizontalDragUpdate: (d) {
+                final dx = _chartDragStartX - d.globalPosition.dx;
+                final newOffset = (_chartScrollStartOffset + dx).clamp(
+                  0.0,
+                  _chartScrollController.position.maxScrollExtent,
+                );
+                _chartScrollController.jumpTo(newOffset);
+              },
+              child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
+              physics: const NeverScrollableScrollPhysics(),
+              controller: _chartScrollController,
               child: Column(children: [
                 SizedBox(
                   height: chartHeight,
@@ -269,6 +273,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
                 ),
               ]),
             ),
+            ),
           ),
         ]),
       ),
@@ -276,7 +281,6 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
       if (_selectedBarDate != null) Center(child: Text('Selected: $_selectedBarDate \u2014 tap for details', style: TextStyle(fontSize: DesignTokens.fontSm2, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7)))),
     ]);
   }
-
   void _showDaySleepDetails(({String date, List<SleepLog> logs, double totalMinutes}) day) {
     final dateStr = day.date;
     final logs = day.logs;
@@ -300,7 +304,6 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
       actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))],
     ));
   }
-
   @override
   Widget build(BuildContext context) {
     final logs = _logsForSelectedDate();
@@ -346,29 +349,28 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
         ),
       ),
             ),
-      floatingActionButton: Semantics(
-        label: 'Add sleep log',
-        button: true,
-        child: FloatingActionButton(
-          heroTag: 'add_sleep',
-          backgroundColor: context.colorScheme.primary,
-          foregroundColor: context.colorScheme.onPrimary,
-          onPressed: _showAddSleepDialog,
-          child: const Icon(PhosphorIconsLight.moon),
-        ),
-      ),
+      floatingActionButton: hasBabyMon
+          ? Semantics(
+              label: 'Add sleep log',
+              button: true,
+              child: FloatingActionButton(
+                heroTag: 'add_sleep',
+                backgroundColor: context.colorScheme.primary,
+                foregroundColor: context.colorScheme.onPrimary,
+                onPressed: _showAddSleepDialog,
+                child: const Icon(PhosphorIconsLight.moon),
+              ),
+            )
+          : null,
     );
   }
-
   String _sleepTypeLabel(SleepLog log) {
     final start = log.startTime; final end = log.endTime;
     if (start == null || end == null) return 'Sleep'; final duration = end.difference(start);
     if (duration.inHours >= 4) return SleepType.night.label; if (start.hour >= 20 || start.hour < 6) return SleepType.night.label; return SleepType.nap.label;
   }
-
   String _qualityLabelText(double s) => s >= 0.5 ? SleepQuality.fromScore(s).label : 'N/A';
   Widget _summaryStat(String v, String l) { return Column(children: [Text(v, style: const TextStyle(fontSize: DesignTokens.fontLg2, fontWeight: FontWeight.bold)), Text(l, style: TextStyle(fontSize: DesignTokens.fontSm2, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7), height: 1.4))]); }
-
   void _showAddSleepDialog() {
     if (babyMonId == null) return;
     final now = DateTime.now();

@@ -17,7 +17,7 @@ export class LinkedAccountsService {
 
   // ── Reads (user-level, kept for admin / non-mobile callers) ────────────
 
-  async getLinkedAccounts(userId: string) {
+  async getLinkedAccounts(userId: string, skip?: number, take?: number) {
     const rows = await this.prisma.linkedAccount.findMany({
       where: {
         OR: [
@@ -29,6 +29,8 @@ export class LinkedAccountsService {
         userA: { select: { id: true, email: true, name: true } },
         userB: { select: { id: true, email: true, name: true } },
       },
+      skip,
+      take,
     });
     return rows.map((r) => this.toPartnerDto(r, userId));
   }

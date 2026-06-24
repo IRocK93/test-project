@@ -1,6 +1,7 @@
 import { Injectable, Logger, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { S3Service } from '../s3/s3.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { MAX_UPLOAD_SIZE_BYTES } from '../common/app-constants';
 
 export interface UploadResult {
   id: string;
@@ -61,8 +62,7 @@ export class MediaService {
     }
 
     // Validate file size (max 50MB)
-    const maxSize = 50 * 1024 * 1024;
-    if (fileSize > maxSize) {
+    if (fileSize > MAX_UPLOAD_SIZE_BYTES) {
       throw new BadRequestException('File too large. Maximum size is 50MB');
     }
 
@@ -131,7 +131,7 @@ export class MediaService {
     return { uploadUrl, key };
   }
 
-  async getMediaForBabyMon(babyMonId: string, userId: string): Promise<any[]> {
+  async getMediaForBabyMon(babyMonId: string, userId: string, skip?: number, take?: number): Promise<any[]> {
     // Verify access
     const babyMon = await this.prisma.babyMon.findFirst({
       where: { id: babyMonId, deletedAt: null },
@@ -159,6 +159,8 @@ export class MediaService {
     return this.prisma.media.findMany({
       where: { babyMonId },
       orderBy: { createdAt: 'desc' },
+      skip,
+      take,
     });
   }
 

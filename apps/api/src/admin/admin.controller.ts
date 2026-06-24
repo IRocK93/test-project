@@ -2,9 +2,9 @@ import { Controller, Get, Patch, Param, Query, UseGuards, Body } from '@nestjs/c
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { UpdateUserStatusDto, UpdateUserRoleDto } from './dto/admin.dto';
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -36,9 +36,9 @@ export class AdminController {
   @ApiOperation({ summary: 'Update user active status (admin only)' })
   async updateUserStatus(
     @Param('id') id: string,
-    @Body() body: { isActive: boolean },
+    @Body() dto: UpdateUserStatusDto,
   ) {
-    return this.adminService.updateUserStatus(id, body.isActive);
+    return this.adminService.updateUserStatus(id, dto.isActive);
   }
 
   @Roles('ADMIN')
@@ -46,9 +46,9 @@ export class AdminController {
   @ApiOperation({ summary: 'Update user role (admin only)' })
   async updateUserRole(
     @Param('id') id: string,
-    @Body() body: { role: string },
+    @Body() dto: UpdateUserRoleDto,
   ) {
-    return this.adminService.updateUserRole(id, body.role);
+    return this.adminService.updateUserRole(id, dto.role);
   }
 
   @Roles('ADMIN')

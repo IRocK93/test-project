@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
+import 'package:baby_mon/core/utils/tier_required_exception.dart';
 import '../../data/companion_repository.dart';
 import 'companion_provider.dart';
 
@@ -10,6 +11,7 @@ class AdviceFeedState {
   final bool hasMore;
   final bool isLoading;
   final String? error;
+  final bool isTierError;
   final bool isInitialLoad;
   final Set<String> bookmarkedIds;
   final Map<String, bool?> ratings;
@@ -21,6 +23,7 @@ class AdviceFeedState {
     this.hasMore = true,
     this.isLoading = false,
     this.error,
+    this.isTierError = false,
     this.isInitialLoad = true,
     this.bookmarkedIds = const {},
     this.ratings = const {},
@@ -33,6 +36,7 @@ class AdviceFeedState {
     bool? hasMore,
     bool? isLoading,
     String? error,
+    bool? isTierError,
     bool? isInitialLoad,
     Set<String>? bookmarkedIds,
     Map<String, bool?>? ratings,
@@ -44,6 +48,7 @@ class AdviceFeedState {
       hasMore: hasMore ?? this.hasMore,
       isLoading: isLoading ?? this.isLoading,
       error: error,
+      isTierError: isTierError ?? this.isTierError,
       isInitialLoad: isInitialLoad ?? this.isInitialLoad,
       bookmarkedIds: bookmarkedIds ?? this.bookmarkedIds,
       ratings: ratings ?? this.ratings,
@@ -51,7 +56,7 @@ class AdviceFeedState {
   }
 
   /// Clears error when transitioning away from error state.
-  AdviceFeedState clearError() => copyWith(error: null);
+  AdviceFeedState clearError() => copyWith(error: null, isTierError: false);
 }
 
 class AdviceFeedNotifier extends StateNotifier<AdviceFeedState> {
@@ -63,7 +68,7 @@ class AdviceFeedNotifier extends StateNotifier<AdviceFeedState> {
 
   Future<void> loadCards() async {
     if (state.isLoading || !state.hasMore) return;
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, error: null, isTierError: false);
 
     try {
       final result = await _repo.getAdvice(
@@ -88,6 +93,7 @@ class AdviceFeedNotifier extends StateNotifier<AdviceFeedState> {
       state = state.copyWith(
         isLoading: false,
         isInitialLoad: false,
+        isTierError: e is TierRequiredException,
         error: extractErrorMessage(e),
       );
     }
@@ -178,6 +184,13 @@ class AdviceFeedNotifier extends StateNotifier<AdviceFeedState> {
       reverted[cardId] = previousRating;
       state = state.copyWith(ratings: reverted);
     }
+  }
+
+  @override
+  void dispose() {
+    // Release any loaded card data
+    state = state.copyWith(cards: [], skip: 0, hasMore: false);
+    super.dispose();
   }
 }
 

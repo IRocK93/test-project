@@ -14,7 +14,6 @@ final modelManagerProvider = FutureProvider<ModelManager>((ref) async => ModelMa
 final deviceCapabilityServiceProvider = Provider<DeviceCapabilityService>((ref) => DeviceCapabilityService());
 
 /// Whether the current device is capable of running the on-device LLM.
-/// Falls back to `true` while the async check is in progress (optimistic).
 final deviceCanRunLlmProvider = FutureProvider<bool>((ref) async {
   final service = ref.read(deviceCapabilityServiceProvider);
   return service.canRunLLM();
@@ -22,24 +21,35 @@ final deviceCanRunLlmProvider = FutureProvider<bool>((ref) async {
 
 class ModelDownloadNotifier extends StateNotifier<ModelDownloadState> {
   final ModelDownloadService _downloadService;
-  final ModelManager? _modelManager;
+  final Ref _ref;
   StreamSubscription<ModelDownloadState>? _subscription;
 
-  ModelDownloadNotifier({required ModelDownloadService downloadService, required ModelManager? modelManager})
-      : _downloadService = downloadService, _modelManager = modelManager, super(const ModelDownloadNotStarted());
+  ModelDownloadNotifier({required ModelDownloadService downloadService, required Ref ref})
+      : _downloadService = downloadService,
+        _ref = ref,
+        super(const ModelDownloadNotStarted());
 
   Future<void> startDownload({required String url, required String destinationPath, String? expectedSha256, required String version, bool registerOnComplete = true}) async {
     await cancelDownload();
     _subscription = _downloadService.download(url: url, destinationPath: destinationPath, expectedSha256: expectedSha256).listen((event) async {
       state = event;
-      if (event is ModelDownloadComplete && registerOnComplete && _modelManager != null) {
+      if (event is ModelDownloadComplete && registerOnComplete) {
         try {
+          // Resolve ModelManager fresh — the FutureProvider is guaranteed
+          // to have completed by the time a download finishes.
+          final modelManager = await _ref.read(modelManagerProvider.future);
           final file = File(event.filePath);
           final sizeBytes = await file.exists() ? await file.length() : 0;
-          await _modelManager!.addInstalledVersion(version: version, filePath: event.filePath, sha256: expectedSha256, sizeBytes: sizeBytes);
-        } catch (e) { debugPrint('Failed to register downloaded model: $e'); }
+          await modelManager.addInstalledVersion(version: version, filePath: event.filePath, sha256: expectedSha256, sizeBytes: sizeBytes);
+          debugPrint('[DOWNLOAD] Model registered: $version at ${event.filePath}');
+        } catch (e) {
+          debugPrint('[DOWNLOAD] Failed to register downloaded model: $e');
+        }
       }
-    }, onError: (Object error) { state = ModelDownloadError(message: error.toString()); });
+    }, onError: (Object error) {
+      state = ModelDownloadError(message: error.toString());
+      debugPrint('[DOWNLOAD] Error: $error');
+    });
   }
 
   Future<void> cancelDownload() async {
@@ -59,10 +69,5 @@ class ModelDownloadNotifier extends StateNotifier<ModelDownloadState> {
 
 final modelDownloadStateProvider = StateNotifierProvider<ModelDownloadNotifier, ModelDownloadState>((ref) {
   final downloadService = ref.watch(modelDownloadServiceProvider);
-  final modelManagerAsync = ref.watch(modelManagerProvider);
-  // ModelManager may not have resolved yet on first read — that's OK,
-  // the notifier handles a null modelManager gracefully (version
-  // registration is skipped until it becomes available).
-  final modelManager = modelManagerAsync.valueOrNull;
-  return ModelDownloadNotifier(downloadService: downloadService, modelManager: modelManager);
+  return ModelDownloadNotifier(downloadService: downloadService, ref: ref);
 });

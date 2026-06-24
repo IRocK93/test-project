@@ -2,68 +2,210 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
-import 'package:baby_mon/core/widgets/premium_card.dart';
+import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
 
-/// Stage-specific editorial content card (summary + tips).
+/// Stage Insights — inviting gateway to the AI Companion.
 class DashboardContentCard extends StatelessWidget {
   final Map<String, dynamic> stageContent;
+  final VoidCallback? onReflectionTap;
+  final VoidCallback? onOpenChat;
+  final VoidCallback? onViewMilestones;
 
-  const DashboardContentCard({super.key, required this.stageContent});
+  const DashboardContentCard({
+    super.key,
+    required this.stageContent,
+    this.onReflectionTap,
+    this.onOpenChat,
+    this.onViewMilestones,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return PremiumCard(
-      isGlass: true,
+    final summary = parseString(stageContent['summaryText']);
+    final stageTitle = parseString(stageContent['title']) ?? 'Stage Insights';
+    final tips = stageContent['expertTips'] as List<dynamic>? ?? [];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(PhosphorIconsLight.sparkle,
-                  color: context.colorScheme.primary, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                parseString(stageContent['title']) ?? 'Stage Insights',
-                style: Theme.of(context)
-                    .textTheme
-                    .labelLarge
-                    ?.copyWith(fontWeight: FontWeight.w700),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: [
+                    context.colorScheme.primary,
+                    context.colorScheme.tertiary,
+                  ]),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+                ),
+                child: const Icon(PhosphorIconsLight.sparkle,
+                    color: Colors.white, size: 18),
+              ),
+              const SizedBox(width: DesignTokens.spaceMd),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      stageTitle,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: context.colorScheme.onSurface),
+                    ),
+                    Text(
+                      'Powered by Enas AI',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(
+                              color: context.colorScheme.primary,
+                              fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          if (stageContent['summary'] != null) ...[
-            const SizedBox(height: DesignTokens.spaceSm),
-            Text(
-              parseString(stageContent['summary']) ?? '',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+          const SizedBox(height: DesignTokens.spaceMd),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(DesignTokens.spaceLg),
+            decoration: BoxDecoration(
+              color: context.colorScheme.surface,
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+              border: Border.all(
+                  color: context.colorScheme.outline.withValues(alpha: 0.15)),
             ),
-          ],
-          if (stageContent['tips'] != null) ...[
-            const SizedBox(height: DesignTokens.spaceSm),
-            ...parseList(stageContent['tips']).map((tip) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (summary != null) ...[
+                  Text(
+                    summary,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(
+                            color: context.colorScheme.onSurfaceVariant,
+                            height: 1.5),
+                  ),
+                  const SizedBox(height: DesignTokens.spaceLg),
+                ],
+                if (tips.isNotEmpty) ...[
+                  Row(
                     children: [
-                      const Text('• ',
-                          style: TextStyle(fontWeight: FontWeight.w800)),
+                      Icon(PhosphorIconsLight.lightbulb,
+                          size: 14, color: context.colorScheme.primary),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          tip.toString(),
+                          parseString(tips.first) ?? '',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
-                              ?.copyWith(color: context.colorScheme.onSurfaceVariant),
+                              ?.copyWith(
+                                  color: context.colorScheme.onSurfaceVariant,
+                                  fontStyle: FontStyle.italic),
                         ),
                       ),
                     ],
                   ),
-                )),
-          ],
+                  const SizedBox(height: DesignTokens.spaceLg),
+                ],
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ActionButton(
+                        icon: PhosphorIconsLight.chatCircleDots,
+                        label: 'Ask Enas',
+                        subtitle: 'AI guidance',
+                        color: context.colorScheme.primary,
+                        onTap: onOpenChat,
+                      ),
+                    ),
+                    const SizedBox(width: DesignTokens.spaceSm),
+                    Expanded(
+                      child: _ActionButton(
+                        icon: PhosphorIconsLight.target,
+                        label: 'Milestones',
+                        subtitle: 'Track progress',
+                        color: context.colorScheme.tertiary,
+                        onTap: onViewMilestones,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: DesignTokens.spaceMd,
+              vertical: DesignTokens.spaceMd),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20, color: color),
+              const SizedBox(width: DesignTokens.spaceSm),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                        fontSize: DesignTokens.fontSm,
+                        fontWeight: FontWeight.w700,
+                        color: color),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                        fontSize: DesignTokens.font2xs,
+                        color: context.textCaption),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

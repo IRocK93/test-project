@@ -94,9 +94,14 @@ export class S3Service {
     return signedUrl;
   }
 
-  async getSignedDownloadUrl(key: string): Promise<string> {
+  async getSignedDownloadUrl(key: string, userId: string, babyMonId: string): Promise<string> {
     if (!this.s3Client) {
       throw new BadRequestException('S3 is not configured');
+    }
+
+    // Verify the key belongs to this user and baby-mon (path-based ACL)
+    if (!key.startsWith(`users/${userId}/babymons/${babyMonId}/`)) {
+      throw new BadRequestException('Access denied');
     }
 
     const command = new GetObjectCommand({
@@ -104,8 +109,8 @@ export class S3Service {
       Key: key,
     });
 
-    // URL valid for 1 hour
-    const signedUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
+    // URL valid for 15 minutes (reduced from 1 hour for security)
+    const signedUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 900 });
 
     return signedUrl;
   }

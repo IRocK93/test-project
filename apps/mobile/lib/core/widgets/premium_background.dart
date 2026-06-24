@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/clay_colors.dart';
+// ignore_for_file: unused_element
 import '../theme/theme_mode_provider.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 
@@ -19,98 +20,73 @@ class PremiumBackground extends ConsumerStatefulWidget {
   ConsumerState<PremiumBackground> createState() => _PremiumBackgroundState();
 }
 
-class _PremiumBackgroundState extends ConsumerState<PremiumBackground>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _animation;
-
+class _PremiumBackgroundState extends ConsumerState<PremiumBackground> {
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 12),
-    )..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isClay = ref.watch(appVisualStyleProvider) == AppVisualStyle.clay;
-    final size = MediaQuery.of(context).size;
 
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, _) {
-        final t = _animation.value;
-        return Stack(
-          children: [
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: isDark
-                        ? _darkBaseColors(t, isClay)
-                        : _lightBaseColors(t, isClay),
-                    stops: [0.0, 0.3 + t * 0.05, 0.7 - t * 0.05, 1.0],
-                  ),
-                ),
+    // Static gradient background — animated orbs removed for performance
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: isDark
+                    ? _darkBaseColors(isClay)
+                    : _lightBaseColors(isClay),
+                stops: const [0.0, 0.33, 0.67, 1.0],
               ),
             ),
-            if (widget.showOrnaments) ..._buildRadialMesh(isDark, t, size, isClay),
-            widget.child,
-          ],
-        );
-      },
-      child: widget.child,
+          ),
+        ),
+        widget.child,
+      ],
     );
   }
 
-  List<Color> _lightBaseColors(double t, bool isClay) {
+  List<Color> _lightBaseColors(bool isClay) {
     if (isClay) {
-      // Clay: warm cream / beige base — matches ClayColors.background
+      // Clay: warm cream / beige base
       return [
-        Color.lerp(const Color(0xFFF5EDE4), const Color(0xFFF0E8DC), t)!,
-        Color.lerp(const Color(0xFFFAF7F2), const Color(0xFFFDFBFA), t)!,
-        Color.lerp(const Color(0xFFFFF8F0), const Color(0xFFFFF3E8), t)!,
+        const Color(0xFFF5EDE4),
+        const Color(0xFFFAF7F2),
+        const Color(0xFFFFF8F0),
         const Color(0xFFF3EFE9),
       ];
     }
     // Glass: cool violet / lavender base
     return [
-      Color.lerp(const Color(0xFFF5F0FF), const Color(0xFFF0EBFF), t)!,
-      Color.lerp(const Color(0xFFFCFAFF), const Color(0xFFFFF9FF), t)!,
-      Color.lerp(const Color(0xFFFFF8F5), const Color(0xFFFFF3EE), t)!,
+      const Color(0xFFF5F0FF),
+      const Color(0xFFFCFAFF),
+      const Color(0xFFFFF8F5),
       const Color(0xFFF8F7FA),
     ];
   }
 
-  List<Color> _darkBaseColors(double t, bool isClay) {
+  List<Color> _darkBaseColors(bool isClay) {
     if (isClay) {
-      // Clay dark: warm brown-black — matches ClayColors.darkBackground
+      // Clay dark: warm brown-black
       return [
-        Color.lerp(const Color(0xFF1C1815), const Color(0xFF221C18), t)!,
+        const Color(0xFF1C1815),
         const Color(0xFF12100E),
-        Color.lerp(const Color(0xFF1A1510), const Color(0xFF201810), t)!,
+        const Color(0xFF1A1510),
         const Color(0xFF12100E),
       ];
     }
     // Glass dark: cool blue-black
     return [
-      Color.lerp(const Color(0xFF14101E), const Color(0xFF1A1428), t)!,
+      const Color(0xFF14101E),
       const Color(0xFF0E0E12),
-      Color.lerp(const Color(0xFF1A1218), const Color(0xFF221018), t)!,
+      const Color(0xFF1A1218),
       const Color(0xFF0E0E12),
     ];
   }

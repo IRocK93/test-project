@@ -1,14 +1,30 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { AccessControlService } from '../common/access-control.service';
 import { isWithinUndoWindow } from '../common/undo-window.helper';
+import { PROPOSAL_EXPIRY_DAYS } from '../common/app-constants';
+import { BadgesService } from '../badges/badges.service';
+import { XpService } from '../xp/xp.service';
+import { AccessControlService } from '../common/access-control.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { buildHistoryDateFilter } from '../common/history-filter.helper';
+import { trackDailyActivity } from '../common/daily-activity.helper';
 import { CreateHealthRecordDto, UpdateHealthRecordDto } from './dto/health-record.dto';
 
 @Injectable()
 export class HealthRecordsService {
-  constructor(private prisma: PrismaService, private accessControl: AccessControlService) {}
+  private readonly logger = new Logger(HealthRecordsService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private badgesService: BadgesService,
+    private xpService: XpService,
+    private accessControl: AccessControlService,
+    private subscriptionsService: SubscriptionsService,
+  ) {}
 
   async create(babymonId: string, userId: string, dto: CreateHealthRecordDto) {
+    await this.accessControl.checkAccess(userId, babymonId);
+
     const babyMon = await this.prisma.babyMon.findFirst({ where: { id: babymonId, deletedAt: null } });
     if (!babyMon) throw new NotFoundException('BabyMon not found');
 
@@ -18,6 +34,8 @@ export class HealthRecordsService {
         authorUserId: userId,
         category: dto.category,
         title: dto.title,
+        value: dto.value,
+        unit: dto.unit,
         notes: dto.notes,
         happenedAt: new Date(dto.happenedAt),
         localMediaRefs: dto.localMediaRefs || [],
@@ -27,6 +45,13 @@ export class HealthRecordsService {
     });
 
     await this.prisma.babyMon.update({ where: { id: babymonId }, data: { currentXp: { increment: 5 } } });
+
+    await trackDailyActivity(this.prisma, babymonId, 'healthRecord');
+
+    await this.xpService.checkAndProcessLevelUp(babymonId);
+
+    await this.badgesService.checkAndAwardBadges(babymonId, userId);
+
     await this.prisma.auditLog.create({
       data: { babymonId: babymonId, actorUserId: userId, eventType: 'HEALTH_RECORD_CREATED', payloadJson: JSON.stringify({ recordId: record.id }) },
     });
@@ -37,16 +62,21 @@ export class HealthRecordsService {
   async findAll(babymonId: string, userId: string, skip: number = 0, take: number = 20) {
     await this.verifyAccess(babymonId, userId);
 
+    // FREE tier: only show limited history
+    const dateFilter = await buildHistoryDateFilter(this.subscriptionsService, userId);
+
+    const baseWhere = { babymonId, deletedAt: null, ...dateFilter };
+
     const [items, total] = await Promise.all([
       this.prisma.healthRecord.findMany({
-        where: { babymonId, deletedAt: null },
+        where: baseWhere,
         orderBy: { happenedAt: 'desc' },
         skip,
         take,
         include: { author: { select: { id: true, name: true } } },
       }),
       this.prisma.healthRecord.count({
-        where: { babymonId, deletedAt: null },
+        where: baseWhere,
       }),
     ]);
 
@@ -76,7 +106,7 @@ export class HealthRecordsService {
     }
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    expiresAt.setDate(expiresAt.getDate() + PROPOSAL_EXPIRY_DAYS);
     return this.prisma.entryChangeProposal.create({
       data: { babymonId: record.babymonId, proposerUserId: userId, entryType: 'HEALTH_RECORD', entryId: id, proposalType: 'EDIT', proposedPayloadJson: JSON.stringify(dto), expiresAt },
     });
@@ -84,17 +114,21 @@ export class HealthRecordsService {
 
   async delete(id: string, userId: string) {
     const record = await this.findOne(id, userId);
-    if (isWithinUndoWindow(record.createdAt)) {
-      await this.prisma.healthRecord.update({ where: { id }, data: { deletedAt: new Date() } });
-      await this.prisma.babyMon.update({ where: { id: record.babymonId }, data: { currentXp: { decrement: record.xpAwarded } } });
-      return { message: 'Health record deleted' };
+
+    // Always soft-delete the record
+    await this.prisma.healthRecord.update({ where: { id }, data: { deletedAt: new Date() } });
+    await this.prisma.babyMon.update({ where: { id: record.babymonId }, data: { currentXp: { decrement: record.xpAwarded } } });
+
+    // If outside the undo window, also create a proposal for partner review
+    if (!isWithinUndoWindow(record.createdAt)) {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + PROPOSAL_EXPIRY_DAYS);
+      this.prisma.entryChangeProposal.create({
+        data: { babymonId: record.babymonId, proposerUserId: userId, entryType: 'HEALTH_RECORD', entryId: id, proposalType: 'DELETE', proposedPayloadJson: JSON.stringify({}), expiresAt },
+      }).catch((err) => this.logger.warn?.({ err }, 'Proposal creation failed (non-critical)'));
     }
 
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-    return this.prisma.entryChangeProposal.create({
-      data: { babymonId: record.babymonId, proposerUserId: userId, entryType: 'HEALTH_RECORD', entryId: id, proposalType: 'DELETE', proposedPayloadJson: JSON.stringify({}), expiresAt },
-    });
+    return { message: 'Health record deleted' };
   }
 
   private async verifyAccess(babymonId: string, userId: string) {

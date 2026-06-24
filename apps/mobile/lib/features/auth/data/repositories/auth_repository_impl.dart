@@ -103,6 +103,11 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<String?> getAccessToken() async {
+    return await _datasource.getAccessToken();
+  }
+
+  @override
   Future<({User user, String token})> googleLogin(String idToken) async {
     return await _datasource.googleLogin(idToken);
   }

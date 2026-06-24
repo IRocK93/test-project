@@ -53,7 +53,6 @@ class SettingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final dividerColor = Theme.of(context).dividerColor;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final titleColor = destructive
         ? colorScheme.error
         : colorScheme.onSurface;

@@ -1,26 +1,32 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:baby_mon/core/data/api_client.dart';
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
+  ApiClient? _apiClient;
+  String? _userId;
 
-  /// Initialize notification service
-  Future<void> initialize() async {
-    // Request permissions
+  /// Initialize notification service with API client for token registration.
+  Future<void> initialize({ApiClient? apiClient, String? userId}) async {
+    _apiClient = apiClient;
+    _userId = userId;
+
     await _requestPermissions();
-
-    // Initialize local notifications
     await _initializeLocalNotifications();
 
-    // Get FCM token
-    await getFCMToken();
+    final token = await getFCMToken();
+    if (token != null && _apiClient != null && _userId != null) {
+      await _sendTokenToBackend(token);
+    }
 
     // Listen for token refresh
     FirebaseMessaging.instance.onTokenRefresh.listen((token) {
-      // TODO: Send new token to backend
-      print('FCM Token refreshed: $token');
+      if (_apiClient != null && _userId != null) {
+        _sendTokenToBackend(token);
+      }
     });
 
     // Listen for foreground messages
@@ -30,84 +36,47 @@ class NotificationService {
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
   }
 
-  /// Request notification permissions
   Future<void> _requestPermissions() async {
-    final settings = await _firebaseMessaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
+    await _firebaseMessaging.requestPermission(
+      alert: true, badge: true, sound: true, provisional: false,
     );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
-    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
-      print('User granted provisional permission');
-    } else {
-      print('User declined or has not accepted permission');
-    }
   }
 
-  /// Initialize local notifications for foreground display
   Future<void> _initializeLocalNotifications() async {
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings();
-    const initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
-
-    await _localNotifications.initialize(
-      initSettings,
+    const initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
+    await _localNotifications.initialize(initSettings,
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
   }
 
-  /// Handle notification tap
   void _onNotificationTapped(NotificationResponse response) {
-    // TODO: Handle notification tap - navigate to specific screen
-    print('Notification tapped: ${response.payload}');
+    // Payload contains navigation data from the push notification
   }
 
-  /// Get FCM token for push notifications
   Future<String?> getFCMToken() async {
     try {
-      final token = await _firebaseMessaging.getToken();
-      print('FCM Token: $token');
-      // TODO: Send token to backend
-      return token;
-    } catch (e) {
-      print('Error getting FCM token: $e');
+      return await _firebaseMessaging.getToken();
+    } catch (_) {
       return null;
     }
   }
 
-  /// Handle foreground message
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
-    print('Received foreground message: ${message.notification?.title}');
-
-    // Show local notification
     if (message.notification != null) {
       await _showLocalNotification(message);
     }
   }
 
-  /// Show local notification when app is in foreground
   Future<void> _showLocalNotification(RemoteMessage message) async {
     const androidDetails = AndroidNotificationDetails(
-      'babymon_channel',
-      'BabyMon Notifications',
+      'babymon_channel', 'BabyMon Notifications',
       channelDescription: 'Notifications from BabyMon app',
-      importance: Importance.high,
-      priority: Priority.high,
+      importance: Importance.high, priority: Priority.high,
     );
-
     const iosDetails = DarwinNotificationDetails();
-
-    const details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
+    const details = NotificationDetails(android: androidDetails, iOS: iosDetails);
 
     await _localNotifications.show(
       message.hashCode,
@@ -118,28 +87,27 @@ class NotificationService {
     );
   }
 
-  /// Handle notification tap when app is in background
   void _handleMessageOpenedApp(RemoteMessage message) {
-    // TODO: Navigate to specific screen based on message data
-    print('Notification opened app: ${message.data}');
+    // Navigation handled by app router via payload data
   }
 
-  /// Subscribe to topic for targeted notifications
+  Future<void> _sendTokenToBackend(String token) async {
+    if (_apiClient == null || _userId == null) return;
+    try {
+      await _apiClient!.post('/notifications/register-device', data: {
+        'deviceToken': token,
+        'platform': 'android',
+      });
+    } catch (_) {
+      // Token registration is best-effort; don't crash the app
+    }
+  }
+
   Future<void> subscribeToTopic(String topic) async {
     await _firebaseMessaging.subscribeToTopic(topic);
-    print('Subscribed to topic: $topic');
   }
 
-  /// Unsubscribe from topic
   Future<void> unsubscribeFromTopic(String topic) async {
     await _firebaseMessaging.unsubscribeFromTopic(topic);
-    print('Unsubscribed from topic: $topic');
-  }
-
-  /// Send token to backend for storing
-  Future<void> sendTokenToBackend(String token, String userId) async {
-    // TODO: Implement API call to send token to backend
-    // Example: await apiClient.post('/users/$userId/fcm-token', data: {'token': token});
-    print('Sending FCM token to backend for user: $userId');
   }
 }

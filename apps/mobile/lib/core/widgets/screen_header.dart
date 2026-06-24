@@ -1,18 +1,14 @@
 import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import '../theme/glass_tokens.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/constants/constants.dart';
-import 'package:baby_mon/core/widgets/widgets.dart';
-
 class ScreenHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final VoidCallback? onBack;
   final List<Widget>? actions;
   final bool showBack;
   final double? elevation;
-
   const ScreenHeader({
     super.key,
     required this.title,
@@ -21,13 +17,11 @@ class ScreenHeader extends StatelessWidget implements PreferredSizeWidget {
     this.showBack = true,
     this.elevation,
   });
-
   static void defaultBack(BuildContext context) {
     if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -94,7 +88,6 @@ class ScreenHeader extends StatelessWidget implements PreferredSizeWidget {
       ),
     );
   }
-
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }

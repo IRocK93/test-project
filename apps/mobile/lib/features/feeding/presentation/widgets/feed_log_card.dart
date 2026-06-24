@@ -8,9 +8,35 @@ class FeedLogCard extends StatelessWidget {
 
   const FeedLogCard({super.key, required this.feedLog, required this.onDelete});
 
+  String _emojiForType(String type) {
+    switch (type) {
+      case 'BREASTMILK': return '🤱';
+      case 'FORMULA': return '🍼';
+      case 'SOLID': return '🥄';
+      default: return '🍽️';
+    }
+  }
+
+  String _labelForType(String type) {
+    switch (type) {
+      case 'BREASTMILK': return 'Breastmilk';
+      case 'FORMULA': return 'Formula';
+      case 'SOLID': return 'Solid';
+      default: return type;
+    }
+  }
+
+  String _summary(FeedLog log) {
+    final parts = <String>[];
+    if (log.amount != null) parts.add('${log.amount}${log.unit ?? ''}');
+    return parts.isEmpty ? 'Logged' : parts.join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final timeStr = DateFormat('HH:mm').format(feedLog.loggedAt);
+    final timeStr = feedLog.happenedAt != null
+        ? DateFormat('HH:mm').format(feedLog.happenedAt!)
+        : '--:--';
 
     return Dismissible(
       key: Key(feedLog.id),
@@ -42,21 +68,21 @@ class FeedLogCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         color: const Color(0xFF1E1E1E),
         child: ListTile(
-          leading: Text(feedLog.typeEmoji, style: const TextStyle(fontSize: 32)),
-          title: Text(feedLog.type.name.replaceAll('_', ' '), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+          leading: Text(_emojiForType(feedLog.type), style: const TextStyle(fontSize: 32)),
+          title: Text(_labelForType(feedLog.type), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('$timeStr • ${feedLog.summary}', style: TextStyle(color: Colors.grey[400])),
+              Text('$timeStr • ${_summary(feedLog)}', style: TextStyle(color: Colors.grey[400])),
               if (feedLog.notes != null && feedLog.notes!.isNotEmpty)
                 Text(feedLog.notes!, style: TextStyle(color: Colors.grey[500], fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
             ],
           ),
-          trailing: feedLog.method != null
+          trailing: feedLog.unit != null
               ? Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: Colors.teal.withOpacity(0.3), borderRadius: BorderRadius.circular(8)),
-                  child: Text(feedLog.method!.name, style: const TextStyle(color: Colors.tealAccent, fontSize: 11)),
+                  decoration: BoxDecoration(color: Colors.teal.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(8)),
+                  child: Text(feedLog.unit!, style: const TextStyle(color: Colors.tealAccent, fontSize: 11)),
                 )
               : null,
         ),

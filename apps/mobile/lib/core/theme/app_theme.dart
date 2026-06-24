@@ -70,7 +70,7 @@ class AppTheme {
         textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, height: 1.6, color: textPrimary),
       ),
       bodyMedium: ui(
-        textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.w400, height: 1.6, color: textPrimary),
+        textStyle: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, height: 1.4, color: textPrimary),
       ),
       bodySmall: ui(
         textStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w400, height: 1.5, color: textSecondary),
@@ -438,7 +438,7 @@ class AppTheme {
   /// Returns the correct [ThemeData] for the given visual style and brightness.
   /// This is the single entry point for theme resolution.
   static ThemeData resolve({required String visualStyle, required Brightness brightness}) {
-    final isClay = visualStyle == 'clay';
+    final isClay = visualStyle.startsWith('clay');
     if (isClay) {
       return brightness == Brightness.dark ? clayDarkTheme : clayLightTheme;
     }

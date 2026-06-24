@@ -110,6 +110,8 @@ class MockApiClient implements ApiClient {
       _stub.getGrowthRecords(babyMonId, type: type);
   @override Future<Response> createGrowthRecord(String babyMonId, Map<String, dynamic> data) =>
       _stub.createGrowthRecord(babyMonId, data);
+  @override Future<Response> updateGrowthRecord(String babyMonId, String recordId, Map<String, dynamic> data) =>
+      _stub.updateGrowthRecord(babyMonId, recordId, data);
   @override Future<Response> deleteGrowthRecord(String babyMonId, String recordId) =>
       _stub.deleteGrowthRecord(babyMonId, recordId);
 
@@ -237,6 +239,7 @@ class StubController {
   // ── Growth ──
   Future<Response> getGrowthRecords(String babyMonId, {String? type}) => _ok();
   Future<Response> createGrowthRecord(String babyMonId, Map<String, dynamic> data) => _ok();
+  Future<Response> updateGrowthRecord(String babyMonId, String recordId, Map<String, dynamic> data) => _ok();
   Future<Response> deleteGrowthRecord(String babyMonId, String recordId) => _ok();
 
   // ── Partners ──

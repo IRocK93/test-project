@@ -42,7 +42,7 @@ class _MockDashboardApiClient extends ApiClient {
   }
 
   @override
-  Future<Response> getEvolution(String id) async {
+  Future<Response> getEvolution(String id, {bool forceRefresh = false}) async {
     return Response(
       requestOptions: RequestOptions(path: ''),
       statusCode: 200,
@@ -60,7 +60,7 @@ class _MockDashboardApiClient extends ApiClient {
   }
 
   @override
-  Future<Response> getGrowthRecords(String id, {String? type}) async {
+  Future<Response> getGrowthRecords(String id, {bool forceRefresh = false, String? type}) async {
     return Response(
       requestOptions: RequestOptions(path: ''),
       statusCode: 200,
@@ -154,7 +154,7 @@ class _MinimalMockDashboardApiClient extends _MockDashboardApiClient {
   }
 
   @override
-  Future<Response> getGrowthRecords(String id, {String? type}) async {
+  Future<Response> getGrowthRecords(String id, {bool forceRefresh = false, String? type}) async {
     return Response(
       requestOptions: RequestOptions(path: ''),
       statusCode: 200,

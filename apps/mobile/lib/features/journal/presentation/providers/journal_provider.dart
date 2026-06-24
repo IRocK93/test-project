@@ -1,10 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:baby_mon/core/data/api_client.dart';
 import '../../data/repositories/journal_repository.dart';
 import '../../domain/entities/journal_entry.dart';
 import '../../../milestones/presentation/providers/milestones_provider.dart';
 
 final journalRepositoryProvider = Provider<JournalRepository>((ref) {
-  return JournalRepository();
+  return JournalRepository(ApiClient());
 });
 
 final journalProvider =

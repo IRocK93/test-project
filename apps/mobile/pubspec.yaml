@@ -39,9 +39,10 @@ dependencies:
   google_fonts: ^6.1.0
   cached_network_image: ^3.3.0
   device_info_plus: ^11.3.0
-  llamadart: ^0.5.4
+  llamadart: ^0.8.3
   audioplayers: ^6.0.0
   crypto: ^3.0.3
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -66,3 +67,5 @@ flutter:
     - assets/fonts/PlusJakartaSans-Regular.ttf
     - assets/fonts/PlusJakartaSans-Medium.ttf
     - assets/audio/
+    - assets/images/enas_chat.png
+    - assets/badges/

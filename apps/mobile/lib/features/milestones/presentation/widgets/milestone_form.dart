@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// ignore_for_file: unused_element
 import '../../domain/entities/milestone.dart';
 
 class MilestoneForm extends StatefulWidget {
@@ -15,7 +16,7 @@ class _MilestoneFormState extends State<MilestoneForm> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
-  MilestoneCategory _category = MilestoneCategory.FIRSTS;
+  String _category = '';
   DateTime _date = DateTime.now();
   bool _isLoading = false;
 
@@ -32,14 +33,10 @@ class _MilestoneFormState extends State<MilestoneForm> {
     try {
       final milestone = Milestone(
         id: '', // assigned by backend
-        babyMonId: widget.babyMonId,
+        // babyMonId removed,
         title: _titleController.text.trim(),
-        description: _descController.text.trim().isEmpty ? null : _descController.text.trim(),
-        category: _category,
-        date: _date,
-        photoUrl: null,
-        xpAwarded: 10,
-        createdAt: DateTime.now(),
+        notes: _descController.text.trim().isEmpty ? null : _descController.text.trim(),
+        happenedAt: _date,
       );
       await widget.onSubmit(milestone);
     } finally {
@@ -83,13 +80,13 @@ class _MilestoneFormState extends State<MilestoneForm> {
                 validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<MilestoneCategory>(
+              DropdownButtonFormField<String>(
                 value: _category,
                 dropdownColor: const Color(0xFF1E1E1E),
                 style: const TextStyle(color: Colors.white),
                 decoration: _inputDeco('Category'),
-                items: MilestoneCategory.values.map((c) {
-                  return DropdownMenuItem(value: c, child: Text('${_emoji(c)} ${c.name}'));
+                items: ["Motor","Cognitive","Language","Social","Physical","Emotional","Health","Sleep","Feeding","Play","Development","Diaper"].map((c) {
+                  return DropdownMenuItem(value: c, child: Text(c));
                 }).toList(),
                 onChanged: (v) => setState(() => _category = v!),
               ),
@@ -130,15 +127,15 @@ class _MilestoneFormState extends State<MilestoneForm> {
     );
   }
 
-  String _emoji(MilestoneCategory c) {
+  String _emoji(String c) {
     switch (c) {
-      case MilestoneCategory.SLEEP: return '😴';
-      case MilestoneCategory.FEEDING: return '🍼';
-      case MilestoneCategory.DIAPER: return '🧷';
-      case MilestoneCategory.PLAY: return '🎮';
-      case MilestoneCategory.DEVELOPMENT: return '🧠';
-      case MilestoneCategory.HEALTH: return '💊';
-      case MilestoneCategory.FIRSTS: return '🌟';
+      case "SLEEP": return '😴';
+      case "FEEDING": return '🍼';
+      case "DIAPER": return '🧷';
+      case "PLAY": return '🎮';
+      case "DEVELOPMENT": return '🧠';
+      case "HEALTH": return '💊';
+      default: return '🌟';
     }
   }
 

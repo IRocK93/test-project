@@ -1,4 +1,6 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' as semantics;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -11,86 +13,67 @@ import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/features/feeding/domain/entities/feed_log.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
 import 'package:baby_mon/features/dashboard/presentation/widgets/level_up_celebration.dart';
-
 class FeedingScreen extends ConsumerStatefulWidget {
   const FeedingScreen({super.key});
   @override
   ConsumerState<FeedingScreen> createState() => _FeedingScreenState();
 }
-
 class _FeedingScreenState extends ConsumerState<FeedingScreen>
     with DataScreenMixin<FeedingScreen> {
   List<FeedLog> _feedLogs = [];
   bool _isMetric = true;
-  int _feedChartRange = 3;
+  int _feedChartRange = 7;
   String _feedChartUnit = 'Days';
   String? _feedSelectedDate;
-
   // ─────────────────────────────────────────────────
   //  DataScreenMixin overrides
   // ─────────────────────────────────────────────────
-
   @override
   IconData get emptyIcon => PhosphorIconsLight.bowlFood;
-
   @override
   String get emptyTitle => 'No feeding logs yet';
-
   @override
   String get emptySubtitle =>
       'Tap the button below to log your first feeding.';
-
   @override
   String get emptyActionLabel => 'Log feeding';
-
   // Listeners are wired manually in initState below (cross-tab signal),
   // so initDataScreen() is intentionally NOT called.
   @override
   int? get listenToTabRefresh => 2;
-
   @override
   Duration? get refreshCooldown => const Duration(seconds: 10);
-
   @override
   void onEmptyAction() => _showAddFeedLogDialog();
-
   /// Fetches feed logs + loads SharedPreferences (isMetric).
   /// Called automatically by [DataScreenMixin.loadData] after BabyMon ID
   /// is resolved, with [babyMonId] already available.
   @override
   Future<void> fetchData() async {
     if (babyMonId == null) return;
-
     if (mounted) {
       final prefs = await ref.read(sharedPreferencesProvider.future);
       _isMetric = prefs.getBool('isMetric') ?? true;
     }
-
     final response =
         await ref.read(apiClientProvider).getFeedLogs(babyMonId!);
     _feedLogs = parseItems(response.data).whereType<Map<String, dynamic>>().map(FeedLog.fromJson).toList();
   }
-
   // ─────────────────────────────────────────────────
   //  Lifecycle
   // ─────────────────────────────────────────────────
-
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) => loadData());
-
     // Global refresh listener
     ref.listenManual(appRefreshProvider, (prev, next) {
       if (prev != next) loadData();
     });
-
     // Tab-specific refresh listener (tab index 2 = Feeding)
     ref.listenManual(tabRefreshProvider(2), (prev, next) {
       if (prev != next) loadData();
     });
-
     // Cross-tab signal from the Dashboard's InfoFab: open the
     // "Log Feeding" dialog when the action fires, then clear the
     // signal so it doesn't re-open on rebuild.
@@ -104,11 +87,9 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
       }
     });
   }
-
   // ─────────────────────────────────────────────────
   //  CRUD helpers
   // ─────────────────────────────────────────────────
-
   Future<bool> _deleteFeedLog(String id, int index) async {
     final messenger = ScaffoldMessenger.of(context);
     final confirmed = await ConfirmDeleteDialog.show(
@@ -121,18 +102,16 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
       setState(() => _feedLogs.removeAt(index));
       ref.read(appRefreshProvider.notifier).state++;
       messenger.showSnackBar(const SnackBar(content: Text('Feeding log deleted')));
+      semantics.SemanticsService.announce('Feeding log deleted', ui.TextDirection.ltr);
       return true;
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
       return false;
     }
   }
-
-
   // ─────────────────────────────────────────────────
   //  Feeding chart
   // ─────────────────────────────────────────────────
-
   void _showDayFeedDetails(String dateStr, List<FeedLog> dayLogs) {
     final total = dayLogs.fold<double>(
       0,
@@ -218,7 +197,6 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
       ),
     );
   }
-
   Widget _buildFeedingChart(BuildContext context) {
     if (_feedLogs.isEmpty) return const SizedBox.shrink();
     final now = DateTime.now();
@@ -272,7 +250,6 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
       if (dayTotal > overallMax) overallMax = dayTotal;
     }
     if (overallMax == 0) overallMax = 1.0;
-
     // ── Y-axis labels: 5 evenly-spaced round numbers ───
     final yStep = _niceStep(overallMax);
     var yMax = (overallMax / yStep).ceil() * yStep;
@@ -284,7 +261,8 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
     const barHeight = 136.0;
     const barWidth = 56.0;
     final chartScrollController = ScrollController();
-
+    double chartDragStartX = 0;
+    double chartScrollStartOffset = 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -379,125 +357,143 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
           ),
         ),
         const SizedBox(height: DesignTokens.spaceSm),
-
         // ── Chart body: Y-axis + bars (same height, aligned) ──
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Y-axis
-            SizedBox(
-              width: 36,
-              height: barHeight,
-              child: Stack(
-                children: [
-                  for (int i = 0; i < yLabelCount; i++)
-                    Positioned(
-                      bottom: barHeight * i / (yLabelCount - 1) - 8,
-                      left: 0, right: 0,
-                      child: Text(
-                        yLabels[i] % 1000 == 0
-                            ? '${yLabels[i] ~/ 1000}k'
-                            : yLabels[i].toString(),
-                        textAlign: TextAlign.right,
-                        style: TextStyle(fontSize: 10, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Y-axis
+                SizedBox(
+                  width: 36,
+                  height: barHeight,
+                  child: Stack(
+                    children: [
+                      for (int i = 0; i < yLabelCount; i++)
+                        Positioned(
+                          bottom: barHeight * i / (yLabelCount - 1) - 8,
+                          left: 0, right: 0,
+                          child: Text(
+                            yLabels[i] % 1000 == 0
+                                ? '${yLabels[i] ~/ 1000}k'
+                                : yLabels[i].toString(),
+                            textAlign: TextAlign.right,
+                            style: TextStyle(fontSize: 10, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.6)),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Container(width: 1, height: barHeight, color: context.colorScheme.outlineVariant.withValues(alpha: 0.3)),
+                const SizedBox(width: 4),
+                // Bars + day totals — wrapped in GestureDetector for swipe
+                Expanded(
+                  child: GestureDetector(
+                    onHorizontalDragStart: (d) {
+                      chartDragStartX = d.globalPosition.dx;
+                      chartScrollStartOffset = chartScrollController.offset;
+                    },
+                    onHorizontalDragUpdate: (d) {
+                      final dx = chartDragStartX - d.globalPosition.dx;
+                      final newOffset = (chartScrollStartOffset + dx).clamp(
+                        0.0,
+                        chartScrollController.position.maxScrollExtent,
+                      );
+                      chartScrollController.jumpTo(newOffset);
+                    },
+                    child: SizedBox(
+                      height: barHeight + 24,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const NeverScrollableScrollPhysics(),
+                        controller: chartScrollController,
+                        children: List.generate(keysWithData.length, (di) {
+                          final dateStr = keysWithData[di];
+                          final dayLogs = dayGroups[dateStr] ?? [];
+                          final dayTotal = dayLogs.fold<double>(0, (s, l) => s + (l.amount ?? 0));
+                          final isSelected = _feedSelectedDate == dateStr;
+                          final isToday = dateStr == DateFormat('yyyy-MM-dd').format(DateTime.now());
+                          final barSegments = <Widget>[];
+                          double cumulativeHeight = 0;
+                          final entries = feedTypes
+                            .map((t) => MapEntry(t, typeData[t]![di].value))
+                            .where((e) => e.value > 0)
+                            .toList()
+                            ..sort((a, b) => b.value.compareTo(a.value));
+                          for (final e in entries) {
+                            final h = (e.value / yMax * barHeight).clamp(2.0, barHeight - cumulativeHeight);
+                            barSegments.add(Positioned(
+                              bottom: cumulativeHeight, left: 0, right: 0,
+                              child: Container(height: h, decoration: BoxDecoration(color: e.key.color.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(3))),
+                            ));
+                            cumulativeHeight += h;
+                          }
+                          return GestureDetector(
+                            onTap: () => _showDayFeedDetails(dateStr, dayLogs),
+                            child: Container(
+                              width: barWidth,
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Text(dayTotal % 1 == 0 ? '${dayTotal.toInt()}' : dayTotal.toStringAsFixed(1),
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(fontSize: DesignTokens.fontSm, fontWeight: FontWeight.w600)),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    height: barHeight,
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? context.colorScheme.primary.withValues(alpha: 0.05)
+                                          : isToday ? context.colorScheme.tertiary.withValues(alpha: 0.12) : null,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Stack(children: barSegments),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
                       ),
                     ),
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
-            Container(width: 1, height: barHeight, color: context.colorScheme.outlineVariant.withValues(alpha: 0.3)),
-            const SizedBox(width: 4),
-            // Bars + day totals
-            Expanded(
+            // ── X-axis line ──
+            Padding(
+              padding: const EdgeInsets.only(left: 41),
+              child: Container(height: 1, color: context.colorScheme.outlineVariant.withValues(alpha: 0.3)),
+            ),
+            const SizedBox(height: 2),
+            // ── Date labels (separate row, below chart) ──
+            Padding(
+              padding: const EdgeInsets.only(left: 41),
               child: SizedBox(
-                height: barHeight + 24, // bar + day total label above
+                height: 22,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
+                  physics: const NeverScrollableScrollPhysics(),
                   controller: chartScrollController,
                   children: List.generate(keysWithData.length, (di) {
                     final dateStr = keysWithData[di];
-                    final dayLogs = dayGroups[dateStr] ?? [];
-                    final dayTotal = dayLogs.fold<double>(0, (s, l) => s + (l.amount ?? 0));
+                    final date = DateTime.tryParse(dateStr);
+                    final label = date != null ? DateFormat('d/M').format(date) : dateStr;
                     final isSelected = _feedSelectedDate == dateStr;
-                    final isToday = dateStr == DateFormat('yyyy-MM-dd').format(DateTime.now());
-                    final barSegments = <Widget>[];
-                    double cumulativeHeight = 0;
-                    final entries = feedTypes
-                      .map((t) => MapEntry(t, typeData[t]![di].value))
-                      .where((e) => e.value > 0)
-                      .toList()
-                      ..sort((a, b) => b.value.compareTo(a.value));
-                    for (final e in entries) {
-                      final h = (e.value / yMax * barHeight).clamp(2.0, barHeight - cumulativeHeight);
-                      barSegments.add(Positioned(
-                        bottom: cumulativeHeight, left: 0, right: 0,
-                        child: Container(height: h, decoration: BoxDecoration(color: e.key.color.withValues(alpha: 0.8), borderRadius: BorderRadius.circular(3))),
-                      ));
-                      cumulativeHeight += h;
-                    }
-                    return GestureDetector(
-                      onTap: () => _showDayFeedDetails(dateStr, dayLogs),
-                      child: Container(
-                        width: barWidth,
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text(dayTotal % 1 == 0 ? '${dayTotal.toInt()}' : dayTotal.toStringAsFixed(1),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: DesignTokens.fontSm, fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 4),
-                            Container(
-                              height: barHeight,
-                              decoration: BoxDecoration(
-                                color: isSelected ? context.colorScheme.primary.withValues(alpha: 0.05)
-                                    : isToday ? context.colorScheme.tertiary.withValues(alpha: 0.12) : null,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Stack(children: barSegments),
-                            ),
-                          ],
-                        ),
-                      ),
+                    return SizedBox(
+                      width: barWidth,
+                      child: Text(label, textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: DesignTokens.fontSm,
+                            color: isSelected ? context.colorScheme.primary : context.colorScheme.onSurfaceVariant,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
                     );
                   }),
                 ),
               ),
             ),
           ],
-        ),
-
-        // ── X-axis line ──
-        Padding(
-          padding: const EdgeInsets.only(left: 41), // align after Y-axis + divider
-          child: Container(height: 1, color: context.colorScheme.outlineVariant.withValues(alpha: 0.3)),
-        ),
-        const SizedBox(height: 2),
-
-        // ── Date labels (separate row, below chart) ──
-        Padding(
-          padding: const EdgeInsets.only(left: 41), // align after Y-axis
-          child: SizedBox(
-            height: 22,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              controller: ScrollController(),
-              children: List.generate(keysWithData.length, (di) {
-                final dateStr = keysWithData[di];
-                final date = DateTime.tryParse(dateStr);
-                final label = date != null ? DateFormat('d/M').format(date) : dateStr;
-                final isSelected = _feedSelectedDate == dateStr;
-                return SizedBox(
-                  width: barWidth,
-                  child: Text(label, textAlign: TextAlign.center,
-                    style: TextStyle(
-                        fontSize: DesignTokens.fontSm,
-                        color: isSelected ? context.colorScheme.primary : context.colorScheme.onSurfaceVariant,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
-                );
-              }),
-            ),
-          ),
         ),
         if (_feedSelectedDate != null)
           Center(
@@ -534,7 +530,6 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
       ],
     );
   }
-
   /// Returns a "nice" step size for y-axis labels (10, 20, 50, 100, 200, 500, 1000).
   double _niceStep(double maxVal) {
     if (maxVal <= 50) return 10;
@@ -545,11 +540,9 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
     if (maxVal <= 2000) return 500;
     return 1000;
   }
-
   // ─────────────────────────────────────────────────
   //  Build
   // ─────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -659,24 +652,24 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                           ),
                   ),
       ),
-      floatingActionButton: Semantics(
-        label: 'Log feeding',
-        button: true,
-        child: FloatingActionButton(
-          heroTag: 'add_feeding',
-          backgroundColor: context.colorScheme.primary,
-          foregroundColor: context.colorScheme.onPrimary,
-          onPressed: _showAddFeedLogDialog,
-          child: const Icon(PhosphorIconsLight.plus),
-        ),
-      ),
+      floatingActionButton: hasBabyMon
+          ? Semantics(
+              label: 'Log feeding',
+              button: true,
+              child: FloatingActionButton(
+                heroTag: 'add_feeding',
+                backgroundColor: context.colorScheme.primary,
+                foregroundColor: context.colorScheme.onPrimary,
+                onPressed: _showAddFeedLogDialog,
+                child: const Icon(PhosphorIconsLight.plus),
+              ),
+            )
+          : null,
     );
   }
-
   // ─────────────────────────────────────────────────
   //  Add dialog
   // ─────────────────────────────────────────────────
-
   void _showAddFeedLogDialog() {
     FeedType selectedType = FeedType.breastmilk;
     final amountController = TextEditingController();
@@ -686,7 +679,6 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
     double? selectedAmount;
     bool isSaving = false;
     String? validationError;
-
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,

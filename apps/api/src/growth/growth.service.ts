@@ -1,6 +1,8 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessControlService } from '../common/access-control.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { buildHistoryDateFilter } from '../common/history-filter.helper';
 import { GrowthType } from '@prisma/client';
 
 // WHO Growth Standards (simplified - for 0-24 months)
@@ -57,6 +59,7 @@ export class GrowthService {
   constructor(
     private prisma: PrismaService,
     private accessControl: AccessControlService,
+    private subscriptionsService: SubscriptionsService,
   ) {}
 
   async addGrowthRecord(
@@ -112,7 +115,10 @@ export class GrowthService {
     // Verify access
     await this.verifyAccess(babyMonId, userId);
 
-    const where: any = { babyMonId };
+    // FREE tier: only show limited history
+    const dateFilter = await buildHistoryDateFilter(this.subscriptionsService, userId, 'measuredAt');
+
+    const where: any = { babyMonId, ...dateFilter };
     if (type) {
       where.type = type;
     }
@@ -164,6 +170,23 @@ export class GrowthService {
       trend,
       totalRecords: records.length,
     };
+  }
+
+  async updateGrowthRecord(recordId: string, babyMonId: string, userId: string, dto: { type: string; value: number; unit: string; measuredAt: string; notes?: string }) {
+    await this.accessControl.checkAccess(userId, babyMonId);
+
+    const updated = await this.prisma.growthRecord.update({
+      where: { id: recordId },
+      data: {
+        type: dto.type as any,
+        value: dto.value,
+        unit: dto.unit,
+        measuredAt: new Date(dto.measuredAt),
+        notes: dto.notes,
+      },
+    });
+
+    return updated;
   }
 
   async deleteGrowthRecord(recordId: string, userId: string) {

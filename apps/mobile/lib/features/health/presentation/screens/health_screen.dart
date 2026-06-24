@@ -1,4 +1,6 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' as semantics;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
@@ -14,26 +16,20 @@ import 'package:baby_mon/features/health/domain/entities/health_record.dart';
 import 'package:baby_mon/features/health/domain/entities/allergy.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
 import 'package:baby_mon/features/dashboard/presentation/widgets/level_up_celebration.dart';
-
 class HealthScreen extends ConsumerStatefulWidget {
   const HealthScreen({super.key});
-
   @override
   ConsumerState<HealthScreen> createState() => _HealthScreenState();
 }
-
 class _HealthScreenState extends ConsumerState<HealthScreen>
     with DataScreenMixin<HealthScreen> {
   @override
   Duration? get refreshCooldown => const Duration(seconds: 10);
-
   List<HealthRecord> _records = [];
   String _selectedCategory = 'ALL';
   bool _isMetric = true;
-
   List<Allergy> _allergies = [];
   List<HealthDisplayEntry> _cachedAllergyEntries = [];
-
   @override
   void initState() {
     super.initState();
@@ -65,19 +61,15 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
       });
     });
   }
-
   Future<void> _loadUnitPref() async {
     final prefs = await ref.read(sharedPreferencesProvider.future);
     final val = prefs.getString(measurementUnitsKey);
     if (mounted) setState(() => _isMetric = val != 'imperial');
   }
-
   @override
   Future<void> fetchData() async {
     await _loadUnitPref();
-    final response = await ref.read(apiClientProvider).get(
-      '/api/v1${ApiConstants.babyMons}/$babyMonId/health-records',
-    );
+    final response = await ref.read(apiClientProvider).getHealthRecords(babyMonId!);
     try {
       final aRes = await ref.read(apiClientProvider).getAllergies(babyMonId!);
       final raw = aRes.data;
@@ -97,7 +89,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
       isAllergyEvent: true,
     ))).toList();
   }
-
   List<HealthDisplayEntry> _filteredRecords() {
     if (_selectedCategory == 'ALLERGY') return _cachedAllergyEntries;
     if (_selectedCategory == 'ALL') {
@@ -111,7 +102,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
         .map((r) => r.toDisplayEntry())
         .toList();
   }
-
   // ── Filter chips grouped semantically (was 12 chips on a single
   // horizontal scroll — now 2 rows by type). ──
   static const List<HealthCategory> _measurementCategories = [
@@ -136,14 +126,11 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     'Sesame', 'Pollen (Hay Fever)', 'Dust Mites', 'Mold', 'Pet Dander', 'Insect Stings',
     'Latex', 'Penicillin', 'NSAIDs', 'Sulfa Drugs',
   ];
-
   IconData _categoryIcon(String cat) =>
       HealthCategory.fromApiKey(cat)?.icon ?? PhosphorIconsLight.note;
-
   String _categoryLabel(String cat) =>
       HealthCategory.fromApiKey(cat)?.label ??
       (cat.isEmpty ? '' : cat[0].toUpperCase() + cat.substring(1).toLowerCase());
-
   Future<bool> _deleteRecord(String id, int index) async {
     // Capture messenger upfront so we can safely use it after async gaps.
     final messenger = ScaffoldMessenger.of(context);
@@ -164,7 +151,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
       return false;
     }
   }
-
   Future<bool> _deleteAllergyEvent(String eventId) async {
     // Capture messenger upfront so we can safely use it after async gaps.
     final messenger = ScaffoldMessenger.of(context);
@@ -178,13 +164,13 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
       await ref.read(apiClientProvider).deleteAllergyEvent(babyMonId!, eventId);
       ref.read(appRefreshProvider.notifier).state++;
       messenger.showSnackBar(const SnackBar(content: Text('Event deleted')));
+      semantics.SemanticsService.announce('Health event deleted', ui.TextDirection.ltr);
       return true;
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
       return false;
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final filtered = _filteredRecords();
@@ -274,7 +260,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
             ),
     );
   }
-
   /// Renders a single horizontal scroll of category filter chips.
   Widget _categoryChipRow(List<HealthCategory> categories) {
     return SingleChildScrollView(
@@ -293,7 +278,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
       ),
     );
   }
-
   /// Builds a [HealthRecordRow] for a single health record, with a
   /// Dismissible wrapper that confirms delete via the existing dialogs.
   Widget _buildHealthRecordRow(HealthDisplayEntry entry, int index) {
@@ -304,7 +288,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     final value = entry.value?.toString();
     final dateStr = entry.happenedAt != null ? DateFormat.yMMMd().format(entry.happenedAt!) : '';
     final semLabel = '$title${value != null ? ', $value ${entry.unit ?? ''}' : ''}${dateStr.isNotEmpty ? ', $dateStr' : ''}${isAllergyEvent ? ' (allergy event)' : ''}';
-
     return Semantics(
       label: semLabel,
       button: true,
@@ -326,7 +309,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     ),
     );
   }
-
   void _showMeasurementDialog() {
     HealthCategory selectedCategory = HealthCategory.weight;
     int major = 0;
@@ -336,7 +318,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     DateTime selectedDate = DateTime.now();
     bool saving = false;
     String? validationError;
-
     showModalBottomSheet<void>(
       context: context, isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
@@ -442,7 +423,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
       ),
     );
   }
-
   Widget _buildDial({required int value, required int max, required String unit, int step = 1, required ValueChanged<int> onChanged}) {
     return Column(mainAxisSize: MainAxisSize.min, children: [
       ThemeButton.icon(icon: PhosphorIconsLight.caretUp, onPressed: () { if (value + step <= max) onChanged(value + step); }, semanticLabel: 'Increase value', variant: ThemeButtonVariant.text),
@@ -458,7 +438,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
       ThemeButton.icon(icon: PhosphorIconsLight.caretDown, onPressed: () { if (value - step >= 0) onChanged(value - step); }, semanticLabel: 'Decrease value', variant: ThemeButtonVariant.text),
     ]);
   }
-
   void _showEventDialog() {
     showModalBottomSheet<void>(
       context: context, isScrollControlled: true,
@@ -483,7 +462,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
       ),
     );
   }
-
   void _showMedicalTeamDialog() {
     final nameCtrl = TextEditingController();
     final roleCtrl = TextEditingController();
@@ -529,7 +507,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
       ),
     );
   }
-
   void _showAllergyForm({String? prefillName, String? prefillTriggers, String? prefillSeverity, String? prefillTreatment}) {
     // Capture messenger upfront so we can safely use it after async gaps.
     final messenger = ScaffoldMessenger.of(context);
@@ -546,7 +523,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     bool _allergyIsOther = false;
     final _allergyOtherCtrl = TextEditingController();
     String? _allergySeverity;
-
     showModalBottomSheet<void>(
       context: context, isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
@@ -651,7 +627,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
       ),
     );
   }
-
   void _showEventForm(HealthCategory category) {
     if (category == HealthCategory.allergy) { _showAllergyForm(); return; }
     final apiKey = category.apiKey;
@@ -664,14 +639,11 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     final _vaccineOtherCtrl = TextEditingController();
     DateTime selectedDate = DateTime.now();
     bool saving = false;
-
     final staffCtrl = TextEditingController();
     final timeCtrl = TextEditingController();
-
     final isHospitalOrClinic = category == HealthCategory.hospital || category == HealthCategory.clinic;
     final isInjuryOrBowelOrVax = category == HealthCategory.injury || category == HealthCategory.bowelMovement || category == HealthCategory.vaccination;
     final showTitle = !isInjuryOrBowelOrVax;
-
     String formLabel1() {
       if (isHospitalOrClinic) return 'Reason';
       if (category == HealthCategory.injury) return 'Severity';
@@ -679,18 +651,15 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
       if (category == HealthCategory.vaccination) return 'Vaccine Name';
       return '';
     }
-
     final showStaff = isHospitalOrClinic;
     final showExtra1 = category == HealthCategory.hospital || category == HealthCategory.clinic || category == HealthCategory.injury || category == HealthCategory.bowelMovement || category == HealthCategory.vaccination;
     final showExtra2 = category == HealthCategory.hospital || category == HealthCategory.clinic || category == HealthCategory.injury || category == HealthCategory.vaccination;
     final showTime = category == HealthCategory.bowelMovement;
     final showVenue = category == HealthCategory.vaccination;
     final venueCtrl = TextEditingController();
-
     String? stoolType;
     String? validationError;
     final stoolTypes = ['Watery (Diarrhea)', 'Loose', 'Mushy', 'Soft & Formed', 'Normal', 'Firm', 'Hard Pellets', 'Constipated'];
-
     showModalBottomSheet<void>(
       context: context, isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
@@ -830,20 +799,17 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     );
   }
 }
-
 class _NavTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
-
   const _NavTile({
     required this.icon,
     required this.label,
     required this.color,
     required this.onTap,
   });
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -878,7 +844,6 @@ class _NavTile extends StatelessWidget {
     );
   }
 }
-
 /// Searchable vaccine picker with "Other" option.
 class _VaccinePicker extends StatefulWidget {
   final String value;
@@ -888,12 +853,9 @@ class _VaccinePicker extends StatefulWidget {
   const _VaccinePicker({required this.value, required this.onChanged, required this.showOtherField, required this.otherCtrl});
   @override State<_VaccinePicker> createState() => _VaccinePickerState();
 }
-
 class _VaccinePickerState extends State<_VaccinePicker> {
   final _searchCtrl = TextEditingController();
-
   @override void dispose() { _searchCtrl.dispose(); super.dispose(); }
-
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -910,7 +872,6 @@ class _VaccinePickerState extends State<_VaccinePicker> {
         ),
     ]);
   }
-
   void _showPicker(BuildContext context) {
     final vaccines = _HealthScreenState._vaccines;
     _searchCtrl.clear();
@@ -949,7 +910,6 @@ class _VaccinePickerState extends State<_VaccinePicker> {
     );
   }
 }
-
 /// Searchable allergy picker with "Other" option and brief explanations.
 class _AllergyPicker extends StatefulWidget {
   final String value;
@@ -959,11 +919,9 @@ class _AllergyPicker extends StatefulWidget {
   const _AllergyPicker({required this.value, required this.onChanged, required this.showOtherField, required this.otherCtrl});
   @override State<_AllergyPicker> createState() => _AllergyPickerState();
 }
-
 class _AllergyPickerState extends State<_AllergyPicker> {
   final _searchCtrl = TextEditingController();
   @override void dispose() { _searchCtrl.dispose(); super.dispose(); }
-
   static const _allergyExplanations = {
     'Peanuts': 'Legume allergy, often severe, can cause anaphylaxis',
     'Tree Nuts': 'Almonds, walnuts, cashews — often lifelong',
@@ -984,7 +942,6 @@ class _AllergyPickerState extends State<_AllergyPicker> {
     'NSAIDs': 'Ibuprofen, aspirin type anti-inflammatory drugs',
     'Sulfa Drugs': 'Sulfonamide antibiotics, distinct from sulfites',
   };
-
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1001,7 +958,6 @@ class _AllergyPickerState extends State<_AllergyPicker> {
         ),
     ]);
   }
-
   void _showPicker(BuildContext context) {
     final allergies = _HealthScreenState._allergyOptions;
     _searchCtrl.clear();

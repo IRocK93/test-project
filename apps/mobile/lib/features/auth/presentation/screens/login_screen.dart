@@ -1,5 +1,4 @@
 import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,40 +9,33 @@ import 'package:baby_mon/features/auth/auth.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
-
+import 'package:baby_mon/core/widgets/responsive_wrapper.dart';
 //// Login screen with premium double-bezel card, button-in-button CTAs, and info tooltips on social circles.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
-
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
-
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
   bool _obscurePassword = true;
   bool _isResetting = false;
   bool _biometricsAvailable = false;
   bool _biometricsOptedIn = false;
-
   final LocalAuthentication _localAuth = LocalAuthentication();
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkBiometrics());
   }
-
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
-
   Future<void> _checkBiometrics() async {
     try {
       final canCheck = await _localAuth.canCheckBiometrics;
@@ -58,13 +50,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) { debugPrint('[Login] biometrics check failed: $e'); }
   }
-
   Future<void> _saveBiometricPreference(bool enabled) async {
     final prefs = await ref.read(sharedPreferencesProvider.future);
     await prefs.setBool('biometrics_enabled', enabled);
     if (mounted) setState(() => _biometricsOptedIn = enabled);
   }
-
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       await ref.read(authProvider.notifier).login(
@@ -81,7 +71,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     }
   }
-
   Future<void> _biometricLogin() async {
     try {
       final authenticated = await _localAuth.authenticate(
@@ -112,11 +101,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     }
   }
-
   Future<void> _googleLogin() async => await ref.read(authProvider.notifier).googleLogin();
   Future<void> _appleLogin() async => await ref.read(authProvider.notifier).appleLogin();
   Future<void> _facebookLogin() async => await ref.read(authProvider.notifier).facebookLogin();
-
   void _showForgotPasswordSheet() {
     final resetEmailController = TextEditingController(text: _emailController.text);
     showModalBottomSheet<void>(
@@ -138,16 +125,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     height: 4,
                     margin: const EdgeInsets.only(bottom: DesignTokens.spaceMd),
                     decoration: BoxDecoration(
-                      color: AppColors.divider,
+                      color: Theme.of(ctx).colorScheme.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
               const SizedBox(height: DesignTokens.spaceSm),
               Text('Reset Password', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: DesignTokens.spaceSm),
-              const Text(
+              Text(
                 "Enter your email address and we'll send you a password reset link.",
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant, fontSize: 14),
               ),
               const SizedBox(height: DesignTokens.spaceLg),
               TextField(
@@ -196,18 +183,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      body: Container(
+      body: ResponsiveWrapper(
+        scrollable: false,
+        landscapeLayout: _buildLandscapeBody(cs, authState),
+        child: SingleChildScrollView(
+        child: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.primary, AppColors.primaryDark],
+            colors: [AppColors.primary, AppColors.primaryDark], // Gradient uses branded palette
           ),
         ),
         child: SafeArea(
@@ -250,36 +240,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             width: 64,
                             height: 64,
                             decoration: BoxDecoration(
-                              color: AppColors.primaryContainer,
+                              color: cs.primaryContainer,
                               borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               PhosphorIconsLight.baby,
                               size: 36,
-                              color: AppColors.primary,
+                              color: cs.primary,
                             ),
                           ),
                           const SizedBox(height: DesignTokens.spaceLg),
-
                           // Title
-                          const Text(
+                          Text(
                             'Welcome Back!',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                              color: cs.onSurface,
                             ),
                           ),
                           const SizedBox(height: DesignTokens.spaceXs),
-                          const Text(
+                          Text(
                             'Log in to continue',
                             style: TextStyle(
                               fontSize: 14,
-                              color: AppColors.textSecondary,
+                              color: cs.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: DesignTokens.space2xl),
-
                           // Email
                           TextFormField(
                             controller: _emailController,
@@ -291,7 +279,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             validator: (value) => value!.isEmpty ? 'Please enter your email' : null,
                           ),
                           const SizedBox(height: DesignTokens.spaceMd),
-
                           // Password
                           TextFormField(
                             controller: _passwordController,
@@ -309,7 +296,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             obscureText: _obscurePassword,
                             validator: (value) => value!.isEmpty ? 'Please enter your password' : null,
                           ),
-
                           // Forgot password
                           Align(
                             alignment: Alignment.centerRight,
@@ -318,18 +304,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: const Text('Forgot Password?'),
                             ),
                           ),
-
                           // Error
                           if (authState.error != null)
                             Padding(
                               padding: const EdgeInsets.only(bottom: DesignTokens.spaceMd),
                               child: Text(
                                 authState.error!,
-                                style: const TextStyle(color: AppColors.error, fontSize: 13),
+                                style: TextStyle(color: cs.error, fontSize: 13),
                                 textAlign: TextAlign.center,
                               ),
                             ),
-
                           // Login button
                           ThemeButton(
                             text: 'Log In',
@@ -340,7 +324,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             borderRadius: DesignTokens.radiusFull,
                             semanticLabel: 'Log in to your account',
                           ),
-
                           // Biometrics
                           if (_biometricsAvailable && _biometricsOptedIn) ...[
                             const SizedBox(height: DesignTokens.spaceMd),
@@ -360,7 +343,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
                 const SizedBox(height: DesignTokens.space2xl),
-
               // ---- Social Row ----
               StaggeredFadeSlide(
                 index: 1,
@@ -384,7 +366,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ],
                       ),
                       const SizedBox(height: DesignTokens.spaceLg),
-
                       // Social icons in a row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -399,9 +380,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
               ),
-
               const SizedBox(height: DesignTokens.space2xl),
-
               // Register link
               StaggeredFadeSlide(
                 index: 2,
@@ -437,9 +416,203 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ),
       ),
+	    ),
+	    ));
+				  }
+  /// Landscape layout: branding panel on left, scrollable form on right.
+  Widget _buildLandscapeBody(ColorScheme cs, dynamic authState) {
+    return Row(
+      children: [
+        // ── Left: branding ──
+        Expanded(
+          flex: 4,
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.primary, AppColors.primaryDark],
+              ),
+            ),
+            child: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(DesignTokens.space2xl),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: cs.primaryContainer,
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                        ),
+                        child: Icon(PhosphorIconsLight.baby, size: 40, color: cs.primary),
+                      ),
+                      const SizedBox(height: DesignTokens.spaceLg),
+                      Text(
+                        'Welcome Back!',
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: DesignTokens.spaceXs),
+                      const Text(
+                        'Log in to continue',
+                        style: TextStyle(fontSize: 15, color: Colors.white70),
+                      ),
+                      const SizedBox(height: DesignTokens.space2xl),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _socialCircle(Icons.g_mobiledata, AppColors.warning, _googleLogin),
+                          const SizedBox(width: DesignTokens.spaceMd),
+                          _socialCircle(Icons.apple, Colors.white, _appleLogin),
+                          const SizedBox(width: DesignTokens.spaceMd),
+                          _socialCircle(Icons.facebook, const Color(0xFF1877F2), _facebookLogin),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        // ── Right: form ──
+        Expanded(
+          flex: 6,
+          child: Container(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(DesignTokens.space2xl),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Glass form card
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
+                      child: BackdropFilter(
+                        filter: ui.ImageFilter.blur(
+                          sigmaX: DesignTokens.glassBlurMd,
+                          sigmaY: DesignTokens.glassBlurMd,
+                        ),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(DesignTokens.space2xl),
+                          decoration: BoxDecoration(
+                            color: AppColors.glassWhite,
+                            borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
+                            border: Border.all(
+                              color: AppColors.glassBorder,
+                              width: DesignTokens.glassBorderWidth,
+                            ),
+                          ),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              children: [
+                                // Email
+                                TextFormField(
+                                  controller: _emailController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Email',
+                                    prefixIcon: Icon(PhosphorIconsLight.envelope),
+                                  ),
+                                  keyboardType: TextInputType.emailAddress,
+                                  validator: (v) => v!.isEmpty ? 'Please enter your email' : null,
+                                ),
+                                const SizedBox(height: DesignTokens.spaceMd),
+                                // Password
+                                TextFormField(
+                                  controller: _passwordController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Password',
+                                    prefixIcon: const Icon(PhosphorIconsLight.lock),
+                                    suffixIcon: IconButton(
+                                      icon: Icon(_obscurePassword ? PhosphorIconsLight.eyeSlash : PhosphorIconsLight.eye),
+                                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                    ),
+                                  ),
+                                  obscureText: _obscurePassword,
+                                  validator: (v) => v!.isEmpty ? 'Please enter your password' : null,
+                                ),
+                                // Forgot password
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: _showForgotPasswordSheet,
+                                    child: const Text('Forgot Password?'),
+                                  ),
+                                ),
+                                // Error
+                                if (authState.error != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: DesignTokens.spaceMd),
+                                    child: Text(
+                                      authState.error!,
+                                      style: TextStyle(color: cs.error, fontSize: 13),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                // Login button
+                                ThemeButton(
+                                  text: 'Log In',
+                                  onPressed: _login,
+                                  isLoading: authState.isLoading,
+                                  fullWidth: true,
+                                  trailingIcon: PhosphorIconsLight.arrowRight,
+                                  borderRadius: DesignTokens.radiusFull,
+                                  semanticLabel: 'Log in to your account',
+                                ),
+                                // Biometrics
+                                if (_biometricsAvailable && _biometricsOptedIn) ...[
+                                  const SizedBox(height: DesignTokens.spaceMd),
+                                  ThemeButton(
+                                    text: 'Log in with Biometrics',
+                                    onPressed: _biometricLogin,
+                                    variant: ThemeButtonVariant.outlined,
+                                    icon: PhosphorIconsLight.fingerprint,
+                                    fullWidth: true,
+                                    semanticLabel: 'Log in with biometrics',
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: DesignTokens.spaceLg),
+                    // Register link
+                    GestureDetector(
+                      onTap: () => context.go('/register'),
+                      child: RichText(
+                        text: const TextSpan(
+                          style: TextStyle(fontSize: 14),
+                          children: [
+                            TextSpan(text: "Don't have an account? "),
+                            TextSpan(
+                              text: 'Sign up',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
-
   Widget _socialCircle(IconData icon, Color color, VoidCallback onTap) {
     final label = icon == Icons.g_mobiledata
         ? 'Continue with Google'

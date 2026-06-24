@@ -50,7 +50,8 @@ class DeviceCapabilityService {
   static const int requiredRamMB = 4096;
 
   /// Recommended free storage (MB) for model download + workspace.
-  static const int requiredStorageMB = 2560;
+  /// SmolLM2 is ~271 MB; 1 GB gives comfortable headroom.
+  static const int requiredStorageMB = 1024;
 
   /// Performs a full capability check.
   ///

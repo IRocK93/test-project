@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { RegisterDeviceDto, SendTestNotificationDto } from './dto/notification.dto';
 
 @ApiTags('notifications')
 @ApiBearerAuth()
@@ -15,17 +16,17 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Register device for push notifications' })
   async registerDevice(
     @CurrentUser('id') userId: string,
-    @Body() body: { deviceToken: string; platform: 'ios' | 'android' | 'web' },
+    @Body() dto: RegisterDeviceDto,
   ) {
-    return this.notificationsService.registerDevice(userId, body.deviceToken, body.platform);
+    return this.notificationsService.registerDevice(userId, dto.deviceToken, dto.platform);
   }
 
   @Post('test')
   @ApiOperation({ summary: 'Send test push notification' })
   async sendTest(
     @CurrentUser('id') userId: string,
-    @Body() body: { title: string; body: string },
+    @Body() dto: SendTestNotificationDto,
   ) {
-    return this.notificationsService.sendPushNotification(userId, body);
+    return this.notificationsService.sendPushNotification(userId, dto);
   }
 }

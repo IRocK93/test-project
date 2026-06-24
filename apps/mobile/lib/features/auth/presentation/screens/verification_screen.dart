@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,19 +5,16 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/features/auth/auth.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
-
 class VerificationScreen extends ConsumerStatefulWidget {
   final String email;
   const VerificationScreen({super.key, required this.email});
   @override
   ConsumerState<VerificationScreen> createState() => _VerificationScreenState();
 }
-
 class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   bool _isResending = false;
   bool _isChecking = false;
   String? _message;
-
   Future<void> _resendVerification() async {
     setState(() { _isResending = true; _message = null; });
     try {
@@ -30,7 +26,6 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
       if (mounted) setState(() => _isResending = false);
     }
   }
-
   Future<void> _checkVerification() async {
     setState(() { _isChecking = true; _message = null; });
     try {
@@ -43,7 +38,6 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
       if (mounted) setState(() => _isChecking = false);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;

@@ -11,3 +11,4 @@ export 'presentation/screens/chat_screen.dart';
 export 'presentation/screens/model_download_screen.dart';
 export 'presentation/screens/medical_disclaimer_gate.dart';
 export 'presentation/widgets/monthly_ai_reminder.dart';
+export 'presentation/widgets/upgrade_prompt.dart';

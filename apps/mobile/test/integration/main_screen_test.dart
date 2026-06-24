@@ -3,8 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
-import 'package:baby_mon/presentation/screens/main/main_screen.dart';
+import 'package:baby_mon/features/navigation/presentation/screens/main_screen.dart';
 import 'package:baby_mon/core/providers.dart';
+import 'package:baby_mon/features/auth/presentation/providers/auth_provider.dart';
 import 'package:baby_mon/core/testing/stub_api_client.dart';
 
 import 'screen_test_helper.dart';

@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { BabyMonService } from './baby-mon.service';
 import { CreateBabyMonDto, UpdateBabyMonDto } from './dto/baby-mon.dto';
+import { BabyMonResponseDto } from './dto/baby-mon-response.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { PaginationDto } from '../common/dto/pagination.dto';
 
@@ -14,12 +15,15 @@ export class BabyMonController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new BabyMon' })
+  @ApiResponse({ status: 201, description: 'BabyMon created' })
+  @ApiResponse({ status: 403, description: 'Free tier limit reached (max 1)' })
   async create(@Request() req: any, @Body() dto: CreateBabyMonDto) {
     return this.babyMonService.create(req.user.id, dto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all BabyMons for current user' })
+  @ApiResponse({ status: 200, type: [BabyMonResponseDto] })
   @ApiQuery({ name: 'skip', required: false, type: Number })
   @ApiQuery({ name: 'take', required: false, type: Number })
   async findAll(
@@ -39,6 +43,20 @@ export class BabyMonController {
     return this.babyMonService.findOne(id, req.user.id);
   }
 
+  @Post('batch')
+  @ApiOperation({ summary: 'Create multiple BabyMons (twins/multiples)' })
+  @ApiResponse({ status: 201, description: 'BabyMons created' })
+  async createBatch(@Request() req: any, @Body() dtos: CreateBabyMonDto[]) {
+    return this.babyMonService.createBatch(req.user.id, dtos);
+  }
+
+  @Post(':id/graduate')
+  @ApiOperation({ summary: 'Graduate a BabyMon (archive after 24 months)' })
+  @ApiResponse({ status: 200, description: 'BabyMon graduated' })
+  async graduate(@Request() req: any, @Param('id') id: string) {
+    return this.babyMonService.graduateBabyMon(id, req.user.id);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: 'Update a BabyMon' })
   async update(
@@ -53,6 +71,12 @@ export class BabyMonController {
   @ApiOperation({ summary: 'Delete a BabyMon' })
   async delete(@Request() req: any, @Param('id') id: string) {
     return this.babyMonService.delete(id, req.user.id);
+  }
+
+  @Get(':id/dashboard')
+  @ApiOperation({ summary: 'Aggregated dashboard data — BabyMon, evolution, growth, allergies, badges, stage content' })
+  async getDashboard(@Request() req: any, @Param('id') id: string) {
+    return this.babyMonService.getDashboard(id, req.user.id);
   }
 
   @Get(':id/stage')

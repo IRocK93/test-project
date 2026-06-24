@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:baby_mon/features/settings/presentation/screens/settings_screen.dart';
 import 'package:baby_mon/core/providers.dart';
+import 'package:baby_mon/features/auth/presentation/providers/auth_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screen_test_helper.dart';

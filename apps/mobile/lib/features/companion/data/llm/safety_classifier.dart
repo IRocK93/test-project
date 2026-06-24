@@ -1,52 +1,42 @@
 /// Safety classifier for AI-generated companion responses.
 ///
 /// Runs rule-based checks on model output before display to the user.
-/// Detects: medical emergencies, medication dosage suggestions, anti-vaccine content.
-/// Each flagged category produces a warning that is shown alongside the AI response.
+/// Detects: medical emergencies, medication dosage suggestions, anti-vaccine content,
+/// and hallucinated web/app features that don't exist.
 class SafetyClassifier {
   static const _emergencyPatterns = [
-    'seizure',
-    'not breathing',
-    'blue',
-    'unresponsive',
-    'passed out',
-    'swallowed poison',
-    'anaphylaxis',
-    'difficulty breathing',
-    'turning blue',
+    'seizure', 'not breathing', 'blue', 'unresponsive', 'passed out',
+    'swallowed poison', 'anaphylaxis', 'difficulty breathing', 'turning blue',
     'stopped breathing',
   ];
 
   static const _dangerousDrugPatterns = [
-    'aspirin for',
-    'give them ibuprofen',
-    'give them acetaminophen',
-    'dose of tylenol',
-    'dose of motrin',
+    'aspirin for', 'give them ibuprofen', 'give them acetaminophen',
+    'dose of tylenol', 'dose of motrin',
   ];
 
   static const _antiVaccinePatterns = [
-    'vaccines cause',
-    'vaccine injury',
-    'vaccines are dangerous',
-    'no vaccines',
-    'anti-vax',
-    'anti vax',
+    'vaccines cause', 'vaccine injury', 'vaccines are dangerous',
+    'no vaccines', 'anti-vax', 'anti vax',
+  ];
+
+  /// Patterns that indicate the model hallucinated web/app features.
+  static const _hallucinationPatterns = [
+    'watch the video', 'click here', 'visit our website',
+    'download our app', 'check out this link', 'tap the button below',
+    'see the image', 'view the chart', 'click the link',
   ];
 
   /// Check a response for safety concerns.
-  /// Returns a [SafetyResult] indicating whether the response was flagged
-  /// and what warning should be shown to the user.
   static SafetyResult check(String response) {
     final lower = response.toLowerCase();
 
+    // Emergency takes highest priority
     for (final pattern in _emergencyPatterns) {
       if (lower.contains(pattern)) {
         return const SafetyResult(
-          flagged: true,
-          category: SafetyCategory.emergency,
-          warning:
-              'If this is a medical emergency, stop using this app '
+          flagged: true, category: SafetyCategory.emergency,
+          warning: 'If this is a medical emergency, stop using this app '
               'and call 911 or your local emergency number immediately.',
         );
       }
@@ -55,10 +45,8 @@ class SafetyClassifier {
     for (final pattern in _dangerousDrugPatterns) {
       if (lower.contains(pattern)) {
         return const SafetyResult(
-          flagged: true,
-          category: SafetyCategory.medication,
-          warning:
-              'The AI cannot provide medication dosage advice. '
+          flagged: true, category: SafetyCategory.medication,
+          warning: 'The AI cannot provide medication dosage advice. '
               'Always consult your pediatrician before giving any medication.',
         );
       }
@@ -67,11 +55,18 @@ class SafetyClassifier {
     for (final pattern in _antiVaccinePatterns) {
       if (lower.contains(pattern)) {
         return const SafetyResult(
-          flagged: true,
-          category: SafetyCategory.antiVaccine,
-          warning:
-              'Content about vaccine safety may not be accurate. '
+          flagged: true, category: SafetyCategory.antiVaccine,
+          warning: 'Content about vaccine safety may not be accurate. '
               'Vaccines are safe and effective. Consult your pediatrician.',
+        );
+      }
+    }
+
+    for (final pattern in _hallucinationPatterns) {
+      if (lower.contains(pattern)) {
+        return const SafetyResult(
+          flagged: true, category: SafetyCategory.hallucination,
+          warning: 'This response may reference features that don\'t exist in the app.',
         );
       }
     }
@@ -80,21 +75,12 @@ class SafetyClassifier {
   }
 }
 
-enum SafetyCategory {
-  safe,
-  emergency,
-  medication,
-  antiVaccine,
-}
+enum SafetyCategory { safe, emergency, medication, antiVaccine, hallucination }
 
 class SafetyResult {
   final bool flagged;
   final SafetyCategory category;
   final String? warning;
 
-  const SafetyResult({
-    required this.flagged,
-    required this.category,
-    this.warning,
-  });
+  const SafetyResult({required this.flagged, required this.category, this.warning});
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:baby_mon/features/album/presentation/screens/album_screen.dart';
 import 'package:baby_mon/core/providers.dart';
+import 'package:baby_mon/features/auth/presentation/providers/auth_provider.dart';
 import 'package:baby_mon/core/testing/stub_api_client.dart';
 import 'package:baby_mon/core/widgets/premium_background.dart';
 

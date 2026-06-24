@@ -1,9 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:baby_mon/core/data/api_client.dart';
 import '../../data/repositories/milestones_repository.dart';
 import '../../domain/entities/milestone.dart';
 
 final milestonesRepositoryProvider = Provider<MilestonesRepository>((ref) {
-  return MilestonesRepository();
+  return MilestonesRepository(ApiClient());
 });
 
 final selectedBabyMonIdProvider = StateProvider<String?>((ref) => null);
@@ -46,7 +47,7 @@ class MilestonesNotifier extends StateNotifier<AsyncValue<List<Milestone>>> {
 
   Future<void> addMilestone(Milestone milestone) async {
     try {
-      final created = await _repository.createMilestone(milestone);
+      final created = await _repository.createMilestone(_babyMonId!, milestone.toJson());
       state.whenData((milestones) {
         state = AsyncValue.data([created, ...milestones]);
       });

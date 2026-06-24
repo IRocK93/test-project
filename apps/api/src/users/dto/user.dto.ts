@@ -13,6 +13,11 @@ export class UpdateUserDto {
   @MinLength(1)
   @MaxLength(100, { message: 'Name must not exceed 100 characters' })
   name?: string;
+
+  @ApiProperty({ example: '+1234567890', required: false })
+  @IsOptional()
+  @IsString()
+  phone?: string;
 }
 
 export class DeleteAccountDto {

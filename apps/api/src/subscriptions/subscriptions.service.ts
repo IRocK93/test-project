@@ -1,5 +1,6 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { TrialExpiredException } from '../common/exceptions/business.exception';
 
 @Injectable()
 export class SubscriptionsService {
@@ -71,12 +72,50 @@ export class SubscriptionsService {
   async checkWriteAccess(userId: string) {
     const { canWrite, reason } = await this.canWrite(userId);
     if (!canWrite) {
-      throw new ForbiddenException({
-        message: reason,
-        code: 'TRIAL_EXPIRED',
-        error: 'Payment Required',
-      });
+      throw new TrialExpiredException();
     }
+  }
+
+  async getHistoryLimitDays(userId: string): Promise<number | null> {
+    const { tier } = await this.getCurrentSubscription(userId);
+    if (tier === 'FREE') return 7;  // FREE: last 7 days of history
+    return null;  // PREMIUM: unlimited history
+  }
+
+  /**
+   * Returns trials ending within the specified number of days.
+   * Designed to be called by a scheduled job or dashboard check.
+   * Returns { userId, trialEndDate, daysRemaining } for each trial ending soon.
+   */
+  async getTrialsEndingSoon(withinDays: number = 3) {
+    const now = new Date();
+    const cutoff = new Date(now.getTime() + withinDays * 24 * 60 * 60 * 1000);
+
+    return this.prisma.subscription.findMany({
+      where: {
+        tier: 'FREE',
+        isActive: true,
+        trialEndDate: { gte: now, lte: cutoff },
+      },
+      select: {
+        userId: true,
+        trialEndDate: true,
+        user: { select: { email: true } },
+      },
+    });
+  }
+
+  /**
+   * Checks if the current user's trial is ending soon.
+   * Returns days remaining, or null if not in trial / already premium.
+   */
+  async checkTrialEndingSoon(userId: string): Promise<{ daysRemaining: number; trialEndDate: Date } | null> {
+    const sub = await this.prisma.subscription.findFirst({
+      where: { userId, tier: 'FREE', trialEndDate: { gte: new Date() }, isActive: true },
+    });
+    if (!sub || !sub.trialEndDate) return null;
+    const daysRemaining = Math.ceil((sub.trialEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    return { daysRemaining, trialEndDate: sub.trialEndDate };
   }
 
   // Dev override for testing (only available in development)

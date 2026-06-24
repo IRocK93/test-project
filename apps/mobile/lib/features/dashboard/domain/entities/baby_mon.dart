@@ -90,9 +90,9 @@ class BabyMon {
   /// Reference date for stage calculation (conception, idea, or birth).
   DateTime? get referenceDate {
     switch (stageStartType) {
-      case 'CONCEIVED':
+      case 'INCUBATING':
         return conceptionDate ?? lmpDate;
-      case 'IDEA':
+      case 'PLAN':
         return ideaDate;
       case 'BORN':
       default:

@@ -28,11 +28,11 @@ final dailyBriefProvider = FutureProvider.family<Map<String, dynamic>, String>((
 });
 
 final routineProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, babyMonId) {
-  return ref.read(companionRepositoryProvider).getRoutine(babyMonId);
+  return ref.read(companionRepositoryProvider).getRoutine(babyMonId, forceRefresh: true);
 });
 
 final milestonesProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, babyMonId) {
-  return ref.read(companionRepositoryProvider).getMilestones(babyMonId);
+  return ref.read(companionRepositoryProvider).getMilestones(babyMonId, forceRefresh: true);
 });
 
 final adviceProvider = FutureProvider.family<Map<String, dynamic>, ({String babyMonId, String? category, int skip, int take})>((ref, params) {
@@ -43,3 +43,11 @@ final adviceProvider = FutureProvider.family<Map<String, dynamic>, ({String baby
     take: params.take,
   );
 });
+
+// ── Local-first pending state — survives widget disposal ──
+final pendingRoutineStepsProvider = StateProvider.family<Set<String>, String>((ref, babyMonId) => <String>{});
+final pendingMilestoneAchievementsProvider = StateProvider.family<Set<String>, String>((ref, babyMonId) => <String>{});
+final pendingMilestoneUnachievementsProvider = StateProvider.family<Set<String>, String>((ref, babyMonId) => <String>{});
+
+enum SyncStatus { idle, pending, syncing, error }
+final syncStatusProvider = StateProvider.family<SyncStatus, String>((ref, babyMonId) => SyncStatus.idle);

@@ -144,7 +144,7 @@ abstract class AppLocalizations {
   /// No description provided for @registerButton.
   ///
   /// In en, this message translates to:
-  /// **'Create Account'**
+  /// **'Sign Up'**
   String get registerButton;
 
   /// No description provided for @forgotPassword.
@@ -264,7 +264,7 @@ abstract class AppLocalizations {
   /// No description provided for @companion.
   ///
   /// In en, this message translates to:
-  /// **'Companion'**
+  /// **'AI Companion'**
   String get companion;
 
   /// No description provided for @profile.
@@ -651,7 +651,7 @@ abstract class AppLocalizations {
   /// **'Visual Style'**
   String get visualStyle;
 
-  /// No description provided for @context.glass.
+  /// No description provided for @glass.
   ///
   /// In en, this message translates to:
   /// **'Glass'**
@@ -1239,23 +1239,23 @@ abstract class AppLocalizations {
   /// **'Current Plan'**
   String get currentPlan;
 
-  /// No description provided for @corePlan.
+  /// No description provided for @freePlan.
   ///
   /// In en, this message translates to:
-  /// **'CORE'**
-  String get corePlan;
+  /// **'Free'**
+  String get freePlan;
 
-  /// No description provided for @aiCompanionPlan.
+  /// No description provided for @premiumPlan.
   ///
   /// In en, this message translates to:
-  /// **'AI Companion'**
-  String get aiCompanionPlan;
+  /// **'Premium'**
+  String get premiumPlan;
 
-  /// No description provided for @upgradeToAi.
+  /// No description provided for @upgradeToPremium.
   ///
   /// In en, this message translates to:
-  /// **'Upgrade to AI Companion'**
-  String get upgradeToAi;
+  /// **'Upgrade to Premium'**
+  String get upgradeToPremium;
 
   /// No description provided for @trialActive.
   ///

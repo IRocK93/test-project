@@ -13,6 +13,8 @@ class ModelDownloadService {
       : _dio = dio ?? Dio(BaseOptions(
           connectTimeout: const Duration(seconds: 30),
           receiveTimeout: const Duration(hours: 2),
+          followRedirects: true,
+          maxRedirects: 10,
         ));
 
   Stream<ModelDownloadState> download({

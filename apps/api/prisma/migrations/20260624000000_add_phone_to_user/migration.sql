@@ -1,0 +1,15 @@
+-- AlterTable - Add all User columns missing from earlier migrations (schema drift)
+ALTER TABLE "User" 
+  ADD COLUMN IF NOT EXISTS "phone" TEXT,
+  ADD COLUMN IF NOT EXISTS "tosAcceptedAt" TIMESTAMP(3),
+  ADD COLUMN IF NOT EXISTS "tosVersion" TEXT,
+  ADD COLUMN IF NOT EXISTS "privacyAcceptedAt" TIMESTAMP(3),
+  ADD COLUMN IF NOT EXISTS "privacyVersion" TEXT,
+  ADD COLUMN IF NOT EXISTS "consentDataAt" TIMESTAMP(3),
+  ADD COLUMN IF NOT EXISTS "notificationsEnabled" BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS "pushMilestones" BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS "pushBadges" BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS "pushGrowth" BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS "pushProposals" BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS "quietHoursStart" TEXT,
+  ADD COLUMN IF NOT EXISTS "quietHoursEnd" TEXT;

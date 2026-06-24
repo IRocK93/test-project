@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:baby_mon/core/data/api_client.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
+import 'package:baby_mon/core/utils/tier_required_exception.dart';
 
 class CompanionRepository {
   final ApiClient _api;
@@ -11,14 +13,31 @@ class CompanionRepository {
       final res = await _api.get('/stage-content/$babyMonId/daily-brief');
       return res.data as Map<String, dynamic>;
     } catch (e) {
+      if (isTierRequiredError(e)) throw const TierRequiredException();
       throw Exception(extractErrorMessage(e));
     }
   }
 
-  Future<Map<String, dynamic>> getRoutine(String babyMonId) async {
+  Future<Map<String, dynamic>> getRoutine(String babyMonId, {bool forceRefresh = false}) async {
     try {
-      final res = await _api.get('/stage-content/$babyMonId/routine');
+      final res = await _api.get(
+        '/stage-content/$babyMonId/routine',
+        forceRefresh: forceRefresh,
+        options: Options(extra: {'forceRefresh': forceRefresh}),
+      );
       return res.data as Map<String, dynamic>;
+    } catch (e) {
+      if (isTierRequiredError(e)) throw const TierRequiredException();
+      throw Exception(extractErrorMessage(e));
+    }
+  }
+
+  Future<void> syncRoutine(String babyMonId, List<String> completedSteps) async {
+    try {
+      await _api.put(
+        '/stage-content/$babyMonId/routine/sync',
+        data: {'completedSteps': completedSteps},
+      );
     } catch (e) {
       throw Exception(extractErrorMessage(e));
     }
@@ -26,17 +45,33 @@ class CompanionRepository {
 
   Future<void> completeRoutineStep(String babyMonId, String stepLabel) async {
     try {
-      await _api.post('/stage-content/$babyMonId/routine/$stepLabel/complete', data: <String, dynamic>{});
+      await _api.post(
+        '/stage-content/$babyMonId/routine/${Uri.encodeComponent(stepLabel)}/complete',
+        data: <String, dynamic>{},
+      );
     } catch (e) {
       throw Exception(extractErrorMessage(e));
     }
   }
 
-  Future<Map<String, dynamic>> getMilestones(String babyMonId, {String? status}) async {
+  Future<Map<String, dynamic>> getMilestones(String babyMonId, {String? status, bool forceRefresh = false}) async {
     try {
       final query = status != null ? '?status=$status' : '';
-      final res = await _api.get('/stage-content/$babyMonId/milestones/expected$query');
+      final res = await _api.get(
+        '/stage-content/$babyMonId/milestones/expected$query',
+        forceRefresh: forceRefresh,
+        options: Options(extra: {'forceRefresh': forceRefresh}),
+      );
       return res.data as Map<String, dynamic>;
+    } catch (e) {
+      if (isTierRequiredError(e)) throw const TierRequiredException();
+      throw Exception(extractErrorMessage(e));
+    }
+  }
+
+  Future<void> unachieveMilestone(String babyMonId, String expectationId) async {
+    try {
+      await _api.delete('/stage-content/$babyMonId/milestones/$expectationId/achieve');
     } catch (e) {
       throw Exception(extractErrorMessage(e));
     }
@@ -57,6 +92,7 @@ class CompanionRepository {
       final res = await _api.get('/stage-content/$babyMonId/advice$query');
       return res.data as Map<String, dynamic>;
     } catch (e) {
+      if (isTierRequiredError(e)) throw const TierRequiredException();
       throw Exception(extractErrorMessage(e));
     }
   }

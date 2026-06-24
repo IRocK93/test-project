@@ -19,6 +19,7 @@ abstract class AuthRepository {
   Future<bool> checkEmailVerified();
   Future<void> resetPassword(String token, String newPassword);
   Future<bool> isLoggedIn();
+  Future<String?> getAccessToken();
   Future<({User user, String token})> googleLogin(String idToken) => throw UnimplementedError('googleLogin not implemented');
   Future<({User user, String token})> appleLogin(String idToken) => throw UnimplementedError('appleLogin not implemented');
   Future<({User user, String token})> facebookLogin(String accessToken) => throw UnimplementedError('facebookLogin not implemented');

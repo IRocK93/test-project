@@ -5,6 +5,7 @@ import 'package:baby_mon/core/theme/design_tokens.dart';
 import 'package:baby_mon/core/utils/theme_text_utils.dart';
 import 'package:baby_mon/core/widgets/glass_surface.dart';
 import 'package:baby_mon/features/companion/presentation/providers/advice_feed_provider.dart';
+import 'package:baby_mon/features/companion/presentation/widgets/upgrade_prompt.dart';
 
 class SavedCardsScreen extends ConsumerWidget {
   final String babyMonId;
@@ -14,6 +15,16 @@ class SavedCardsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(adviceFeedProvider(babyMonId));
+
+    // Show upgrade prompt if this is a tier error
+    if (state.isTierError && state.cards.isEmpty) {
+      return const UpgradePromptWidget(
+        featureName: 'Saved Cards',
+        description: 'Upgrade to Premium to bookmark and save expert advice '
+            'cards to your personal parenting library.',
+      );
+    }
+
     final bookmarkedCards = state.cards
         .where((card) => state.bookmarkedIds.contains(card['id'] as String? ?? ''))
         .toList();
