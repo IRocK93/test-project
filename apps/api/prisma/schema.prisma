@@ -257,6 +257,7 @@ model User {
   SavedAdvice         SavedAdvice[]
   AdviceRating        AdviceRating[]
   journalProposed     JournalProposal[] @relation("JournalProposer")
+  promoRedemptions    PromoRedemption[]
 }
 
 model PasswordResetToken {
@@ -554,6 +555,40 @@ model Subscription {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+}
+
+enum PromoCodeType {
+  TRIAL_EXTEND
+  FULL_PREMIUM
+}
+
+model PromoCode {
+  id                 String         @id @default(uuid())
+  code               String         @unique
+  type               PromoCodeType
+  valueDays          Int            // how many days of access this grants
+  maxRedemptions     Int?           // null = unlimited
+  currentRedemptions Int            @default(0)
+  isActive           Boolean        @default(true)
+  expiresAt          DateTime?
+  createdBy          String?        // admin note
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  redemptions PromoRedemption[]
+}
+
+model PromoRedemption {
+  id          String   @id @default(uuid())
+  promoCodeId String
+  userId      String
+  redeemedAt  DateTime @default(now())
+
+  promoCode PromoCode @relation(fields: [promoCodeId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([promoCodeId, userId])
   @@index([userId])
 }
 

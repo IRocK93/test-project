@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/data/api_client.dart';
 import '../../domain/entities/user.dart';
 import 'package:baby_mon/core/constants/constants.dart';
@@ -7,11 +6,9 @@ import 'package:baby_mon/core/utils/json_utils.dart';
 
 class AuthRemoteDatasource {
   final ApiClient _apiClient;
-  final SharedPreferences _prefs;
 
-  AuthRemoteDatasource({required ApiClient apiClient, required SharedPreferences prefs})
-      : _apiClient = apiClient,
-        _prefs = prefs;
+  AuthRemoteDatasource({required ApiClient apiClient})
+      : _apiClient = apiClient;
 
   Future<({User user, String token})> login({required String email, required String password}) async {
     try {
@@ -24,7 +21,7 @@ class AuthRemoteDatasource {
         final user = User.fromJson(parseJsonMap(response.data['user']) ?? {});
         final token = parseString(response.data['accessToken']) ?? '';
         final refreshToken = parseString(response.data['refreshToken']) ?? '';
-        await _apiClient.saveTokens(token, refreshToken, user.id);
+        await _apiClient.saveTokens(token, refreshToken, user.id, userEmail: user.email);
         return (user: user, token: token);
       } else {
         throw Exception('Failed to login');
@@ -63,7 +60,7 @@ class AuthRemoteDatasource {
           final user = User.fromJson(parseJsonMap(response.data['user']) ?? {});
           final token = parseString(response.data['accessToken']) ?? '';
           final refreshToken = parseString(response.data['refreshToken']) ?? '';
-          await _apiClient.saveTokens(token, refreshToken, user.id);
+          await _apiClient.saveTokens(token, refreshToken, user.id, userEmail: user.email);
           return (user: user, token: token);
         } else {
           final responseType = response.data.runtimeType.toString();
@@ -95,7 +92,7 @@ class AuthRemoteDatasource {
   }
 
   Future<void> logout() async {
-    final token = _prefs.getString('accessToken');
+    final token = await _apiClient.getAccessToken();
     if (token != null) {
       try {
         await _apiClient.post(
@@ -107,21 +104,19 @@ class AuthRemoteDatasource {
         print('Logout API call failed (non-critical): $e'); 
       }
     }
-    await clearToken();
+    await _apiClient.clearAuth();
   }
 
   Future<void> clearToken() async {
-    await _prefs.remove('accessToken');
-    await _prefs.remove('userId');
-    await _prefs.remove('userEmail');
+    await _apiClient.clearAuth();
   }
 
   Future<User?> getCurrentUser() async {
-    final userId = _prefs.getString('userId');
+    final userId = await _apiClient.getUserId();
     if (userId == null) return null;
     return User(
       id: userId,
-      email: _prefs.getString('userEmail') ?? '',
+      email: await _apiClient.getUserEmail() ?? '',
       createdAt: DateTime.now(),
     );
   }
@@ -141,7 +136,7 @@ class AuthRemoteDatasource {
     final user = User.fromJson(data['user'] as Map<String, dynamic>);
     final token = data['accessToken'] as String;
     final refreshToken = data['refreshToken'] as String?;
-    await _apiClient.saveTokens(token, refreshToken ?? '', user.id);
+    await _apiClient.saveTokens(token, refreshToken ?? '', user.id, userEmail: user.email);
     return (user: user, token: token);
   }
 
@@ -151,7 +146,7 @@ class AuthRemoteDatasource {
     final user = User.fromJson(data['user'] as Map<String, dynamic>);
     final token = data['accessToken'] as String;
     final refreshToken = data['refreshToken'] as String?;
-    await _apiClient.saveTokens(token, refreshToken ?? '', user.id);
+    await _apiClient.saveTokens(token, refreshToken ?? '', user.id, userEmail: user.email);
     return (user: user, token: token);
   }
 
@@ -161,7 +156,7 @@ class AuthRemoteDatasource {
     final user = User.fromJson(data['user'] as Map<String, dynamic>);
     final token = data['accessToken'] as String;
     final refreshToken = data['refreshToken'] as String?;
-    await _apiClient.saveTokens(token, refreshToken ?? '', user.id);
+    await _apiClient.saveTokens(token, refreshToken ?? '', user.id, userEmail: user.email);
     return (user: user, token: token);
   }
 }

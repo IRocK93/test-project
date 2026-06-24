@@ -3,7 +3,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SubscriptionsService } from './subscriptions.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { DevOverrideTrialDto } from './dto/subscriptions.dto';
+import { DevOverrideTrialDto, PromoCodeDto } from './dto/subscriptions.dto';
 import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('subscriptions')
@@ -69,5 +69,21 @@ export class SubscriptionsController {
       return { message: 'Not available in production' };
     }
     return this.subscriptionsService.devOverrideTrial(dto.userId, dto.days);
+  }
+
+  @Post('validate-promo')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Validate a promo code without redeeming it' })
+  async validatePromo(@CurrentUser('id') userId: string, @Body() dto: PromoCodeDto) {
+    return this.subscriptionsService.validatePromoCode(userId, dto.code);
+  }
+
+  @Post('redeem-promo')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Redeem a promo code and apply its benefits' })
+  async redeemPromo(@CurrentUser('id') userId: string, @Body() dto: PromoCodeDto) {
+    return this.subscriptionsService.redeemPromoCode(userId, dto.code);
   }
 }

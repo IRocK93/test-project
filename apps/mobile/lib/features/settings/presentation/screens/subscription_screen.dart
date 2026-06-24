@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,6 +18,11 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   int? _trialDaysRemaining;
   bool _isLoading = true;
   bool _isUpgrading = false;
+  // Promo code
+  final _promoController = TextEditingController();
+  bool _promoLoading = false;
+  String? _promoError;
+  String? _promoSuccess;
   // Plan definitions.
   // Prices are kept in a single list so a future remote-config
   // upgrade is a one-line change. Number formatting happens at
@@ -90,6 +96,117 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
+  @override
+  void dispose() {
+    _promoController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildPromoSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_promoSuccess != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(DesignTokens.spaceMd),
+              decoration: BoxDecoration(
+                color: context.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
+              ),
+              child: Row(
+                children: [
+                  Icon(PhosphorIconsLight.checkCircle, color: context.colorScheme.primary, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(_promoSuccess!, style: TextStyle(color: context.colorScheme.primary, fontWeight: FontWeight.w600, fontSize: DesignTokens.fontSm))),
+                ],
+              ),
+            )
+          else ...[
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _promoController,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: InputDecoration(
+                      hintText: 'Have a promo code?',
+                      prefixIcon: const Icon(PhosphorIconsLight.tag, size: 20),
+                      suffixIcon: _promoLoading
+                          ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+                          : null,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceMd, vertical: DesignTokens.spaceSm),
+                      errorText: _promoError,
+                      isDense: true,
+                    ),
+                    style: const TextStyle(fontSize: DesignTokens.fontSm),
+                    onSubmitted: (_) => _applyPromoCode(),
+                  ),
+                ),
+                const SizedBox(width: DesignTokens.spaceSm),
+                SizedBox(
+                  height: 40,
+                  child: FilledButton(
+                    onPressed: _promoLoading ? null : _applyPromoCode,
+                    style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg)),
+                    child: const Text('Apply', style: TextStyle(fontSize: DesignTokens.fontSm)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _applyPromoCode() async {
+    final code = _promoController.text.trim().toUpperCase();
+    if (code.isEmpty) return;
+    setState(() { _promoLoading = true; _promoError = null; _promoSuccess = null; });
+
+    try {
+      final api = ref.read(apiClientProvider);
+      // Validate first
+      final validate = await api.validatePromoCode(code);
+      final data = validate.data as Map<String, dynamic>;
+      final desc = data['description'] as String? ?? 'Apply this promo code?';
+
+      if (!mounted) return;
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Promo Code'),
+          content: Text(desc),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Apply')),
+          ],
+        ),
+      );
+      if (confirm != true) { setState(() => _promoLoading = false); return; }
+
+      // Redeem
+      final redeem = await api.redeemPromoCode(code);
+      final result = redeem.data as Map<String, dynamic>;
+      setState(() {
+        _promoSuccess = 'Code applied! ${result['valueDays']} days of ${result['type'] == 'FULL_PREMIUM' ? 'Premium' : 'trial extension'} granted.';
+        _promoController.clear();
+        _promoLoading = false;
+      });
+
+      // Refresh subscription status
+      _loadSubscription();
+    } catch (e) {
+      final msg = e is DioException ? (e.response?.data?['message'] ?? 'Invalid code') : 'Something went wrong';
+      setState(() { _promoError = msg.toString(); _promoLoading = false; });
+    }
+  }
+
   Future<void> _upgradeToPremium() async {
     if (_isUpgrading) return;
     setState(() => _isUpgrading = true);
@@ -181,6 +298,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                 children: [
                   // ── Hero ──
                   const _Hero(),
+                  const SizedBox(height: DesignTokens.spaceXl),
+                  // ── Promo Code ──
+                  _buildPromoSection(),
                   const SizedBox(height: DesignTokens.spaceXl),
                   // ── Current Plan Banner ──
                   _CurrentPlanBanner(

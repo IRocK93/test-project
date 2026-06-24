@@ -18,6 +18,8 @@ class ApiConstants {
 
   // Subscription endpoints
   static const String subscription = '/subscriptions/current';
+  static const String validatePromo = '/subscriptions/validate-promo';
+  static const String redeemPromo = '/subscriptions/redeem-promo';
   static const String devOverride = '/subscriptions/dev-override-trial';
 }
 
@@ -25,6 +27,7 @@ class StorageKeys {
   static const String accessToken = 'access_token';
   static const String refreshToken = 'refresh_token';
   static const String userId = 'user_id';
+  static const String userEmail = 'user_email';
   static const String selectedBabyMonId = 'selected_baby_mon_id';
   static const String trialOverride = 'trial_override_days';
 }

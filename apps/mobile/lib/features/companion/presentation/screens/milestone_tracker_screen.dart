@@ -351,15 +351,20 @@ class MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen>
   }
 
   /// Remove pending IDs that don't match any milestone in the current stage.
-  /// Prevents phantom achievements from stale SharedPreferences data.
+  /// Remove pending IDs that don't match any milestone in the current stage
+  /// and persist the cleanup so stale data doesn't survive app restarts.
   void _pruneOrphanedPendingIds(Set<String> validIds) {
     final aNotifier = ref.read(pendingMilestoneAchievementsProvider(widget.babyMonId).notifier);
     if (aNotifier.state.any((id) => !validIds.contains(id))) {
-      aNotifier.state = aNotifier.state.where(validIds.contains).toSet();
+      final cleaned = aNotifier.state.where(validIds.contains).toSet();
+      aNotifier.state = cleaned;
+      SyncPersistence.saveAchievements(widget.babyMonId, cleaned);
     }
     final uNotifier = ref.read(pendingMilestoneUnachievementsProvider(widget.babyMonId).notifier);
     if (uNotifier.state.any((id) => !validIds.contains(id))) {
-      uNotifier.state = uNotifier.state.where(validIds.contains).toSet();
+      final cleaned = uNotifier.state.where(validIds.contains).toSet();
+      uNotifier.state = cleaned;
+      SyncPersistence.saveUnachievements(widget.babyMonId, cleaned);
     }
   }
 

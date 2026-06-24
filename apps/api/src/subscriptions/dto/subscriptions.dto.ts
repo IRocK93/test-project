@@ -14,3 +14,9 @@ export class DevOverrideTrialDto {
   @Type(() => Number)
   days: number;
 }
+
+export class PromoCodeDto {
+  @ApiProperty({ description: 'Promo code to validate or redeem', example: 'LAUNCH-A3F7-K9M2' })
+  @IsString()
+  code: string;
+}

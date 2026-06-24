@@ -18,7 +18,6 @@ Future<void> setupDependencies() async {
   // Auth
   getIt.registerLazySingleton<AuthRemoteDatasource>(() => AuthRemoteDatasource(
     apiClient: getIt<ApiClient>(),
-    prefs: getIt<SharedPreferences>(),
   ));
   
   getIt.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(

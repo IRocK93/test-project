@@ -12,12 +12,7 @@ import '../../domain/repositories/auth_repository.dart';
 // Datasource
 final authRemoteDatasourceProvider = Provider<AuthRemoteDatasource>((ref) {
   final apiClient = ref.watch(apiClientProvider);
-  final prefsAsync = ref.watch(sharedPreferencesProvider);
-  final prefs = prefsAsync.valueOrNull;
-  if (prefs == null) {
-    throw Exception('SharedPreferences not initialized');
-  }
-  return AuthRemoteDatasource(apiClient: apiClient, prefs: prefs);
+  return AuthRemoteDatasource(apiClient: apiClient);
 });
 // Repository
 final authRepositoryProvider = Provider<AuthRepository>((ref) {

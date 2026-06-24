@@ -296,6 +296,14 @@ class ApiClient {
     return _dio.post('/api${ApiConstants.devOverride}', data: {'days': days});
   }
 
+  Future<Response> validatePromoCode(String code) async {
+    return _dio.post('/api${ApiConstants.validatePromo}', data: {'code': code});
+  }
+
+  Future<Response> redeemPromoCode(String code) async {
+    return _dio.post('/api${ApiConstants.redeemPromo}', data: {'code': code});
+  }
+
   // Growth Records
   /// Fetches all growth records for a BabyMon, optionally filtered by metric type
   Future<Response> getGrowthRecords(String babyMonId, {String? type, bool forceRefresh = false}) async {
@@ -390,10 +398,13 @@ class ApiClient {
   }
 
   // Storage
-  Future<void> saveTokens(String accessToken, String refreshToken, String userId) async {
+  Future<void> saveTokens(String accessToken, String refreshToken, String userId, {String? userEmail}) async {
     await _storage.write(key: StorageKeys.accessToken, value: accessToken);
     await _storage.write(key: StorageKeys.refreshToken, value: refreshToken);
     await _storage.write(key: StorageKeys.userId, value: userId);
+    if (userEmail != null) {
+      await _storage.write(key: StorageKeys.userEmail, value: userEmail);
+    }
   }
 
   Future<String?> getAccessToken() async {
@@ -402,6 +413,17 @@ class ApiClient {
 
   Future<String?> getUserId() async {
     return _storage.read(key: StorageKeys.userId);
+  }
+
+  Future<String?> getUserEmail() async {
+    return _storage.read(key: StorageKeys.userEmail);
+  }
+
+  Future<void> clearAuth() async {
+    await _storage.delete(key: StorageKeys.accessToken);
+    await _storage.delete(key: StorageKeys.refreshToken);
+    await _storage.delete(key: StorageKeys.userId);
+    await _storage.delete(key: StorageKeys.userEmail);
   }
 
   Future<void> setSelectedBabyMonId(String? id) async {
