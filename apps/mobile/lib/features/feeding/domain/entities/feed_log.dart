@@ -69,7 +69,7 @@ class FeedLog {
       unit: parseString(json['unit']),
       notes: parseString(json['notes']),
       happenedAt: parseString(json['happenedAt']) != null
-          ? DateTime.tryParse(parseString(json['happenedAt'])!)?.toLocal()
+          ? DateTime.tryParse(parseString(json['happenedAt'])!)
           : null,
       syncStatus: parseString(json['syncStatus']),
     );

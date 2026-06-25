@@ -25,6 +25,9 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
   int _feedChartRange = 7;
   String _feedChartUnit = 'Days';
   String? _feedSelectedDate;
+  final _feedChartScrollController = ScrollController();
+  double _chartDragStartX = 0;
+  double _chartScrollStartOffset = 0;
   // ─────────────────────────────────────────────────
   //  DataScreenMixin overrides
   // ─────────────────────────────────────────────────
@@ -260,9 +263,6 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
     final yLabels = List.generate(yLabelCount, (i) => (yMax * i / (yLabelCount - 1)).round());
     const barHeight = 136.0;
     const barWidth = 56.0;
-    final chartScrollController = ScrollController();
-    double chartDragStartX = 0;
-    double chartScrollStartOffset = 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -389,25 +389,12 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                 const SizedBox(width: 4),
                 // Bars + day totals — wrapped in GestureDetector for swipe
                 Expanded(
-                  child: GestureDetector(
-                    onHorizontalDragStart: (d) {
-                      chartDragStartX = d.globalPosition.dx;
-                      chartScrollStartOffset = chartScrollController.offset;
-                    },
-                    onHorizontalDragUpdate: (d) {
-                      final dx = chartDragStartX - d.globalPosition.dx;
-                      final newOffset = (chartScrollStartOffset + dx).clamp(
-                        0.0,
-                        chartScrollController.position.maxScrollExtent,
-                      );
-                      chartScrollController.jumpTo(newOffset);
-                    },
-                    child: SizedBox(
-                      height: barHeight + 24,
-                      child: ListView(
+                  child: SizedBox(
+                    height: barHeight + 24,
+                    child: ListView(
                         scrollDirection: Axis.horizontal,
-                        physics: const NeverScrollableScrollPhysics(),
-                        controller: chartScrollController,
+                        physics: const ClampingScrollPhysics(),
+                        controller: _feedChartScrollController,
                         children: List.generate(keysWithData.length, (di) {
                           final dateStr = keysWithData[di];
                           final dayLogs = dayGroups[dateStr] ?? [];
@@ -457,7 +444,6 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                         }),
                       ),
                     ),
-                  ),
                 ),
               ],
             ),
@@ -475,7 +461,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   physics: const NeverScrollableScrollPhysics(),
-                  controller: chartScrollController,
+                  controller: _feedChartScrollController,
                   children: List.generate(keysWithData.length, (di) {
                     final dateStr = keysWithData[di];
                     final date = DateTime.tryParse(dateStr);
@@ -516,8 +502,8 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
               onPressed: () {
                 final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
                 final idx = keysWithData.indexOf(todayKey);
-                if (idx >= 0 && chartScrollController.hasClients) {
-                  chartScrollController.animateTo(
+                if (idx >= 0 && _feedChartScrollController.hasClients) {
+                  _feedChartScrollController.animateTo(
                     idx * (barWidth + 8), // width + horizontal margin
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeOut,
@@ -584,6 +570,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                                     ),
                                     child: PremiumCard(
                                       isGlass: true,
+                                      onTap: () => _showEditFeedLogDialog(log, index),
                                       backgroundColor: feedColor.withValues(alpha: 0.08),
                                       margin: const EdgeInsets.symmetric(
                                         horizontal: DesignTokens.spaceSm,
@@ -640,6 +627,10 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                                                     size: 14,
                                                   ),
                                                 ),
+                                              Padding(
+                                                padding: const EdgeInsets.only(left: DesignTokens.spaceXs),
+                                                child: Icon(PhosphorIconsLight.pencilSimple, size: 16, color: context.colorScheme.primary),
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -858,5 +849,64 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
         ),
       ),
     );
+  }
+  void _showEditFeedLogDialog(FeedLog log, int index) {
+    if (babyMonId == null) return;
+    final type = FeedType.fromApiKey(log.type) ?? FeedType.values.first;
+    FeedType selectedType = type;
+    double? selectedAmount = log.amount;
+    final notesController = TextEditingController(text: log.notes ?? '');
+    DateTime logDate = log.happenedAt ?? DateTime.now();
+    TimeOfDay logTime = log.happenedAt != null ? TimeOfDay.fromDateTime(log.happenedAt!) : TimeOfDay.now();
+    final api = ref.read(apiClientProvider);
+    bool isSaving = false;
+    showModalBottomSheet<void>(context: context, isScrollControlled: true, builder: (ctx) => StatefulBuilder(builder: (ctx, setD) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: DesignTokens.spaceLg, right: DesignTokens.spaceLg, top: DesignTokens.spaceLg),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('Edit Feeding', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: DesignTokens.spaceLg),
+        SegmentedButton<FeedType>(
+          segments: FeedType.values.map((ft) => ButtonSegment(value: ft, label: Text(ft.label))).toList(),
+          selected: {selectedType},
+          onSelectionChanged: (s) => setD(() => selectedType = s.first),
+          showSelectedIcon: false,
+        ),
+        const SizedBox(height: DesignTokens.spaceMd),
+        Row(children: [
+          Expanded(child: ListTile(leading: Icon(PhosphorIconsLight.calendar, color: context.colorScheme.primary), title: Text(DateFormat('MMM d, yyyy').format(logDate)), dense: true,
+            onTap: () async { final p = await showDatePicker(context: ctx, initialDate: logDate, firstDate: DateTime(2020), lastDate: DateTime.now()); if (p != null) setD(() => logDate = p); })),
+          Expanded(child: ListTile(leading: Icon(PhosphorIconsLight.clock, color: context.colorScheme.primary), title: Text(logTime.format(ctx)), dense: true,
+            onTap: () async { final t = await showTimePicker(context: ctx, initialTime: logTime); if (t != null) setD(() => logTime = t); })),
+        ]),
+        const SizedBox(height: DesignTokens.spaceMd),
+        GestureDetector(
+          onTap: () async { final a = await WheelPickerBottomSheet.showFeedingAmount(context: ctx, feedType: selectedType.apiKey, isMetric: _isMetric); if (a != null) setD(() => selectedAmount = a); },
+          child: Container(padding: const EdgeInsets.all(DesignTokens.spaceMd), decoration: BoxDecoration(border: Border.all(color: context.colorScheme.outline.withValues(alpha: 0.5)), borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
+            child: Text(selectedAmount != null ? '${(selectedAmount! % 1 == 0) ? selectedAmount!.toInt() : selectedAmount!.toStringAsFixed(1)} ${selectedType.unit(_isMetric)}' : 'Tap to set amount', style: TextStyle(fontSize: DesignTokens.fontLg, fontWeight: FontWeight.w600))),
+        ),
+        const SizedBox(height: DesignTokens.spaceMd),
+        TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notes'), maxLines: 2),
+        const SizedBox(height: DesignTokens.spaceLg),
+        Row(children: [
+          Expanded(child: ThemeButton(text: 'Delete', onPressed: () async {
+            final c = await ConfirmDeleteDialog.show(ctx, title: 'Delete Feed Log'); if (c != true) return;
+            try { await api.deleteFeedLog(log.id); setState(() => _feedLogs.removeAt(index)); ref.read(appRefreshProvider.notifier).state++; if (ctx.mounted) Navigator.pop(ctx); }
+            catch (e) { if (ctx.mounted) showError(ctx, e); }
+          }, variant: ThemeButtonVariant.outlined, foregroundColor: context.colorScheme.error, fullWidth: true)),
+          const SizedBox(width: DesignTokens.spaceSm),
+          Expanded(child: ThemeButton(text: 'Save', onPressed: () async {
+            setD(() => isSaving = true);
+            try {
+              await api.updateFeedLog(log.id, {
+                'type': selectedType.apiKey, 'amount': selectedAmount?.toString(), 'unit': selectedType.unit(_isMetric),
+                'happenedAt': DateTime(logDate.year, logDate.month, logDate.day, logTime.hour, logTime.minute).toIso8601String(),
+                'notes': notesController.text.isNotEmpty ? notesController.text : null,
+              });
+              ref.read(appRefreshProvider.notifier).state++; if (ctx.mounted) Navigator.pop(ctx);
+            } catch (e) { setD(() => isSaving = false); if (ctx.mounted) showError(ctx, e); }
+          }, isLoading: isSaving, fullWidth: true)),
+        ]), const SizedBox(height: DesignTokens.spaceSm),
+      ]),
+    )));
   }
 }
