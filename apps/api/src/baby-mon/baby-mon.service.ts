@@ -90,16 +90,6 @@ export class BabyMonService {
       },
     });
 
-    // Award first BabyMon badge
-    await this.prisma.badge.create({
-      data: {
-        babymonId: babyMon.id,
-        badgeType: 'FIRST_BABYMON',
-        name: 'New Beginning',
-        icon: 'baby',
-      },
-    });
-
     return babyMon;
   }
 

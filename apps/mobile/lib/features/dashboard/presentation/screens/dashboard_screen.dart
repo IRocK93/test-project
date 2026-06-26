@@ -677,16 +677,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           _detailRow('Middle Name', _babyMon!.middleName!),
         if (_babyMon?.lastName != null && _babyMon!.lastName!.isNotEmpty)
           _detailRow('Last Name', _babyMon!.lastName!),
-        _detailRow(
-          'Stage',
-          _babyMon?.stageStartType == 'BORN'
-              ? 'Born'
-              : _babyMon?.stageStartType == 'INCUBATING'
-                  ? 'Incubating'
-                  : _babyMon?.stageStartType == 'PLAN'
-                      ? 'Plan'
-                      : '—',
-        ),
+        _detailRow('Stage', _stageLabel),
         _detailRow(
           'Gender',
           _babyMon?.gender == 'MONIOUS'

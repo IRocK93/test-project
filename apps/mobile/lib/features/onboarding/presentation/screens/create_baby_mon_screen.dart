@@ -809,6 +809,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceSm),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── Card ──
             AnimatedContainer(

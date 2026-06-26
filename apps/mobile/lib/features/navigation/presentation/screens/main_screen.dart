@@ -11,6 +11,7 @@ import 'package:baby_mon/features/dashboard/dashboard.dart';
 import 'package:baby_mon/features/milestones/milestones.dart';
 import 'package:baby_mon/features/feeding/feeding.dart';
 import 'package:baby_mon/features/health/health.dart';
+import 'package:baby_mon/features/companion/presentation/screens/companion_tab.dart';
 import 'package:baby_mon/core/core.dart';
 import 'package:baby_mon/l10n/l10n_ext.dart';
 /// Main navigation shell — redesigned with 5-tab bottom nav, floating AppBar,
@@ -34,12 +35,13 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   // ═══ Scroll-aware tab label ═══
   final Set<int> _scrolledTabs = {};
   // Navigation configuration
-  static const _tabCount = 5;
+  static const _tabCount = 6;
   List<_NavTab> _buildTabs(BuildContext context) => [
     _NavTab(PhosphorIconsLight.gauge, PhosphorIconsLight.gauge, context.l10n.dashboard),
     _NavTab(PhosphorIconsLight.trophy, PhosphorIconsLight.trophy, context.l10n.milestones),
     _NavTab(PhosphorIconsLight.bowlFood, PhosphorIconsLight.bowlFood, context.l10n.feeding),
     _NavTab(PhosphorIconsLight.heart, PhosphorIconsLight.heart, context.l10n.health),
+    _NavTab(PhosphorIconsLight.magicWand, PhosphorIconsLight.magicWand, context.l10n.companion),
     _NavTab(PhosphorIconsLight.dotsSixVertical, PhosphorIconsLight.dotsSixVertical, 'More'),
   ];
   /// Returns the real screen for visited tabs, [SizedBox.shrink] for others.
@@ -53,7 +55,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       _screen(1, _scrollAware(1, const MilestonesScreen())),
       _screen(2, _scrollAware(2, const FeedingScreen())),
       _screen(3, _scrollAware(3, const HealthScreen())),
-      const SizedBox.shrink(),
+      _screen(4, CompanionTab(babyMonId: _activeBabyMonId ?? '')),
+      const SizedBox.shrink(), // More tab placeholder
     ];
   }
   /// Wraps a tab screen in [ScrollAware] to track scroll offset for the pill.
@@ -241,10 +244,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         Navigator.pop(context);
         context.push('/discover');
       }),
-      _MoreItem(PhosphorIconsLight.magicWand, context.l10n.companion, AppColors.bentoIndigo, () {
-        Navigator.pop(context);
-        _openCompanion(context);
-      }),
     ];
     showModalBottomSheet<void>(
       context: context,
@@ -371,6 +370,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         _DrawerItem(PhosphorIconsLight.trophy, context.l10n.milestones, 1),
         _DrawerItem(PhosphorIconsLight.bowlFood, context.l10n.feeding, 2),
         _DrawerItem(PhosphorIconsLight.heart, context.l10n.health, 3),
+        _DrawerItem(PhosphorIconsLight.magicWand, context.l10n.companion, 4),
       ]),
       _DrawerSection('More', [
         _DrawerItem(PhosphorIconsLight.images, context.l10n.album, null, () =>
@@ -381,8 +381,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             _drawerNavigate(() => GoRouter.of(context).push('/sleep'))),
         _DrawerItem(PhosphorIconsLight.compass, context.l10n.discover, null, () =>
             _drawerNavigate(() => GoRouter.of(context).push('/discover'))),
-        _DrawerItem(PhosphorIconsLight.magicWand, context.l10n.companion, null, () =>
-            _drawerNavigate(() => _openCompanion(context))),
       ]),
     ];
     return Drawer(
@@ -834,17 +832,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 tooltip: 'Quick actions',
                 icon: PhosphorIconsLight.lightning,
                 children: [
-                  InfoFabAction(
-                    tooltip: 'AI Companion',
-                    infoDescription: 'AI Companion',
-                    backgroundColor: AppColors.bentoIndigo,
-                    onTap: () {
-                      if (_activeBabyMonId != null) {
-                        context.push('/companion/$_activeBabyMonId');
-                      }
-                    },
-                    child: const Icon(PhosphorIconsLight.magicWand, color: Colors.white),
-                  ),
                   InfoFabAction(
                     tooltip: 'Journal',
                     infoDescription: 'Journal',

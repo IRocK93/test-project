@@ -249,15 +249,13 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
       allKeys.add(DateFormat('yyyy-MM-dd').format(current));
       current = current.add(const Duration(days: 1));
     }
-    // Filter out days with no entries, unless today (keep it as placeholder)
-    final keysWithData = allKeys.where((k) => (dayGroups[k]?.isNotEmpty ?? false) || k == DateFormat('yyyy-MM-dd').format(todayDate)).toList();
     const feedTypes = FeedType.values;
     double overallMax = 0;
     final typeData = <FeedType, List<MapEntry<String, double>>>{};
     for (final t in feedTypes) {
       typeData[t] = [];
     }
-    for (final k in keysWithData) {
+    for (final k in allKeys) {
       final logs = dayGroups[k] ?? [];
       double dayTotal = 0;
       for (final t in feedTypes) {
@@ -415,8 +413,8 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                         scrollDirection: Axis.horizontal,
                         physics: const ClampingScrollPhysics(),
                         controller: _feedChartScrollController,
-                        children: List.generate(keysWithData.length, (di) {
-                          final dateStr = keysWithData[di];
+                        children: List.generate(allKeys.length, (di) {
+                          final dateStr = allKeys[di];
                           final dayLogs = dayGroups[dateStr] ?? [];
                           final dayTotal = dayLogs.fold<double>(0, (s, l) => s + (l.amount ?? 0));
                           final isSelected = _feedSelectedDate == dateStr;
@@ -482,8 +480,8 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                   scrollDirection: Axis.horizontal,
                   physics: const NeverScrollableScrollPhysics(),
                   controller: _feedLabelsScrollController,
-                  children: List.generate(keysWithData.length, (di) {
-                    final dateStr = keysWithData[di];
+                  children: List.generate(allKeys.length, (di) {
+                    final dateStr = allKeys[di];
                     final date = DateTime.tryParse(dateStr);
                     final label = date != null ? DateFormat('d/M').format(date) : dateStr;
                     final isSelected = _feedSelectedDate == dateStr;
@@ -521,7 +519,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
               tooltip: 'Scroll to today',
               onPressed: () {
                 final todayKey = DateFormat('yyyy-MM-dd').format(DateTime.now());
-                final idx = keysWithData.indexOf(todayKey);
+                final idx = allKeys.indexOf(todayKey);
                 if (idx >= 0 && _feedChartScrollController.hasClients) {
                   _feedChartScrollController.animateTo(
                     idx * (barWidth + 8), // width + horizontal margin

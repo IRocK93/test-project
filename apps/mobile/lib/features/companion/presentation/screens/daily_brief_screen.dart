@@ -9,8 +9,13 @@ import 'package:baby_mon/features/companion/presentation/widgets/upgrade_prompt.
 
 class DailyBriefScreen extends ConsumerWidget {
   final String babyMonId;
+  final VoidCallback? onNavigateToRoutine;
 
-  const DailyBriefScreen({super.key, required this.babyMonId});
+  const DailyBriefScreen({
+    super.key,
+    required this.babyMonId,
+    this.onNavigateToRoutine,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -290,9 +295,12 @@ class DailyBriefScreen extends ConsumerWidget {
           }),
           if (sampleSchedule.length > 5) ...[
             const SizedBox(height: 4),
-            Text(
-              '+${sampleSchedule.length - 5} more steps — view full routine',
-              style: TextStyle(fontSize: DesignTokens.fontSm, color: context.colorScheme.primary, fontWeight: FontWeight.w600),
+            GestureDetector(
+              onTap: onNavigateToRoutine,
+              child: Text(
+                '+${sampleSchedule.length - 5} more steps — view full routine',
+                style: TextStyle(fontSize: DesignTokens.fontSm, color: context.colorScheme.primary, fontWeight: FontWeight.w600),
+              ),
             ),
           ],
         ],

@@ -34,14 +34,19 @@ class CompanionTab extends ConsumerStatefulWidget {
 }
 
 class _CompanionTabState extends ConsumerState<CompanionTab>
-    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late final TabController _tabController;
+  late final AnimationController _chatPulseController;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _tabController = TabController(length: 5, vsync: this);
+    _chatPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
     _restorePendingState();
     // Retry any previously failed sync
     WidgetsBinding.instance.addPostFrameCallback((_) => _syncAll(widget.babyMonId));
@@ -257,6 +262,21 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
     return '$baseUrl$url';
   }
 
+  /// 4-stop color cycle: primary → tertiary → red → yellow → primary
+  Color _cycleColor(BuildContext context, double t) {
+    final stops = [
+      context.colorScheme.primary,
+      context.colorScheme.tertiary,
+      Colors.redAccent,
+      Colors.amber,
+      context.colorScheme.primary,
+    ];
+    final segment = t * (stops.length - 1);
+    final i = segment.floor().clamp(0, stops.length - 2);
+    final localT = segment - i;
+    return Color.lerp(stops[i], stops[i + 1], localT)!;
+  }
+
   void _openContentChat() {
     ref.read(llmInferenceServiceProvider).contentOnlyMode = true;
     Navigator.of(context).pop(); // dismiss download screen
@@ -361,6 +381,7 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
     WidgetsBinding.instance.removeObserver(this);
     _syncAll(widget.babyMonId);
     _tabController.dispose();
+    _chatPulseController.dispose();
     super.dispose();
   }
 
@@ -495,10 +516,21 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
         title: const Text('Companion'),
         centerTitle: false,
         actions: [
-          IconButton(
-            icon: const Icon(PhosphorIconsLight.chatCircleDots),
-            tooltip: 'Ask the Companion',
-            onPressed: () => _openChatFlow(),
+          AnimatedBuilder(
+            animation: _chatPulseController,
+            builder: (context, child) {
+              final t = _chatPulseController.value; // 0.0 → 1.0 → 0.0
+              final scale = 1.10 + (t * 0.14);
+              final color = _cycleColor(context, t);
+              return Transform.scale(
+                scale: scale,
+                child: IconButton(
+                  icon: Icon(PhosphorIconsFill.chatCircleDots, color: color, size: 28),
+                  tooltip: 'Ask the Companion',
+                  onPressed: () => _openChatFlow(),
+                ),
+              );
+            },
           ),
         ],
         bottom: TabBar(
@@ -533,7 +565,10 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
       body: TabBarView(
         controller: _tabController,
         children: [
-          DailyBriefScreen(babyMonId: widget.babyMonId),
+          DailyBriefScreen(
+            babyMonId: widget.babyMonId,
+            onNavigateToRoutine: () => _tabController.animateTo(1),
+          ),
           RoutineScreen(babyMonId: widget.babyMonId),
           MilestoneTrackerScreen(babyMonId: widget.babyMonId),
           AdviceFeedScreen(babyMonId: widget.babyMonId),

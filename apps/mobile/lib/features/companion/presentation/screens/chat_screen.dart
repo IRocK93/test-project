@@ -30,6 +30,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   String _stageInfo = '';
   String _focusInfo = '';
 
+  List<ChatMessage> get _visibleMessages =>
+      _messages.where((m) => !m.hidden).toList();
+
   // ── Medical emergency keyword detection ──────────────────────────
   // These patterns bypass the LLM entirely — if a user's message matches
   // any of them, we respond with a hardcoded emergency instruction instead
@@ -100,8 +103,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    _loadBabyContext();
-    _loadModelIfNeeded();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await _loadBabyContext();
+    await _loadModelIfNeeded();
+    if (!mounted) return;
+    await _warmUpModel();
+  }
+
+  Future<void> _loadBabyContext() async {
+    final briefData = await ref.read(dailyBriefProvider(widget.babyMonId).future);
+    if (!mounted) return;
+    setState(() {
+      _babyName = briefData['babyName'] as String? ?? 'your baby';
+      _ageInfo = briefData['age'] as String? ?? '';
+      _genderInfo = briefData['gender'] as String? ?? '';
+      _stageInfo = briefData['stageName'] as String? ?? '';
+      _focusInfo = briefData['focusOfWeek'] as String? ?? '';
+    });
   }
 
   Future<void> _loadModelIfNeeded() async {
@@ -128,6 +149,49 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  /// Sends a hidden "hi" to the model and displays the greeting response.
+  Future<void> _warmUpModel() async {
+    final inferenceService = ref.read(llmInferenceServiceProvider);
+    if (!inferenceService.isReady) return;
+    if (!mounted) return;
+
+    setState(() => _isGenerating = true);
+
+    // Add hidden user message + visible assistant placeholder
+    _messages.add(ChatMessage(role: ChatRole.user, content: 'hi', hidden: true, timestamp: DateTime.now()));
+    _messages.add(ChatMessage(role: ChatRole.assistant, content: '', timestamp: DateTime.now()));
+    final assistantIndex = _messages.length - 1;
+
+    final buffer = StringBuffer();
+    try {
+      final stream = inferenceService.ask(
+        babyMonId: widget.babyMonId,
+        userMessage: 'hi',
+        babyName: _babyName,
+        age: _ageInfo,
+        gender: _genderInfo,
+        stageName: _stageInfo,
+        focusOfWeek: _focusInfo,
+      );
+      await for (final token in stream) {
+        buffer.write(token);
+        if (mounted) {
+          setState(() {
+            _messages[assistantIndex] = ChatMessage(
+              role: ChatRole.assistant,
+              content: buffer.toString(),
+              timestamp: DateTime.now(),
+            );
+          });
+        }
+      }
+    } catch (_) {
+      // Warm-up failed — silently skip, user can still chat
+    } finally {
+      if (mounted) setState(() => _isGenerating = false);
+    }
+  }
+
   @override
   void dispose() {
     // Unload model to free RAM when leaving chat
@@ -135,18 +199,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (engine.isLoaded) engine.unload();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadBabyContext() async {
-    final briefData = await ref.read(dailyBriefProvider(widget.babyMonId).future);
-    if (!mounted) return;
-    setState(() {
-      _babyName = briefData['babyName'] as String? ?? 'your baby';
-      _ageInfo = briefData['age'] as String? ?? '';
-      _genderInfo = briefData['gender'] as String? ?? '';
-      _stageInfo = briefData['stageName'] as String? ?? '';
-      _focusInfo = briefData['focusOfWeek'] as String? ?? '';
-    });
   }
 
   void _sendMessage(String text) {
@@ -246,15 +298,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: _messages.isEmpty
+            child: _visibleMessages.isEmpty
                 ? _buildEmptyState()
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(DesignTokens.spaceLg),
-                    itemCount: _messages.length + (_isGenerating ? 1 : 0),
+                    itemCount: _visibleMessages.length + (_isGenerating ? 1 : 0),
                     itemBuilder: (context, index) {
-                      if (index >= _messages.length) return const ThinkingIndicator();
-                      return ChatBubble(message: _messages[index]);
+                      if (index >= _visibleMessages.length) return const ThinkingIndicator();
+                      return ChatBubble(message: _visibleMessages[index]);
                     },
                   ),
           ),

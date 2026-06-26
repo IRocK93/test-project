@@ -7,12 +7,15 @@ class LlamadartEngine {
   llamadart.LlamaEngine? _engine;
   llamadart.LlamaBackend? _backend;
   llamadart.ChatSession? _session;
+  Future<void>? _pendingUnload;
 
   LlamadartEngine();
 
   bool get isLoaded => _loaded;
 
   Future<void> loadModel(String path) async {
+    // Wait for any in-flight unload to complete before initializing
+    await _pendingUnload;
     try {
       _backend = llamadart.LlamaBackend();
       _engine = llamadart.LlamaEngine(_backend!);
@@ -25,6 +28,16 @@ class LlamadartEngine {
   }
 
   Future<void> unload() async {
+    if (_engine == null) {
+      _loaded = false;
+      return;
+    }
+    _pendingUnload = _doUnload();
+    await _pendingUnload;
+    _pendingUnload = null;
+  }
+
+  Future<void> _doUnload() async {
     try {
       await _engine?.dispose();
     } catch (_) {} finally {
