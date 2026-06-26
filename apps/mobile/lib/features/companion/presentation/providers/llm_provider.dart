@@ -6,8 +6,11 @@ import '../../data/llm/model_download_service.dart';
 import '../../data/llm/model_manager.dart';
 import '../../data/llm/device_capability_service.dart';
 import '../../domain/models/model_download_state.dart';
+import '../../../../core/providers.dart';
 
-final modelDownloadServiceProvider = Provider<ModelDownloadService>((ref) => ModelDownloadService());
+final modelDownloadServiceProvider = Provider<ModelDownloadService>((ref) {
+  return ModelDownloadService(dio: ref.read(apiClientProvider).dio);
+});
 
 final modelManagerProvider = FutureProvider<ModelManager>((ref) async => ModelManager.create());
 

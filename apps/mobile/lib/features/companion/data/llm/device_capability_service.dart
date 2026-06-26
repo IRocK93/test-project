@@ -175,22 +175,21 @@ class DeviceCapabilityService {
   /// Estimates free storage in MB on the device's primary storage.
   Future<int?> _getFreeStorageMB() async {
     try {
-      // Use the application documents directory as a proxy for the
-      // primary storage volume.
       final tmpDir = Directory.systemTemp;
-      // dart:io doesn't directly provide free space.
-      // On mobile, we use a command-line approach as a fallback.
       if (Platform.isAndroid || Platform.isLinux) {
-        final result = await Process.run('df', ['-m', tmpDir.path]);
-        if (result.exitCode == 0) {
-          final lines = (result.stdout as String).split('\n');
-          if (lines.length >= 2) {
-            final parts = lines[1].split(RegExp(r'\s+'));
-            // df -m output: Filesystem 1M-blocks Used Available Use% Mounted
-            if (parts.length >= 4) {
-              return int.tryParse(parts[3]); // Available column
+        try {
+          final result = await Process.run('df', ['-m', tmpDir.path]).timeout(const Duration(seconds: 3));
+          if (result.exitCode == 0) {
+            final lines = (result.stdout as String).split('\n');
+            if (lines.length >= 2) {
+              final parts = lines[1].split(RegExp(r'\s+'));
+              if (parts.length >= 4) {
+                return int.tryParse(parts[3]);
+              }
             }
           }
+        } catch (_) {
+          // Best-effort; return null if we cannot determine.
         }
       }
     } catch (_) {

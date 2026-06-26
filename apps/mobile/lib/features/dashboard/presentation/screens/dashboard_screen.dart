@@ -184,7 +184,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   /// Fetches ALL dashboard data in a single API call (replaces 8+ individual requests).
   Future<void> _fetchDashboardAggregated(ApiClient api, {bool forceRefresh = false}) async {
     try {
-      final res = await api.getDashboard(_babyMonId!);
+      final res = await api.getDashboard(_babyMonId!, forceRefresh: forceRefresh);
       final data = parseJsonMap(res.data);
       if (data == null) throw Exception('Invalid dashboard data');
 
@@ -196,7 +196,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 	      final evo = parseJsonMap(data['evolution']);
 	      if (evo != null) {
 	        final evoBm = parseJsonMap(data['babyMon']) ?? <String, dynamic>{};
-	        final counts = parseJsonMap(evoBm['_count']);
+	        final counts = parseJsonMap(evoBm['_counts']);
 	        _evolution = <String, dynamic>{
 	          ...evo,
 	          ...evoBm,
@@ -848,6 +848,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final parentCtrl = TextEditingController(text: _parentName ?? '');
     final contactCtrl = TextEditingController(text: _parentContact ?? '');
     final specialMoveCtrl = TextEditingController(text: _babyMon?.specialMove ?? '');
+    // Helper to safely dispose all controllers after the dismiss animation
+    // completes. Must run post-frame to avoid "used after disposed" crashes
+    // when the animation's _AnimatedState tries to access controllers.
+    void disposeAll() {
+      for (final c in [nameCtrl, middleCtrl, lastNameCtrl, motherCtrl,
+           fatherCtrl, parentCtrl, contactCtrl, specialMoveCtrl]) {
+        try { c.dispose(); } catch (_) {}
+      }
+    }
     final api = ref.read(apiClientProvider);
     Set<String> traits = {...?_babyMon?.traits};
     String? bloodGroup = _babyMon?.bloodGroup;
@@ -1094,7 +1103,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         ),
       ),
     );
-    if (result != true) return;
+    if (result != true) {
+      // Schedule disposal after the dismiss animation completes.
+      // Disposing immediately causes _AnimatedState to access disposed
+      // controllers during the sheet's pop transition.
+      WidgetsBinding.instance.addPostFrameCallback((_) => disposeAll());
+      return;
+    }
     final newName = parentCtrl.text.trim();
     final newPhone = contactCtrl.text.trim();
     final babyName = nameCtrl.text.trim();
@@ -1104,10 +1119,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final babyFather = fatherCtrl.text.trim();
     final babySpecialMove = specialMoveCtrl.text.trim();
     final babyTraits = traits.toList();
-    // Immediately dispose controllers to avoid lifecycle conflicts
-    nameCtrl.dispose(); middleCtrl.dispose(); lastNameCtrl.dispose();
-    motherCtrl.dispose(); fatherCtrl.dispose();
-    parentCtrl.dispose(); contactCtrl.dispose(); specialMoveCtrl.dispose();
     // Save parent/guardian profile first (independent of BabyMon)
     final nameChanged = newName != (_parentName ?? '');
     final phoneChanged = newPhone != (_parentContact ?? '');
@@ -1153,18 +1164,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         'traits': babyTraits,
         'specialMove': babySpecialMove,
       });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('BabyMon save failed: $e'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: context.colorScheme.error,
-          ),
-        );
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('BabyMon save failed: $e'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: context.colorScheme.error,
+            ),
+          );
+        }
+        disposeAll();
+        return;
       }
-      return;
-    }
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1177,6 +1189,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       );
       _loadData(force: true);
     }
+    disposeAll();
   }
   Widget _editField(TextEditingController ctrl, String label,
       {TextInputType? keyboardType}) {

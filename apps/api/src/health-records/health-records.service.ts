@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { isWithinUndoWindow } from '../common/undo-window.helper';
 import { PROPOSAL_EXPIRY_DAYS } from '../common/app-constants';
@@ -26,7 +27,7 @@ export class HealthRecordsService {
     await this.accessControl.checkAccess(userId, babymonId);
 
     const babyMon = await this.prisma.babyMon.findFirst({ where: { id: babymonId, deletedAt: null } });
-    if (!babyMon) throw new NotFoundException('BabyMon not found');
+    if (!babyMon) throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
 
     const record = await this.prisma.healthRecord.create({
       data: {
@@ -50,7 +51,11 @@ export class HealthRecordsService {
 
     await this.xpService.checkAndProcessLevelUp(babymonId);
 
-    await this.badgesService.checkAndAwardBadges(babymonId, userId);
+    try {
+      await this.badgesService.checkAndAwardBadges(babymonId, userId);
+    } catch (e) {
+      this.logger.warn({ err: e }, 'Badge check failed (non-critical)');
+    }
 
     await this.prisma.auditLog.create({
       data: { babymonId: babymonId, actorUserId: userId, eventType: 'HEALTH_RECORD_CREATED', payloadJson: JSON.stringify({ recordId: record.id }) },
@@ -85,7 +90,7 @@ export class HealthRecordsService {
 
   async findOne(id: string, userId: string) {
     const record = await this.prisma.healthRecord.findUnique({ where: { id }, include: { author: { select: { id: true, name: true } } } });
-    if (!record || record.deletedAt) throw new NotFoundException('Health record not found');
+    if (!record || record.deletedAt) throw new NotFoundException({ message: 'Health record not found', code: ErrorCode.HEALTH_RECORD_NOT_FOUND });
     await this.verifyAccess(record.babymonId, userId);
     return record;
   }
@@ -113,7 +118,19 @@ export class HealthRecordsService {
   }
 
   async delete(id: string, userId: string) {
-    const record = await this.findOne(id, userId);
+    const record = await this.prisma.healthRecord.findUnique({
+      where: { id },
+      select: { id: true, babymonId: true, deletedAt: true, xpAwarded: true, createdAt: true },
+    });
+
+    if (!record) throw new NotFoundException({ message: 'Health record not found', code: ErrorCode.HEALTH_RECORD_NOT_FOUND });
+
+    // Idempotent: if already soft-deleted, return success
+    if (record.deletedAt) {
+      return { message: 'Health record already deleted' };
+    }
+
+    await this.verifyAccess(record.babymonId, userId);
 
     // Always soft-delete the record
     await this.prisma.healthRecord.update({ where: { id }, data: { deletedAt: new Date() } });

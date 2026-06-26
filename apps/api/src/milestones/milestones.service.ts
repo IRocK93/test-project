@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMilestoneDto, UpdateMilestoneDto } from './dto/milestone.dto';
 import { isWithinUndoWindow } from '../common/undo-window.helper';
@@ -29,7 +30,7 @@ export class MilestonesService {
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     const milestone = await this.prisma.milestone.create({
@@ -58,8 +59,11 @@ export class MilestonesService {
     // Process level-up (may advance multiple stages if XP exceeds thresholds)
     await this.xpService.checkAndProcessLevelUp(babymonId);
 
-    // Check for badges
-    await this.badgesService.checkAndAwardBadges(babymonId, userId);
+    try {
+      await this.badgesService.checkAndAwardBadges(babymonId, userId);
+    } catch (e) {
+      this.logger.warn({ err: e }, 'Badge check failed (non-critical)');
+    }
 
     // Audit log
     await this.prisma.auditLog.create({
@@ -113,7 +117,7 @@ export class MilestonesService {
     });
 
     if (!milestone || milestone.deletedAt) {
-      throw new NotFoundException('Milestone not found');
+      throw new NotFoundException({ message: 'Milestone not found', code: ErrorCode.MILESTONE_NOT_FOUND });
     }
 
     await this.verifyAccess(milestone.babymonId, userId);
@@ -156,7 +160,19 @@ export class MilestonesService {
   }
 
   async delete(id: string, userId: string) {
-    const milestone = await this.findOne(id, userId);
+    const milestone = await this.prisma.milestone.findUnique({
+      where: { id },
+      select: { id: true, babymonId: true, deletedAt: true, xpAwarded: true, createdAt: true },
+    });
+
+    if (!milestone) throw new NotFoundException({ message: 'Milestone not found', code: ErrorCode.MILESTONE_NOT_FOUND });
+
+    // Idempotent: if already soft-deleted, return success
+    if (milestone.deletedAt) {
+      return { message: 'Milestone already deleted' };
+    }
+
+    await this.verifyAccess(milestone.babymonId, userId);
 
     // Always soft-delete the milestone
     await this.prisma.milestone.update({
@@ -193,7 +209,7 @@ export class MilestonesService {
   private async verifyAccess(babymonId: string, userId: string) {
     const { hasAccess } = await this.accessControl.checkAccess(userId, babymonId);
     if (!hasAccess) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.UNAUTHORIZED });
     }
   }
 }

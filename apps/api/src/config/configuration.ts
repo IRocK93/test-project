@@ -54,6 +54,7 @@ export interface AppConfig {
   companion: {
     modelUrl: string;
     modelSha256: string | null;
+    hfToken: string | null;
   };
 
   database: {
@@ -111,6 +112,7 @@ export default function configuration(): AppConfig {
       process.env.COMPANION_MODEL_URL ||
       '/api/models/companion-llm/download',
     modelSha256: process.env.COMPANION_MODEL_SHA256 || null,
+    hfToken: process.env.HF_TOKEN || null,
   },
 
   database: {

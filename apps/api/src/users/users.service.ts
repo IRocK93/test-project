@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { UpdateUserDto, DeleteAccountDto } from './dto/user.dto';
@@ -21,6 +22,7 @@ export class UsersService {
         email: true,
         name: true,
         phone: true,
+        locale: true,
         createdAt: true,
         verifiedAt: true,
         // Excluded: passwordHash, verificationToken, verificationExpires
@@ -28,7 +30,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException({ message: 'User not found', code: ErrorCode.USER_NOT_FOUND });
     }
 
     return user;
@@ -41,7 +43,7 @@ export class UsersService {
         where: { email: dto.email },
       });
       if (existing && existing.id !== userId) {
-        throw new BadRequestException('Email already in use');
+        throw new BadRequestException({ message: 'Email already in use', code: ErrorCode.EMAIL_IN_USE });
       }
     }
 
@@ -51,12 +53,14 @@ export class UsersService {
         name: dto.name,
         email: dto.email,
         phone: dto.phone,
+        locale: dto.locale,
       },
       select: {
         id: true,
         email: true,
         name: true,
         phone: true,
+        locale: true,
         createdAt: true,
         verifiedAt: true,
       },
@@ -70,7 +74,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException({ message: 'User not found', code: ErrorCode.USER_NOT_FOUND });
     }
 
     // OAuth-only users have no password — allow deletion without password check
@@ -79,7 +83,7 @@ export class UsersService {
       const bcrypt = require('bcryptjs');
       const isValid = await bcrypt.compare(dto.password || '', user.passwordHash || '');
       if (!isValid) {
-        throw new BadRequestException('Invalid password');
+        throw new BadRequestException({ message: 'Invalid password', code: ErrorCode.INVALID_PASSWORD });
       }
     }
 
@@ -155,6 +159,7 @@ export class UsersService {
         id: true,
         email: true,
         name: true,
+        locale: true,
         createdAt: true,
         verifiedAt: true,
       },

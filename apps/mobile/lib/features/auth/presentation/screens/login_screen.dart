@@ -8,7 +8,9 @@ import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/features/auth/auth.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
+import 'package:baby_mon/core/utils/error_mapper.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/widgets/responsive_wrapper.dart';
 //// Login screen with premium double-bezel card, button-in-button CTAs, and info tooltips on social circles.
 class LoginScreen extends ConsumerStatefulWidget {
@@ -74,7 +76,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _biometricLogin() async {
     try {
       final authenticated = await _localAuth.authenticate(
-        localizedReason: 'Authenticate to log in to BabyMon',
+        localizedReason: context.l10n.biometricPrompt,
         options: const AuthenticationOptions(stickyAuth: true, biometricOnly: true),
       );
       if (authenticated && mounted) {
@@ -82,11 +84,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           final enable = await showDialog<bool>(
             context: context,
             builder: (ctx) => AlertDialog(
-              title: const Text('Enable Biometric Login'),
-              content: const Text('Would you like to use biometrics for faster sign-in next time?'),
+              title: Text(context.l10n.biometricEnableTitle),
+              content: Text(context.l10n.biometricEnablePrompt),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Not Now')),
-                TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enable')),
+                TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.l10n.notNow)),
+                TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(context.l10n.enable)),
               ],
             ),
           );
@@ -130,27 +132,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
               const SizedBox(height: DesignTokens.spaceSm),
-              Text('Reset Password', style: Theme.of(context).textTheme.titleLarge),
+              Text(context.l10n.resetPasswordTitle, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: DesignTokens.spaceSm),
               Text(
-                "Enter your email address and we'll send you a password reset link.",
+                context.l10n.resetPasswordSubtitle,
                 style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant, fontSize: 14),
               ),
               const SizedBox(height: DesignTokens.spaceLg),
               TextField(
                 controller: resetEmailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',                              prefixIcon: Icon(PhosphorIconsLight.envelope),
+                decoration: InputDecoration(
+                  labelText: context.l10n.emailLabel,                              prefixIcon: const Icon(PhosphorIconsLight.envelope),
                 ),
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: DesignTokens.spaceLg),
               ThemeButton(
-                text: 'Send Reset Link',
+                text: context.l10n.sendResetLink,
                 onPressed: () async {
                   if (resetEmailController.text.isEmpty) {
                     ScaffoldMessenger.of(ctx).showSnackBar(
-                      const SnackBar(content: Text('Please enter your email')),
+                      SnackBar(content: Text(context.l10n.emailRequired)),
                     );
                     return;
                   }
@@ -164,7 +166,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Password reset link sent to your email')),
+                        SnackBar(content: Text(context.l10n.resetPasswordSuccess)),
                       );
                     }
                   } catch (e) {
@@ -252,7 +254,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: DesignTokens.spaceLg),
                           // Title
                           Text(
-                            'Welcome Back!',
+                            context.l10n.loginTitle,
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
@@ -261,7 +263,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: DesignTokens.spaceXs),
                           Text(
-                            'Log in to continue',
+                            context.l10n.loginSubtitle,
                             style: TextStyle(
                               fontSize: 14,
                               color: cs.onSurfaceVariant,
@@ -271,22 +273,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           // Email
                           TextFormField(
                             controller: _emailController,
-                            decoration: const InputDecoration(
-                              labelText: 'Email',
-                              prefixIcon: Icon(PhosphorIconsLight.envelope),
+                            decoration: InputDecoration(
+                              labelText: context.l10n.emailLabel,
+                              prefixIcon: const Icon(PhosphorIconsLight.envelope),
                             ),
                             keyboardType: TextInputType.emailAddress,
-                            validator: (value) => value!.isEmpty ? 'Please enter your email' : null,
+                            validator: (value) => value!.isEmpty ? context.l10n.emailRequired : null,
                           ),
                           const SizedBox(height: DesignTokens.spaceMd),
                           // Password
                           TextFormField(
                             controller: _passwordController,
                             decoration: InputDecoration(
-                              labelText: 'Password',
+                              labelText: context.l10n.passwordLabel,
                               prefixIcon: const Icon(PhosphorIconsLight.lock),
                               suffixIcon: Semantics(
-                                label: 'Toggle password visibility',
+                                label: context.l10n.togglePasswordVisibility,
                                 child: IconButton(
                                   icon: Icon(_obscurePassword ? PhosphorIconsLight.eyeSlash : PhosphorIconsLight.eye),
                                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -294,14 +296,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                             obscureText: _obscurePassword,
-                            validator: (value) => value!.isEmpty ? 'Please enter your password' : null,
+                            validator: (value) => value!.isEmpty ? context.l10n.passwordRequired : null,
                           ),
                           // Forgot password
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
                               onPressed: _showForgotPasswordSheet,
-                              child: const Text('Forgot Password?'),
+                              child: Text(context.l10n.forgotPassword),
                             ),
                           ),
                           // Error
@@ -309,31 +311,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             Padding(
                               padding: const EdgeInsets.only(bottom: DesignTokens.spaceMd),
                               child: Text(
-                                authState.error!,
+                                ErrorMapper.localize(context, authState.error),
                                 style: TextStyle(color: cs.error, fontSize: 13),
                                 textAlign: TextAlign.center,
                               ),
                             ),
                           // Login button
                           ThemeButton(
-                            text: 'Log In',
+                            text: context.l10n.loginButton,
                             onPressed: _login,
                             isLoading: authState.isLoading,
                             fullWidth: true,
                             trailingIcon: PhosphorIconsLight.arrowRight,
                             borderRadius: DesignTokens.radiusFull,
-                            semanticLabel: 'Log in to your account',
+                            semanticLabel: context.l10n.loginButton,
                           ),
                           // Biometrics
                           if (_biometricsAvailable && _biometricsOptedIn) ...[
                             const SizedBox(height: DesignTokens.spaceMd),
                             ThemeButton(
-                            text: 'Log in with Biometrics',
+                            text: context.l10n.biometricLogin,
                             onPressed: _biometricLogin,
                             variant: ThemeButtonVariant.outlined,
                             icon: PhosphorIconsLight.fingerprint,
                             fullWidth: true,
-                            semanticLabel: 'Log in with biometrics',
+                            semanticLabel: context.l10n.biometricLogin,
                           ),
                           ],
                         ],
@@ -348,21 +350,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 index: 1,
                 child: Column(
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Expanded(child: Divider(color: AppColors.divider)),
+                          const Expanded(child: Divider(color: AppColors.divider)),
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: DesignTokens.spaceMd),
+                            padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceMd),
                             child: Text(
-                              'OR',
-                              style: TextStyle(
+                              context.l10n.orDivider,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textOnDark,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
-                          Expanded(child: Divider(color: AppColors.divider)),
+                          const Expanded(child: Divider(color: AppColors.divider)),
                         ],
                       ),
                       const SizedBox(height: DesignTokens.spaceLg),
@@ -390,16 +392,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: GestureDetector(
                     onTap: () => context.go('/register'),
                     child: RichText(
-                      text: const TextSpan(
-                        style: TextStyle(
+                      text: TextSpan(
+                        style: const TextStyle(
                           fontSize: 14,
                           color: AppColors.textOnDark,
                         ),
                         children: [
-                          TextSpan(text: "Don't have an account? "),
+                          TextSpan(text: context.l10n.noAccount),
                           TextSpan(
-                            text: 'Sign up',
-                            style: TextStyle(
+                            text: context.l10n.signUpLink,
+                            style: const TextStyle(
                               color: AppColors.textOnDark,
                               fontWeight: FontWeight.w600,
                             ),
@@ -452,7 +454,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       const SizedBox(height: DesignTokens.spaceLg),
                       Text(
-                        'Welcome Back!',
+                        context.l10n.loginTitle,
                         style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w800,
@@ -460,9 +462,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: DesignTokens.spaceXs),
-                      const Text(
-                        'Log in to continue',
-                        style: TextStyle(fontSize: 15, color: Colors.white70),
+                      Text(
+                        context.l10n.loginSubtitle,
+                        style: const TextStyle(fontSize: 15, color: Colors.white70),
                       ),
                       const SizedBox(height: DesignTokens.space2xl),
                       Row(
@@ -519,19 +521,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 // Email
                                 TextFormField(
                                   controller: _emailController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Email',
-                                    prefixIcon: Icon(PhosphorIconsLight.envelope),
+                                  decoration: InputDecoration(
+                                    labelText: context.l10n.emailLabel,
+                                    prefixIcon: const Icon(PhosphorIconsLight.envelope),
                                   ),
                                   keyboardType: TextInputType.emailAddress,
-                                  validator: (v) => v!.isEmpty ? 'Please enter your email' : null,
+                                  validator: (v) => v!.isEmpty ? context.l10n.emailRequired : null,
                                 ),
                                 const SizedBox(height: DesignTokens.spaceMd),
                                 // Password
                                 TextFormField(
                                   controller: _passwordController,
                                   decoration: InputDecoration(
-                                    labelText: 'Password',
+                                    labelText: context.l10n.passwordLabel,
                                     prefixIcon: const Icon(PhosphorIconsLight.lock),
                                     suffixIcon: IconButton(
                                       icon: Icon(_obscurePassword ? PhosphorIconsLight.eyeSlash : PhosphorIconsLight.eye),
@@ -539,14 +541,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     ),
                                   ),
                                   obscureText: _obscurePassword,
-                                  validator: (v) => v!.isEmpty ? 'Please enter your password' : null,
+                                  validator: (v) => v!.isEmpty ? context.l10n.passwordRequired : null,
                                 ),
                                 // Forgot password
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
                                     onPressed: _showForgotPasswordSheet,
-                                    child: const Text('Forgot Password?'),
+                                    child: Text(context.l10n.forgotPassword),
                                   ),
                                 ),
                                 // Error
@@ -554,31 +556,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: DesignTokens.spaceMd),
                                     child: Text(
-                                      authState.error!,
+                                      ErrorMapper.localize(context, authState.error),
                                       style: TextStyle(color: cs.error, fontSize: 13),
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
                                 // Login button
                                 ThemeButton(
-                                  text: 'Log In',
+                                  text: context.l10n.loginButton,
                                   onPressed: _login,
                                   isLoading: authState.isLoading,
                                   fullWidth: true,
                                   trailingIcon: PhosphorIconsLight.arrowRight,
                                   borderRadius: DesignTokens.radiusFull,
-                                  semanticLabel: 'Log in to your account',
+                                  semanticLabel: context.l10n.loginButton,
                                 ),
                                 // Biometrics
                                 if (_biometricsAvailable && _biometricsOptedIn) ...[
                                   const SizedBox(height: DesignTokens.spaceMd),
                                   ThemeButton(
-                                    text: 'Log in with Biometrics',
+                                    text: context.l10n.biometricLogin,
                                     onPressed: _biometricLogin,
                                     variant: ThemeButtonVariant.outlined,
                                     icon: PhosphorIconsLight.fingerprint,
                                     fullWidth: true,
-                                    semanticLabel: 'Log in with biometrics',
+                                    semanticLabel: context.l10n.biometricLogin,
                                   ),
                                 ],
                               ],
@@ -592,13 +594,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     GestureDetector(
                       onTap: () => context.go('/register'),
                       child: RichText(
-                        text: const TextSpan(
-                          style: TextStyle(fontSize: 14),
+                        text: TextSpan(
+                          style: const TextStyle(fontSize: 14),
                           children: [
-                            TextSpan(text: "Don't have an account? "),
+                            TextSpan(text: context.l10n.noAccount),
                             TextSpan(
-                              text: 'Sign up',
-                              style: TextStyle(fontWeight: FontWeight.w600),
+                              text: context.l10n.signUpLink,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -615,10 +617,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
   Widget _socialCircle(IconData icon, Color color, VoidCallback onTap) {
     final label = icon == Icons.g_mobiledata
-        ? 'Continue with Google'
+        ? context.l10n.socialLoginGoogle
         : icon == Icons.apple
-            ? 'Continue with Apple'
-            : 'Continue with Facebook';
+            ? context.l10n.socialLoginApple
+            : context.l10n.socialLoginFacebook;
     return Tooltip(
       message: label,
       preferBelow: false,

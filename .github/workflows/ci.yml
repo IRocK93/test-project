@@ -54,6 +54,19 @@ jobs:
       - name: Run database migrations
         working-directory: ./apps/api
         run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/babymon_test?schema=public
+
+      - name: Verify Prisma schema is fully migrated (no db push drift)
+        working-directory: ./apps/api
+        run: |
+          npx prisma migrate diff \
+            --from-migrations prisma/migrations \
+            --to-schema-datamodel prisma/schema.prisma \
+            --shadow-database-url "postgresql://postgres:postgres@localhost:5432/babymon_shadow?schema=public" \
+            --exit-code
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/babymon_test?schema=public
 
       - name: Run tests
         working-directory: ./apps/api
@@ -271,5 +284,5 @@ jobs:
         run: |
           docker run -d --name test-api -p 3001:3000 babymon/api:${{ github.sha }}
           sleep 15
-          curl -f http://localhost:3001/api/health || exit 1
+          curl -f http://localhost:3001/api/v1/health/live || exit 1
           docker stop test-api

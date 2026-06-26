@@ -10,8 +10,6 @@ import * as http from 'http';
 const OLD_STUB_URL = 'https://cdn.babymon.app/models/gemma4-e2b-v1-q4km.gguf';
 
 @ApiTags('companion')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard, TierGuard)
 @Controller('models/companion-llm')
 export class ModelManifestController {
   constructor(private config: ConfigService) {}
@@ -60,14 +58,16 @@ export class ModelManifestController {
     const parsed = new URL(modelUrl);
     const client = parsed.protocol === 'https:' ? https : http;
     const rangeHeader = req.headers['range'] as string | undefined;
+    const hfToken = this.config.get<string>('companion.hfToken');
 
     const options: https.RequestOptions = {
       hostname: parsed.hostname,
       port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
       path: parsed.pathname + parsed.search,
-      method: 'GET',
+      method: req.method,
       headers: {
         'User-Agent': 'BabyMon/1.0',
+        ...(hfToken && parsed.hostname.includes('huggingface.co') ? { 'Authorization': `Bearer ${hfToken}` } : {}),
         ...(rangeHeader ? { 'Range': rangeHeader } : {}),
       },
     };
@@ -83,9 +83,10 @@ export class ModelManifestController {
             hostname: redirectParsed.hostname,
             port: redirectParsed.port || (redirectParsed.protocol === 'https:' ? 443 : 80),
             path: redirectParsed.pathname + redirectParsed.search,
-            method: 'GET',
+            method: req.method,
             headers: {
               'User-Agent': 'BabyMon/1.0',
+              ...(hfToken && redirectParsed.hostname.includes('huggingface.co') ? { 'Authorization': `Bearer ${hfToken}` } : {}),
               ...(rangeHeader ? { 'Range': rangeHeader } : {}),
             },
           };

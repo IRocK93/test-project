@@ -10,12 +10,15 @@ import 'package:baby_mon/features/companion/presentation/screens/chat_screen.dar
 import 'package:baby_mon/features/companion/presentation/screens/advice_feed_screen.dart';
 import 'package:baby_mon/features/companion/presentation/screens/saved_cards_screen.dart';
 import 'package:baby_mon/features/companion/presentation/screens/model_download_screen.dart';
+import 'package:baby_mon/features/companion/presentation/screens/model_onboarding_screen.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/monthly_ai_reminder.dart';
 import 'package:baby_mon/features/companion/data/sync_persistence.dart';
 import 'package:baby_mon/features/companion/presentation/providers/companion_provider.dart';
 import 'package:baby_mon/features/companion/presentation/providers/llm_provider.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
 import 'package:baby_mon/core/constants/api_constants.dart';
+import 'package:baby_mon/core/providers.dart';
+import 'package:baby_mon/core/utils/json_utils.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
 import 'package:baby_mon/core/widgets/premium_empty_state.dart';
 
@@ -79,11 +82,49 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
     }
   }
 
-  Future<void> _onDisclaimerAccepted() async {
-    Navigator.of(context).pop(); // close disclaimer
+  static const _disclaimerKey = 'ai_disclaimer_accepted_at';
+
+  Future<void> _openChatFlow() async {
+    final prefs = await ref.read(sharedPreferencesProvider.future);
+    final lastAccepted = prefs.getInt(_disclaimerKey);
+    final needsDisclaimer = lastAccepted == null ||
+        DateTime.now().difference(
+          DateTime.fromMillisecondsSinceEpoch(lastAccepted),
+        ).inDays >= 14;
+    if (needsDisclaimer) {
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => MedicalDisclaimerGate(
+            onAccept: _onDisclaimerAccepted,
+          ),
+        ),
+      );
+    } else {
+      _startChatFlow();
+    }
+  }
+
+  /// Called when the user accepts the disclaimer. Pops the gate, persists, then
+  /// delegates to [\_startChatFlow].
+  void _onDisclaimerAccepted() {
+    Navigator.of(context).pop(); // dismiss the disclaimer gate
+    ref.read(sharedPreferencesProvider.future).then((prefs) {
+      prefs.setInt(_disclaimerKey, DateTime.now().millisecondsSinceEpoch);
+    });
+    _startChatFlow();
+  }
+
+  /// Core post-disclaimer flow — device check, model manager, download/chat.
+  Future<void> _startChatFlow() async {
 
     // ── Device capability check ───────────────────────────────────
-    final deviceCanRun = await ref.read(deviceCanRunLlmProvider.future);
+    bool deviceCanRun;
+    try {
+      deviceCanRun = await ref.read(deviceCanRunLlmProvider.future);
+    } catch (_) {
+      deviceCanRun = false;
+    }
     if (!mounted) return;
 
     if (!deviceCanRun) {
@@ -102,7 +143,13 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
       return;
     }
 
-    final modelManager = await ref.read(modelManagerProvider.future);
+    final modelManager;
+    try {
+      modelManager = await ref.read(modelManagerProvider.future);
+    } catch (_) {
+      _fallbackToContentOnly();
+      return;
+    }
     final modelPath = await modelManager.getActiveModelPath();
 
     if (!mounted) return;
@@ -141,39 +188,45 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
         );
       }
     } else {
-      // No model — fetch manifest from backend, then show download
+      // No model — show onboarding with model selection
       try {
         final manifestService = ref.read(modelManifestServiceProvider);
         final manifest = await manifestService.fetchManifest('${ApiConstants.baseUrl}/api');
 
         if (!mounted) return;
         final baseDir = modelManager.baseDirectory;
-        final fileName = manifest.url.split('/').last;
-        final downloadPath = '$baseDir/$fileName';
+        final defaultUrl = _resolveModelUrl(manifest.url);
+
+        // Check premium status
+        bool isPremium = false;
+        try {
+          final subRes = await ref.read(apiClientProvider).getSubscription();
+          final tier = parseJsonMap(subRes.data)?['tier'] as String?;
+          isPremium = tier == 'PREMIUM';
+        } catch (_) {
+          isPremium = false;
+        }
 
         if (mounted) {
           Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (_) => ModelDownloadScreen(
-                url: manifest.url,
-                destinationPath: downloadPath,
-                version: manifest.version,
-                sha256: manifest.sha256,
-                sizeBytes: manifest.sizeBytes,
-                onComplete: () {
-                  Navigator.of(context).pop();
-                  _openChatAfterDownload();
-                },
+              builder: (_) => ModelOnboardingScreen(
+                manifestUrl: defaultUrl,
+                manifestVersion: manifest.version,
+                manifestSha256: manifest.sha256,
+                manifestSizeBytes: manifest.sizeBytes,
+                downloadBaseDir: baseDir,
+                isPremium: isPremium,
+                onSkip: _openContentChat,
               ),
             ),
           );
         }
       } catch (_) {
-        // Manifest fetch failed — use fallback hardcoded only as last resort
+        // Manifest fetch failed — use direct HuggingFace URLs, no backend needed
         if (!mounted) return;
         final baseDir = modelManager.baseDirectory;
-        const fallbackUrl = 'https://cdn.babymon.app/models/gemma4-e2b-v1-q4km.gguf';
-        final downloadPath = '$baseDir/gemma4-e2b-v1-q4km.gguf';
+        const defaultUrl = 'https://huggingface.co/bartowski/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q4_K_M.gguf?download=true';
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -183,19 +236,46 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
           );
           Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (_) => ModelDownloadScreen(
-                url: fallbackUrl,
-                destinationPath: downloadPath,
-                version: 'gemma4-e2b-v1',
-                onComplete: () {
-                  Navigator.of(context).pop();
-                  _openChatAfterDownload();
-                },
+              builder: (_) => ModelOnboardingScreen(
+                manifestUrl: defaultUrl,
+                manifestVersion: 'smollm2-360m-v2',
+                manifestSizeBytes: 271000000,
+                downloadBaseDir: baseDir,
+                isPremium: false,
+                onSkip: _openContentChat,
               ),
             ),
           );
         }
       }
+    }
+  }
+
+  String _resolveModelUrl(String url) {
+    if (url.startsWith('http')) return url;
+    final baseUrl = ApiConstants.baseUrl;
+    return '$baseUrl$url';
+  }
+
+  void _openContentChat() {
+    ref.read(llmInferenceServiceProvider).contentOnlyMode = true;
+    Navigator.of(context).pop(); // dismiss download screen
+    if (mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => ChatScreen(babyMonId: widget.babyMonId)),
+      );
+    }
+  }
+
+  void _fallbackToContentOnly() {
+    ref.read(llmInferenceServiceProvider).contentOnlyMode = true;
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('AI Companion unavailable. Using parenting content cards instead.'),
+          duration: Duration(seconds: 4),
+        ),
+      );
     }
   }
 
@@ -251,16 +331,17 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
       final baseDir = modelManager.baseDirectory;
       final fileName = manifest.url.split('/').last;
       final downloadPath = '$baseDir/$fileName';
+      final downloadUrl = _resolveModelUrl(manifest.url);
 
       Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => ModelDownloadScreen(
-            url: manifest.url as String,
+            url: downloadUrl,
             destinationPath: downloadPath,
             version: manifest.version as String? ?? '',
             sha256: manifest.sha256 as String? ?? '',
             sizeBytes: manifest.sizeBytes as int?,
-            onComplete: () {
+            onSkip: _openContentChat, onComplete: () {
               Navigator.of(context).pop();
               _openChatAfterDownload();
             },
@@ -417,15 +498,7 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
           IconButton(
             icon: const Icon(PhosphorIconsLight.chatCircleDots),
             tooltip: 'Ask the Companion',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => MedicalDisclaimerGate(
-                    onAccept: () => _onDisclaimerAccepted(),
-                  ),
-                ),
-              );
-            },
+            onPressed: () => _openChatFlow(),
           ),
         ],
         bottom: TabBar(

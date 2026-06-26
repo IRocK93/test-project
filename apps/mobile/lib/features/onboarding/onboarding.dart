@@ -8,3 +8,4 @@ library;
 
 // ── Presentation: Screens ──
 export 'presentation/screens/create_baby_mon_screen.dart' show CreateBabyMonScreen;
+export 'presentation/screens/language_onboarding_screen.dart' show LanguageOnboardingScreen;

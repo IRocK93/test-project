@@ -31,6 +31,9 @@ RUN npx prisma generate
 # Copy built artifacts from builder
 COPY --from=builder /app/dist ./dist
 
+# Copy entrypoint script for auto-migration on startup
+COPY --chmod=755 docker-entrypoint.sh /docker-entrypoint.sh
+
 # Create non-root user
 RUN groupadd --gid 1001 nodejs && useradd --uid 1001 --gid nodejs --shell /bin/bash --create-home nestjs
 
@@ -39,6 +42,6 @@ USER nestjs
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/api/health/live', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); })"
+  CMD node -e "require('http').get('http://localhost:3000/api/v1/health/live', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); })"
 
-CMD ["node", "dist/src/main"]
+ENTRYPOINT ["/docker-entrypoint.sh"]

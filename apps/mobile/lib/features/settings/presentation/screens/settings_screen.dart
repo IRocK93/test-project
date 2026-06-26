@@ -11,6 +11,7 @@ import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/l10n/l10n_ext.dart';
 const String measurementUnitsKey = 'measurement_units';
 const String _biometricsEnabledKey = 'biometrics_enabled';
+const String _localeKey = 'user_locale';
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
   @override
@@ -25,6 +26,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isEditingName = false;
   bool _isMetric = true;
   bool _biometricsEnabled = false;
+  String _locale = 'en';
   @override
   void initState() {
     super.initState();
@@ -32,6 +34,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _loadSettings();
       _loadUnitPref();
       _loadBiometricsPref();
+      _loadLocalePref();
       _loadActiveBabyMon();
     });
   }
@@ -74,6 +77,74 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (mounted) setState(() => _biometricsEnabled = !enabled);
     }
   }
+  Future<void> _loadLocalePref() async {
+    // Prefer backend-stored locale, fall back to local SharedPreferences
+    String locale = 'en';
+    try {
+      final api = ref.read(apiClientProvider);
+      final profileRes = await api.getProfile();
+      final backendLocale = parseJsonMap(profileRes.data)?['locale'] as String?;
+      if (backendLocale != null && backendLocale.isNotEmpty) {
+        locale = backendLocale;
+        final prefs = await ref.read(sharedPreferencesProvider.future);
+        await prefs.setString(_localeKey, locale);
+      } else {
+        final prefs = await ref.read(sharedPreferencesProvider.future);
+        locale = prefs.getString(_localeKey) ?? 'en';
+      }
+    } catch (_) {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      locale = prefs.getString(_localeKey) ?? 'en';
+    }
+    if (mounted) setState(() => _locale = locale);
+  }
+  Future<void> _saveLocalePref(String locale) async {
+    HapticFeedback.selectionClick();
+    try {
+      final prefs = await ref.read(sharedPreferencesProvider.future);
+      await prefs.setString(_localeKey, locale);
+      await ref.read(apiClientProvider).patch('/users/me/locale', data: {'locale': locale});
+      if (mounted) setState(() => _locale = locale);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(extractErrorMessage(e))),
+        );
+      }
+    }
+  }
+  Future<void> _showLanguagePicker() async {
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(context.l10n.selectLanguage),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 'en'),
+            child: Row(
+              children: [
+                const Icon(PhosphorIconsLight.globe),
+                const SizedBox(width: DesignTokens.spaceMd),
+                Text(context.l10n.english),
+                if (_locale == 'en') ...[
+                  const Spacer(),
+                  Icon(PhosphorIconsLight.check, color: context.colorScheme.primary),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    if (selected != null && selected != _locale) {
+      await _saveLocalePref(selected);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.localeUpdated)),
+        );
+      }
+    }
+  }
   Future<void> _loadSettings() async {
     setState(() => _isLoading = true);
     try {
@@ -99,11 +170,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final result = await showDialog<String?>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Edit Name'),
+        title: Text(context.l10n.editName),
         content: SingleChildScrollView(
           child: TextField(
             controller: nameController,
-            decoration: const InputDecoration(labelText: 'Name'),
+            decoration: InputDecoration(labelText: context.l10n.nameLabel),
             autofocus: true,
             textInputAction: TextInputAction.done,
           ),
@@ -111,11 +182,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancelButton),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, nameController.text),
-            child: const Text('Save'),
+            child: Text(context.l10n.saveButton),
           ),
         ],
       ),
@@ -130,7 +201,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _user = parseJsonMap(profileRes.data);
             _isEditingName = false;
           });
-          messenger.showSnackBar(const SnackBar(content: Text('Name updated!')));
+          messenger.showSnackBar(SnackBar(content: Text(context.l10n.nameUpdated)));
         }
       } catch (e) {
         if (mounted) {
@@ -147,18 +218,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final navigator = Navigator.of(context);
     if (_babyMonId == null) {
       messenger.showSnackBar(
-        const SnackBar(content: Text('No BabyMon to export')),
+        SnackBar(content: Text(context.l10n.noBabyMonToExport)),
       );
       return;
     }
     showDialog<void>(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) => const AlertDialog(
+      barrierDismissible: false,        builder: (ctx) => AlertDialog(
         content: Row(children: [
           ButtonLoading(),
           SizedBox(width: DesignTokens.spaceMd),
-          Text('Exporting your data...'),
+          Text(context.l10n.exportingData),
         ]),
       ),
     );
@@ -177,7 +247,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
   Future<void> _deleteBabyMon() async {
     if (_babyMonId == null) {
-      _showComingSoon('Create a BabyMon first');
+      _showComingSoon(context.l10n.createBabyMonFirst);
       return;
     }
     final messenger = ScaffoldMessenger.of(context);
@@ -190,7 +260,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (babyMons.isEmpty) {
         if (mounted) {
           messenger.showSnackBar(
-            const SnackBar(content: Text('No BabyMons to delete')),
+            SnackBar(content: Text(context.l10n.noBabyMonsToDelete)),
           );
         }
         return;
@@ -199,7 +269,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final selected = await showDialog<Map<String, dynamic>>(
         context: context,
         builder: (ctx) => SimpleDialog(
-          title: const Text('Delete BabyMon'),
+          title: Text(context.l10n.deleteBabyMon),
           children: [
             for (final bm in babyMons)
               SimpleDialogOption(
@@ -214,27 +284,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       );
       if (selected == null) return;
-      final name = selected['name'] ?? 'this BabyMon';
       final id = parseString(selected['id']) ?? '';
       if (!mounted) return;
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Permanent Deletion'),
+          title: Text(context.l10n.permanentDeletion),
           content: Text(
-            'You are about to permanently delete "$name".\n\n'
-            'This will remove ALL data including milestones, feedings, photos, '
-            'health records, and growth data.\n\nThis action CANNOT be undone.',
+            context.l10n.deleteBabyMonConfirm,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.cancelButton),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(
-                'Delete Permanently',
+                context.l10n.deletePermanently,
                 style: TextStyle(color: ctx.colorScheme.error),
               ),
             ),
@@ -251,7 +318,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ref.read(appRefreshProvider.notifier).state++;
       if (mounted) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('BabyMon permanently deleted')),
+          SnackBar(content: Text(context.l10n.babyMonDeleted)),
         );
         if (_babyMonId == null) router.go('/create-baby-mon');
       }
@@ -266,7 +333,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _showClearDataMenu() {
     if (_babyMonId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No BabyMon selected')),
+        SnackBar(content: Text(context.l10n.noBabyMonSelected)),
       );
       return;
     }
@@ -279,7 +346,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Padding(
               padding: const EdgeInsets.all(DesignTokens.spaceMd),
               child: Text(
-                'Clear Data',
+                context.l10n.clearData,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -287,8 +354,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             ListTile(
               leading: Icon(PhosphorIconsLight.warning, color: ctx.colorScheme.error),
-              title: const Text('Clear all allergies'),
-              subtitle: const Text('Removes all allergy profiles and events'),
+              title: Text(context.l10n.clearAllAllergies),
+              subtitle: Text(context.l10n.clearAllAllergiesDesc),
               onTap: () {
                 Navigator.pop(ctx);
                 _clearAllAllergies();
@@ -297,8 +364,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const Divider(height: 1),
             ListTile(
               leading: Icon(PhosphorIconsLight.xCircle, color: ctx.colorScheme.error),
-              title: const Text('Clear all allergy events'),
-              subtitle: const Text('Removes events but keeps allergy profiles'),
+              title: Text(context.l10n.clearAllEvents),
+              subtitle: Text(context.l10n.clearAllEventsDesc),
               onTap: () {
                 Navigator.pop(ctx);
                 _clearAllEvents();
@@ -314,19 +381,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Clear all allergies'),
-        content: const Text(
-          'This will permanently delete all allergy profiles and their '
-          'events for this BabyMon. This cannot be undone.',
+        title: Text(context.l10n.clearAllAllergies),
+        content: Text(
+          context.l10n.clearAllAllergiesDesc,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancelButton),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Clear'),
+            child: Text(context.l10n.clearButton),
           ),
         ],
       ),
@@ -337,12 +403,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final count = parseJsonMap(result.data)?['deleted'] ?? 0;
       ref.read(appRefreshProvider.notifier).state++;
       if (mounted) {
-        messenger.showSnackBar(SnackBar(content: Text('$count allergies cleared')));
+        messenger.showSnackBar(SnackBar(content: Text('$count ${context.l10n.allergiesCleared}')));
       }
     } catch (e) {
       if (mounted) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Could not clear. Please try again.')),
+          SnackBar(content: Text(context.l10n.couldNotClear)),
         );
       }
     }
@@ -352,19 +418,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Clear all events'),
-        content: const Text(
-          'This will delete all allergy event records but keep the allergy '
-          'profiles. This cannot be undone.',
+        title: Text(context.l10n.clearAllEvents),
+        content: Text(
+          context.l10n.clearAllEventsDesc,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancelButton),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Clear'),
+            child: Text(context.l10n.clearButton),
           ),
         ],
       ),
@@ -375,12 +440,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final count = parseJsonMap(result.data)?['deleted'] ?? 0;
       ref.read(appRefreshProvider.notifier).state++;
       if (mounted) {
-        messenger.showSnackBar(SnackBar(content: Text('$count events cleared')));
+        messenger.showSnackBar(SnackBar(content: Text('$count ${context.l10n.eventsCleared}')));
       }
     } catch (e) {
       if (mounted) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Could not clear. Please try again.')),
+          SnackBar(content: Text(context.l10n.couldNotClear)),
         );
       }
     }
@@ -390,15 +455,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Log out'),
-        content: const Text('Are you sure you want to log out?'),
+        title: Text(context.l10n.logOutTitle),
+        content: Text(context.l10n.logOutConfirm),
         actions: [          TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: TextStyle(color: context.textSecondary)),
+              child: Text(context.l10n.cancelButton, style: TextStyle(color: context.textSecondary)),
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text('Log out', style: TextStyle(color: ctx.colorScheme.error)),
+              child: Text(context.l10n.logOutTitle, style: TextStyle(color: ctx.colorScheme.error)),
           ),
         ],
       ),
@@ -411,7 +476,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
   void _showComingSoon(String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature — coming soon')),
+      SnackBar(content: Text(context.l10n.featureComingSoon(feature))),
     );
   }
   @override
@@ -436,16 +501,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     onTap: _isEditingName ? null : _editName,
                   ),
                   // ── Preferences ──
-                  const SettingsSectionHeader(title: 'Preferences'),
+                  SettingsSectionHeader(title: context.l10n.preferences),
                   _SettingsCard(
                     children: [
                       SettingsRow(
                         icon: PhosphorIconsLight.crown,
                         iconColor: context.colorScheme.tertiary,
-                        title: 'Subscription & Plan',
-                        subtitle: 'Compare plans & upgrade',
+                        title: context.l10n.subscriptionAndPlan,
+                        subtitle: context.l10n.comparePlans,
                         trailing: Text(
-                          parseString(_subscription?['tier']) ?? 'Free',
+                          parseString(_subscription?['tier']) ?? context.l10n.freePlan,
                           style: TextStyle(
                             fontSize: DesignTokens.fontMd,
                             fontWeight: FontWeight.w600,
@@ -457,28 +522,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       SettingsRow(
                         icon: PhosphorIconsLight.bell,
                         iconColor: context.colorScheme.primary,
-                        title: 'Notification preferences',
-                        subtitle: 'Push, milestone reminders, partner activity',
-                        onTap: () => _showComingSoon('Notification preferences'),
+                        title: context.l10n.notificationPreferences,
+                        subtitle: context.l10n.notificationPreferencesDesc,
+                        onTap: () => _showComingSoon(context.l10n.notificationPreferences),
                       ),
                       SettingsRow(
                         icon: PhosphorIconsLight.fingerprint,
                         iconColor: context.colorScheme.primary,
-                        title: 'Biometric login',
-                        subtitle: 'Use fingerprint or face to sign in',
+                        title: context.l10n.biometricLoginSetting,
+                        subtitle: context.l10n.biometricLoginDesc,
                         trailing: Switch.adaptive(
                           value: _biometricsEnabled,
                           onChanged: _saveBiometricsPref,
                         ),
                       ),
+                      SettingsRow(
+                        icon: PhosphorIconsLight.globe,
+                        iconColor: context.colorScheme.primary,
+                        title: context.l10n.languageSetting,
+                        subtitle: context.l10n.currentLanguage,
+                        trailing: Text(
+                          _locale.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: DesignTokens.fontMd,
+                            fontWeight: FontWeight.w600,
+                            color: context.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        onTap: _showLanguagePicker,
+                      ),
                   SettingsRow(
                     icon: PhosphorIconsLight.scales,
                     iconColor: context.colorScheme.primary,
-                    title: 'Measurement units',
+                    title: context.l10n.measurementUnits,
                     trailing: SegmentedButton<bool>(
-                        segments: const [
-                          ButtonSegment(value: true, label: Text('Metric')),
-                          ButtonSegment(value: false, label: Text('Imperial')),
+                        segments: [
+                          ButtonSegment(value: true, label: Text(context.l10n.metric)),
+                          ButtonSegment(value: false, label: Text(context.l10n.imperial)),
                         ],
                         selected: {_isMetric},
                         onSelectionChanged: (v) => _saveUnitPref(v.first),
@@ -491,19 +571,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                         ),
                       ),
-                    ),
-                  SettingsRow(
+                    ),                  SettingsRow(
                     icon: PhosphorIconsLight.paintBrush,
                     iconColor: context.colorScheme.secondary,
-                    title: 'Visual style',
-                    subtitle: 'Glass or Clay theme',
+                    title: context.l10n.visualStyle,
+                        subtitle: context.l10n.visualStyleDesc,
                     trailing: Consumer(
                       builder: (context, ref, _) {
                         final style = ref.watch(appVisualStyleProvider);
                         return SegmentedButton<AppVisualStyle>(
-                          segments: const [
-                            ButtonSegment(value: AppVisualStyle.glass, label: Text('Glass')),
-                            ButtonSegment(value: AppVisualStyle.clay, label: Text('Clay')),
+                          segments: [
+                            ButtonSegment(value: AppVisualStyle.glass, label: Text(context.l10n.visualStyleGlass)),
+                            ButtonSegment(value: AppVisualStyle.clay, label: Text(context.l10n.visualStyleClay)),
                           ],
                           selected: {style},
                           onSelectionChanged: (v) {
@@ -520,20 +599,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         );
                       },
                     ),
-                  ),
-                  SettingsRow(
+                  ),                  SettingsRow(
                     icon: PhosphorIconsLight.sun,
                     iconColor: context.colorScheme.primary,
-                    title: 'Theme mode',
-                    subtitle: 'Light, dark, or follow system',
+                    title: context.l10n.themeMode,
+                        subtitle: context.l10n.themeModeDesc,
                     trailing: Consumer(
                       builder: (context, ref, _) {
                         final mode = ref.watch(appThemeModeProvider);
                         return SegmentedButton<AppThemeMode>(
-                          segments: const [
-                            ButtonSegment(value: AppThemeMode.system, label: Text('System')),
-                            ButtonSegment(value: AppThemeMode.light, label: Text('Light')),
-                            ButtonSegment(value: AppThemeMode.dark, label: Text('Dark')),
+                          segments: [
+                            ButtonSegment(value: AppThemeMode.system, label: Text(context.l10n.themeSystem)),
+                            ButtonSegment(value: AppThemeMode.light, label: Text(context.l10n.themeLight)),
+                            ButtonSegment(value: AppThemeMode.dark, label: Text(context.l10n.themeDark)),
                           ],
                           selected: {mode},
                           onSelectionChanged: (v) {
@@ -556,16 +634,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: DesignTokens.spaceLg),
                   // ── BabyMon Data ──
-                  const SettingsSectionHeader(title: 'BabyMon Data'),
+                  SettingsSectionHeader(title: context.l10n.babyMonData),
                   _SettingsCard(
                     children: [
                       SettingsRow(
                         icon: PhosphorIconsLight.baby,
                         iconColor: context.colorScheme.secondary,
-                        title: 'Active BabyMon',
+                        title: context.l10n.activeBabyMon,
                         subtitle: _babyMon == null
-                            ? 'No BabyMon selected'
-                            : 'Use the avatar in the top bar to switch',
+                            ? context.l10n.noBabyMonSelected
+                            : context.l10n.switchBabyMonHint,
                         trailing: _babyMon == null
                             ? null
                             : Text(
@@ -580,8 +658,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       SettingsRow(
                         icon: PhosphorIconsLight.users,
                         iconColor: context.colorScheme.primary,
-                        title: 'Manage Partners',
-                        subtitle: 'Co-parents & guardians with access',
+                        title: context.l10n.managePartners,
+                        subtitle: context.l10n.managePartnersDesc,
                         onTap: () => context.push('/partners'),
                         last: true,
                       ),
@@ -589,23 +667,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: DesignTokens.spaceLg),
                   // ── Backup & Privacy ──
-                  const SettingsSectionHeader(title: 'Backup & Privacy'),
+                  SettingsSectionHeader(title: context.l10n.backupPrivacy),
                   _SettingsCard(
                     children: [
                       SettingsRow(
                         icon: PhosphorIconsLight.downloadSimple,
                         iconColor: context.colorScheme.primary,
-                        title: 'Export data',
-                        subtitle: 'Download all records as JSON',
+                        title: context.l10n.exportData,
+                        subtitle: context.l10n.exportDataDesc,
                         onTap: _exportData,
                       ),
                       SettingsRow(
                         icon: PhosphorIconsLight.cloudArrowUp,
                         iconColor: context.colorScheme.primary,
-                        title: 'Sync status',
+                        title: context.l10n.syncStatus,
                         subtitle: _babyMonId == null
-                            ? 'No BabyMon selected'
-                            : 'All changes saved',
+                            ? context.l10n.noBabyMonSelected
+                            : context.l10n.allChangesSaved,
                         trailing: Icon(
                           PhosphorIconsLight.checkCircle,
                           color: context.colorScheme.primary,
@@ -617,8 +695,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   const SizedBox(height: DesignTokens.spaceLg),
                   // ── Danger Zone ──
-                  const SettingsSectionHeader(
-                    title: 'Danger Zone',
+                  SettingsSectionHeader(
+                    title: context.l10n.dangerZone,
                   ),
                   _SettingsCard(
                     danger: true,
@@ -626,24 +704,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       SettingsRow(
                         icon: PhosphorIconsLight.broom,
                         iconColor: context.colorScheme.error,
-                        title: 'Clear allergies & events',
-                        subtitle: 'Remove allergy records for this BabyMon',
+                        title: context.l10n.clearAllergiesEvents,
+                        subtitle: context.l10n.clearAllergiesEventsDesc,
                         destructive: true,
                         onTap: _showClearDataMenu,
                       ),
                       SettingsRow(
                         icon: PhosphorIconsLight.trash,
                         iconColor: context.colorScheme.error,
-                        title: 'Delete BabyMon',
-                        subtitle: 'Permanently remove all data',
+                        title: context.l10n.deleteBabyMon,
+                        subtitle: context.l10n.deleteBabyMonDesc,
                         onTap: _deleteBabyMon,
                         destructive: true,
                       ),
                       SettingsRow(
                         icon: PhosphorIconsLight.signOut,
                         iconColor: context.colorScheme.error,
-                        title: 'Log out',
-                        subtitle: 'Sign out of this device',
+                        title: context.l10n.logOutTitle,
+                        subtitle: context.l10n.signOutDevice,
                         onTap: _logout,
                         destructive: true,
                         last: true,

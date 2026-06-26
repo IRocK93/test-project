@@ -14,8 +14,9 @@ class ModelDownloadScreen extends ConsumerStatefulWidget {
   final String? sha256;
   final int? sizeBytes;
   final VoidCallback onComplete;
+  final VoidCallback? onSkip;
 
-  const ModelDownloadScreen({super.key, required this.url, required this.destinationPath, required this.version, this.sha256, this.sizeBytes, required this.onComplete});
+  const ModelDownloadScreen({super.key, required this.url, required this.destinationPath, required this.version, this.sha256, this.sizeBytes, required this.onComplete, this.onSkip});
 
   @override
   ConsumerState<ModelDownloadScreen> createState() => _ModelDownloadScreenState();
@@ -79,7 +80,7 @@ class _ModelDownloadScreenState extends ConsumerState<ModelDownloadScreen> {
         const SizedBox(height: DesignTokens.space3xl),
         SizedBox(width: double.infinity, height: 52, child: ElevatedButton(onPressed: () { debugPrint('[DOWNLOAD] Start Download tapped: ${widget.url}'); notifier.startDownload(url: widget.url, destinationPath: widget.destinationPath, expectedSha256: widget.sha256, version: widget.version); }, style: ElevatedButton.styleFrom(backgroundColor: context.colorScheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd))), child: const Text('Start Download', style: TextStyle(fontSize: DesignTokens.fontLg, fontWeight: FontWeight.w600, color: Colors.white)))),
         const SizedBox(height: DesignTokens.spaceMd),
-        TextButton(onPressed: () => Navigator.pop(context), child: Text('Skip for now', style: TextStyle(color: context.textCaption))),
+        TextButton(onPressed: () { if (widget.onSkip != null) { widget.onSkip!(); } else { Navigator.pop(context); } }, child: Text('Skip for now', style: TextStyle(color: context.textCaption))),
       ],
     );
   }
@@ -117,7 +118,8 @@ class _ModelDownloadScreenState extends ConsumerState<ModelDownloadScreen> {
       const SizedBox(height: DesignTokens.spaceSm), Text(message, textAlign: TextAlign.center, style: TextStyle(fontSize: DesignTokens.fontMd, color: context.textSecondary)),
       const SizedBox(height: DesignTokens.space2xl),
       ElevatedButton(onPressed: () => notifier.startDownload(url: widget.url, destinationPath: widget.destinationPath, expectedSha256: widget.sha256, version: widget.version), style: ElevatedButton.styleFrom(backgroundColor: context.colorScheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd))), child: const Text('Retry', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white))),
-      TextButton(onPressed: () => Navigator.pop(context), child: Text('Close', style: TextStyle(color: context.textCaption))),
+      const SizedBox(height: DesignTokens.spaceSm),
+      TextButton(onPressed: () { if (widget.onSkip != null) { widget.onSkip!(); } else { Navigator.pop(context); } }, child: Text('Use Content Cards', style: TextStyle(color: context.textCaption))),
     ]);
   }
 

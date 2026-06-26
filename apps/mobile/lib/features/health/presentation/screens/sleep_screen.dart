@@ -26,7 +26,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
   @override
   int? get listenToTabRefresh => 4;
   @override
-  Duration? get refreshCooldown => const Duration(seconds: 10);
+  Duration? get refreshCooldown => const Duration(seconds: 3);
   List<SleepLog> _sleepLogs = [];
   DateTime _selectedDate = DateTime.now();
   static const _qualities = SleepQuality.values;
@@ -40,6 +40,12 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
   Future<void> fetchData() async {
     final response = await ref.read(apiClientProvider).getSleepLogs(babyMonId!);
     _sleepLogs = parseItemsTyped(response.data).map(SleepLog.fromJson).toList();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_chartScrollController.hasClients) {
+        final maxScroll = _chartScrollController.position.maxScrollExtent;
+        if (maxScroll > 0) _chartScrollController.jumpTo(maxScroll);
+      }
+    });
   }
   Future<bool> _deleteLog(String id, int index) async {
     // Capture messenger upfront so we can safely use it after async gaps.
@@ -62,9 +68,17 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
       return false;
     }
   }
+  /// Format a [DateTime] as a UTC date string (yyyy-MM-dd).
+  /// Converts to UTC first so comparisons are timezone-independent.
+  String _utcDateStr(DateTime dt) {
+    final u = dt.toUtc();
+    return '${u.year.toString().padLeft(4, '0')}-${u.month.toString().padLeft(2, '0')}-${u.day.toString().padLeft(2, '0')}';
+  }
+
   List<SleepLog> _logsForSelectedDate() {
-    final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    return _sleepLogs.where((log) => log.startTime != null && DateFormat('yyyy-MM-dd').format(log.startTime!) == dateStr).toList();
+    final dateStr = _utcDateStr(_selectedDate);
+    return _sleepLogs.where((log) =>
+        log.startTime != null && _utcDateStr(log.startTime!) == dateStr).toList();
   }
   List<({String date, List<SleepLog> logs, double totalMinutes})> _sleepLogsByDay() {
     final now = DateTime.now();
@@ -81,14 +95,14 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
     for (final log in _sleepLogs) {
       final start = log.startTime;
       if (start == null || start.millisecondsSinceEpoch < cutoffMs) continue;
-      final dayKey = DateFormat('yyyy-MM-dd').format(start);
+      final dayKey = _utcDateStr(start);
       dayGroups.putIfAbsent(dayKey, () => []);
       dayGroups[dayKey]!.add(log);
     }
     final allDays = <String, List<SleepLog>>{};
     var current = cutoff;
     while (!current.isAfter(now)) {
-      final key = DateFormat('yyyy-MM-dd').format(current);
+      final key = _utcDateStr(current);
       allDays[key] = dayGroups[key] ?? [];
       current = current.add(const Duration(days: 1));
     }
@@ -227,14 +241,18 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
                               top: topPos, left: 2, right: 2,
                               child: Semantics(
                                 label: '${SleepType.fromApiKey(log.type)?.label ?? 'Sleep'} $startStr to $endStr, $dur, quality: ${q.label}',
-                                child: Container(
-                                  height: barHeight,
-                                  decoration: BoxDecoration(color: q.color, borderRadius: BorderRadius.circular(3)),
-                                  alignment: Alignment.center,
-                                  child: barHeight > 18
-                                      ? Text('$startStr-$endStr',
-                                          style: TextStyle(color: context.colorScheme.onPrimary, fontSize: DesignTokens.fontXs, fontWeight: FontWeight.w600))
-                                      : null,
+                                button: true,
+                                child: GestureDetector(
+                                  onTap: () => _showEditSleepDialog(log),
+                                  child: Container(
+                                    height: barHeight,
+                                    decoration: BoxDecoration(color: q.color, borderRadius: BorderRadius.circular(3)),
+                                    alignment: Alignment.center,
+                                    child: barHeight > 18
+                                        ? Text('$startStr-$endStr',
+                                            style: TextStyle(color: context.colorScheme.onPrimary, fontSize: DesignTokens.fontXs, fontWeight: FontWeight.w600))
+                                        : null,
+                                  ),
                                 ),
                               ),
                             );
@@ -250,9 +268,9 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
                   child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: List.generate(days.length, (di) {
                     final day = days[di];
                     final dateStr = day.date;
-                    final date = DateTime.tryParse(dateStr);
+                    final date = DateTime.tryParse('${dateStr}T12:00:00Z'); // parse as UTC noon
                     final label = date != null ? DateFormat('d MMM').format(date) : dateStr;
-                    final isToday = dateStr == DateFormat('yyyy-MM-dd').format(DateTime.now());
+                    final isToday = dateStr == _utcDateStr(DateTime.now());
                     final isSelected = _selectedBarDate == dateStr;
                     return Semantics(
                       label: 'View sleep details for $dateStr',
@@ -293,12 +311,50 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
         const Divider(),
         ...logs.map((log) {
           final q = SleepQuality.resolve(log.quality);
-          return Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(children: [
-            Container(width: 12, height: 12, decoration: BoxDecoration(color: q.color, shape: BoxShape.circle)),
-            const SizedBox(width: DesignTokens.spaceSm),
-            Expanded(child: Text('${_formatTime(log.startTime?.toIso8601String())} \u2192 ${_formatTime(log.endTime?.toIso8601String())} (${_formatDuration(log.startTime?.toIso8601String(), log.endTime?.toIso8601String())})', style: const TextStyle(fontSize: DesignTokens.fontSm2))),
-            Text(q.label, style: TextStyle(fontSize: DesignTokens.font2xs, color: q.color, fontWeight: FontWeight.w600)),
-          ]));
+          return Dismissible(
+            key: Key(log.id),
+            direction: DismissDirection.endToStart,
+            confirmDismiss: (_) async {
+              final confirmed = await ConfirmDeleteDialog.show(ctx, title: 'Delete Sleep Log', message: 'Remove this sleep record?');
+              if (confirmed == true) {
+                final idx = _sleepLogs.indexWhere((l) => l.id == log.id);
+                if (idx != -1) {
+                  try {
+                    await ref.read(apiClientProvider).deleteSleepLog(babyMonId!, log.id);
+                    setState(() => _sleepLogs.removeAt(idx));
+                    ref.read(appRefreshProvider.notifier).state++;
+                    if (ctx.mounted) Navigator.pop(ctx);
+                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sleep log deleted')));
+                  } catch (e) { if (ctx.mounted) showError(ctx, e); }
+                }
+              }
+              return false; // we handle it ourselves
+            },
+            background: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 16),
+              color: context.colorScheme.error,
+              child: Icon(PhosphorIconsLight.trash, color: context.colorScheme.onPrimary),
+            ),
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Container(width: 12, height: 12, decoration: BoxDecoration(color: q.color, shape: BoxShape.circle)),
+              title: Text('${_formatTime(log.startTime?.toIso8601String())} \u2192 ${_formatTime(log.endTime?.toIso8601String())}', style: const TextStyle(fontSize: DesignTokens.fontSm)),
+              subtitle: Text('${_formatDuration(log.startTime?.toIso8601String(), log.endTime?.toIso8601String())}  ·  ${q.label}', style: TextStyle(fontSize: DesignTokens.font2xs, color: q.color)),
+              trailing: IconButton(
+                icon: Icon(PhosphorIconsLight.pencilSimple, size: 18, color: context.colorScheme.primary),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _showEditSleepDialog(log);
+                },
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showEditSleepDialog(log);
+              },
+            ),
+          );
         }),
       ])),
       actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))],
@@ -334,6 +390,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
             ),
             PremiumCard(
               isGlass: true,
+              backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.85),
               margin: const EdgeInsets.fromLTRB(DesignTokens.spaceMd, DesignTokens.spaceSm, DesignTokens.spaceMd, DesignTokens.spaceXs),
               child: Padding(padding: const EdgeInsets.all(DesignTokens.spaceLg),
               child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
@@ -370,7 +427,7 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
     if (duration.inHours >= 4) return SleepType.night.label; if (start.hour >= 20 || start.hour < 6) return SleepType.night.label; return SleepType.nap.label;
   }
   String _qualityLabelText(double s) => s >= 0.5 ? SleepQuality.fromScore(s).label : 'N/A';
-  Widget _summaryStat(String v, String l) { return Column(children: [Text(v, style: const TextStyle(fontSize: DesignTokens.fontLg2, fontWeight: FontWeight.bold)), Text(l, style: TextStyle(fontSize: DesignTokens.fontSm2, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7), height: 1.4))]); }
+  Widget _summaryStat(String v, String l) { return Column(children: [Text(v, style: TextStyle(fontSize: DesignTokens.fontLg2, fontWeight: FontWeight.bold, color: context.colorScheme.onSurface)), Text(l, style: TextStyle(fontSize: DesignTokens.fontSm2, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7), height: 1.4))]); }
   void _showAddSleepDialog() {
     if (babyMonId == null) return;
     final now = DateTime.now();
@@ -420,6 +477,76 @@ class _SleepScreenState extends ConsumerState<SleepScreen>
             setState(() => _sleepLogs.insert(0, newLog));
           } catch (e) { setD(() => isSaving = false); if (ctx.mounted) showError(ctx, e); }
         }, isLoading: isSaving, fullWidth: true, semanticLabel: 'Save sleep log'),
+      ]),
+    )));
+  }
+  void _showEditSleepDialog(SleepLog log) {
+    if (babyMonId == null) return;
+    DateTime sleepDate = log.startTime ?? DateTime.now();
+    DateTime startTime = log.startTime ?? DateTime.now();
+    DateTime? endTime = log.endTime;
+    SleepQuality selectedQuality = SleepQuality.resolve(log.quality);
+    final notesController = TextEditingController(text: log.notes ?? '');
+    bool isStillSleeping = log.endTime == null;
+    bool isSaving = false;
+    final originalId = log.id;
+    showModalBottomSheet<void>(context: context, isScrollControlled: true, builder: (ctx) => StatefulBuilder(builder: (ctx, setD) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: DesignTokens.spaceLg, right: DesignTokens.spaceLg, top: DesignTokens.spaceLg),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Text('Edit Sleep', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)), const SizedBox(height: DesignTokens.spaceLg),
+        ListTile(leading: Icon(PhosphorIconsLight.calendar, color: context.colorScheme.primary), title: Text('Date', style: TextStyle(color: Theme.of(ctx).brightness == Brightness.dark ? context.colorScheme.onPrimary : context.colorScheme.onSurface)), subtitle: Text(DateFormat('EEE, MMM d, yyyy').format(sleepDate)),
+          onTap: () async { final p = await showDatePicker(context: ctx, initialDate: sleepDate, firstDate: DateTime(2020), lastDate: DateTime.now().add(const Duration(days: 1))); if (p != null) setD(() { sleepDate = p; startTime = DateTime(p.year, p.month, p.day, startTime.hour, startTime.minute); if (endTime != null) endTime = DateTime(p.year, p.month, p.day, endTime!.hour, endTime!.minute); }); }),
+        ListTile(leading: Icon(PhosphorIconsLight.moon, color: context.colorScheme.primary), title: Text('Start time', style: TextStyle(color: Theme.of(ctx).brightness == Brightness.dark ? context.colorScheme.onPrimary : context.colorScheme.onSurface)), subtitle: Text(DateFormat('hh:mm a').format(startTime)),
+          onTap: () async { final tod = await showTimePicker(context: ctx, initialTime: TimeOfDay.fromDateTime(startTime)); if (tod != null && ctx.mounted) setD(() { startTime = DateTime(sleepDate.year, sleepDate.month, sleepDate.day, tod.hour, tod.minute); }); }),
+        SwitchListTile(secondary: Icon(PhosphorIconsLight.sun, color: context.colorScheme.primary), title: const Text('Still sleeping'), value: isStillSleeping, onChanged: (v) => setD(() { isStillSleeping = v; if (v) endTime = null; })),
+        if (!isStillSleeping) ListTile(leading: Icon(PhosphorIconsLight.sun, color: context.colorScheme.primary), title: const Text('End time'), subtitle: Text(endTime != null ? DateFormat('hh:mm a').format(endTime!) : 'Not set'),
+          onTap: () async { final tod = await showTimePicker(context: ctx, initialTime: TimeOfDay.fromDateTime(endTime ?? startTime)); if (tod != null && ctx.mounted) setD(() { endTime = DateTime(sleepDate.year, sleepDate.month, sleepDate.day, tod.hour, tod.minute); }); }),
+        const SizedBox(height: DesignTokens.spaceMd),
+        Wrap(spacing: DesignTokens.spaceSm, children: _qualities.map((q) => ChoiceChip(label: Text(q.label), selected: selectedQuality == q, selectedColor: q.color.withValues(alpha: DesignTokens.opacityDim), onSelected: (_) => setD(() => selectedQuality = q))).toList()),
+        const SizedBox(height: DesignTokens.spaceMd),
+        TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notes (optional)'), maxLines: 2), const SizedBox(height: DesignTokens.spaceLg),
+        Row(children: [
+          Expanded(child: ThemeButton(text: 'Delete', onPressed: () async {
+            final confirmed = await ConfirmDeleteDialog.show(ctx, title: 'Delete Sleep Log', message: 'Remove this sleep record?');
+            if (confirmed != true) return;
+            try {
+              await ref.read(apiClientProvider).deleteSleepLog(babyMonId!, originalId);
+              setState(() => _sleepLogs.removeWhere((l) => l.id == originalId));
+              ref.read(appRefreshProvider.notifier).state++;
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sleep log deleted')));
+            } catch (e) { if (ctx.mounted) showError(ctx, e); }
+          }, variant: ThemeButtonVariant.outlined, foregroundColor: context.colorScheme.error, fullWidth: true)),
+          const SizedBox(width: DesignTokens.spaceSm),
+          Expanded(child: ThemeButton(text: 'Save', onPressed: () async {
+            setD(() => isSaving = true);
+            try {
+              final ee = isStillSleeping ? startTime.add(const Duration(minutes: 1)) : endTime;
+              final dur = ee?.difference(startTime) ?? const Duration(hours: 1);
+              final t = (dur.inHours < 4 && startTime.hour >= 6 && startTime.hour < 20) ? SleepType.nap.apiKey : SleepType.night.apiKey;
+              await ref.read(apiClientProvider).updateSleepLog(babyMonId!, originalId, {
+                'type': t, 'startTime': startTime.toIso8601String(),
+                'endTime': (ee ?? DateTime.now()).toIso8601String(),
+                'quality': selectedQuality.apiNumericValue,
+                'notes': notesController.text.isNotEmpty ? notesController.text : null,
+              });
+              // Update local state immediately
+              setState(() {
+                final idx = _sleepLogs.indexWhere((l) => l.id == originalId);
+                if (idx != -1) {
+                  _sleepLogs[idx] = log.copyWith(
+                    type: t, startTime: startTime, endTime: ee,
+                    quality: selectedQuality.apiNumericValue.toString(),
+                    notes: notesController.text.isNotEmpty ? notesController.text : null,
+                  );
+                }
+              });
+              if (ctx.mounted) Navigator.pop(ctx);
+              ref.read(appRefreshProvider.notifier).state++;
+            } catch (e) { setD(() => isSaving = false); if (ctx.mounted) showError(ctx, e); }
+          }, isLoading: isSaving, fullWidth: true, semanticLabel: 'Save sleep changes')),
+        ]),
+        const SizedBox(height: DesignTokens.spaceSm),
       ]),
     )));
   }

@@ -4,9 +4,11 @@ import {
   ArgumentsHost,
   HttpException,
   Logger,
+  HttpStatus,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
+import { ErrorCode } from '../enums/error-code.enum';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -17,29 +19,40 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    let status = 500;
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string = 'Internal server error';
-    let code: string = 'INTERNAL_ERROR';
+    let code: string = ErrorCode.INTERNAL_ERROR;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      message =
-        typeof exceptionResponse === 'string'
-          ? exceptionResponse
-          : String((exceptionResponse as Record<string, unknown>).message || exception.message);
-      code =
-        String((exceptionResponse as Record<string, unknown>).error || 'ERROR');
+
+      if (typeof exceptionResponse === 'string') {
+        message = exceptionResponse;
+        // Derive a stable code from the HTTP status when the exception
+        // only carries a string message (e.g., NotFoundException('User not found')).
+        code = this.inferCodeFromStatus(status);
+      } else {
+        const resp = exceptionResponse as Record<string, unknown>;
+        message = String(resp.message || exception.message);
+        // Prefer an explicit code from the thrower; fall back to status inference.
+        const explicitCode = resp.code ?? resp.error;
+        code =
+          typeof explicitCode === 'string' && explicitCode.length > 0
+            ? explicitCode
+            : this.inferCodeFromStatus(status);
+      }
     } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       status = this.mapPrismaError(exception);
       message = 'A database error occurred';
-      code = 'DATABASE_ERROR';
+      code = ErrorCode.DATABASE_ERROR;
     } else if (exception instanceof Error) {
       message = exception.message;
+      code = ErrorCode.INTERNAL_ERROR;
     }
 
     this.logger.error(
-      { err: exception, path: request.url, status },
+      { err: exception, path: request.url, status, code },
       message,
     );
 
@@ -50,6 +63,25 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
       path: request.url,
     });
+  }
+
+  private inferCodeFromStatus(status: number): string {
+    switch (status) {
+      case HttpStatus.BAD_REQUEST:
+        return ErrorCode.VALIDATION_ERROR;
+      case HttpStatus.UNAUTHORIZED:
+        return ErrorCode.UNAUTHORIZED;
+      case HttpStatus.FORBIDDEN:
+        return ErrorCode.LIMIT_REACHED;
+      case HttpStatus.NOT_FOUND:
+        return ErrorCode.NOT_FOUND;
+      case HttpStatus.CONFLICT:
+        return ErrorCode.DUPLICATE_EMAIL;
+      case HttpStatus.TOO_MANY_REQUESTS:
+        return ErrorCode.RATE_LIMITED;
+      default:
+        return ErrorCode.INTERNAL_ERROR;
+    }
   }
 
   private mapPrismaError(error: Prisma.PrismaClientKnownRequestError): number {

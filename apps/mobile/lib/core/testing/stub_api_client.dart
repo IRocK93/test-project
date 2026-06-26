@@ -71,7 +71,7 @@ class StubApiClient implements ApiClient {
   @override Future<Response> getEvolution(String id, {bool forceRefresh = false}) async => _ok();
 
   // ── Dashboard Aggregation ──
-  @override Future<Response> getDashboard(String id) async => _ok();
+  @override Future<Response> getDashboard(String id, {bool forceRefresh = false}) async => _ok();
 
   // ── Stage Content ──
   @override Future<Response> getStageContentForBabyMon(String id) async => _ok();
@@ -114,10 +114,16 @@ class StubApiClient implements ApiClient {
   // ── Stage Content ──
   @override Future<Response> getStageContent(String s) async => _ok();
 
+  // ── Promo Codes ──
+  @override Future<Response> validatePromoCode(String code) async => _ok();
+  @override Future<Response> redeemPromoCode(String code) async => _ok();
+
   // ── Storage ──
-  @override Future<void> saveTokens(String a, String r, String u) async {}
+  @override Future<void> saveTokens(String a, String r, String u, {String? userEmail}) async {}
   @override Future<String?> getAccessToken() async => null;
   @override Future<String?> getUserId() async => null;
+  @override Future<String?> getUserEmail() async => null;
+  @override Future<void> clearAuth() async {}
   @override Future<void> setSelectedBabyMonId(String? id) async {}
   @override Future<String?> getSelectedBabyMonId() async => null;
   @override Future<void> setTrialOverride(int d) async {}

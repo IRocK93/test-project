@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { AccessControlService } from '../common/access-control.service';
@@ -9,6 +10,7 @@ import { StageCalculatorService } from '../common/stage-calculator.service';
 import { StageContentService } from '../stage-content/stage-content.service';
 import { xpForNextLevel, getLevelName } from '../xp/xp.service';
 import { LimitReachedException } from '../common/exceptions/business.exception';
+import { buildHistoryDateFilter } from '../common/history-filter.helper';
 
 @Injectable()
 export class BabyMonService {
@@ -114,7 +116,7 @@ export class BabyMonService {
 
   async graduateBabyMon(babymonId: string, userId: string) {
     const babyMon = await this.findOne(babymonId, userId);
-    if (!babyMon.isOwner) throw new ForbiddenException('Only the owner can graduate a BabyMon');
+    if (!babyMon.isOwner) throw new ForbiddenException({ message: 'Only the owner can graduate a BabyMon', code: ErrorCode.UNAUTHORIZED });
 
     await this.prisma.babyMon.update({
       where: { id: babymonId },
@@ -159,7 +161,7 @@ export class BabyMonService {
     // Verify access (ownership or linked partner) before returning data
     const access = await this.accessControl.checkAccess(userId, id);
     if (!access.hasAccess) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     const babyMon = await this.prisma.babyMon.findFirst({
@@ -177,7 +179,7 @@ export class BabyMonService {
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     return {
@@ -194,16 +196,18 @@ export class BabyMonService {
   async getDashboard(babymonId: string, userId: string) {
     const access = await this.accessControl.checkAccess(userId, babymonId);
     if (!access.hasAccess) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
-    const [babyMon, evolution, growth, allergies, badges] =
+    // Compute history date filters once (async), then apply to count queries.
+    // FREE tier restricts to 7 days; PREMIUM has no restriction.
+    const historyFilter = await buildHistoryDateFilter(this.subscriptionsService, userId);
+    const sleepHistoryFilter = await buildHistoryDateFilter(this.subscriptionsService, userId, 'startTime');
+
+    const [babyMon, evolution, growth, allergies, badges, milestoneCount, feedLogCount, healthRecordCount, sleepLogCount] =
       await Promise.all([
         this.prisma.babyMon.findFirst({
           where: { id: babymonId, deletedAt: null },
-          include: {
-            _count: { select: { milestones: true, feedLogs: true, healthRecords: true, sleepLogs: true } },
-          },
         }),
         this.prisma.babyMon.findUnique({
           where: { id: babymonId },
@@ -225,10 +229,14 @@ export class BabyMonService {
           take: 50,
           select: { id: true, badgeType: true, name: true, icon: true, unlockedAt: true },
         }),
+        this.prisma.milestone.count({ where: { babymonId, deletedAt: null, ...historyFilter } }),
+        this.prisma.feedLog.count({ where: { babymonId, deletedAt: null, ...historyFilter } }),
+        this.prisma.healthRecord.count({ where: { babymonId, deletedAt: null, ...historyFilter } }),
+        this.prisma.sleepLog.count({ where: { babymonId, deletedAt: null, ...sleepHistoryFilter } }),
       ]);
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     // Stage content — computed after babyMon is resolved
@@ -258,6 +266,12 @@ export class BabyMonService {
         ...babyMon,
         bloodGroup: this.cryptoService.decrypt(babyMon.bloodGroup),
         isOwner: babyMon.ownerUserId === userId,
+        _counts: {
+          milestones: milestoneCount,
+          feedLogs: feedLogCount,
+          healthRecords: healthRecordCount,
+          sleepLogs: sleepLogCount,
+        },
       },
       evolution: (() => {
         const rawStage = evolution?.currentStage ?? 1;
@@ -302,7 +316,7 @@ export class BabyMonService {
       where: { id, deletedAt: null },
     });
     if (!babyMon || babyMon.ownerUserId !== userId) {
-      throw new ForbiddenException('Only the owner can edit this BabyMon');
+      throw new ForbiddenException({ message: 'Only the owner can edit this BabyMon', code: ErrorCode.UNAUTHORIZED });
     }
 
     const updated = await this.prisma.babyMon.update({
@@ -340,7 +354,7 @@ export class BabyMonService {
       where: { id, deletedAt: null },
     });
     if (!babyMon || babyMon.ownerUserId !== userId) {
-      throw new ForbiddenException('Only the owner can delete this BabyMon');
+      throw new ForbiddenException({ message: 'Only the owner can delete this BabyMon', code: ErrorCode.UNAUTHORIZED });
     }
 
     // Delete S3 media files before removing DB records
@@ -382,7 +396,7 @@ export class BabyMonService {
     // Verify user has access to this BabyMon before returning stage data
     const access = await this.accessControl.checkAccess(userId, babymonId);
     if (!access.hasAccess) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     const babyMon = await this.prisma.babyMon.findUnique({
@@ -390,7 +404,7 @@ export class BabyMonService {
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     // Use shared stage calculator — single source of truth

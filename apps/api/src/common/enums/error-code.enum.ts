@@ -1,0 +1,63 @@
+/**
+ * Machine-readable error codes returned by the API.
+ *
+ * The mobile app maps these codes to localized strings via `ErrorMapper`.
+ * Never change an existing code value — doing so breaks client-side localization.
+ *
+ * When adding a new code:
+ *  1. Append it here with a unique value.
+ *  2. Add the matching localization key to the mobile ARB files.
+ *  3. Update ErrorMapper in the mobile app.
+ */
+export enum ErrorCode {
+  // Generic
+  INTERNAL_ERROR = 'INTERNAL_ERROR',
+  DATABASE_ERROR = 'DATABASE_ERROR',
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  NOT_FOUND = 'NOT_FOUND',
+
+  // Auth
+  UNAUTHORIZED = 'UNAUTHORIZED',
+  INVALID_TOKEN = 'INVALID_TOKEN',
+  TOKEN_EXPIRED = 'TOKEN_EXPIRED',
+  USER_NOT_FOUND = 'USER_NOT_FOUND',
+  ACCOUNT_DELETED = 'ACCOUNT_DELETED',
+  OAUTH_REQUIRED = 'OAUTH_REQUIRED',
+  DUPLICATE_EMAIL = 'DUPLICATE_EMAIL',
+  INVALID_OPERATION = 'INVALID_OPERATION',
+  RATE_LIMITED = 'RATE_LIMITED',
+
+  // Subscription / Business
+  TRIAL_EXPIRED = 'TRIAL_EXPIRED',
+  LIMIT_REACHED = 'LIMIT_REACHED',
+  UPGRADE_REQUIRED = 'UPGRADE_REQUIRED',
+
+  // User
+  EMAIL_IN_USE = 'EMAIL_IN_USE',
+  INVALID_PASSWORD = 'INVALID_PASSWORD',
+
+  // BabyMon
+  BABYMON_NOT_FOUND = 'BABYMON_NOT_FOUND',
+
+  // Milestones
+  MILESTONE_NOT_FOUND = 'MILESTONE_NOT_FOUND',
+
+  // Feed Logs
+  FEED_LOG_NOT_FOUND = 'FEED_LOG_NOT_FOUND',
+
+  // Health Records
+  HEALTH_RECORD_NOT_FOUND = 'HEALTH_RECORD_NOT_FOUND',
+
+  // Partners / Linked Accounts
+  INVITATION_NOT_FOUND = 'INVITATION_NOT_FOUND',
+  CANNOT_INVITE_SELF = 'CANNOT_INVITE_SELF',
+  INVITATION_ALREADY_PROCESSED = 'INVITATION_ALREADY_PROCESSED',
+  INVITATION_EXPIRED = 'INVITATION_EXPIRED',
+  LINK_NOT_FOUND = 'LINK_NOT_FOUND',
+
+  // Promo Codes
+  PROMO_CODE_INVALID = 'PROMO_CODE_INVALID',
+  PROMO_CODE_EXPIRED = 'PROMO_CODE_EXPIRED',
+  PROMO_CODE_LIMIT_REACHED = 'PROMO_CODE_LIMIT_REACHED',
+  PROMO_CODE_ALREADY_USED = 'PROMO_CODE_ALREADY_USED',
+}

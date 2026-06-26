@@ -6,12 +6,12 @@ import 'package:baby_mon/core/widgets/premium_background.dart';
 import 'package:baby_mon/features/companion/presentation/screens/model_download_screen.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
 
-/// Premium model URL — SmolLM3 3B Q4_K_M from HuggingFace.
+/// Premium model URL — SmolLM3 3B Q4_K_M from HuggingFace (ggml-org, ungated).
 const premiumModelUrl =
-    'https://huggingface.co/bartowski/HuggingFaceTB_SmolLM3-3B-GGUF/resolve/main/HuggingFaceTB_SmolLM3-3B-Q4_K_M.gguf';
+    'https://huggingface.co/ggml-org/SmolLM3-3B-GGUF/resolve/main/SmolLM3-Q4_K_M.gguf?download=true';
 const premiumModelVersion = 'smollm3-3b-v1';
 const premiumModelName = 'SmolLM3 3B';
-const premiumModelSizeBytes = 1920000000; // ~1.92 GB
+const premiumModelSizeBytes = 1915305312; // ~1.83 GB
 
 /// Onboarding screen shown the first time a user activates the AI Companion.
 ///
@@ -42,9 +42,9 @@ class ModelOnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final defaultFileName = manifestUrl.split('/').last;
+    final defaultFileName = Uri.parse(manifestUrl).pathSegments.last;
     final defaultPath = '$downloadBaseDir/$defaultFileName';
-    final premiumFileName = premiumModelUrl.split('/').last;
+    final premiumFileName = Uri.parse(premiumModelUrl).pathSegments.last;
     final premiumPath = '$downloadBaseDir/$premiumFileName';
 
     return Scaffold(
@@ -102,10 +102,9 @@ class ModelOnboardingScreen extends StatelessWidget {
                   ),
                 ),
 
-                // ── Premium model card — premium only ──
-                if (isPremium) ...[
-                  const SizedBox(height: DesignTokens.spaceMd),
-                  _ModelCard(
+                // ── Premium model card ──
+                const SizedBox(height: DesignTokens.spaceMd),
+                _ModelCard(
                     icon: PhosphorIconsLight.crown,
                     title: 'Better Quality',
                     subtitle: 'Deeper reasoning, nuanced advice',
@@ -123,7 +122,6 @@ class ModelOnboardingScreen extends StatelessWidget {
                       ));
                     },
                   ),
-                ],
 
                 const SizedBox(height: DesignTokens.spaceXl),
 

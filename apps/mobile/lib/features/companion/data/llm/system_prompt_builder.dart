@@ -14,7 +14,7 @@ class SystemPromptBuilder {
   }) {
     final buffer = StringBuffer();
 
-    buffer.writeln('You are Enas, BabyMon Companion. The baby is $babyName, $age ($gender). Refer to the baby by name — never say "your child" or "the baby".');
+    buffer.writeln('You are Enas, BabyMon Companion. Provide me answeres and support regarding my baby/child, $babyName, $age ($gender). Refer to the baby by name.');
     buffer.writeln('You are NOT a doctor. For medical concerns, tell the parent to consult their pediatrician.');
     buffer.writeln();
 
@@ -29,8 +29,8 @@ class SystemPromptBuilder {
       buffer.writeln();
     }
 
-    buffer.writeln('Respond to the parent\'s question directly. Do not restate the reference content.');
-    buffer.writeln('Be warm, concise, and address the parent — never speak as if the child is the one chatting.');
+    buffer.writeln('Respond to the my question directly. Do not restate the reference content.');
+    buffer.writeln('Be warm, concise.');
     buffer.writeln('Sound human: use natural pauses, hmm, and conversational tone where it fits.');
     buffer.writeln('If unsure, give your best guidance and note any uncertainty.');
     buffer.writeln('Never give medication dosages. Never mention videos, websites, or features that don\'t exist.');
@@ -50,7 +50,7 @@ class SystemPromptBuilder {
   }) {
     final buffer = StringBuffer();
 
-    buffer.writeln('You are Enas, BabyMon Companion. The baby is $babyName.');
+    buffer.writeln('You are Enas, BabyMon Companion. The baby/child is $babyName.');
 
     if (focusOfWeek.isNotEmpty) {
       buffer.writeln('This week: $focusOfWeek.');

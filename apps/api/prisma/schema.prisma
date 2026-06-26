@@ -225,6 +225,7 @@ model User {
   privacyAcceptedAt   DateTime?
   privacyVersion      String?
   consentDataAt       DateTime?
+  locale              String   @default("en")
 
   notificationsEnabled Boolean  @default(true)
   pushMilestones       Boolean  @default(true)  // push: milestone alerts

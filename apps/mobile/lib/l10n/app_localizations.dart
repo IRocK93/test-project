@@ -5,7 +5,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
+import 'app_localizations_de.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
+import 'app_localizations_fr.dart';
+import 'app_localizations_pt.dart';
 
 // ignore_for_file: type=lint
 
@@ -90,7 +94,11 @@ abstract class AppLocalizations {
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
-    Locale('en')
+    Locale('de'),
+    Locale('en'),
+    Locale('es'),
+    Locale('fr'),
+    Locale('pt')
   ];
 
   /// No description provided for @appTitle.
@@ -198,7 +206,7 @@ abstract class AppLocalizations {
   /// No description provided for @hasAccount.
   ///
   /// In en, this message translates to:
-  /// **'Already have an account?'**
+  /// **'Already have an account? '**
   String get hasAccount;
 
   /// No description provided for @signUp.
@@ -1814,6 +1822,912 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clay'**
   String get visualStyleClay;
+
+  /// No description provided for @loginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome Back!'**
+  String get loginTitle;
+
+  /// No description provided for @loginSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in to continue'**
+  String get loginSubtitle;
+
+  /// No description provided for @emailRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your email'**
+  String get emailRequired;
+
+  /// No description provided for @passwordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your password'**
+  String get passwordRequired;
+
+  /// No description provided for @biometricPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Authenticate to log in to BabyMon'**
+  String get biometricPrompt;
+
+  /// No description provided for @biometricEnableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Biometric Login'**
+  String get biometricEnableTitle;
+
+  /// No description provided for @biometricEnablePrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Would you like to use biometrics for faster sign-in next time?'**
+  String get biometricEnablePrompt;
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Now'**
+  String get notNow;
+
+  /// No description provided for @enable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable'**
+  String get enable;
+
+  /// No description provided for @orDivider.
+  ///
+  /// In en, this message translates to:
+  /// **'OR'**
+  String get orDivider;
+
+  /// No description provided for @signUpLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up'**
+  String get signUpLink;
+
+  /// No description provided for @loginLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Login'**
+  String get loginLink;
+
+  /// No description provided for @resetPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Password'**
+  String get resetPasswordTitle;
+
+  /// No description provided for @resetPasswordSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email address and we\'ll send you a password reset link.'**
+  String get resetPasswordSubtitle;
+
+  /// No description provided for @sendResetLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Reset Link'**
+  String get sendResetLink;
+
+  /// No description provided for @resetPasswordSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset link sent to your email'**
+  String get resetPasswordSuccess;
+
+  /// No description provided for @createAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Account'**
+  String get createAccountTitle;
+
+  /// No description provided for @createAccountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Join BabyMon today'**
+  String get createAccountSubtitle;
+
+  /// No description provided for @nameOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (optional)'**
+  String get nameOptional;
+
+  /// No description provided for @passwordWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Weak'**
+  String get passwordWeak;
+
+  /// No description provided for @passwordFair.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair'**
+  String get passwordFair;
+
+  /// No description provided for @passwordGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get passwordGood;
+
+  /// No description provided for @passwordStrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong'**
+  String get passwordStrong;
+
+  /// No description provided for @dateOfBirth.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of Birth'**
+  String get dateOfBirth;
+
+  /// No description provided for @tapToSelect.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to select'**
+  String get tapToSelect;
+
+  /// No description provided for @dateOfBirthHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your date of birth'**
+  String get dateOfBirthHelp;
+
+  /// No description provided for @verifyEmailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Your Email'**
+  String get verifyEmailTitle;
+
+  /// No description provided for @verifyEmailSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please check your inbox and click the verification link to continue.'**
+  String get verifyEmailSubtitle;
+
+  /// No description provided for @continueButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueButton;
+
+  /// No description provided for @resendVerificationEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend Verification Email'**
+  String get resendVerificationEmail;
+
+  /// No description provided for @emailSentSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification email sent! Check your inbox.'**
+  String get emailSentSuccess;
+
+  /// No description provided for @emailSendFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send verification email. Please try again.'**
+  String get emailSendFailed;
+
+  /// No description provided for @emailNotVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Email not yet verified. Please check your inbox.'**
+  String get emailNotVerified;
+
+  /// No description provided for @checkVerificationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to check verification status.'**
+  String get checkVerificationFailed;
+
+  /// No description provided for @newPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get newPasswordLabel;
+
+  /// No description provided for @passwordMinLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get passwordMinLength;
+
+  /// No description provided for @passwordsDoNotMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordsDoNotMatch;
+
+  /// No description provided for @passwordResetSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset successful. Please login.'**
+  String get passwordResetSuccess;
+
+  /// No description provided for @resetPasswordSemantic.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset your password'**
+  String get resetPasswordSemantic;
+
+  /// No description provided for @acceptTermsPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'I accept the '**
+  String get acceptTermsPrefix;
+
+  /// No description provided for @termsOfServiceLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get termsOfServiceLink;
+
+  /// No description provided for @acceptPrivacyPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'I accept the '**
+  String get acceptPrivacyPrefix;
+
+  /// No description provided for @privacyPolicyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicyLink;
+
+  /// No description provided for @iConsentToDataProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'I consent to processing of child health & development data'**
+  String get iConsentToDataProcessing;
+
+  /// No description provided for @pleaseSelectDob.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select your date of birth'**
+  String get pleaseSelectDob;
+
+  /// No description provided for @mustAcceptTos.
+  ///
+  /// In en, this message translates to:
+  /// **'You must accept the Terms of Service'**
+  String get mustAcceptTos;
+
+  /// No description provided for @mustAcceptPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'You must accept the Privacy Policy'**
+  String get mustAcceptPrivacy;
+
+  /// No description provided for @mustConsentData.
+  ///
+  /// In en, this message translates to:
+  /// **'You must consent to data processing'**
+  String get mustConsentData;
+
+  /// No description provided for @togglePasswordVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle password visibility'**
+  String get togglePasswordVisibility;
+
+  /// No description provided for @editName.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Name'**
+  String get editName;
+
+  /// No description provided for @nameUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Name updated!'**
+  String get nameUpdated;
+
+  /// No description provided for @noBabyMonToExport.
+  ///
+  /// In en, this message translates to:
+  /// **'No BabyMon to export'**
+  String get noBabyMonToExport;
+
+  /// No description provided for @exportingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Exporting your data...'**
+  String get exportingData;
+
+  /// No description provided for @deletePermanently.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Permanently'**
+  String get deletePermanently;
+
+  /// No description provided for @babyMonDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'BabyMon permanently deleted'**
+  String get babyMonDeleted;
+
+  /// No description provided for @createBabyMonFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a BabyMon first'**
+  String get createBabyMonFirst;
+
+  /// No description provided for @clearAllAllergies.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all allergies'**
+  String get clearAllAllergies;
+
+  /// No description provided for @clearAllAllergiesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes all allergy profiles and events'**
+  String get clearAllAllergiesDesc;
+
+  /// No description provided for @clearAllEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear all allergy events'**
+  String get clearAllEvents;
+
+  /// No description provided for @clearAllEventsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Removes events but keeps allergy profiles'**
+  String get clearAllEventsDesc;
+
+  /// No description provided for @allergiesCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'allergies cleared'**
+  String get allergiesCleared;
+
+  /// No description provided for @eventsCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'events cleared'**
+  String get eventsCleared;
+
+  /// No description provided for @couldNotClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not clear. Please try again.'**
+  String get couldNotClear;
+
+  /// No description provided for @noBabyMonsToDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'No BabyMons to delete'**
+  String get noBabyMonsToDelete;
+
+  /// No description provided for @noBabyMonSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No BabyMon selected'**
+  String get noBabyMonSelected;
+
+  /// No description provided for @logOutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out'**
+  String get logOutTitle;
+
+  /// No description provided for @logOutConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to log out?'**
+  String get logOutConfirm;
+
+  /// No description provided for @cancelButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancelButton;
+
+  /// No description provided for @saveButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveButton;
+
+  /// No description provided for @languageSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get languageSetting;
+
+  /// No description provided for @selectLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Language'**
+  String get selectLanguage;
+
+  /// No description provided for @currentLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Language'**
+  String get currentLanguage;
+
+  /// No description provided for @localeUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Language updated'**
+  String get localeUpdated;
+
+  /// No description provided for @localeUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update language'**
+  String get localeUpdateFailed;
+
+  /// No description provided for @preferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get preferences;
+
+  /// No description provided for @subscriptionAndPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription & Plan'**
+  String get subscriptionAndPlan;
+
+  /// No description provided for @comparePlans.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare plans & upgrade'**
+  String get comparePlans;
+
+  /// No description provided for @notificationPreferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification preferences'**
+  String get notificationPreferences;
+
+  /// No description provided for @notificationPreferencesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Push, milestone reminders, partner activity'**
+  String get notificationPreferencesDesc;
+
+  /// No description provided for @biometricLoginSetting.
+  ///
+  /// In en, this message translates to:
+  /// **'Biometric login'**
+  String get biometricLoginSetting;
+
+  /// No description provided for @biometricLoginDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use fingerprint or face to sign in'**
+  String get biometricLoginDesc;
+
+  /// No description provided for @measurementUnits.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurement units'**
+  String get measurementUnits;
+
+  /// No description provided for @visualStyleDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Glass or Clay theme'**
+  String get visualStyleDesc;
+
+  /// No description provided for @themeMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme mode'**
+  String get themeMode;
+
+  /// No description provided for @themeModeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Light, dark, or follow system'**
+  String get themeModeDesc;
+
+  /// No description provided for @babyMonData.
+  ///
+  /// In en, this message translates to:
+  /// **'BabyMon Data'**
+  String get babyMonData;
+
+  /// No description provided for @activeBabyMon.
+  ///
+  /// In en, this message translates to:
+  /// **'Active BabyMon'**
+  String get activeBabyMon;
+
+  /// No description provided for @switchBabyMonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the avatar in the top bar to switch'**
+  String get switchBabyMonHint;
+
+  /// No description provided for @managePartners.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Partners'**
+  String get managePartners;
+
+  /// No description provided for @managePartnersDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Co-parents & guardians with access'**
+  String get managePartnersDesc;
+
+  /// No description provided for @backupPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & Privacy'**
+  String get backupPrivacy;
+
+  /// No description provided for @exportDataDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Download all records as JSON'**
+  String get exportDataDesc;
+
+  /// No description provided for @syncStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync status'**
+  String get syncStatus;
+
+  /// No description provided for @allChangesSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'All changes saved'**
+  String get allChangesSaved;
+
+  /// No description provided for @dangerZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Danger Zone'**
+  String get dangerZone;
+
+  /// No description provided for @clearAllergiesEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear allergies & events'**
+  String get clearAllergiesEvents;
+
+  /// No description provided for @clearAllergiesEventsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove allergy records for this BabyMon'**
+  String get clearAllergiesEventsDesc;
+
+  /// No description provided for @deleteBabyMonDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently remove all data'**
+  String get deleteBabyMonDesc;
+
+  /// No description provided for @signOutDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out of this device'**
+  String get signOutDevice;
+
+  /// No description provided for @clearButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clearButton;
+
+  /// No description provided for @metric.
+  ///
+  /// In en, this message translates to:
+  /// **'Metric'**
+  String get metric;
+
+  /// No description provided for @imperial.
+  ///
+  /// In en, this message translates to:
+  /// **'Imperial'**
+  String get imperial;
+
+  /// No description provided for @featureComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'{feature} — coming soon'**
+  String featureComingSoon(Object feature);
+
+  /// No description provided for @errorInternal.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get errorInternal;
+
+  /// No description provided for @errorDatabase.
+  ///
+  /// In en, this message translates to:
+  /// **'A database error occurred. Please try again.'**
+  String get errorDatabase;
+
+  /// No description provided for @errorValidation.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid request. Please check your input.'**
+  String get errorValidation;
+
+  /// No description provided for @errorNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Not found. The feature may not be available yet.'**
+  String get errorNotFound;
+
+  /// No description provided for @errorUnauthorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired. Please log in again.'**
+  String get errorUnauthorized;
+
+  /// No description provided for @errorInvalidToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid token. Please log in again.'**
+  String get errorInvalidToken;
+
+  /// No description provided for @errorTokenExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session has expired. Please log in again.'**
+  String get errorTokenExpired;
+
+  /// No description provided for @errorUserNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'User not found.'**
+  String get errorUserNotFound;
+
+  /// No description provided for @errorAccountDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This account has been deleted.'**
+  String get errorAccountDeleted;
+
+  /// No description provided for @errorOAuthRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please use social login for this account.'**
+  String get errorOAuthRequired;
+
+  /// No description provided for @errorDuplicateEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'This email is already registered.'**
+  String get errorDuplicateEmail;
+
+  /// No description provided for @errorInvalidOperation.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid operation. Please try again.'**
+  String get errorInvalidOperation;
+
+  /// No description provided for @errorRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many requests. Please wait a moment.'**
+  String get errorRateLimited;
+
+  /// No description provided for @errorTrialExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your free trial has expired. Please upgrade.'**
+  String get errorTrialExpired;
+
+  /// No description provided for @errorLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached the limit for this feature.'**
+  String get errorLimitReached;
+
+  /// No description provided for @errorUpgradeRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature requires a Premium subscription.'**
+  String get errorUpgradeRequired;
+
+  /// No description provided for @errorEmailInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'Email already in use.'**
+  String get errorEmailInUse;
+
+  /// No description provided for @errorInvalidPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid password.'**
+  String get errorInvalidPassword;
+
+  /// No description provided for @errorBadRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid request. Please check your input.'**
+  String get errorBadRequest;
+
+  /// No description provided for @errorForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'You do not have permission to do that.'**
+  String get errorForbidden;
+
+  /// No description provided for @errorConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'This already exists. Please use a different value.'**
+  String get errorConflict;
+
+  /// No description provided for @errorServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Server error. Please try again later.'**
+  String get errorServer;
+
+  /// No description provided for @errorConnectionTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection timed out. Please check your internet.'**
+  String get errorConnectionTimeout;
+
+  /// No description provided for @errorConnectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not connect to the server.'**
+  String get errorConnectionFailed;
+
+  /// No description provided for @errorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. Please check your connection.'**
+  String get errorNetwork;
+
+  /// No description provided for @errorBabyMonNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'BabyMon not found.'**
+  String get errorBabyMonNotFound;
+
+  /// No description provided for @errorMilestoneNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Milestone not found.'**
+  String get errorMilestoneNotFound;
+
+  /// No description provided for @errorFeedLogNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Feed log not found.'**
+  String get errorFeedLogNotFound;
+
+  /// No description provided for @errorHealthRecordNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Health record not found.'**
+  String get errorHealthRecordNotFound;
+
+  /// No description provided for @errorInvitationNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation not found.'**
+  String get errorInvitationNotFound;
+
+  /// No description provided for @errorCannotInviteSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot invite yourself.'**
+  String get errorCannotInviteSelf;
+
+  /// No description provided for @errorInvitationAlreadyProcessed.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation already processed.'**
+  String get errorInvitationAlreadyProcessed;
+
+  /// No description provided for @errorInvitationExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Invitation has expired.'**
+  String get errorInvitationExpired;
+
+  /// No description provided for @errorLinkNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Link not found.'**
+  String get errorLinkNotFound;
+
+  /// No description provided for @errorPromoCodeInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid promo code.'**
+  String get errorPromoCodeInvalid;
+
+  /// No description provided for @errorPromoCodeExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This promo code has expired.'**
+  String get errorPromoCodeExpired;
+
+  /// No description provided for @errorPromoCodeLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'This promo code has reached its usage limit.'**
+  String get errorPromoCodeLimitReached;
+
+  /// No description provided for @errorPromoCodeAlreadyUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'You have already used this promo code.'**
+  String get errorPromoCodeAlreadyUsed;
+
+  /// No description provided for @errorAppleSignInUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple Sign-In is not available on this device.'**
+  String get errorAppleSignInUnavailable;
+
+  /// No description provided for @errorAppleNoIdentityToken.
+  ///
+  /// In en, this message translates to:
+  /// **'No identity token received from Apple.'**
+  String get errorAppleNoIdentityToken;
+
+  /// No description provided for @errorFacebookNoAccessToken.
+  ///
+  /// In en, this message translates to:
+  /// **'No access token received from Facebook.'**
+  String get errorFacebookNoAccessToken;
+
+  /// No description provided for @welcomeChooseLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your language'**
+  String get welcomeChooseLanguage;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @languageSpanish.
+  ///
+  /// In en, this message translates to:
+  /// **'Español'**
+  String get languageSpanish;
+
+  /// No description provided for @languageFrench.
+  ///
+  /// In en, this message translates to:
+  /// **'Français'**
+  String get languageFrench;
+
+  /// No description provided for @languageGerman.
+  ///
+  /// In en, this message translates to:
+  /// **'Deutsch'**
+  String get languageGerman;
+
+  /// No description provided for @languagePortuguese.
+  ///
+  /// In en, this message translates to:
+  /// **'Português'**
+  String get languagePortuguese;
+
+  /// No description provided for @errorUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get errorUnknown;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
@@ -1825,7 +2739,7 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['de', 'en', 'es', 'fr', 'pt'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -1836,7 +2750,11 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
 
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
+    case 'de': return AppLocalizationsDe();
     case 'en': return AppLocalizationsEn();
+    case 'es': return AppLocalizationsEs();
+    case 'fr': return AppLocalizationsFr();
+    case 'pt': return AppLocalizationsPt();
   }
 
   throw FlutterError(

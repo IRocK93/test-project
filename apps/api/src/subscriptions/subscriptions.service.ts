@@ -1,4 +1,5 @@
 import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { TrialExpiredException } from '../common/exceptions/business.exception';
 
@@ -121,7 +122,7 @@ export class SubscriptionsService {
   // Dev override for testing (only available in development)
   async devOverrideTrial(userId: string, days: number) {
     if (process.env.NODE_ENV === 'production') {
-      throw new ForbiddenException('Dev override not available in production');
+      throw new ForbiddenException({ message: 'Dev override not available in production', code: ErrorCode.INVALID_OPERATION });
     }
 
     const trialEnd = new Date();
@@ -159,19 +160,19 @@ export class SubscriptionsService {
 
   async validatePromoCode(userId: string, code: string) {
     const promo = await this.prisma.promoCode.findUnique({ where: { code: code.toUpperCase() } });
-    if (!promo) throw new NotFoundException('Invalid promo code');
+    if (!promo) throw new NotFoundException({ message: 'Invalid promo code', code: ErrorCode.PROMO_CODE_INVALID });
 
-    if (!promo.isActive) throw new BadRequestException('This promo code is no longer active');
-    if (promo.expiresAt && new Date() > promo.expiresAt) throw new BadRequestException('This promo code has expired');
+    if (!promo.isActive) throw new BadRequestException({ message: 'This promo code is no longer active', code: ErrorCode.PROMO_CODE_EXPIRED });
+    if (promo.expiresAt && new Date() > promo.expiresAt) throw new BadRequestException({ message: 'This promo code has expired', code: ErrorCode.PROMO_CODE_EXPIRED });
     if (promo.maxRedemptions && promo.currentRedemptions >= promo.maxRedemptions) {
-      throw new BadRequestException('This promo code has reached its usage limit');
+      throw new BadRequestException({ message: 'This promo code has reached its usage limit', code: ErrorCode.PROMO_CODE_LIMIT_REACHED });
     }
 
     // Check user hasn't already redeemed this code
     const existing = await this.prisma.promoRedemption.findUnique({
       where: { promoCodeId_userId: { promoCodeId: promo.id, userId } },
     });
-    if (existing) throw new BadRequestException('You have already used this promo code');
+    if (existing) throw new BadRequestException({ message: 'You have already used this promo code', code: ErrorCode.PROMO_CODE_ALREADY_USED });
 
     return {
       code: promo.code,
@@ -187,17 +188,17 @@ export class SubscriptionsService {
   async redeemPromoCode(userId: string, code: string) {
     // Validate first
     const promo = await this.prisma.promoCode.findUnique({ where: { code: code.toUpperCase() } });
-    if (!promo) throw new NotFoundException('Invalid promo code');
-    if (!promo.isActive) throw new BadRequestException('This promo code is no longer active');
-    if (promo.expiresAt && new Date() > promo.expiresAt) throw new BadRequestException('This promo code has expired');
+    if (!promo) throw new NotFoundException({ message: 'Invalid promo code', code: ErrorCode.PROMO_CODE_INVALID });
+    if (!promo.isActive) throw new BadRequestException({ message: 'This promo code is no longer active', code: ErrorCode.PROMO_CODE_EXPIRED });
+    if (promo.expiresAt && new Date() > promo.expiresAt) throw new BadRequestException({ message: 'This promo code has expired', code: ErrorCode.PROMO_CODE_EXPIRED });
     if (promo.maxRedemptions && promo.currentRedemptions >= promo.maxRedemptions) {
-      throw new BadRequestException('This promo code has reached its usage limit');
+      throw new BadRequestException({ message: 'This promo code has reached its usage limit', code: ErrorCode.PROMO_CODE_LIMIT_REACHED });
     }
 
     const existing = await this.prisma.promoRedemption.findUnique({
       where: { promoCodeId_userId: { promoCodeId: promo.id, userId } },
     });
-    if (existing) throw new BadRequestException('You have already used this promo code');
+    if (existing) throw new BadRequestException({ message: 'You have already used this promo code', code: ErrorCode.PROMO_CODE_ALREADY_USED });
 
     // Apply the promo
     const now = new Date();

@@ -229,8 +229,9 @@ Full notice: docs/legal/childrens-privacy-notice.md
       final onVerify = state.matchedLocation == '/verify-email';
       final onLegal = state.matchedLocation == '/legal/tos' || state.matchedLocation == '/legal/privacy' || state.matchedLocation == '/legal/childrens-privacy';
       final onLoading = state.matchedLocation == '/loading';
+      final onLanguageOnboarding = state.matchedLocation == '/welcome-language';
 
-      if (!loggedIn && !onAuth && !onSplash && !onVerify && !onLegal && !onLoading) {
+      if (!loggedIn && !onAuth && !onSplash && !onVerify && !onLegal && !onLoading && !onLanguageOnboarding) {
         return '/login';
       }
       if (loggedIn && onAuth) {
@@ -243,6 +244,7 @@ Full notice: docs/legal/childrens-privacy-notice.md
     },
     routes: [
         GoRoute(path: '/', pageBuilder: (context, state) => _pageTransition(context: context, state: state, child: const SplashScreen())),
+        GoRoute(path: '/welcome-language', pageBuilder: (context, state) => _pageTransition(context: context, state: state, child: const LanguageOnboardingScreen())),
         GoRoute(path: '/login', pageBuilder: (context, state) => _pageTransition(context: context, state: state, child: const LoginScreen())),
         GoRoute(path: '/loading', pageBuilder: (context, state) => _pageTransition(context: context, state: state, child: const PostLoginLoadingScreen())),
         GoRoute(path: '/register', pageBuilder: (context, state) => _pageTransition(context: context, state: state, child: const RegisterScreen())),
@@ -296,7 +298,7 @@ Full notice: docs/legal/childrens-privacy-notice.md
           pageBuilder: (context, state) => _pageTransition(
             context: context,
             state: state,
-            child: LegalDocumentScreen(
+            child: const LegalDocumentScreen(
               title: 'Terms of Service',
               content: _termsOfServiceContent,
             ),
@@ -307,7 +309,7 @@ Full notice: docs/legal/childrens-privacy-notice.md
           pageBuilder: (context, state) => _pageTransition(
             context: context,
             state: state,
-            child: LegalDocumentScreen(
+            child: const LegalDocumentScreen(
               title: 'Privacy Policy',
               content: _privacyPolicyContent,
             ),
@@ -318,7 +320,7 @@ Full notice: docs/legal/childrens-privacy-notice.md
           pageBuilder: (context, state) => _pageTransition(
             context: context,
             state: state,
-            child: LegalDocumentScreen(
+            child: const LegalDocumentScreen(
               title: "Children's Privacy",
               content: _childrensPrivacyContent,
             ),

@@ -164,7 +164,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (!isAvailable) {
         state = state.copyWith(
           isLoading: false,
-          error: 'Apple Sign-In is not available on this device',
+          error: 'APPLE_SIGN_IN_UNAVAILABLE',
         );
         return;
       }
@@ -178,7 +178,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (identityToken == null || identityToken.isEmpty) {
         state = state.copyWith(
           isLoading: false,
-          error: 'No identity token received from Apple',
+          error: 'APPLE_NO_IDENTITY_TOKEN',
         );
         return;
       }
@@ -206,7 +206,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (accessToken == null || accessToken.isEmpty) {
         state = state.copyWith(
           isLoading: false,
-          error: 'No access token received from Facebook',
+          error: 'FACEBOOK_NO_ACCESS_TOKEN',
         );
         return;
       }

@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsOptional, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsEmail, IsOptional, MinLength, MaxLength, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateUserDto {
@@ -18,6 +18,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @ApiProperty({ example: 'en', required: false, description: 'ISO 639-1 language code (e.g., en, es, fr)' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z]{2}(-[A-Z]{2})?$/, { message: 'Locale must be a valid ISO language code (e.g., en, en-US)' })
+  locale?: string;
 }
 
 export class DeleteAccountDto {

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { PartnerRole } from './dto/linked-accounts.dto';
@@ -62,7 +63,7 @@ export class LinkedAccountsService {
     const babyMon = await this.prisma.babyMon.findFirst({
       where: { id: babyMonId, deletedAt: null },
     });
-    if (!babyMon) throw new NotFoundException('BabyMon not found');
+    if (!babyMon) throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
 
     // Access gate: must be owner, linked co-parent, or invited (pending).
     // REJECTED / EXPIRED invitees are treated as strangers.
@@ -74,7 +75,7 @@ export class LinkedAccountsService {
           OR: [{ userAId: userId }, { userBId: userId }],
         },
       });
-      if (!related) throw new ForbiddenException('Access denied');
+      if (!related) throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.UNAUTHORIZED });
     }
 
     // Return only rows where the caller is a direct participant.
@@ -116,15 +117,15 @@ export class LinkedAccountsService {
     const babyMon = await this.prisma.babyMon.findFirst({
       where: { id: babyMonId, deletedAt: null },
     });
-    if (!babyMon) throw new NotFoundException('BabyMon not found');
+    if (!babyMon) throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     if (babyMon.ownerUserId !== userId) {
-      throw new ForbiddenException('Only the BabyMon owner can invite partners');
+      throw new ForbiddenException({ message: 'Only the BabyMon owner can invite partners', code: ErrorCode.UNAUTHORIZED });
     }
 
     // 2. Registered users only
     const partner = await this.prisma.user.findUnique({ where: { email } });
-    if (!partner) throw new NotFoundException('User not found with this email');
-    if (partner.id === userId) throw new BadRequestException('Cannot link to yourself');
+    if (!partner) throw new NotFoundException({ message: 'User not found with this email', code: ErrorCode.USER_NOT_FOUND });
+    if (partner.id === userId) throw new BadRequestException({ message: 'Cannot link to yourself', code: ErrorCode.CANNOT_INVITE_SELF });
 
     // 3. Look for an existing link (either direction)
     const existing = await this.prisma.linkedAccount.findFirst({
@@ -192,17 +193,17 @@ export class LinkedAccountsService {
     const invitation = await this.prisma.linkedAccount.findUnique({
       where: { id: invitationId },
     });
-    if (!invitation) throw new NotFoundException('Invitation not found');
+    if (!invitation) throw new NotFoundException({ message: 'Invitation not found', code: ErrorCode.INVITATION_NOT_FOUND });
 
     // Only the invitee may respond
     if (invitation.userBId !== userId) {
-      throw new ForbiddenException('You cannot respond to this invitation');
+      throw new ForbiddenException({ message: 'You cannot respond to this invitation', code: ErrorCode.UNAUTHORIZED });
     }
     if (invitation.status !== 'PENDING') {
-      throw new BadRequestException('Invitation already processed');
+      throw new BadRequestException({ message: 'Invitation already processed', code: ErrorCode.INVITATION_ALREADY_PROCESSED });
     }
     if (invitation.expiresAt && invitation.expiresAt < new Date()) {
-      throw new BadRequestException('Invitation has expired');
+      throw new BadRequestException({ message: 'Invitation has expired', code: ErrorCode.INVITATION_EXPIRED });
     }
 
     if (status === 'ACCEPTED') {
@@ -254,9 +255,9 @@ export class LinkedAccountsService {
     const link = await this.prisma.linkedAccount.findUnique({
       where: { id: linkId },
     });
-    if (!link) throw new NotFoundException('Link not found');
+    if (!link) throw new NotFoundException({ message: 'Link not found', code: ErrorCode.LINK_NOT_FOUND });
     if (link.userAId !== userId && link.userBId !== userId) {
-      throw new ForbiddenException('You are not part of this link');
+      throw new ForbiddenException({ message: 'You are not part of this link', code: ErrorCode.UNAUTHORIZED });
     }
 
     if (link.status === 'PENDING') {
@@ -288,7 +289,7 @@ export class LinkedAccountsService {
 
   async linkBabyMonToUser(userId: string, babymonId: string, access: 'READ' | 'EDIT' | 'ADMIN' = 'EDIT') {
     const babyMon = await this.prisma.babyMon.findUnique({ where: { id: babymonId } });
-    if (!babyMon) throw new NotFoundException('BabyMon not found');
+    if (!babyMon) throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
 
     const link = await this.prisma.linkedAccount.findFirst({
       where: {
@@ -298,7 +299,7 @@ export class LinkedAccountsService {
         ],
       },
     });
-    if (!link) throw new ForbiddenException('You are not linked to this BabyMon owner');
+    if (!link) throw new ForbiddenException({ message: 'You are not linked to this BabyMon owner', code: ErrorCode.UNAUTHORIZED });
 
     return this.prisma.linkedBabyMon.upsert({
       where: { userId_babymonId: { userId, babymonId } },

@@ -77,7 +77,15 @@ class ModelDownloadService {
       }
 
       final headers = <String, String>{if (existingSize > 0) 'Range': 'bytes=$existingSize-'};
-      final response = await _dio.get<ResponseBody>(url, options: Options(headers: headers, responseType: ResponseType.stream), cancelToken: _cancelToken);
+      final response = await _dio.get<ResponseBody>(url,
+        options: Options(
+          headers: headers,
+          responseType: ResponseType.stream,
+          receiveTimeout: const Duration(hours: 2),
+          sendTimeout: const Duration(seconds: 30),
+        ),
+        cancelToken: _cancelToken,
+      );
       if (response.statusCode != 200 && response.statusCode != 206) {
         controller.add(ModelDownloadError(message: 'Server returned unexpected status: ${response.statusCode}.'));
         await controller.close();

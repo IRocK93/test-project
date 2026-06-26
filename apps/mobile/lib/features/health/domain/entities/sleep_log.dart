@@ -123,12 +123,12 @@ class SleepLog {
       id: parseString(json['id']) ?? '',
       type: parseString(json['type']),
       startTime: parseString(json['startTime']) != null
-          ? DateTime.tryParse(parseString(json['startTime'])!)?.toLocal()
+          ? DateTime.tryParse(parseString(json['startTime'])!)
           : null,
       endTime: parseString(json['endTime']) != null
-          ? DateTime.tryParse(parseString(json['endTime'])!)?.toLocal()
+          ? DateTime.tryParse(parseString(json['endTime'])!)
           : null,
-      quality: parseString(json['quality']),
+      quality: json['quality']?.toString(),
       notes: parseString(json['notes']),
     );
   }
@@ -148,6 +148,20 @@ class SleepLog {
   Duration? get duration {
     if (startTime == null || endTime == null) return null;
     return endTime!.difference(startTime!);
+  }
+
+  /// Creates a copy with the given fields replaced.
+  SleepLog copyWith({
+    String? type, DateTime? startTime, DateTime? endTime,
+    String? quality, String? notes,
+  }) {
+    return SleepLog(
+      id: id, type: type ?? this.type,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      quality: quality ?? this.quality,
+      notes: notes ?? this.notes,
+    );
   }
 
   /// Whether this is a nap (daytime, short) vs night sleep.

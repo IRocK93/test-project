@@ -27,6 +27,16 @@ export class UsersController {
     return this.usersService.updateProfile(userId, dto);
   }
 
+  @Patch('me/locale')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update user locale preference' })
+  async updateLocale(
+    @CurrentUser('id') userId: string,
+    @Body('locale') locale: string,
+  ) {
+    return this.usersService.updateProfile(userId, { locale });
+  }
+
   @Delete('me')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete account and all associated data' })

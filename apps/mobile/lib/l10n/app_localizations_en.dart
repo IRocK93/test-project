@@ -60,7 +60,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noAccount => 'Don\'t have an account?';
 
   @override
-  String get hasAccount => 'Already have an account?';
+  String get hasAccount => 'Already have an account? ';
 
   @override
   String get signUp => 'Sign Up';
@@ -878,4 +878,459 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get visualStyleClay => 'Clay';
+
+  @override
+  String get loginTitle => 'Welcome Back!';
+
+  @override
+  String get loginSubtitle => 'Log in to continue';
+
+  @override
+  String get emailRequired => 'Please enter your email';
+
+  @override
+  String get passwordRequired => 'Please enter your password';
+
+  @override
+  String get biometricPrompt => 'Authenticate to log in to BabyMon';
+
+  @override
+  String get biometricEnableTitle => 'Enable Biometric Login';
+
+  @override
+  String get biometricEnablePrompt => 'Would you like to use biometrics for faster sign-in next time?';
+
+  @override
+  String get notNow => 'Not Now';
+
+  @override
+  String get enable => 'Enable';
+
+  @override
+  String get orDivider => 'OR';
+
+  @override
+  String get signUpLink => 'Sign up';
+
+  @override
+  String get loginLink => 'Login';
+
+  @override
+  String get resetPasswordTitle => 'Reset Password';
+
+  @override
+  String get resetPasswordSubtitle => 'Enter your email address and we\'ll send you a password reset link.';
+
+  @override
+  String get sendResetLink => 'Send Reset Link';
+
+  @override
+  String get resetPasswordSuccess => 'Password reset link sent to your email';
+
+  @override
+  String get createAccountTitle => 'Create Account';
+
+  @override
+  String get createAccountSubtitle => 'Join BabyMon today';
+
+  @override
+  String get nameOptional => 'Name (optional)';
+
+  @override
+  String get passwordWeak => 'Weak';
+
+  @override
+  String get passwordFair => 'Fair';
+
+  @override
+  String get passwordGood => 'Good';
+
+  @override
+  String get passwordStrong => 'Strong';
+
+  @override
+  String get dateOfBirth => 'Date of Birth';
+
+  @override
+  String get tapToSelect => 'Tap to select';
+
+  @override
+  String get dateOfBirthHelp => 'Select your date of birth';
+
+  @override
+  String get verifyEmailTitle => 'Verify Your Email';
+
+  @override
+  String get verifyEmailSubtitle => 'Please check your inbox and click the verification link to continue.';
+
+  @override
+  String get continueButton => 'Continue';
+
+  @override
+  String get resendVerificationEmail => 'Resend Verification Email';
+
+  @override
+  String get emailSentSuccess => 'Verification email sent! Check your inbox.';
+
+  @override
+  String get emailSendFailed => 'Failed to send verification email. Please try again.';
+
+  @override
+  String get emailNotVerified => 'Email not yet verified. Please check your inbox.';
+
+  @override
+  String get checkVerificationFailed => 'Failed to check verification status.';
+
+  @override
+  String get newPasswordLabel => 'New Password';
+
+  @override
+  String get passwordMinLength => 'Password must be at least 6 characters';
+
+  @override
+  String get passwordsDoNotMatch => 'Passwords do not match';
+
+  @override
+  String get passwordResetSuccess => 'Password reset successful. Please login.';
+
+  @override
+  String get resetPasswordSemantic => 'Reset your password';
+
+  @override
+  String get acceptTermsPrefix => 'I accept the ';
+
+  @override
+  String get termsOfServiceLink => 'Terms of Service';
+
+  @override
+  String get acceptPrivacyPrefix => 'I accept the ';
+
+  @override
+  String get privacyPolicyLink => 'Privacy Policy';
+
+  @override
+  String get iConsentToDataProcessing => 'I consent to processing of child health & development data';
+
+  @override
+  String get pleaseSelectDob => 'Please select your date of birth';
+
+  @override
+  String get mustAcceptTos => 'You must accept the Terms of Service';
+
+  @override
+  String get mustAcceptPrivacy => 'You must accept the Privacy Policy';
+
+  @override
+  String get mustConsentData => 'You must consent to data processing';
+
+  @override
+  String get togglePasswordVisibility => 'Toggle password visibility';
+
+  @override
+  String get editName => 'Edit Name';
+
+  @override
+  String get nameUpdated => 'Name updated!';
+
+  @override
+  String get noBabyMonToExport => 'No BabyMon to export';
+
+  @override
+  String get exportingData => 'Exporting your data...';
+
+  @override
+  String get deletePermanently => 'Delete Permanently';
+
+  @override
+  String get babyMonDeleted => 'BabyMon permanently deleted';
+
+  @override
+  String get createBabyMonFirst => 'Create a BabyMon first';
+
+  @override
+  String get clearAllAllergies => 'Clear all allergies';
+
+  @override
+  String get clearAllAllergiesDesc => 'Removes all allergy profiles and events';
+
+  @override
+  String get clearAllEvents => 'Clear all allergy events';
+
+  @override
+  String get clearAllEventsDesc => 'Removes events but keeps allergy profiles';
+
+  @override
+  String get allergiesCleared => 'allergies cleared';
+
+  @override
+  String get eventsCleared => 'events cleared';
+
+  @override
+  String get couldNotClear => 'Could not clear. Please try again.';
+
+  @override
+  String get noBabyMonsToDelete => 'No BabyMons to delete';
+
+  @override
+  String get noBabyMonSelected => 'No BabyMon selected';
+
+  @override
+  String get logOutTitle => 'Log out';
+
+  @override
+  String get logOutConfirm => 'Are you sure you want to log out?';
+
+  @override
+  String get cancelButton => 'Cancel';
+
+  @override
+  String get saveButton => 'Save';
+
+  @override
+  String get languageSetting => 'Language';
+
+  @override
+  String get selectLanguage => 'Select Language';
+
+  @override
+  String get currentLanguage => 'Current Language';
+
+  @override
+  String get localeUpdated => 'Language updated';
+
+  @override
+  String get localeUpdateFailed => 'Failed to update language';
+
+  @override
+  String get preferences => 'Preferences';
+
+  @override
+  String get subscriptionAndPlan => 'Subscription & Plan';
+
+  @override
+  String get comparePlans => 'Compare plans & upgrade';
+
+  @override
+  String get notificationPreferences => 'Notification preferences';
+
+  @override
+  String get notificationPreferencesDesc => 'Push, milestone reminders, partner activity';
+
+  @override
+  String get biometricLoginSetting => 'Biometric login';
+
+  @override
+  String get biometricLoginDesc => 'Use fingerprint or face to sign in';
+
+  @override
+  String get measurementUnits => 'Measurement units';
+
+  @override
+  String get visualStyleDesc => 'Glass or Clay theme';
+
+  @override
+  String get themeMode => 'Theme mode';
+
+  @override
+  String get themeModeDesc => 'Light, dark, or follow system';
+
+  @override
+  String get babyMonData => 'BabyMon Data';
+
+  @override
+  String get activeBabyMon => 'Active BabyMon';
+
+  @override
+  String get switchBabyMonHint => 'Use the avatar in the top bar to switch';
+
+  @override
+  String get managePartners => 'Manage Partners';
+
+  @override
+  String get managePartnersDesc => 'Co-parents & guardians with access';
+
+  @override
+  String get backupPrivacy => 'Backup & Privacy';
+
+  @override
+  String get exportDataDesc => 'Download all records as JSON';
+
+  @override
+  String get syncStatus => 'Sync status';
+
+  @override
+  String get allChangesSaved => 'All changes saved';
+
+  @override
+  String get dangerZone => 'Danger Zone';
+
+  @override
+  String get clearAllergiesEvents => 'Clear allergies & events';
+
+  @override
+  String get clearAllergiesEventsDesc => 'Remove allergy records for this BabyMon';
+
+  @override
+  String get deleteBabyMonDesc => 'Permanently remove all data';
+
+  @override
+  String get signOutDevice => 'Sign out of this device';
+
+  @override
+  String get clearButton => 'Clear';
+
+  @override
+  String get metric => 'Metric';
+
+  @override
+  String get imperial => 'Imperial';
+
+  @override
+  String featureComingSoon(Object feature) {
+    return '$feature — coming soon';
+  }
+
+  @override
+  String get errorInternal => 'Something went wrong. Please try again.';
+
+  @override
+  String get errorDatabase => 'A database error occurred. Please try again.';
+
+  @override
+  String get errorValidation => 'Invalid request. Please check your input.';
+
+  @override
+  String get errorNotFound => 'Not found. The feature may not be available yet.';
+
+  @override
+  String get errorUnauthorized => 'Session expired. Please log in again.';
+
+  @override
+  String get errorInvalidToken => 'Invalid token. Please log in again.';
+
+  @override
+  String get errorTokenExpired => 'Your session has expired. Please log in again.';
+
+  @override
+  String get errorUserNotFound => 'User not found.';
+
+  @override
+  String get errorAccountDeleted => 'This account has been deleted.';
+
+  @override
+  String get errorOAuthRequired => 'Please use social login for this account.';
+
+  @override
+  String get errorDuplicateEmail => 'This email is already registered.';
+
+  @override
+  String get errorInvalidOperation => 'Invalid operation. Please try again.';
+
+  @override
+  String get errorRateLimited => 'Too many requests. Please wait a moment.';
+
+  @override
+  String get errorTrialExpired => 'Your free trial has expired. Please upgrade.';
+
+  @override
+  String get errorLimitReached => 'You have reached the limit for this feature.';
+
+  @override
+  String get errorUpgradeRequired => 'This feature requires a Premium subscription.';
+
+  @override
+  String get errorEmailInUse => 'Email already in use.';
+
+  @override
+  String get errorInvalidPassword => 'Invalid password.';
+
+  @override
+  String get errorBadRequest => 'Invalid request. Please check your input.';
+
+  @override
+  String get errorForbidden => 'You do not have permission to do that.';
+
+  @override
+  String get errorConflict => 'This already exists. Please use a different value.';
+
+  @override
+  String get errorServer => 'Server error. Please try again later.';
+
+  @override
+  String get errorConnectionTimeout => 'Connection timed out. Please check your internet.';
+
+  @override
+  String get errorConnectionFailed => 'Could not connect to the server.';
+
+  @override
+  String get errorNetwork => 'Network error. Please check your connection.';
+
+  @override
+  String get errorBabyMonNotFound => 'BabyMon not found.';
+
+  @override
+  String get errorMilestoneNotFound => 'Milestone not found.';
+
+  @override
+  String get errorFeedLogNotFound => 'Feed log not found.';
+
+  @override
+  String get errorHealthRecordNotFound => 'Health record not found.';
+
+  @override
+  String get errorInvitationNotFound => 'Invitation not found.';
+
+  @override
+  String get errorCannotInviteSelf => 'You cannot invite yourself.';
+
+  @override
+  String get errorInvitationAlreadyProcessed => 'Invitation already processed.';
+
+  @override
+  String get errorInvitationExpired => 'Invitation has expired.';
+
+  @override
+  String get errorLinkNotFound => 'Link not found.';
+
+  @override
+  String get errorPromoCodeInvalid => 'Invalid promo code.';
+
+  @override
+  String get errorPromoCodeExpired => 'This promo code has expired.';
+
+  @override
+  String get errorPromoCodeLimitReached => 'This promo code has reached its usage limit.';
+
+  @override
+  String get errorPromoCodeAlreadyUsed => 'You have already used this promo code.';
+
+  @override
+  String get errorAppleSignInUnavailable => 'Apple Sign-In is not available on this device.';
+
+  @override
+  String get errorAppleNoIdentityToken => 'No identity token received from Apple.';
+
+  @override
+  String get errorFacebookNoAccessToken => 'No access token received from Facebook.';
+
+  @override
+  String get welcomeChooseLanguage => 'Choose your language';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageSpanish => 'Español';
+
+  @override
+  String get languageFrench => 'Français';
+
+  @override
+  String get languageGerman => 'Deutsch';
+
+  @override
+  String get languagePortuguese => 'Português';
+
+  @override
+  String get errorUnknown => 'Something went wrong. Please try again.';
 }

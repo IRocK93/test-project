@@ -381,7 +381,7 @@ void main() {
 
         expect(mockNotifier.state.isLoggedIn, isFalse);
         expect(mockNotifier.state.user, isNull);
-        expect(mockNotifier.state.error, contains('not available'));
+        expect(mockNotifier.state.error, 'APPLE_SIGN_IN_UNAVAILABLE');
         expect(mockNotifier.state.isLoading, isFalse);
       });
 

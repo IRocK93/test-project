@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, InternalServerErrorException, Logger, HttpStatus } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
@@ -9,6 +9,7 @@ import { MailService } from '../mail/mail.service';
 import { randomBytes } from 'crypto';
 import { getJwtSecret } from './jwt-config';
 import { DuplicateException, InvalidOperationException } from '../common/exceptions/business.exception';
+import { ErrorCode } from '../common/enums/error-code.enum';
 
 @Injectable()
 export class AuthService {
@@ -95,7 +96,7 @@ export class AuthService {
       this.logger.error({ err: error }, 'Registration failed');
       throw new InternalServerErrorException({
         message: `Failed to create account: ${msg}`,
-        error: 'INTERNAL_ERROR',
+        code: ErrorCode.INTERNAL_ERROR,
       });
     }
   }
@@ -108,21 +109,21 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException({
         message: 'Invalid email or password',
-        error: 'UNAUTHORIZED',
+        code: ErrorCode.UNAUTHORIZED,
       });
     }
 
     if (!user.passwordHash) {
       throw new UnauthorizedException({
         message: 'Please use OAuth login',
-        error: 'OAUTH_REQUIRED',
+        code: ErrorCode.OAUTH_REQUIRED,
       });
     }
 
     if (user.deletedAt) {
       throw new UnauthorizedException({
         message: 'Account has been deleted',
-        error: 'ACCOUNT_DELETED',
+        code: ErrorCode.ACCOUNT_DELETED,
       });
     }
 
@@ -131,7 +132,7 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException({
         message: 'Invalid email or password',
-        error: 'UNAUTHORIZED',
+        code: ErrorCode.UNAUTHORIZED,
       });
     }
 
@@ -156,7 +157,7 @@ export class AuthService {
       if (payload.type !== 'refresh') {
         throw new UnauthorizedException({
           message: 'Invalid token type',
-          error: 'INVALID_TOKEN',
+          code: ErrorCode.INVALID_TOKEN,
         });
       }
 
@@ -167,7 +168,7 @@ export class AuthService {
       if (!user || user.deletedAt) {
         throw new UnauthorizedException({
           message: 'User not found or deleted',
-          error: 'USER_NOT_FOUND',
+          code: ErrorCode.USER_NOT_FOUND,
         });
       }
 
@@ -182,7 +183,7 @@ export class AuthService {
       if (!storedToken || storedToken.expiresAt < new Date()) {
         throw new UnauthorizedException({
           message: 'Invalid or expired refresh token',
-          error: 'TOKEN_EXPIRED',
+          code: ErrorCode.TOKEN_EXPIRED,
         });
       }
 
@@ -199,7 +200,7 @@ export class AuthService {
       }
       throw new UnauthorizedException({
         message: 'Invalid refresh token',
-        error: 'INVALID_TOKEN',
+        code: ErrorCode.INVALID_TOKEN,
       });
     }
   }
@@ -315,6 +316,12 @@ export class AuthService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + refreshTtlDays);
 
+    // Delete any existing refresh tokens for this user to avoid unique
+    // constraint violations when register + login are called in rapid succession.
+    await this.prisma.refreshToken.deleteMany({
+      where: { userId },
+    });
+
     await this.prisma.refreshToken.create({
       data: {
         userId,
@@ -354,7 +361,10 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException({
+        message: 'User not found',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
     }
 
     return user;
@@ -369,7 +379,12 @@ export class AuthService {
       where: { id: userId },
       select: { id: true, email: true, name: true, verifiedAt: true },
     });
-    if (!user) throw new UnauthorizedException('User not found');
+    if (!user) {
+      throw new UnauthorizedException({
+        message: 'User not found',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
     const tokens = await this.generateTokens(user.id, user.email);
     return { user, ...tokens };
   }

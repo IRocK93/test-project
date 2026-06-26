@@ -20,7 +20,7 @@ final llmInferenceServiceProvider = Provider<LlmInferenceService>((ref) {
 });
 
 final modelManifestServiceProvider = Provider<ModelManifestService>((ref) {
-  return ModelManifestService();
+  return ModelManifestService(dio: ref.read(apiClientProvider).dio);
 });
 
 final dailyBriefProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, babyMonId) {

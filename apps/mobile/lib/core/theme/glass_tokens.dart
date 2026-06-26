@@ -25,20 +25,20 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     required this.accent,
   });
 
-  /// Default Glass theme tokens.
-  factory GlassTokens.light() => const GlassTokens(
-        background: AppColors.glassDark,
-        surface: AppColors.glassWhite,
+      /// Default Glass theme tokens.
+      factory GlassTokens.light() => const GlassTokens(
+            background: AppColors.glassWhite,
+            surface: AppColors.glassWhite,
         border: AppColors.glassBorder,
         borderLight: AppColors.glassBorderLight,
         shadow: AppColors.glassShadow,
         accent: AppColors.accent,
       );
 
-  /// Dark-mode Glass theme tokens.
-  factory GlassTokens.dark() => const GlassTokens(
-        background: AppColors.glassDark,
-        surface: AppColors.darkSurface,
+      /// Dark-mode Glass theme tokens.
+      factory GlassTokens.dark() => const GlassTokens(
+            background: AppColors.glassDarkElevated,
+            surface: AppColors.darkSurface,
         border: AppColors.glassDarkBorder,
         borderLight: AppColors.glassDarkBorderLight,
         shadow: AppColors.glassDarkShadow,

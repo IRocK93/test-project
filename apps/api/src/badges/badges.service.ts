@@ -488,38 +488,38 @@ export class BadgesService {
 
       // ═══ Category 1-7 gap-fill badges (matching 86-badge spec) ═══
       // M04: Roll Over (mobility milestone via keyword)
-      if (!existingBadgeTypes.includes('M04')) { const rm = await tx.milestone.findMany({ where: { babymonId, deletedAt: null }, select: { title: true }, take: 50 }); const txt = rm.map(m => m.title.toLowerCase()).join(' '); if (/roll|crawl|scoot|tummy|motor/.test(txt)) newBadges.push({ badgeType: 'M04', name: 'Roll Over', icon: '360' }); }
-      // M05: First Steps (walking milestone via keyword)
-      if (!existingBadgeTypes.includes('M05')) { const rm = await tx.milestone.findMany({ where: { babymonId, deletedAt: null }, select: { title: true }, take: 50 }); const txt = rm.map(m => m.title.toLowerCase()).join(' '); if (/walk|step|stand|toddle|first step/.test(txt)) newBadges.push({ badgeType: 'M05', name: 'First Steps', icon: 'directions_walk' }); }
-      // M06: First Words (speech milestone via keyword)
-      if (!existingBadgeTypes.includes('M06')) { const rm = await tx.milestone.findMany({ where: { babymonId, deletedAt: null }, select: { title: true }, take: 50 }); const txt = rm.map(m => m.title.toLowerCase()).join(' '); if (/speech|word|talk|babble|language|say|first word|mama|dada/.test(txt)) newBadges.push({ badgeType: 'M06', name: 'First Words', icon: 'record_voice_over' }); }
+      if (!existingBadgeTypes.includes('M09')) { const rm = await tx.milestone.findMany({ where: { babymonId, deletedAt: null }, select: { title: true }, take: 50 }); const txt = rm.map(m => m.title.toLowerCase()).join(' '); if (/roll|crawl|scoot|tummy|motor/.test(txt)) newBadges.push({ badgeType: 'M09', name: 'Roll Over', icon: '360' }); }
+      // M10: First Steps (walking milestone via keyword)
+      if (!existingBadgeTypes.includes('M10')) { const rm = await tx.milestone.findMany({ where: { babymonId, deletedAt: null }, select: { title: true }, take: 50 }); const txt = rm.map(m => m.title.toLowerCase()).join(' '); if (/walk|step|stand|toddle|first step/.test(txt)) newBadges.push({ badgeType: 'M10', name: 'First Steps', icon: 'directions_walk' }); }
+      // M11: First Words (speech milestone via keyword)
+      if (!existingBadgeTypes.includes('M11')) { const rm = await tx.milestone.findMany({ where: { babymonId, deletedAt: null }, select: { title: true }, take: 50 }); const txt = rm.map(m => m.title.toLowerCase()).join(' '); if (/speech|word|talk|babble|language|say|first word|mama|dada/.test(txt)) newBadges.push({ badgeType: 'M11', name: 'First Words', icon: 'record_voice_over' }); }
 
-      // F04: Breastfeeding Champ (20 breastmilk feeds)
+      // F10: Breastfeeding Champ (20 breastmilk feeds)
       const breastmilkCount = await tx.feedLog.count({ where: { babymonId, deletedAt: null, type: 'BREASTMILK' } });
-      if (breastmilkCount >= 20 && !existingBadgeTypes.includes('F04')) newBadges.push({ badgeType: 'F04', name: 'Breastfeeding Champ', icon: 'water_drop' });
-      // F05: Solid Food Explorer (10 solid food entries)
+      if (breastmilkCount >= 20 && !existingBadgeTypes.includes('F10')) newBadges.push({ badgeType: 'F10', name: 'Breastfeeding Champ', icon: 'water_drop' });
+      // F11: Solid Food Explorer (10 solid food entries)
       const solidCount = await tx.feedLog.count({ where: { babymonId, deletedAt: null, type: { in: ['SOLID', 'SOLIDS'] } } });
-      if (solidCount >= 10 && !existingBadgeTypes.includes('F05')) newBadges.push({ badgeType: 'F05', name: 'Solid Food Explorer', icon: 'egg' });
+      if (solidCount >= 10 && !existingBadgeTypes.includes('F11')) newBadges.push({ badgeType: 'F11', name: 'Solid Food Explorer', icon: 'egg' });
 
-      // S04: Nap Master (15 naps)
+      // S10: Nap Master (15 naps)
       const napCount = await tx.sleepLog.count({ where: { babymonId, deletedAt: null, type: 'NAP' } });
-      if (napCount >= 15 && !existingBadgeTypes.includes('S04')) newBadges.push({ badgeType: 'S04', name: 'Nap Master', icon: 'airline_seat_individual_suite' });
-      // S05: Night Owl (5 night sleeps > 8 hours) — approximate by night type count
+      if (napCount >= 15 && !existingBadgeTypes.includes('S10')) newBadges.push({ badgeType: 'S10', name: 'Nap Master', icon: 'airline_seat_individual_suite' });
+      // S11: Night Owl (5 night sleeps > 8 hours) — approximate by night type count
       const nightCount = await tx.sleepLog.count({ where: { babymonId, deletedAt: null, type: 'NIGHT' } });
-      if (nightCount >= 5 && !existingBadgeTypes.includes('S05')) newBadges.push({ badgeType: 'S05', name: 'Night Owl', icon: 'dark_mode' });
+      if (nightCount >= 5 && !existingBadgeTypes.includes('S11')) newBadges.push({ badgeType: 'S11', name: 'Night Owl', icon: 'dark_mode' });
 
-      // H04: Immunization Complete (5 vaccination records)
+      // H06: Immunization Complete (5 vaccination records)
       const vaxCount = await tx.healthRecord.count({ where: { babymonId, deletedAt: null, category: 'VACCINATION' } });
-      if (vaxCount >= 5 && !existingBadgeTypes.includes('H04')) newBadges.push({ badgeType: 'H04', name: 'Immunization Complete', icon: 'vaccines' });
+      if (vaxCount >= 5 && !existingBadgeTypes.includes('H06')) newBadges.push({ badgeType: 'H06', name: 'Immunization Complete', icon: 'vaccines' });
 
-      // P02: Co-Parent Pro (both parents log in same week — proxied by having linked accounts + recent entries)
+      // P07: Co-Parent Pro (both parents log in same week)
       const linkedCount = await tx.linkedBabyMon.count({ where: { babymonId } });
       const weekAgo = new Date(Date.now() - 7 * 86400000);
       const recentByOwner = await tx.milestone.count({ where: { babymonId, deletedAt: null, happenedAt: { gte: weekAgo } } });
-      if (linkedCount >= 1 && recentByOwner >= 2 && !existingBadgeTypes.includes('P02')) newBadges.push({ badgeType: 'P02', name: 'Co-Parent Pro', icon: 'diversity_3' });
-      // P04: Journal Keeper (10 journal entries — proxied by milestone+feed+sleep+health total)
+      if (linkedCount >= 1 && recentByOwner >= 2 && !existingBadgeTypes.includes('P07')) newBadges.push({ badgeType: 'P07', name: 'Co-Parent Pro', icon: 'diversity_3' });
+      // P08: Journal Keeper (10 journal entries)
       const totalEntries = milestoneCount + feedLogCount + sleepLogCount + healthRecordCount;
-      if (totalEntries >= 10 && !existingBadgeTypes.includes('P04')) newBadges.push({ badgeType: 'P04', name: 'Journal Keeper', icon: 'edit_note' });
+      if (totalEntries >= 10 && !existingBadgeTypes.includes('P08')) newBadges.push({ badgeType: 'P08', name: 'Journal Keeper', icon: 'edit_note' });
 
       // ═══ Category 8: Trait-Based Badges (T01-T48 gap fill) ═══
       const traits = babyMon.traits || [];
@@ -620,11 +620,11 @@ async function countConsecutiveDays(
   type: 'milestone' | 'feedLog' | 'sleepLog' | 'healthRecord' | 'growthRecord',
 ): Promise<number> {
   const tableMap: Record<string, string> = {
-    milestone: 'milestone',
-    feedLog: 'feedLog',
-    sleepLog: 'sleepLog',
-    healthRecord: 'healthRecord',
-    growthRecord: 'growthRecord',
+    milestone: 'Milestone',
+    feedLog: 'FeedLog',
+    sleepLog: 'SleepLog',
+    healthRecord: 'HealthRecord',
+    growthRecord: 'GrowthRecord',
   };
   const table = tableMap[type];
   const dateField = type === 'sleepLog' ? 'startTime' : type === 'growthRecord' ? 'measuredAt' : 'happenedAt';

@@ -26,6 +26,9 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
   String _feedChartUnit = 'Days';
   String? _feedSelectedDate;
   final _feedChartScrollController = ScrollController();
+  final _feedLabelsScrollController = ScrollController();
+  VoidCallback? _chartSyncListener;
+  bool _chartDidInitialScroll = false;
   double _chartDragStartX = 0;
   double _chartScrollStartOffset = 0;
   // ─────────────────────────────────────────────────
@@ -61,6 +64,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
     final response =
         await ref.read(apiClientProvider).getFeedLogs(babyMonId!);
     _feedLogs = parseItems(response.data).whereType<Map<String, dynamic>>().map(FeedLog.fromJson).toList();
+    _chartDidInitialScroll = false;
   }
   // ─────────────────────────────────────────────────
   //  Lifecycle
@@ -68,6 +72,13 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
   @override
   void initState() {
     super.initState();
+    // Sync the labels ScrollController to the main chart controller
+    _chartSyncListener = () {
+      if (_feedLabelsScrollController.hasClients) {
+        _feedLabelsScrollController.jumpTo(_feedChartScrollController.offset);
+      }
+    };
+    _feedChartScrollController.addListener(_chartSyncListener!);
     WidgetsBinding.instance.addPostFrameCallback((_) => loadData());
     // Global refresh listener
     ref.listenManual(appRefreshProvider, (prev, next) {
@@ -89,6 +100,15 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
         });
       }
     });
+  }
+  @override
+  void dispose() {
+    if (_chartSyncListener != null) {
+      _feedChartScrollController.removeListener(_chartSyncListener!);
+    }
+    _feedChartScrollController.dispose();
+    _feedLabelsScrollController.dispose();
+    super.dispose();
   }
   // ─────────────────────────────────────────────────
   //  CRUD helpers
@@ -461,7 +481,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   physics: const NeverScrollableScrollPhysics(),
-                  controller: _feedChartScrollController,
+                  controller: _feedLabelsScrollController,
                   children: List.generate(keysWithData.length, (di) {
                     final dateStr = keysWithData[di];
                     final date = DateTime.tryParse(dateStr);
@@ -531,6 +551,16 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
   // ─────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    // Auto-scroll feeding chart to today on first data load
+    if (!_chartDidInitialScroll && _feedLogs.isNotEmpty) {
+      _chartDidInitialScroll = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_feedChartScrollController.hasClients) {
+          final max = _feedChartScrollController.position.maxScrollExtent;
+          if (max > 0) _feedChartScrollController.jumpTo(max);
+        }
+      });
+    }
     return Scaffold(
       body: PremiumBackground(
         child: isLoading
@@ -612,7 +642,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                                                 ),
                                               ),
                                               Text(
-                                                '${log.happenedAt != null ? DateFormat('h:mm a').format(log.happenedAt!) : '--:--'}${log.amount != null ? '  ·  ${(log.amount! % 1 == 0) ? log.amount!.toInt().toString() : log.amount!.toStringAsFixed(1)} $unit' : ''}',
+                                                '${log.happenedAt != null ? '${DateFormat('MMM d, h:mm a').format(log.happenedAt!)}' : '--:--'}${log.amount != null ? '  ·  ${(log.amount! % 1 == 0) ? log.amount!.toInt().toString() : log.amount!.toStringAsFixed(1)} $unit' : ''}',
                                                 style: TextStyle(
                                                   fontSize: DesignTokens.fontSm,
                                                   color: context.colorScheme.onSurfaceVariant,

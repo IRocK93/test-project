@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFeedLogDto, UpdateFeedLogDto } from './dto/feed-log.dto';
 import { buildHistoryDateFilter } from '../common/history-filter.helper';
@@ -28,7 +29,7 @@ export class FeedLogsService {
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     const feedLog = await this.prisma.feedLog.create({
@@ -55,7 +56,11 @@ export class FeedLogsService {
 
     await this.xpService.checkAndProcessLevelUp(babymonId);
 
-    await this.badgesService.checkAndAwardBadges(babymonId, userId);
+    try {
+      await this.badgesService.checkAndAwardBadges(babymonId, userId);
+    } catch (e) {
+      this.logger.warn({ err: e }, 'Badge check failed (non-critical)');
+    }
 
     await this.prisma.auditLog.create({
       data: {
@@ -86,7 +91,7 @@ export class FeedLogsService {
         include: { author: { select: { id: true, name: true } } },
       }),
       this.prisma.feedLog.count({
-        where: { babymonId, deletedAt: null },
+        where: baseWhere,
       }),
     ]);
 
@@ -100,7 +105,7 @@ export class FeedLogsService {
     });
 
     if (!feedLog || feedLog.deletedAt) {
-      throw new NotFoundException('Feed log not found');
+      throw new NotFoundException({ message: 'Feed log not found', code: ErrorCode.FEED_LOG_NOT_FOUND });
     }
 
     await this.verifyAccess(feedLog.babymonId, userId);
@@ -141,7 +146,19 @@ export class FeedLogsService {
   }
 
   async delete(id: string, userId: string) {
-    const feedLog = await this.findOne(id, userId);
+    const feedLog = await this.prisma.feedLog.findUnique({
+      where: { id },
+      select: { id: true, babymonId: true, deletedAt: true, xpAwarded: true, createdAt: true },
+    });
+
+    if (!feedLog) throw new NotFoundException({ message: 'Feed log not found', code: ErrorCode.FEED_LOG_NOT_FOUND });
+
+    // Idempotent: if already soft-deleted, return success
+    if (feedLog.deletedAt) {
+      return { message: 'Feed log already deleted' };
+    }
+
+    await this.verifyAccess(feedLog.babymonId, userId);
 
     // Always soft-delete the feed log
     await this.prisma.feedLog.update({
@@ -179,7 +196,7 @@ export class FeedLogsService {
   private async verifyAccess(babymonId: string, userId: string) {
     const { hasAccess } = await this.accessControlService.checkAccess(userId, babymonId);
     if (!hasAccess) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.UNAUTHORIZED });
     }
   }
 }

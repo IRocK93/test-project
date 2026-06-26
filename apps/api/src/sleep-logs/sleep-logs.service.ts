@@ -53,7 +53,11 @@ export class SleepLogsService {
 
     await this.xpService.checkAndProcessLevelUp(babymonId);
 
-    await this.badgesService.checkAndAwardBadges(babymonId, userId);
+    try {
+      await this.badgesService.checkAndAwardBadges(babymonId, userId);
+    } catch (e) {
+      // Badge check is non-critical — the sleep log is already persisted
+    }
 
     // Audit log
     await this.prisma.auditLog.create({

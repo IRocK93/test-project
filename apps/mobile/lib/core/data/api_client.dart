@@ -5,9 +5,12 @@ import '../../core/constants/api_constants.dart';
 import 'response_cache.dart';
 import 'retry_interceptor.dart';
 import 'backoff_interceptor.dart';
+import 'locale_interceptor.dart';
 
 class ApiClient {
   late final Dio _dio;
+  /// Exposed for services that need Dio directly (e.g. streaming downloads).
+  Dio get dio => _dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final ResponseCache _cache = ResponseCache();
 
@@ -28,7 +31,7 @@ class ApiClient {
     _dio = dio;
 
     // ── API versioning: transparently upgrade /api/ → /api/v1/ ──
-    final v1 = '/api/v1';
+    const v1 = '/api/v1';
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         final path = options.path;
@@ -70,18 +73,47 @@ class ApiClient {
 	          final url = response.requestOptions.path;
 	          // Strip /api prefix and action suffixes (with preceding UUID), keep resource UUIDs intact
 	          // so the pattern matches GET cache keys. Normalize trailing slashes.
-	          final resource = url
-	              .replaceAll(RegExp(r'^/api(/v1)?'), '')
-	              .replaceAll(RegExp(r'/[a-f0-9-]{36}/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
-	              .replaceAll(RegExp(r'/routine/[^/]+/complete$'), '/routine')
-	              .replaceAll(RegExp(r'/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
-	              .replaceAll(RegExp(r'/+$'), '');
-	          _cache.invalidatePattern(resource);
-	        }
-	        return handler.next(response);
-	      },
-	    ));
+          final resource = url
+              .replaceAll(RegExp(r'^/api(/v1)?'), '')
+              .replaceAll(RegExp(r'/[a-f0-9-]{36}/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
+              .replaceAll(RegExp(r'/routine/[^/]+/complete$'), '/routine')
+              .replaceAll(RegExp(r'/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
+              .replaceAll(RegExp(r'/[a-f0-9-]{36}$'), '')   // strip trailing UUID for single-resource mutations
+              .replaceAll(RegExp(r'/+$'), '');
+          _cache.invalidatePattern(resource);
+          // Also invalidate the parent baby-mon dashboard — mutations on any
+          // sub-resource (milestones, feed-logs, etc.) should refresh counts.
+          final parentMatch = RegExp(r'^(/baby-mons/[a-f0-9-]+)').firstMatch(resource);
+          if (parentMatch != null) {
+            _cache.invalidatePattern(parentMatch.group(1)!);
+          }
+        }
+        return handler.next(response);
+      },
+      onError: (error, handler) {
+        // Mutations that return errors (e.g., 409 badge conflict) still changed
+        // server state — invalidate cache so subsequent GETs see fresh data.
+        final method = error.requestOptions.method.toUpperCase();
+        if (method == 'POST' || method == 'PATCH' || method == 'DELETE' || method == 'PUT') {
+          final url = error.requestOptions.path;
+          final resource = url
+              .replaceAll(RegExp(r'^/api(/v1)?'), '')
+              .replaceAll(RegExp(r'/[a-f0-9-]{36}/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
+              .replaceAll(RegExp(r'/routine/[^/]+/complete$'), '/routine')
+              .replaceAll(RegExp(r'/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
+              .replaceAll(RegExp(r'/[a-f0-9-]{36}$'), '')
+              .replaceAll(RegExp(r'/+$'), '');
+          _cache.invalidatePattern(resource);
+          final parentMatch = RegExp(r'^(/baby-mons/[a-f0-9-]+)').firstMatch(resource);
+          if (parentMatch != null) {
+            _cache.invalidatePattern(parentMatch.group(1)!);
+          }
+        }
+        return handler.next(error);
+      },
+    ));
 
+    _dio.interceptors.add(LocaleInterceptor());
     _dio.interceptors.add(BackoffInterceptor());
     _dio.interceptors.add(RetryInterceptor(
       storage: _storage,
@@ -262,8 +294,9 @@ class ApiClient {
   }
 
   // ── Dashboard Aggregation (collapses 8+ requests into 1) ──
-  Future<Response> getDashboard(String babyMonId) async {
-    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/dashboard');
+  Future<Response> getDashboard(String babyMonId, {bool forceRefresh = false}) async {
+    return _dio.get('/api${ApiConstants.babyMons}/$babyMonId/dashboard',
+      options: Options(extra: {'forceRefresh': forceRefresh}));
   }
 
   // Journal

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:baby_mon/features/auth/auth.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 /// Splash screen with premium gradient, glass logo orb, and animated entry.
@@ -51,9 +52,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
   Future<void> _checkAuth() async {
     try {
-      final authNotifier = ref.read(authProvider.notifier);
       await Future<void>.delayed(const Duration(milliseconds: 500)); // brief pause for animation to play
       if (!mounted) return;
+
+      // First-launch language check: if no locale was ever selected, show language picker
+      final prefs = await SharedPreferences.getInstance();
+      final hasSelectedLocale = prefs.getString('user_locale')?.isNotEmpty ?? false;
+      if (!hasSelectedLocale && mounted) {
+        context.go('/welcome-language');
+        return;
+      }
+
+      final authNotifier = ref.read(authProvider.notifier);
       final isLoggedIn = await authNotifier.checkAuth();
       if (!mounted) return;
       if (isLoggedIn) {
