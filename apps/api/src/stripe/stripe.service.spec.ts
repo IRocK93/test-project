@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { StripeService } from './stripe.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -32,6 +33,7 @@ describe('StripeService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+      { provide: ConfigService, useValue: { get: jest.fn(() => undefined) } },
         StripeService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: NotificationsService, useValue: mockNotifications },
@@ -66,7 +68,7 @@ describe('StripeService', () => {
   describe('handlePaymentFailed — notification dispatch', () => {
     it('should send push notification on first payment failure', async () => {
       // Simulate: subscription lookup returns userId
-      mockPrisma.subscription.findFirst.mockResolvedValue({ userId: 'user-1' });
+      mockPrisma.subscription.findFirst.mockResolvedValue({ userId: 'user-1', user: { locale: 'en' } });
 
       // Call the private method via type assertion (tests critical notification path)
       const invoice = {
@@ -87,11 +89,11 @@ describe('StripeService', () => {
           data: { isActive: true }, // attempt 1 < 4, so still active
         }),
       );
-      expect(notifications.notifyPaymentFailed).toHaveBeenCalledWith('user-1', 1);
+      expect(notifications.notifyPaymentFailed).toHaveBeenCalledWith('user-1', 1, 'en');
     });
 
     it('should deactivate subscription + escalate notification after 4+ failures', async () => {
-      mockPrisma.subscription.findFirst.mockResolvedValue({ userId: 'user-1' });
+      mockPrisma.subscription.findFirst.mockResolvedValue({ userId: 'user-1', user: { locale: 'en' } });
 
       const invoice = {
         id: 'inv_4',
@@ -110,7 +112,7 @@ describe('StripeService', () => {
         }),
       );
       // Notification should still fire
-      expect(notifications.notifyPaymentFailed).toHaveBeenCalledWith('user-1', 4);
+      expect(notifications.notifyPaymentFailed).toHaveBeenCalledWith('user-1', 4, 'en');
     });
 
     it('should handle lookup failure gracefully (no userId found)', async () => {

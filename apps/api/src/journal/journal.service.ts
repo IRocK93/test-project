@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessControlService } from '../common/access-control.service';
+import { ErrorCode } from '../common/enums/error-code.enum';
 
 @Injectable()
 export class JournalService {
@@ -11,20 +12,26 @@ export class JournalService {
 
   async getJournal(babymonId: string, userId: string, type?: string, skip: number = 0, take: number = 20) {
     const { hasAccess } = await this.accessControl.checkAccess(userId, babymonId);
-    if (!hasAccess) throw new ForbiddenException('Access denied');
+    if (!hasAccess) throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.UNAUTHORIZED });
 
     // Fetch take entries from each source — enough to fill a page after merge
     const queryTake = take + skip;
 
-    const [milestones, feedLogs, healthRecords, proposals] = await Promise.all([
+    const [milestones, feedLogs, healthRecords, sleepLogs, growthRecords, proposals] = await Promise.all([
       (!type || type === 'MILESTONE')
-        ? this.prisma.milestone.findMany({ where: { babymonId, deletedAt: null }, orderBy: { happenedAt: 'desc' }, take: queryTake })
+        ? this.prisma.milestone.findMany({ where: { babymonId }, orderBy: { happenedAt: 'desc' }, take: queryTake })
         : Promise.resolve([] as any[]),
       (!type || type === 'FEED_LOG')
-        ? this.prisma.feedLog.findMany({ where: { babymonId, deletedAt: null }, orderBy: { happenedAt: 'desc' }, take: queryTake })
+        ? this.prisma.feedLog.findMany({ where: { babymonId }, orderBy: { happenedAt: 'desc' }, take: queryTake })
         : Promise.resolve([] as any[]),
       (!type || type === 'HEALTH_RECORD')
-        ? this.prisma.healthRecord.findMany({ where: { babymonId, deletedAt: null }, orderBy: { happenedAt: 'desc' }, take: queryTake })
+        ? this.prisma.healthRecord.findMany({ where: { babymonId }, orderBy: { happenedAt: 'desc' }, take: queryTake })
+        : Promise.resolve([] as any[]),
+      (!type || type === 'SLEEP_LOG')
+        ? this.prisma.sleepLog.findMany({ where: { babymonId }, orderBy: { startTime: 'desc' }, take: queryTake })
+        : Promise.resolve([] as any[]),
+      (!type || type === 'GROWTH_RECORD')
+        ? this.prisma.growthRecord.findMany({ where: { babyMonId: babymonId }, orderBy: { measuredAt: 'desc' }, take: queryTake })
         : Promise.resolve([] as any[]),
       this.prisma.entryChangeProposal.findMany({ where: { babymonId, status: 'PENDING' }, orderBy: { createdAt: 'desc' }, take: 10 }),
     ]);
@@ -34,6 +41,8 @@ export class JournalService {
       ...milestones.map(m => ({ ...m, entryType: 'MILESTONE', sortDate: m.happenedAt })),
       ...feedLogs.map(f => ({ ...f, entryType: 'FEED_LOG', sortDate: f.happenedAt })),
       ...healthRecords.map(h => ({ ...h, entryType: 'HEALTH_RECORD', sortDate: h.happenedAt })),
+      ...sleepLogs.map(s => ({ ...s, entryType: 'SLEEP_LOG', sortDate: s.startTime })),
+      ...growthRecords.map(g => ({ ...g, entryType: 'GROWTH_RECORD', sortDate: g.measuredAt })),
     ].sort((a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime());
 
     const total = allEntries.length;
@@ -52,7 +61,7 @@ export class JournalService {
 
   async getProposals(babymonId: string, userId: string) {
     const { hasAccess } = await this.accessControl.checkAccess(userId, babymonId);
-    if (!hasAccess) throw new ForbiddenException('Access denied');
+    if (!hasAccess) throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.UNAUTHORIZED });
 
     return this.prisma.entryChangeProposal.findMany({
       where: { babymonId: babymonId, status: 'PENDING' },
@@ -66,10 +75,10 @@ export class JournalService {
       where: { id: proposalId },
     });
 
-    if (!proposal) throw new NotFoundException('Proposal not found');
+    if (!proposal) throw new NotFoundException({ message: 'Proposal not found', code: ErrorCode.PROPOSAL_NOT_FOUND });
 
     const { hasAccess } = await this.accessControl.checkAccess(userId, proposal.babymonId);
-    if (!hasAccess) throw new ForbiddenException('Access denied');
+    if (!hasAccess) throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.UNAUTHORIZED });
 
     if (accept) {
       // Apply the change
@@ -77,7 +86,7 @@ export class JournalService {
       try {
         payload = JSON.parse(proposal.proposedPayloadJson);
       } catch {
-        throw new BadRequestException('Invalid proposal payload');
+        throw new BadRequestException({ message: 'Invalid proposal payload', code: ErrorCode.VALIDATION_ERROR });
       }
 
       if (proposal.entryType === 'MILESTONE') {

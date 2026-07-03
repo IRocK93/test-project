@@ -1,5 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as sgMail from '@sendgrid/mail';
+import { getEmailTemplate } from '../common/localized-strings';
+
+function resolveSubject(
+  subject: string | ((params: Record<string, string>) => string),
+  params: Record<string, string>,
+): string {
+  return typeof subject === 'function' ? subject(params) : subject;
+}
 
 export interface EmailOptions {
   to: string;
@@ -12,9 +21,11 @@ export interface EmailOptions {
 export class MailService {
   private readonly logger = new Logger(MailService.name);
   private initialized = false;
+  private readonly fromEmail: string;
+  private readonly appUrl: string;
 
-  constructor() {
-    const apiKey = process.env.SENDGRID_API_KEY;
+  constructor(private configService: ConfigService) {
+    const apiKey = this.configService.get('sendgrid.apiKey') as string | undefined;
     if (apiKey) {
       sgMail.setApiKey(apiKey);
       this.initialized = true;
@@ -22,6 +33,8 @@ export class MailService {
     } else {
       this.logger.warn('SENDGRID_API_KEY not set - email sending disabled');
     }
+    this.fromEmail = (this.configService.get('sendgrid.fromEmail') as string) || 'noreply@babymon.app';
+    this.appUrl = this.configService.get<string>('appUrl') || 'http://localhost:3000';
   }
 
   async sendEmail(options: EmailOptions): Promise<boolean> {
@@ -33,7 +46,7 @@ export class MailService {
     try {
       const msg = {
         to: options.to,
-        from: process.env.SENDGRID_FROM_EMAIL || 'noreply@babymon.app',
+        from: this.fromEmail,
         subject: options.subject,
         text: options.text,
         html: options.html,
@@ -48,80 +61,46 @@ export class MailService {
     }
   }
 
-  async sendVerificationEmail(email: string, token: string): Promise<boolean> {
-    const verificationUrl = `${process.env.APP_URL || 'http://localhost:3000'}/verify-email?token=${token}`;
+  async sendVerificationEmail(email: string, token: string, locale?: string): Promise<boolean> {
+    const verificationUrl = `${this.appUrl}/verify-email?token=${token}`;
+    const tpl = getEmailTemplate(locale || 'en', 'verification');
     return this.sendEmail({
       to: email,
-      subject: 'Verify your BabyMon account',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1>Welcome to BabyMon!</h1>
-          <p>Please verify your email address by clicking the button below:</p>
-          <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Verify Email</a>
-          <p>Or copy and paste this link into your browser:</p>
-          <p style="word-break: break-all;">${verificationUrl}</p>
-          <p>This link expires in 24 hours.</p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
-          <p style="color: #666; font-size: 12px;">If you didn't create this account, please ignore this email.</p>
-        </div>
-      `,
-      text: `Welcome to BabyMon! Please verify your email: ${verificationUrl}`,
+      subject: resolveSubject(tpl.subject, { verificationUrl }),
+      html: tpl.html({ verificationUrl }),
+      text: tpl.text({ verificationUrl }),
     });
   }
 
-  async sendPasswordResetEmail(email: string, token: string): Promise<boolean> {
-    const resetUrl = `${process.env.APP_URL || 'http://localhost:3000'}/reset-password?token=${token}`;
+  async sendPasswordResetEmail(email: string, token: string, locale?: string): Promise<boolean> {
+    const resetUrl = `${this.appUrl}/reset-password?token=${token}`;
+    const tpl = getEmailTemplate(locale || 'en', 'passwordReset');
     return this.sendEmail({
       to: email,
-      subject: 'Reset your BabyMon password',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1>Reset Your Password</h1>
-          <p>You requested to reset your password. Click the button below:</p>
-          <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #DC2626; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Reset Password</a>
-          <p>Or copy and paste this link into your browser:</p>
-          <p style="word-break: break-all;">${resetUrl}</p>
-          <p>This link expires in 1 hour.</p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
-          <p style="color: #666; font-size: 12px;">If you didn't request this, please ignore this email and your password will remain unchanged.</p>
-        </div>
-      `,
-      text: `Reset your password: ${resetUrl}`,
+      subject: resolveSubject(tpl.subject, { resetUrl }),
+      html: tpl.html({ resetUrl }),
+      text: tpl.text({ resetUrl }),
     });
   }
 
-  async sendLinkedAccountInvitation(inviterName: string, email: string, token: string): Promise<boolean> {
-    const acceptUrl = `${process.env.APP_URL || 'http://localhost:3000'}/accept-invitation?token=${token}`;
+  async sendLinkedAccountInvitation(inviterName: string, email: string, token: string, locale?: string): Promise<boolean> {
+    const acceptUrl = `${this.appUrl}/accept-invitation?token=${token}`;
+    const tpl = getEmailTemplate(locale || 'en', 'linkedAccountInvitation');
     return this.sendEmail({
       to: email,
-      subject: `${inviterName} wants to share their BabyMon with you`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1>Co-Parenting Invitation</h1>
-          <p><strong>${inviterName}</strong> has invited you to share their BabyMon journey.</p>
-          <p>Click below to accept:</p>
-          <a href="${acceptUrl}" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; margin: 16px 0;">Accept Invitation</a>
-          <p>Or copy and paste this link into your browser:</p>
-          <p style="word-break: break-all;">${acceptUrl}</p>
-          <p>This invitation expires in 7 days.</p>
-        </div>
-      `,
-      text: `${inviterName} invited you to share their BabyMon: ${acceptUrl}`,
+      subject: resolveSubject(tpl.subject, { inviterName, acceptUrl }),
+      html: tpl.html({ inviterName, acceptUrl }),
+      text: tpl.text({ inviterName, acceptUrl }),
     });
   }
 
-  async sendProposalNotification(email: string, babyMonName: string, proposalType: string): Promise<boolean> {
+  async sendProposalNotification(email: string, babyMonName: string, proposalType: string, locale?: string): Promise<boolean> {
+    const tpl = getEmailTemplate(locale || 'en', 'proposalNotification');
     return this.sendEmail({
       to: email,
-      subject: `New ${proposalType} proposal for ${babyMonName}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1>New Proposal</h1>
-          <p>A new <strong>${proposalType}</strong> proposal has been submitted for <strong>${babyMonName}</strong>.</p>
-          <p>Please review and respond in the BabyMon app.</p>
-        </div>
-      `,
-      text: `New ${proposalType} proposal for ${babyMonName}`,
+      subject: resolveSubject(tpl.subject, { babyMonName, proposalType }),
+      html: tpl.html({ babyMonName, proposalType }),
+      text: tpl.text({ babyMonName, proposalType }),
     });
   }
 }

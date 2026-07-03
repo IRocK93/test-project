@@ -1,9 +1,11 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { BadgesService } from '../badges/badges.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AccessControlService } from '../common/access-control.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { buildHistoryDateFilter } from '../common/history-filter.helper';
 import { GrowthType } from '@prisma/client';
+import { ErrorCode } from '../common/enums/error-code.enum';
 
 // WHO Growth Standards (simplified - for 0-24 months)
 const WHO_STANDARDS = {
@@ -60,6 +62,7 @@ export class GrowthService {
     private prisma: PrismaService,
     private accessControl: AccessControlService,
     private subscriptionsService: SubscriptionsService,
+    private badgesService: BadgesService,
   ) {}
 
   async addGrowthRecord(
@@ -77,11 +80,11 @@ export class GrowthService {
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     if (babyMon.ownerUserId !== userId) {
-      throw new ForbiddenException('Only owner can add growth records');
+      throw new ForbiddenException({ message: 'Only owner can add growth records', code: ErrorCode.GROWTH_RECORD_UNAUTHORIZED });
     }
 
     // Convert units if needed
@@ -103,6 +106,13 @@ export class GrowthService {
         notes,
       },
     });
+
+    // Check & award badges (fire-and-forget)
+    try {
+      await this.badgesService.checkAndAwardBadges(babyMonId, userId);
+    } catch (err) {
+      this.logger.warn({ err }, 'Badge check failed (non-blocking)');
+    }
 
     return record;
   }
@@ -139,7 +149,7 @@ export class GrowthService {
     });
 
     if (records.length === 0) {
-      return { message: 'No growth records yet' };
+      return { latest: null, percentile: null, trend: null, totalRecords: 0 };
     }
 
     const latest = records[records.length - 1];
@@ -195,7 +205,7 @@ export class GrowthService {
     });
 
     if (!record) {
-      throw new NotFoundException('Growth record not found');
+      throw new NotFoundException({ message: 'Growth record not found', code: ErrorCode.GROWTH_RECORD_NOT_FOUND });
     }
 
     const babyMon = await this.prisma.babyMon.findFirst({
@@ -203,27 +213,27 @@ export class GrowthService {
     });
 
     if (babyMon?.ownerUserId !== userId) {
-      throw new ForbiddenException('Only owner can delete growth records');
+      throw new ForbiddenException({ message: 'Only owner can delete growth records', code: ErrorCode.GROWTH_RECORD_UNAUTHORIZED });
     }
 
     await this.prisma.growthRecord.delete({
       where: { id: recordId },
     });
 
-    return { message: 'Growth record deleted' };
+    return { success: true };
   }
 
   private async verifyAccess(babyMonId: string, userId: string) {
     const result = await this.accessControl.checkAccess(userId, babyMonId);
     if (!result.hasAccess) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.UNAUTHORIZED });
     }
   }
 
   private async verifyAccessWithBabyMon(babyMonId: string, userId: string) {
     const result = await this.accessControl.checkAccess(userId, babyMonId);
     if (!result.hasAccess) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.UNAUTHORIZED });
     }
 
     const babyMon = await this.prisma.babyMon.findFirst({
@@ -231,7 +241,7 @@ export class GrowthService {
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     return babyMon;

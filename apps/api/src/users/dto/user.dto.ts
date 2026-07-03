@@ -4,14 +4,14 @@ import { ApiProperty } from '@nestjs/swagger';
 export class UpdateUserDto {
   @ApiProperty({ example: 'user@example.com', required: false })
   @IsOptional()
-  @IsEmail({}, { message: 'Please enter a valid email address' })
+  @IsEmail()
   email?: string;
 
   @ApiProperty({ example: 'John Doe', required: false })
   @IsOptional()
   @IsString()
   @MinLength(1)
-  @MaxLength(100, { message: 'Name must not exceed 100 characters' })
+  @MaxLength(100)
   name?: string;
 
   @ApiProperty({ example: '+1234567890', required: false })
@@ -22,7 +22,7 @@ export class UpdateUserDto {
   @ApiProperty({ example: 'en', required: false, description: 'ISO 639-1 language code (e.g., en, es, fr)' })
   @IsOptional()
   @IsString()
-  @Matches(/^[a-z]{2}(-[A-Z]{2})?$/, { message: 'Locale must be a valid ISO language code (e.g., en, en-US)' })
+  @Matches(/^[a-z]{2}(-[A-Z]{2})?$/)
   locale?: string;
 }
 

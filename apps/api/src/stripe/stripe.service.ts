@@ -1,18 +1,24 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import Stripe from 'stripe';
 
 @Injectable()
 export class StripeService {
   private readonly logger = new Logger(StripeService.name);
   private stripe: Stripe;
+  private readonly webhookSecret: string | undefined;
+  private readonly pricePremiumMonthly: string | undefined;
+  private readonly pricePremiumYearly: string | undefined;
 
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
+    private configService: ConfigService,
   ) {
-    const apiKey = process.env.STRIPE_SECRET_KEY;
+    const apiKey = this.configService.get('stripe.secretKey') as string | undefined;
     if (apiKey) {
       this.stripe = new Stripe(apiKey, {
         apiVersion: '2023-10-16',
@@ -20,6 +26,9 @@ export class StripeService {
     } else {
       this.logger.warn('Stripe API key not configured - Stripe features disabled');
     }
+    this.webhookSecret = this.configService.get('stripe.webhookSecret') as string | undefined;
+    this.pricePremiumMonthly = this.configService.get('stripe.pricePremiumMonthly') as string | undefined;
+    this.pricePremiumYearly = this.configService.get('stripe.pricePremiumYearly') as string | undefined;
   }
 
   isConfigured(): boolean {
@@ -28,7 +37,7 @@ export class StripeService {
 
   async createCustomer(userId: string, email: string, name?: string) {
     if (!this.stripe) {
-      throw new BadRequestException('Stripe is not configured');
+      throw new BadRequestException({ message: 'Stripe is not configured', code: ErrorCode.STRIPE_NOT_CONFIGURED });
     }
 
     const customer = await this.stripe.customers.create({
@@ -49,7 +58,7 @@ export class StripeService {
     cancelUrl: string,
   ) {
     if (!this.stripe) {
-      throw new BadRequestException('Stripe is not configured');
+      throw new BadRequestException({ message: 'Stripe is not configured', code: ErrorCode.STRIPE_NOT_CONFIGURED });
     }
 
     // Get or create customer
@@ -92,7 +101,7 @@ export class StripeService {
 
   async createPortalSession(userId: string, returnUrl: string) {
     if (!this.stripe) {
-      throw new BadRequestException('Stripe is not configured');
+      throw new BadRequestException({ message: 'Stripe is not configured', code: ErrorCode.STRIPE_NOT_CONFIGURED });
     }
 
     const subscription = await this.prisma.subscription.findFirst({
@@ -100,7 +109,7 @@ export class StripeService {
     });
 
     if (!subscription?.stripeCustomerId) {
-      throw new BadRequestException('No subscription found');
+      throw new BadRequestException({ message: 'No subscription found', code: ErrorCode.STRIPE_SUBSCRIPTION_NOT_FOUND });
     }
 
     const session = await this.stripe.billingPortal.sessions.create({
@@ -116,12 +125,11 @@ export class StripeService {
     signature: string,
   ): Promise<{ received: boolean }> {
     if (!this.stripe) {
-      throw new BadRequestException('Stripe is not configured');
+      throw new BadRequestException({ message: 'Stripe is not configured', code: ErrorCode.STRIPE_NOT_CONFIGURED });
     }
 
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      throw new BadRequestException('Stripe webhook secret not configured');
+    if (!this.webhookSecret) {
+      throw new BadRequestException({ message: 'Stripe webhook secret not configured', code: ErrorCode.STRIPE_NOT_CONFIGURED });
     }
 
     let event: Stripe.Event;
@@ -130,11 +138,11 @@ export class StripeService {
       event = this.stripe.webhooks.constructEvent(
         payload,
         signature,
-        webhookSecret,
+        this.webhookSecret,
       );
     } catch (err: any) {
       this.logger.error(`Webhook signature verification failed: ${err.message}`);
-      throw new BadRequestException(`Webhook signature verification failed`);
+      throw new BadRequestException({ message: 'Webhook signature verification failed', code: ErrorCode.STRIPE_WEBHOOK_INVALID });
     }
 
     // Check if event already processed
@@ -283,10 +291,10 @@ export class StripeService {
       // Look up user and send push notification
       const subscription = await this.prisma.subscription.findFirst({
         where: { stripeSubscriptionId: subId },
-        select: { userId: true },
+        select: { userId: true, user: { select: { locale: true } } },
       });
       if (subscription?.userId) {
-        this.notifications.notifyPaymentFailed(subscription.userId, attemptCount)
+        this.notifications.notifyPaymentFailed(subscription.userId, attemptCount, subscription.user.locale)
           .catch((err) => this.logger.warn({ err }, 'Failed to send payment failure notification'));
       }
     }
@@ -294,8 +302,8 @@ export class StripeService {
 
   private getTierFromPriceId(priceId: string): 'FREE' | 'PREMIUM' {
     const premiumPriceIds = [
-      process.env.STRIPE_PRICE_PREMIUM_MONTHLY,
-      process.env.STRIPE_PRICE_PREMIUM_YEARLY,
+      this.pricePremiumMonthly,
+      this.pricePremiumYearly,
     ];
 
     if (premiumPriceIds.includes(priceId)) {
@@ -311,11 +319,11 @@ export class StripeService {
     });
 
     if (!subscription?.stripeSubscriptionId) {
-      throw new BadRequestException('No active subscription found');
+      throw new BadRequestException({ message: 'No active subscription found', code: ErrorCode.STRIPE_SUBSCRIPTION_NOT_FOUND });
     }
 
     if (!this.stripe) {
-      throw new BadRequestException('Stripe is not configured');
+      throw new BadRequestException({ message: 'Stripe is not configured', code: ErrorCode.STRIPE_NOT_CONFIGURED });
     }
 
     await this.stripe.subscriptions.update(subscription.stripeSubscriptionId, {
@@ -327,6 +335,6 @@ export class StripeService {
       data: { cancelAtPeriodEnd: true },
     });
 
-    return { message: 'Subscription will be cancelled at period end' };
+    return { success: true };
   }
 }

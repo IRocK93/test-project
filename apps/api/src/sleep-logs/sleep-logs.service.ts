@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { BadgesService } from '../badges/badges.service';
 import { XpService } from '../xp/xp.service';
@@ -7,6 +7,7 @@ import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { CreateSleepLogDto, UpdateSleepLogDto } from './dto/sleep-log.dto';
 import { buildHistoryDateFilter } from '../common/history-filter.helper';
 import { trackDailyActivity } from '../common/daily-activity.helper';
+import { ErrorCode } from '../common/enums/error-code.enum';
 
 @Injectable()
 export class SleepLogsService {
@@ -24,7 +25,7 @@ export class SleepLogsService {
     });
 
     if (!babyMon || babyMon.deletedAt) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     await this.accessControl.checkAccess(userId, babymonId);
@@ -102,7 +103,7 @@ export class SleepLogsService {
     });
 
     if (!sleepLog || sleepLog.deletedAt) {
-      throw new NotFoundException('Sleep log not found');
+      throw new NotFoundException({ message: 'Sleep log not found', code: ErrorCode.SLEEP_LOG_NOT_FOUND });
     }
 
     await this.accessControl.checkAccess(sleepLog.babymonId, userId);
@@ -116,7 +117,7 @@ export class SleepLogsService {
     });
 
     if (!sleepLog || sleepLog.deletedAt) {
-      throw new NotFoundException('Sleep log not found');
+      throw new NotFoundException({ message: 'Sleep log not found', code: ErrorCode.SLEEP_LOG_NOT_FOUND });
     }
 
     await this.accessControl.checkAccess(sleepLog.babymonId, userId);
@@ -140,7 +141,7 @@ export class SleepLogsService {
     });
 
     if (!sleepLog || sleepLog.deletedAt) {
-      throw new NotFoundException('Sleep log not found');
+      throw new NotFoundException({ message: 'Sleep log not found', code: ErrorCode.SLEEP_LOG_NOT_FOUND });
     }
 
     await this.accessControl.checkAccess(sleepLog.babymonId, userId);

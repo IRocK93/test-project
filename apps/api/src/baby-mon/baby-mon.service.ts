@@ -11,6 +11,7 @@ import { StageContentService } from '../stage-content/stage-content.service';
 import { xpForNextLevel, getLevelName } from '../xp/xp.service';
 import { LimitReachedException } from '../common/exceptions/business.exception';
 import { buildHistoryDateFilter } from '../common/history-filter.helper';
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class BabyMonService {
@@ -94,7 +95,7 @@ export class BabyMonService {
   }
 
   async createBatch(userId: string, dtos: CreateBabyMonDto[]) {
-    const siblingGroupId = require('crypto').randomUUID();
+    const siblingGroupId = randomUUID();
     const results = [];
     for (const dto of dtos) {
       const babyMon = await this.create(userId, dto);
@@ -117,7 +118,7 @@ export class BabyMonService {
       data: { babymonId, actorUserId: userId, eventType: 'BABYMON_GRADUATED', payloadJson: JSON.stringify({ name: babyMon.name }) },
     });
 
-    return { message: 'BabyMon graduated and archived', babymonId };
+    return { success: true, babymonId };
   }
 
   async findAll(userId: string, skip: number = 0, take: number = 20) {
@@ -183,7 +184,7 @@ export class BabyMonService {
    * Aggregated dashboard endpoint — collapses 9 individual HTTP requests
    * into a single response for the mobile dashboard screen.
    */
-  async getDashboard(babymonId: string, userId: string) {
+  async getDashboard(babymonId: string, userId: string, locale?: string) {
     const access = await this.accessControl.checkAccess(userId, babymonId);
     if (!access.hasAccess) {
       throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
@@ -237,7 +238,7 @@ export class BabyMonService {
       gestationalAgeAtBirth: (babyMon as any).gestationalAgeAtBirth,
     });
     let stageContent = stageKey
-      ? await this.stageContentService.getByStageKey(stageKey, babymonId)
+      ? await this.stageContentService.getByStageKey(stageKey, babymonId, locale)
       : null;
 
     // Personalize {name} placeholders (matching StageContentService.getForBabyMon)

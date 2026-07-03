@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ErrorCode } from '../common/enums/error-code.enum';
 
 @Injectable()
 export class ExportService {
@@ -14,7 +15,7 @@ export class ExportService {
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
     if (babyMon.ownerUserId !== userId) {
       const linked = await this.prisma.linkedAccount.findFirst({
@@ -25,7 +26,7 @@ export class ExportService {
           ],
         },
       });
-      if (!linked) throw new ForbiddenException('Access denied');
+      if (!linked) throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.UNAUTHORIZED });
     }
 
     const [milestones, feedLogs, healthRecords, growthRecords, badges] = await Promise.all([
@@ -137,7 +138,7 @@ export class ExportService {
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
     if (babyMon.ownerUserId !== userId) {
       const linked = await this.prisma.linkedAccount.findFirst({
@@ -148,7 +149,7 @@ export class ExportService {
           ],
         },
       });
-      if (!linked) throw new ForbiddenException('Access denied');
+      if (!linked) throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.UNAUTHORIZED });
     }
 
     // Traits is now a native PostgreSQL array

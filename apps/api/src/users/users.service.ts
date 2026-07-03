@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from '../s3/s3.service';
 import { UpdateUserDto, DeleteAccountDto } from './dto/user.dto';
 import { randomBytes } from 'crypto';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
@@ -80,7 +81,6 @@ export class UsersService {
     // OAuth-only users have no password — allow deletion without password check
     const isOAuthUser = !user.passwordHash;
     if (!isOAuthUser) {
-      const bcrypt = require('bcryptjs');
       const isValid = await bcrypt.compare(dto.password || '', user.passwordHash || '');
       if (!isValid) {
         throw new BadRequestException({ message: 'Invalid password', code: ErrorCode.INVALID_PASSWORD });
@@ -146,7 +146,7 @@ export class UsersService {
         },
       });
 
-      return { message: 'Account deleted successfully' };
+      return { success: true };
     });
 
     return result;

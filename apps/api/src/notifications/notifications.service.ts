@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { getNotificationStrings } from '../common/localized-strings';
 import * as admin from 'firebase-admin';
 
 export interface PushNotificationPayload {
@@ -13,12 +15,15 @@ export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
   private initialized = false;
 
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {
     this.initializeFirebase();
   }
 
   private initializeFirebase() {
-    const config = process.env.FIREBASE_CONFIG;
+    const config = this.configService.get('firebase.configJson') as string | undefined;
     if (config) {
       try {
         const serviceAccount = JSON.parse(config);
@@ -63,7 +68,7 @@ export class NotificationsService {
     }
 
     this.logger.log(`Device registered for user ${userId}: ${platform}`);
-    return { message: 'Device registered successfully' };
+    return { success: true };
   }
 
   async unregisterDevice(deviceToken: string) {
@@ -71,7 +76,7 @@ export class NotificationsService {
       where: { deviceToken },
     }).catch((err) => this.logger.warn({ err }, 'Device unregister failed (non-critical)'));
 
-    return { message: 'Device unregistered' };
+    return { success: true };
   }
 
   async sendPushNotification(userId: string, payload: PushNotificationPayload) {
@@ -81,12 +86,12 @@ export class NotificationsService {
 
     if (devices.length === 0) {
       this.logger.warn(`No devices found for user ${userId}`);
-      return { message: 'No devices found' };
+      return { sent: 0, failed: 0 };
     }
 
     if (!this.initialized) {
       this.logger.warn(`Push notification not sent (disabled): ${payload.title}`);
-      return { message: 'Push notifications not configured' };
+      return { sent: 0, failed: 0 };
     }
 
     const results = await Promise.allSettled(
@@ -118,68 +123,76 @@ export class NotificationsService {
     return { sent: successful, failed: devices.length - successful };
   }
 
-  async notifyMilestoneAdded(babymonId: string, milestoneTitle: string) {
+  async notifyMilestoneAdded(babymonId: string, milestoneTitle: string, locale?: string) {
     const babyMon = await this.prisma.babyMon.findUnique({
       where: { id: babymonId },
     });
 
     if (babyMon?.ownerUserId) {
+      const strings = getNotificationStrings(locale || 'en');
+      const ns = strings.milestoneAdded;
       await this.sendPushNotification(babyMon.ownerUserId, {
-        title: 'New Milestone Added!',
-        body: `${babyMon.name}: ${milestoneTitle}`,
+        title: ns.title,
+        body: ns.body(babyMon.name, milestoneTitle),
         data: { babymonId, type: 'milestone' },
       });
     }
   }
 
-  async notifyBadgeUnlocked(babymonId: string, badgeName: string) {
+  async notifyBadgeUnlocked(babymonId: string, badgeName: string, locale?: string) {
     const babyMon = await this.prisma.babyMon.findUnique({
       where: { id: babymonId },
     });
 
     if (babyMon?.ownerUserId) {
+      const strings = getNotificationStrings(locale || 'en');
+      const ns = strings.badgeUnlocked;
       await this.sendPushNotification(babyMon.ownerUserId, {
-        title: 'Badge Unlocked!',
-        body: `${babyMon.name} earned: ${badgeName}`,
+        title: ns.title,
+        body: ns.body(babyMon.name, badgeName),
         data: { babymonId, type: 'badge' },
       });
     }
   }
 
-  async notifyGrowthRecorded(babymonId: string, type: string) {
+  async notifyGrowthRecorded(babymonId: string, type: string, locale?: string) {
     const babyMon = await this.prisma.babyMon.findUnique({
       where: { id: babymonId },
     });
 
     if (babyMon?.ownerUserId) {
+      const strings = getNotificationStrings(locale || 'en');
+      const ns = strings.growthRecorded;
       await this.sendPushNotification(babyMon.ownerUserId, {
-        title: 'Growth Recorded',
-        body: `${type} measurement added for ${babyMon.name}`,
+        title: ns.title,
+        body: ns.body(babyMon.name, type),
         data: { babymonId, type: 'growth' },
       });
     }
   }
 
-  async notifyProposalReceived(babymonId: string, proposalType: string) {
+  async notifyProposalReceived(babymonId: string, proposalType: string, locale?: string) {
     const babyMon = await this.prisma.babyMon.findUnique({
       where: { id: babymonId },
     });
 
     if (babyMon?.ownerUserId) {
+      const strings = getNotificationStrings(locale || 'en');
+      const ns = strings.proposalReceived;
       await this.sendPushNotification(babyMon.ownerUserId, {
-        title: 'New Proposal',
-        body: `A new ${proposalType} proposal needs your attention`,
+        title: ns.title,
+        body: ns.body(proposalType),
         data: { babymonId, type: 'proposal' },
       });
     }
   }
 
-  async notifyPaymentFailed(userId: string, attemptCount: number) {
+  async notifyPaymentFailed(userId: string, attemptCount: number, locale?: string) {
+    const strings = getNotificationStrings(locale || 'en');
+    const ns = strings.paymentFailed;
     await this.sendPushNotification(userId, {
-      title: 'Payment Failed',
-      body: attemptCount >= 3
-        ? 'Your subscription payment has failed multiple times. Please update your payment method.'
-        : 'There was an issue processing your subscription payment.',
+      title: ns.title,
+      body: attemptCount >= 3 ? ns.bodyMultiple : ns.bodySingle,
       data: { type: 'payment_failed', attemptCount: attemptCount.toString() },
     });
   }

@@ -8,7 +8,6 @@ import { ConfigService } from '@nestjs/config';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let prisma: any;
 
   const mockPrisma = {
     user: {
@@ -45,12 +44,11 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: { sign: jest.fn() } },
         { provide: SubscriptionsService, useValue: {} },
         { provide: MailService, useValue: mockMailService },
-        { provide: ConfigService, useValue: { get: jest.fn((key: string) => key === 'TRIAL_DAYS' ? '14' : undefined) } },
+        { provide: ConfigService, useValue: { get: jest.fn((key: string) => key === 'trialDays' ? 14 : undefined) } },
       ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    prisma = module.get(PrismaService);
     jest.clearAllMocks();
   });
 

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
 /**
@@ -18,13 +19,13 @@ export class CryptoService {
   private readonly key: Buffer | null;
   private readonly ivLength = 12; // GCM recommended IV length
 
-  constructor() {
-    const keyHex = process.env.CRYPTO_KEY;
+  constructor(private configService: ConfigService) {
+    const keyHex = this.configService.get<string>('cryptoKey');
     if (keyHex && keyHex.length === 64) {
       this.key = Buffer.from(keyHex, 'hex');
     } else {
       this.key = null;
-      if (process.env.NODE_ENV === 'production') {
+      if (this.configService.get<string>('nodeEnv') === 'production') {
         this.logger.error('CRYPTO_KEY not configured — field encryption disabled in PRODUCTION!');
       } else {
         this.logger.warn('CRYPTO_KEY not set — field encryption disabled (dev mode)');

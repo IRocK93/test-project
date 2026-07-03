@@ -1,8 +1,7 @@
-import { Controller, Get, UseGuards, HttpException, HttpStatus, Res, Req } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Res, Req } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { TierGuard } from './tier.guard';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import { Response, Request } from 'express';
 import * as https from 'https';
 import * as http from 'http';
@@ -22,7 +21,7 @@ export class ModelManifestController {
 
     if (!modelUrl || modelUrl === OLD_STUB_URL) {
       throw new HttpException(
-        { statusCode: HttpStatus.SERVICE_UNAVAILABLE, message: 'AI model is not configured.', error: 'Model Not Configured' },
+        { statusCode: HttpStatus.SERVICE_UNAVAILABLE, message: 'AI model is not configured.', code: ErrorCode.MODEL_NOT_CONFIGURED },
         HttpStatus.SERVICE_UNAVAILABLE,
       );
     }
@@ -50,7 +49,7 @@ export class ModelManifestController {
     const modelUrl = this.config.get<string>('companion.modelUrl');
     if (!modelUrl || modelUrl === OLD_STUB_URL) {
       throw new HttpException(
-        { statusCode: HttpStatus.SERVICE_UNAVAILABLE, message: 'AI model is not configured.' },
+        { statusCode: HttpStatus.SERVICE_UNAVAILABLE, message: 'AI model is not configured.', code: ErrorCode.MODEL_NOT_CONFIGURED },
         HttpStatus.SERVICE_UNAVAILABLE,
       );
     }
@@ -99,8 +98,8 @@ export class ModelManifestController {
             finalRes.pipe(res);
           });
 
-          redirectReq.on('error', (err) => {
-            if (!res.headersSent) res.status(502).json({ message: 'Upstream CDN unreachable.' });
+          redirectReq.on('error', (_err) => {
+            if (!res.headersSent) res.status(502).json({ message: 'Upstream CDN unreachable.', code: ErrorCode.MODEL_DOWNLOAD_FAILED });
           });
           redirectReq.end();
           return;
@@ -115,8 +114,8 @@ export class ModelManifestController {
       proxyRes.pipe(res);
     });
 
-    proxyReq.on('error', (err) => {
-      if (!res.headersSent) res.status(502).json({ message: 'Model server unreachable.' });
+    proxyReq.on('error', (_err) => {
+      if (!res.headersSent) res.status(502).json({ message: 'Model server unreachable.', code: ErrorCode.MODEL_DOWNLOAD_FAILED });
     });
 
     proxyReq.end();

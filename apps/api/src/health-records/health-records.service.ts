@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { ErrorCode } from '../common/enums/error-code.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { isWithinUndoWindow } from '../common/undo-window.helper';
@@ -10,6 +10,7 @@ import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { buildHistoryDateFilter } from '../common/history-filter.helper';
 import { trackDailyActivity } from '../common/daily-activity.helper';
 import { CreateHealthRecordDto, UpdateHealthRecordDto } from './dto/health-record.dto';
+import { validateHealthRecordValue } from '../common/health-value-keys';
 
 @Injectable()
 export class HealthRecordsService {
@@ -28,6 +29,12 @@ export class HealthRecordsService {
 
     const babyMon = await this.prisma.babyMon.findFirst({ where: { id: babymonId, deletedAt: null } });
     if (!babyMon) throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
+
+    try {
+      validateHealthRecordValue(dto.category, dto.value, dto.unit);
+    } catch (err: any) {
+      throw new BadRequestException({ message: err.message, code: ErrorCode.VALIDATION_ERROR });
+    }
 
     const record = await this.prisma.healthRecord.create({
       data: {
@@ -127,7 +134,7 @@ export class HealthRecordsService {
 
     // Idempotent: if already soft-deleted, return success
     if (record.deletedAt) {
-      return { message: 'Health record already deleted' };
+      return { success: true };
     }
 
     await this.verifyAccess(record.babymonId, userId);
@@ -145,7 +152,7 @@ export class HealthRecordsService {
       }).catch((err) => this.logger.warn?.({ err }, 'Proposal creation failed (non-critical)'));
     }
 
-    return { message: 'Health record deleted' };
+    return { success: true };
   }
 
   private async verifyAccess(babymonId: string, userId: string) {

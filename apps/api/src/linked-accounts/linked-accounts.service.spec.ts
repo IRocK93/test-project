@@ -7,8 +7,8 @@ import { NotFoundException, ForbiddenException, BadRequestException } from '@nes
 describe('LinkedAccountsService', () => {
   let service: LinkedAccountsService;
 
-  const userA = { id: 'user-a', name: 'Alice', email: 'alice@test.com' };
-  const userB = { id: 'user-b', name: 'Bob',   email: 'bob@test.com'   };
+  const userA = { id: 'user-a', name: 'Alice', email: 'alice@test.com', locale: 'en' };
+  const userB = { id: 'user-b', name: 'Bob',   email: 'bob@test.com',   locale: 'en' };
   const baby  = { id: 'baby-1', ownerUserId: userA.id, deletedAt: null };
 
   const mockPrisma = {
@@ -112,7 +112,7 @@ describe('LinkedAccountsService', () => {
       });
       await service.invitePartner(userA.id, baby.id, userB.email, 'PARENT');
       await new Promise((r) => setImmediate(r));
-      expect(mockMailService.sendLinkedAccountInvitation).toHaveBeenCalledWith(userA.name, userB.email, 'la-1');
+      expect(mockMailService.sendLinkedAccountInvitation).toHaveBeenCalledWith(userA.name, userB.email, 'la-1', userA.locale);
     });
   });
 

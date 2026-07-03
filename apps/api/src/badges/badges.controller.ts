@@ -10,8 +10,8 @@ export class BadgesController {
 
   @Get('definitions')
   @ApiOperation({ summary: 'Get all badge definitions with icon URLs' })
-  async getDefinitions() {
-    return this.badgesService.getBadgeDefinitions();
+  async getDefinitions(@Request() req: any) {
+    return this.badgesService.getBadgeDefinitions(req.resolvedLocale);
   }
 }
 

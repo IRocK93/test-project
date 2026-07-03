@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
 
 /**
  * GDPR-compliant data retention service.
@@ -15,9 +16,14 @@ import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class DataRetentionService {
   private readonly logger = new Logger(DataRetentionService.name);
-  private readonly retentionDays = parseInt(process.env.DATA_RETENTION_DAYS || '90', 10);
+  private readonly retentionDays: number;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {
+    this.retentionDays = this.configService.get<number>('dataRetentionDays') ?? 90;
+  }
 
   /**
    * Hard-deletes all soft-deleted records past the retention threshold.

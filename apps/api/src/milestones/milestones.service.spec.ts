@@ -9,7 +9,6 @@ import { NotFoundException } from '@nestjs/common';
 
 describe('MilestonesService', () => {
   let service: MilestonesService;
-  let prisma: PrismaService;
 
   const mockPrisma = {
     babyMon: {
@@ -60,7 +59,6 @@ describe('MilestonesService', () => {
     }).compile();
 
     service = module.get<MilestonesService>(MilestonesService);
-    prisma = module.get<PrismaService>(PrismaService) as any;
   });
 
   describe('create', () => {
@@ -122,7 +120,7 @@ describe('MilestonesService', () => {
   describe('delete', () => {
     it('should soft-delete a milestone', async () => {
       const result = await service.delete('m-1', 'user-1');
-      expect(result).toHaveProperty('message');
+      expect(result.success).toBe(true);
     });
   });
 });

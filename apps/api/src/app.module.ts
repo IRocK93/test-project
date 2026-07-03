@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuditService } from './common/audit.service';
 import { StageCalculatorService } from './common/stage-calculator.service';
 import configuration from './config/configuration';
+import { randomUUID } from 'crypto';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { BabyMonModule } from './baby-mon/baby-mon.module';
@@ -40,18 +41,24 @@ import { XpModule } from './xp/xp.module';
       isGlobal: true,
       load: [configuration],
     }),
-    LoggerModule.forRoot({
-      pinoHttp: {
-        level: process.env.LOG_LEVEL || 'info',
-        genReqId: () => require('crypto').randomUUID(),
-        autoLogging: true,
-      },
+    LoggerModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        pinoHttp: {
+          level: configService.get<string>('logLevel') || 'info',
+          genReqId: () => randomUUID(),
+          autoLogging: true,
+        },
+      }),
+      inject: [ConfigService],
     }),
-    ThrottlerModule.forRoot([
-      { name: 'AUTH', ttl: 60000, limit: 5 },
-      { name: 'SENSITIVE', ttl: 60000, limit: 10 },
-      { name: 'DEFAULT', ttl: parseInt(process.env.RATE_LIMIT_TTL || '60000', 10), limit: parseInt(process.env.RATE_LIMIT_MAX || '100', 10) },
-    ]),
+    ThrottlerModule.forRootAsync({
+      useFactory: (configService: ConfigService) => [
+        { name: 'AUTH', ttl: 60000, limit: 5 },
+        { name: 'SENSITIVE', ttl: 60000, limit: 10 },
+        { name: 'DEFAULT', ttl: configService.get('rateLimit.ttl') as number ?? 60000, limit: configService.get('rateLimit.max') as number ?? 100 },
+      ],
+      inject: [ConfigService],
+    }),
     PrismaModule,
     AuthModule,
     UsersModule,

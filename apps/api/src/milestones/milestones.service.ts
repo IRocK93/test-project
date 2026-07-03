@@ -169,7 +169,7 @@ export class MilestonesService {
 
     // Idempotent: if already soft-deleted, return success
     if (milestone.deletedAt) {
-      return { message: 'Milestone already deleted' };
+      return { success: true };
     }
 
     await this.verifyAccess(milestone.babymonId, userId);
@@ -203,7 +203,7 @@ export class MilestonesService {
       }).catch((err) => this.logger.warn?.({ err }, 'Proposal creation failed (non-critical)'));
     }
 
-    return { message: 'Milestone deleted successfully' };
+    return { success: true };
   }
 
   private async verifyAccess(babymonId: string, userId: string) {

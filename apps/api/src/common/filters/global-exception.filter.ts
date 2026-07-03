@@ -22,6 +22,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message: string = 'Internal server error';
     let code: string = ErrorCode.INTERNAL_ERROR;
+    let details: Array<{ field: string; code: string }> | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -41,6 +42,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           typeof explicitCode === 'string' && explicitCode.length > 0
             ? explicitCode
             : this.inferCodeFromStatus(status);
+        // Preserve field-level validation details if present
+        if (Array.isArray(resp.details)) {
+          details = resp.details as Array<{ field: string; code: string }>;
+        }
       }
     } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       status = this.mapPrismaError(exception);
@@ -56,13 +61,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       message,
     );
 
-    response.status(status).json({
+    const body: Record<string, unknown> = {
       statusCode: status,
       message,
       code,
       timestamp: new Date().toISOString(),
       path: request.url,
-    });
+    };
+
+    if (details) {
+      body.details = details;
+    }
+
+    response.status(status).json(body);
   }
 
   private inferCodeFromStatus(status: number): string {

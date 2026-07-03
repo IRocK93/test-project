@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException, ForbiddenException, NotFoundEx
 import { S3Service } from '../s3/s3.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MAX_UPLOAD_SIZE_BYTES } from '../common/app-constants';
+import { ErrorCode } from '../common/enums/error-code.enum';
 
 export interface UploadResult {
   id: string;
@@ -36,7 +37,7 @@ export class MediaService {
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     // Check if user is owner or linked
@@ -51,19 +52,19 @@ export class MediaService {
       });
 
       if (!linked) {
-        throw new ForbiddenException('Access denied');
+        throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.MEDIA_UNAUTHORIZED });
       }
     }
 
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime'];
     if (!allowedTypes.includes(contentType)) {
-      throw new BadRequestException('Invalid file type. Allowed: JPEG, PNG, GIF, WebP, MP4, MOV');
+      throw new BadRequestException({ message: 'Invalid file type. Allowed: JPEG, PNG, GIF, WebP, MP4, MOV', code: ErrorCode.MEDIA_INVALID_TYPE });
     }
 
     // Validate file size (max 50MB)
     if (fileSize > MAX_UPLOAD_SIZE_BYTES) {
-      throw new BadRequestException('File too large. Maximum size is 50MB');
+      throw new BadRequestException({ message: 'File too large. Maximum size is 50MB', code: ErrorCode.MEDIA_TOO_LARGE });
     }
 
     // Upload to S3
@@ -110,17 +111,17 @@ export class MediaService {
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     if (babyMon.ownerUserId !== userId) {
-      throw new ForbiddenException('Only the owner can upload media');
+      throw new ForbiddenException({ message: 'Only the owner can upload media', code: ErrorCode.MEDIA_UNAUTHORIZED });
     }
 
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/quicktime'];
     if (!allowedTypes.includes(contentType)) {
-      throw new BadRequestException('Invalid file type');
+      throw new BadRequestException({ message: 'Invalid file type', code: ErrorCode.MEDIA_INVALID_TYPE });
     }
 
     const key = `users/${userId}/babymons/${babyMonId}/${Date.now()}-${fileName}`;
@@ -138,7 +139,7 @@ export class MediaService {
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     if (babyMon.ownerUserId !== userId) {
@@ -152,7 +153,7 @@ export class MediaService {
       });
 
       if (!linked) {
-        throw new ForbiddenException('Access denied');
+        throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.MEDIA_UNAUTHORIZED });
       }
     }
 
@@ -171,12 +172,12 @@ export class MediaService {
     });
 
     if (!media) {
-      throw new NotFoundException('Media not found');
+      throw new NotFoundException({ message: 'Media not found', code: ErrorCode.MEDIA_NOT_FOUND });
     }
 
     // Only owner can delete
     if (media.babymon.ownerUserId !== userId) {
-      throw new ForbiddenException('Only the owner can delete media');
+      throw new ForbiddenException({ message: 'Only the owner can delete media', code: ErrorCode.MEDIA_UNAUTHORIZED });
     }
 
     // Delete from S3

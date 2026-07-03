@@ -1,14 +1,21 @@
-import { IsString, IsOptional, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsDateString, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export enum AllergySeverity {
+  MILD = 'mild',
+  MODERATE = 'moderate',
+  SEVERE = 'severe',
+  LIFE_THREATENING = 'lifeThreatening',
+}
 
 export class CreateAllergyDto {
   @ApiProperty({ example: 'Peanut', description: 'Allergy name' })
   @IsString()
   name: string;
 
-  @ApiProperty({ example: 'Mild', description: 'Severity level' })
-  @IsString()
-  severity: string;
+  @ApiProperty({ enum: AllergySeverity, example: AllergySeverity.MILD, description: 'Severity level (API key)' })
+  @IsEnum(AllergySeverity)
+  severity: AllergySeverity;
 
   @ApiPropertyOptional({ example: 'Peanuts, tree nuts', description: 'Comma-separated triggers' })
   @IsOptional()

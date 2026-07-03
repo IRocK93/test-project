@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { XpService, xpForNextLevel, getLevelName, isPhaseMilestone } from './xp.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -5,13 +6,21 @@ import { PrismaService } from '../prisma/prisma.service';
 describe('XpService', () => {
   let service: XpService;
 
+  const mockTx = {
+    babyMon: { findUnique: jest.fn(), update: jest.fn() },
+  };
   const mockPrisma = {
     babyMon: { findUnique: jest.fn(), update: jest.fn() },
+    $transaction: jest.fn((cb: (tx: typeof mockTx) => unknown) => cb(mockTx)),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [XpService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        XpService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: ConfigService, useValue: { get: jest.fn(() => undefined) } },
+      ],
     }).compile();
     service = module.get<XpService>(XpService);
     jest.clearAllMocks();
@@ -68,35 +77,35 @@ describe('XpService', () => {
 
   describe('checkAndProcessLevelUp', () => {
     it('should return leveledUp false when BabyMon not found', async () => {
-      mockPrisma.babyMon.findUnique.mockResolvedValue(null);
+      mockTx.babyMon.findUnique.mockResolvedValue(null);
       const result = await service.checkAndProcessLevelUp('babymon-1');
       expect(result.leveledUp).toBe(false);
     });
 
     it('should level up when XP exceeds threshold', async () => {
-      mockPrisma.babyMon.findUnique.mockResolvedValue({
+      mockTx.babyMon.findUnique.mockResolvedValue({
         currentXp: 60,
         currentStage: 1,
       });
-      mockPrisma.babyMon.update.mockResolvedValue({});
+      mockTx.babyMon.update.mockResolvedValue({});
 
       const result = await service.checkAndProcessLevelUp('babymon-1');
 
       expect(result.leveledUp).toBe(true);
       expect(result.newStage).toBe(2);
       expect(result.levelName).toBe('Tiny Gripper');
-      expect(mockPrisma.babyMon.update).toHaveBeenCalledWith({
+      expect(mockTx.babyMon.update).toHaveBeenCalledWith({
         where: { id: 'babymon-1' },
         data: { currentStage: 2, currentXp: 10 },
       });
     });
 
     it('should handle multi-hop level-ups', async () => {
-      mockPrisma.babyMon.findUnique.mockResolvedValue({
+      mockTx.babyMon.findUnique.mockResolvedValue({
         currentXp: 500,
         currentStage: 1,
       });
-      mockPrisma.babyMon.update.mockResolvedValue({});
+      mockTx.babyMon.update.mockResolvedValue({});
 
       const result = await service.checkAndProcessLevelUp('babymon-1');
 
@@ -105,11 +114,11 @@ describe('XpService', () => {
     });
 
     it('should detect phase milestones', async () => {
-      mockPrisma.babyMon.findUnique.mockResolvedValue({
+      mockTx.babyMon.findUnique.mockResolvedValue({
         currentXp: 400,
         currentStage: 1,
       });
-      mockPrisma.babyMon.update.mockResolvedValue({});
+      mockTx.babyMon.update.mockResolvedValue({});
 
       const result = await service.checkAndProcessLevelUp('babymon-1');
 
@@ -117,7 +126,7 @@ describe('XpService', () => {
     });
 
     it('should not level up when XP is insufficient', async () => {
-      mockPrisma.babyMon.findUnique.mockResolvedValue({
+      mockTx.babyMon.findUnique.mockResolvedValue({
         currentXp: 30,
         currentStage: 1,
       });
@@ -128,11 +137,11 @@ describe('XpService', () => {
     });
 
     it('should cap at level 50', async () => {
-      mockPrisma.babyMon.findUnique.mockResolvedValue({
+      mockTx.babyMon.findUnique.mockResolvedValue({
         currentXp: 99999,
         currentStage: 49,
       });
-      mockPrisma.babyMon.update.mockResolvedValue({});
+      mockTx.babyMon.update.mockResolvedValue({});
 
       const result = await service.checkAndProcessLevelUp('babymon-1');
 

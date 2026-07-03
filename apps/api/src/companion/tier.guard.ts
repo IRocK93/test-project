@@ -1,9 +1,14 @@
 import { Injectable, CanActivate, ExecutionContext, HttpException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class TierGuard implements CanActivate {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -11,7 +16,7 @@ export class TierGuard implements CanActivate {
     if (!userId) return false;
 
     // Dev bypass — set SKIP_TIER_GUARD=true in .env to skip subscription checks
-    if (process.env.SKIP_TIER_GUARD === 'true') {
+    if (this.configService.get<boolean>('skipTierGuard')) {
       return true;
     }
 
@@ -25,7 +30,7 @@ export class TierGuard implements CanActivate {
         {
           statusCode: 402,
           message: 'Premium tier required',
-          code: 'UPGRADE_REQUIRED',
+          code: ErrorCode.UPGRADE_REQUIRED,
         },
         402,
       );
@@ -48,7 +53,7 @@ export class TierGuard implements CanActivate {
       {
         statusCode: 402,
         message: 'Premium tier required. Upgrade to access expert guidance, adaptive routines, and milestone tracking.',
-        code: 'UPGRADE_REQUIRED',
+        code: ErrorCode.UPGRADE_REQUIRED,
       },
       402,
     );

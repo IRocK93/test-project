@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
 
 /**
@@ -9,9 +10,9 @@ import { PrismaClient } from '@prisma/client';
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
-  constructor() {
-    const dbUrl = process.env.DATABASE_URL || '';
-    const poolSize = process.env.DATABASE_POOL_SIZE || '5';
+  constructor(configService: ConfigService) {
+    const dbUrl = (configService.get('database.url') as string) || '';
+    const poolSize = (configService.get('database.poolSize') as number) ?? 5;
 
     // Append connection_limit if not already present in the URL
     const url = dbUrl.includes('connection_limit')

@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { BabyMonService } from './baby-mon.service';
@@ -7,11 +8,10 @@ import { AccessControlService } from '../common/access-control.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { CryptoService } from '../common/crypto.service';
 import { StageCalculatorService } from '../common/stage-calculator.service';
-import { LimitReachedException } from '../common/exceptions/business.exception';
+import { StageContentService } from '../stage-content/stage-content.service';
 
 describe('BabyMonService', () => {
   let service: BabyMonService;
-  let prisma: any;
 
   const mockPrisma = {
     babyMon: {
@@ -28,6 +28,10 @@ describe('BabyMonService', () => {
     badge: { findMany: jest.fn() },
     stageContent: { findFirst: jest.fn() },
     auditLog: { create: jest.fn() },
+    milestone: { count: jest.fn() },
+    feedLog: { count: jest.fn() },
+    healthRecord: { count: jest.fn() },
+    sleepLog: { count: jest.fn() },
   };
 
   const mockS3 = { deleteFile: jest.fn() };
@@ -38,10 +42,12 @@ describe('BabyMonService', () => {
   };
   const mockCrypto = { encrypt: jest.fn((v: string) => v), decrypt: jest.fn((v: string) => v) };
   const mockStageCalc = { calculateStage: jest.fn() };
+  const mockStageContent = { getByStageKey: jest.fn() };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+      { provide: ConfigService, useValue: { get: jest.fn(() => undefined) } },
         BabyMonService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: S3Service, useValue: mockS3 },
@@ -49,11 +55,11 @@ describe('BabyMonService', () => {
         { provide: SubscriptionsService, useValue: mockSubscriptions },
         { provide: CryptoService, useValue: mockCrypto },
         { provide: StageCalculatorService, useValue: mockStageCalc },
+        { provide: StageContentService, useValue: mockStageContent },
       ],
     }).compile();
 
     service = module.get<BabyMonService>(BabyMonService);
-    prisma = module.get(PrismaService);
     jest.clearAllMocks();
   });
 
@@ -106,20 +112,22 @@ describe('BabyMonService', () => {
     it('should return full aggregated dashboard data', async () => {
       mockAccessControl.checkAccess.mockResolvedValue({ hasAccess: true });
       mockPrisma.babyMon.findFirst.mockResolvedValue(mockBabyMon);
-      mockPrisma.babyMon.findUnique.mockResolvedValue({ currentXp: 55 });
+      mockPrisma.babyMon.findUnique.mockResolvedValue({ currentXp: 55, currentStage: 1 });
       mockPrisma.growthRecord.findMany.mockResolvedValue([
         { id: 'g1', type: 'WEIGHT', value: 7.5, unit: 'kg', measuredAt: new Date() },
         { id: 'g2', type: 'HEIGHT', value: 65, unit: 'cm', measuredAt: new Date() },
       ]);
       mockPrisma.allergy.findMany.mockResolvedValue([{ id: 'a1', name: 'Lactose', severity: 'MILD', triggers: 'Dairy' }]);
       mockPrisma.badge.findMany.mockResolvedValue([{ id: 'b1', badgeType: 'M01', name: 'First Milestone', icon: 'star', unlockedAt: new Date() }]);
-      mockPrisma.stageContent.findFirst.mockResolvedValue({ summaryText: 'Growing!', nurturingText: 'Nurture', encouragementText: 'Great!', stageKey: 'born_month_5', weekNumber: 20 });
+      mockStageContent.getByStageKey.mockResolvedValue({ summaryText: 'Growing!', nurturingText: 'Nurture', encouragementText: 'Great!', stageKey: 'born_month_5', weekNumber: 20 });
 
       const result = await service.getDashboard(babyMonId, userId);
 
       expect(result.babyMon.id).toBe(babyMonId);
       expect(result.babyMon.isOwner).toBe(true);
-      expect(result.evolution.currentXp).toBe(55);
+      // 55 XP at stage 1 → levels up to stage 2 with 5 XP remaining
+      expect(result.evolution.currentXp).toBe(5);
+      expect(result.evolution.currentStage).toBe(2);
       expect(result.growth.weight.value).toBe(7.5);
       expect(result.growth.height.value).toBe(65);
       expect(result.allergies).toHaveLength(1);
@@ -134,7 +142,7 @@ describe('BabyMonService', () => {
       mockPrisma.growthRecord.findMany.mockResolvedValue([]);
       mockPrisma.allergy.findMany.mockResolvedValue([]);
       mockPrisma.badge.findMany.mockResolvedValue([]);
-      mockPrisma.stageContent.findFirst.mockResolvedValue(null);
+      mockStageContent.getByStageKey.mockResolvedValue(null);
 
       const result = await service.getDashboard(babyMonId, userId);
       expect(result.stageContent).toBeNull();
@@ -160,7 +168,7 @@ describe('BabyMonService', () => {
       mockPrisma.growthRecord.findMany.mockResolvedValue([]);
       mockPrisma.allergy.findMany.mockResolvedValue([]);
       mockPrisma.badge.findMany.mockResolvedValue([]);
-      mockPrisma.stageContent.findFirst.mockResolvedValue(null);
+      mockStageContent.getByStageKey.mockResolvedValue(null);
       mockCrypto.decrypt.mockReturnValue('O+');
 
       const result = await service.getDashboard(babyMonId, userId);

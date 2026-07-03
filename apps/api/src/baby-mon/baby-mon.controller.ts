@@ -76,7 +76,7 @@ export class BabyMonController {
   @Get(':id/dashboard')
   @ApiOperation({ summary: 'Aggregated dashboard data — BabyMon, evolution, growth, allergies, badges, stage content' })
   async getDashboard(@Request() req: any, @Param('id') id: string) {
-    return this.babyMonService.getDashboard(id, req.user.id);
+    return this.babyMonService.getDashboard(id, req.user.id, req.resolvedLocale);
   }
 
   @Get(':id/stage')

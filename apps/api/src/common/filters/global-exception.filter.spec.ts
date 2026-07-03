@@ -60,7 +60,7 @@ describe('GlobalExceptionFilter', () => {
       expect.objectContaining({
         statusCode: 404,
         message: 'Not Found',
-        code: 'ERROR',
+        code: 'NOT_FOUND',
       }),
     );
   });
@@ -104,7 +104,7 @@ describe('GlobalExceptionFilter', () => {
   });
 
   it('should return 404 for Prisma not-found errors (P2025)', () => {
-    const { host, status, json } = createMockHost();
+    const { host, status } = createMockHost();
     const error = new Prisma.PrismaClientKnownRequestError('Record not found', {
       code: 'P2025',
       clientVersion: '5.0.0',

@@ -21,9 +21,15 @@ export interface AppConfig {
   jwt: {
     secret: string;
     fallbackDevSecret: string;
+    refreshExpiresInDays: number;
   };
 
   trialDays: number;
+
+  cryptoKey?: string;
+  dataRetentionDays: number;
+  sentryDsn?: string;
+  skipTierGuard: boolean;
 
   sendgrid: {
     apiKey: string | undefined;
@@ -59,6 +65,7 @@ export interface AppConfig {
 
   database: {
     poolSize: number;
+    url: string;
   };
 }
 
@@ -77,9 +84,15 @@ export default function configuration(): AppConfig {
     jwt: {
       secret: process.env.JWT_SECRET || '',
       fallbackDevSecret: process.env.JWT_DEV_SECRET || 'dev-secret-change-me',
+      refreshExpiresInDays: parseInt(process.env.JWT_REFRESH_EXPIRES_IN_DAYS || '7', 10),
     },
 
     trialDays: parseInt(process.env.TRIAL_DAYS || '14', 10),
+
+    cryptoKey: process.env.CRYPTO_KEY,
+    dataRetentionDays: parseInt(process.env.DATA_RETENTION_DAYS || '90', 10),
+    sentryDsn: process.env.SENTRY_DSN,
+    skipTierGuard: process.env.SKIP_TIER_GUARD === 'true',
 
     sendgrid: {
       apiKey: process.env.SENDGRID_API_KEY,
@@ -117,6 +130,7 @@ export default function configuration(): AppConfig {
 
   database: {
     poolSize: parseInt(process.env.DATABASE_POOL_SIZE || '5', 10),
+    url: process.env.DATABASE_URL || '',
   },
 };
 }

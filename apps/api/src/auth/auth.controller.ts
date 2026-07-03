@@ -60,12 +60,44 @@ export class AuthController {
     return this.authService.resetPassword(dto.token, dto.password);
   }
 
+  @Post('send-verification-email')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Throttle({ SENSITIVE: { limit: 3, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Resend verification email' })
+  async sendVerificationEmail(@CurrentUser('id') userId: string) {
+    return this.authService.sendVerificationEmail(userId);
+  }
+
   @Public()
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify email with token (POST — avoids token in URL logs)' })
   async verifyEmail(@Body('token') token: string) {
     return this.authService.verifyEmail(token);
+  }
+
+  @Post('check-verification')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @Throttle({ AUTH: { limit: 10, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Check if current user email is verified' })
+  async checkVerification(@CurrentUser('id') userId: string) {
+    return this.authService.checkVerification(userId);
+  }
+
+  /**
+   * Development-only: verifies a user by email without requiring the token.
+   * Disabled in production. Used when email delivery (SendGrid) is not configured.
+   */
+  @Public()
+  @Post('verify-email-dev')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '[DEV ONLY] Verify email directly — bypasses email token flow' })
+  async verifyEmailDev(@Body('email') email: string) {
+    return this.authService.verifyEmailDev(email);
   }
 
   @Get('profile')

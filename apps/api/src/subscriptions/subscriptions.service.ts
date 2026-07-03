@@ -1,11 +1,15 @@
 import { Injectable, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ErrorCode } from '../common/enums/error-code.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { TrialExpiredException } from '../common/exceptions/business.exception';
 
 @Injectable()
 export class SubscriptionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
 
   async getCurrentSubscription(userId: string) {
     const subscription = await this.prisma.subscription.findFirst({
@@ -71,7 +75,7 @@ export class SubscriptionsService {
   }
 
   async checkWriteAccess(userId: string) {
-    const { canWrite, reason } = await this.canWrite(userId);
+    const { canWrite } = await this.canWrite(userId);
     if (!canWrite) {
       throw new TrialExpiredException();
     }
@@ -121,7 +125,7 @@ export class SubscriptionsService {
 
   // Dev override for testing (only available in development)
   async devOverrideTrial(userId: string, days: number) {
-    if (process.env.NODE_ENV === 'production') {
+    if (this.configService.get<string>('nodeEnv') === 'production') {
       throw new ForbiddenException({ message: 'Dev override not available in production', code: ErrorCode.INVALID_OPERATION });
     }
 

@@ -1,4 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import {
   S3Client,
   PutObjectCommand,
@@ -7,22 +8,24 @@ import {
   PutObjectCommandInput,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { ErrorCode } from '../common/enums/error-code.enum';
 
 @Injectable()
 export class S3Service {
   private readonly logger = new Logger(S3Service.name);
   private s3Client: S3Client | null = null;
-  private bucketName: string;
+  private readonly bucketName: string;
+  private readonly region: string;
 
-  constructor() {
-    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-    const region = process.env.AWS_REGION || 'us-east-1';
-    this.bucketName = process.env.S3_BUCKET_NAME || 'babymon-media';
+  constructor(private configService: ConfigService) {
+    const accessKeyId = this.configService.get('aws.accessKeyId') as string | undefined;
+    const secretAccessKey = this.configService.get('aws.secretAccessKey') as string | undefined;
+    this.region = (this.configService.get('aws.region') as string) || 'us-east-1';
+    this.bucketName = (this.configService.get('aws.s3BucketName') as string) || 'babymon-media';
 
     if (accessKeyId && secretAccessKey) {
       this.s3Client = new S3Client({
-        region,
+        region: this.region,
         credentials: {
           accessKeyId,
           secretAccessKey,
@@ -46,7 +49,7 @@ export class S3Service {
     contentType: string,
   ): Promise<string> {
     if (!this.s3Client) {
-      throw new BadRequestException('S3 is not configured');
+      throw new BadRequestException({ message: 'S3 is not configured', code: ErrorCode.S3_NOT_CONFIGURED });
     }
 
     // Generate unique key
@@ -67,7 +70,7 @@ export class S3Service {
     await this.s3Client.send(new PutObjectCommand(params));
 
     // Return the S3 URL
-    return `https://${this.bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`;
+    return `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${key}`;
   }
 
   async getSignedUploadUrl(
@@ -77,7 +80,7 @@ export class S3Service {
     contentType: string,
   ): Promise<string> {
     if (!this.s3Client) {
-      throw new BadRequestException('S3 is not configured');
+      throw new BadRequestException({ message: 'S3 is not configured', code: ErrorCode.S3_NOT_CONFIGURED });
     }
 
     const key = `users/${userId}/babymons/${babyMonId}/${Date.now()}-${fileName}`;
@@ -96,12 +99,12 @@ export class S3Service {
 
   async getSignedDownloadUrl(key: string, userId: string, babyMonId: string): Promise<string> {
     if (!this.s3Client) {
-      throw new BadRequestException('S3 is not configured');
+      throw new BadRequestException({ message: 'S3 is not configured', code: ErrorCode.S3_NOT_CONFIGURED });
     }
 
     // Verify the key belongs to this user and baby-mon (path-based ACL)
     if (!key.startsWith(`users/${userId}/babymons/${babyMonId}/`)) {
-      throw new BadRequestException('Access denied');
+      throw new BadRequestException({ message: 'Access denied', code: ErrorCode.UNAUTHORIZED });
     }
 
     const command = new GetObjectCommand({
@@ -117,7 +120,7 @@ export class S3Service {
 
   async deleteFile(key: string): Promise<void> {
     if (!this.s3Client) {
-      throw new BadRequestException('S3 is not configured');
+      throw new BadRequestException({ message: 'S3 is not configured', code: ErrorCode.S3_NOT_CONFIGURED });
     }
 
     await this.s3Client.send(

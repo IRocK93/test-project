@@ -1,33 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StageCalculatorService } from '../common/stage-calculator.service';
-
-const REFLECTION_PROMPTS = [
-  'What small moment brought you joy today?',
-  'What are you most proud of today?',
-  'How did your baby make you smile today?',
-  'What felt like a win today, no matter how small?',
-  'What would you love to remember about this day?',
-  'How are you feeling right now, truly?',
-  'What made you grateful today?',
-];
-
-/// Converts a stageKey like "born_month_5" to a friendly name like "5 Months".
-function stageKeyToName(stageKey: string): string {
-  if (stageKey.startsWith('born_month_')) {
-    const m = parseInt(stageKey.replace('born_month_', ''));
-    return `${m} Month${m > 1 ? 's' : ''}`;
-  }
-  if (stageKey.startsWith('born_week_')) {
-    const w = parseInt(stageKey.replace('born_week_', ''));
-    return `Week ${w}`;
-  }
-  if (stageKey.startsWith('preg_week_')) {
-    const w = parseInt(stageKey.replace('preg_week_', ''));
-    return `Week ${w}`;
-  }
-  return stageKey.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-}
+import { ErrorCode } from '../common/enums/error-code.enum';
+import {
+  findStageContentByLocale,
+  findMilestoneExpectationsByLocale,
+} from '../common/locale-content.helper';
+import { getStageDefaults, getReflectionPrompt } from '../common/localized-strings';
 
 @Injectable()
 export class StageContentService {
@@ -36,76 +15,62 @@ export class StageContentService {
     private stageCalculator: StageCalculatorService,
   ) {}
 
-  async getByStageKey(stageKey: string, babyMonId?: string | null) {
-    // First try to find BabyMon-specific content (only if babyMonId provided)
-    let content = null;
-    if (babyMonId) {
-      content = await this.prisma.stageContent.findFirst({
-        where: { stageKey, babymonId: babyMonId },
-      });
-    }
-
-    // Fall back to system default content (babymonId IS NULL or SYSTEM_BABYMON_ID)
-    if (!content) {
-      content = await this.prisma.stageContent.findFirst({
-        where: {
-          stageKey,
-          OR: [
-            { babymonId: null },
-            { babymonId: '00000000-0000-0000-0000-000000000000' },
-          ],
-        },
-      });
-    }
+  async getByStageKey(stageKey: string, babyMonId?: string | null, locale?: string) {
+    const effectiveLocale = locale || 'en';
+    const content = await findStageContentByLocale(
+      this.prisma, stageKey, effectiveLocale, babyMonId,
+    );
 
     if (!content) {
-      // Return default content instead of throwing — allows empty DB to work
+      // Return locale-aware default content — allows empty DB to work
+      const defaults = getStageDefaults(effectiveLocale);
       return {
         id: 'default',
         stageKey,
         babymonId: babyMonId || null,
-        title: `${stageKeyToName(stageKey)} Insights`,
-        summaryText: `Your BabyMon is growing! Track feedings, sleep, and milestones for personalized stage content.`,
-        nurturingText: 'Keep tracking feedings, sleep, and milestones.',
-        encouragementText: 'You\'re doing great!',
+        title: defaults.stageTitle(stageKey),
+        summaryText: defaults.summaryText,
+        nurturingText: defaults.nurturingText,
+        encouragementText: defaults.encouragementText,
         expertTips: [],
         upcomingMilestone: null,
-        reflectionPrompt: REFLECTION_PROMPTS[
-          Math.floor(Date.now() / 86400000) % REFLECTION_PROMPTS.length
-        ],
+        reflectionPrompt: getReflectionPrompt(effectiveLocale),
       };
     }
 
-    // Enrich DB record with UI-required fields that the StageContent model
-    // does not store (title, expertTips) so the frontend always has them.
+    // Enrich DB record with UI-required fields so the frontend always has them.
+    const defaults = getStageDefaults(effectiveLocale);
     return {
       ...content,
-      title: content.title ?? `${stageKeyToName(stageKey)} Insights`,
-      expertTips: content.expertTips ?? [],
+      title: defaults.stageTitle(stageKey),
+      expertTips: [],
     };
   }
 
-  async getForBabyMon(babyMonId: string, babyMonName?: string, traits?: string[]) {
+  async getForBabyMon(babyMonId: string, locale?: string, babyMonName?: string, _traits?: string[]) {
+    const effectiveLocale = locale || 'en';
+
     try {
     const babyMon = await this.prisma.babyMon.findUnique({
       where: { id: babyMonId },
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     // Calculate stage key using shared service (single source of truth)
     const stageKey = StageCalculatorService.computeStageKey(babyMon);
 
-    const content = await this.getByStageKey(stageKey, babyMonId);
+    const content = await this.getByStageKey(stageKey, babyMonId, effectiveLocale);
 
-    // Fetch upcoming milestone for this stage
+    // Fetch upcoming milestone for this stage (locale-aware)
     const upcomingMilestone = stageKey
-      ? await this.prisma.milestoneExpectation.findFirst({
-          where: { stageKey, status: 'EXPECTED' },
-          orderBy: { domain: 'asc' },
-        })
+      ? (
+          await findMilestoneExpectationsByLocale(
+            this.prisma, stageKey, effectiveLocale, { status: 'EXPECTED', take: 1 },
+          )
+        )[0] ?? null
       : null;
 
     // Personalize content
@@ -124,9 +89,7 @@ export class StageContentService {
             xpReward: upcomingMilestone.xpReward,
           }
         : null,
-      reflectionPrompt: REFLECTION_PROMPTS[
-        Math.floor(Date.now() / 86400000) % REFLECTION_PROMPTS.length
-      ],
+      reflectionPrompt: getReflectionPrompt(effectiveLocale),
     };
 
     return personalizedContent;

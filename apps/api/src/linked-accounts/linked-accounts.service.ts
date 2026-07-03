@@ -262,7 +262,7 @@ export class LinkedAccountsService {
 
     if (link.status === 'PENDING') {
       await this.prisma.linkedAccount.delete({ where: { id: linkId } });
-      return { message: 'Invitation cancelled' };
+      return { success: true };
     }
 
     // LINKED: revoke the partner's access to THIS baby only.
@@ -279,10 +279,10 @@ export class LinkedAccountsService {
     });
     if (remaining === 0) {
       await this.prisma.linkedAccount.delete({ where: { id: linkId } });
-      return { message: 'Link removed successfully' };
+      return { success: true };
     }
 
-    return { message: 'Partner access revoked for this baby' };
+    return { success: true };
   }
 
   // ── Direct BabyMon linking (existing standalone endpoint) ───────────────
@@ -313,10 +313,11 @@ export class LinkedAccountsService {
   private async sendInvitationEmail(inviterId: string, inviteeEmail: string, invitationId: string) {
     const inviter = await this.prisma.user.findUnique({
       where: { id: inviterId },
-      select: { name: true, email: true },
+      select: { name: true, email: true, locale: true },
     });
     const inviterName = inviter?.name || inviter?.email || 'Someone';
-    await this.mailService.sendLinkedAccountInvitation(inviterName, inviteeEmail, invitationId);
+    // Use inviter's locale as the best available language hint for the invitation email
+    await this.mailService.sendLinkedAccountInvitation(inviterName, inviteeEmail, invitationId, inviter?.locale ?? 'en');
   }
 
   /**

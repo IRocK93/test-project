@@ -1,5 +1,7 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import { SubscriptionsService } from './subscriptions.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -9,7 +11,10 @@ import { Public } from '../common/decorators/public.decorator';
 @ApiTags('subscriptions')
 @Controller('subscriptions')
 export class SubscriptionsController {
-  constructor(private subscriptionsService: SubscriptionsService) {}
+  constructor(
+    private subscriptionsService: SubscriptionsService,
+    private configService: ConfigService,
+  ) {}
 
   @Get('current')
   @UseGuards(JwtAuthGuard)
@@ -45,7 +50,7 @@ export class SubscriptionsController {
           tier: 'PREMIUM',
           price: 4.99,
           period: 'month',
-          stripePriceId: process.env.STRIPE_PRICE_PREMIUM_MONTHLY || null,
+          stripePriceId: (this.configService.get('stripe.pricePremiumMonthly') as string) || null,
           features: [
             'AI-powered stage content & tips',
             'Unlimited history',
@@ -65,8 +70,8 @@ export class SubscriptionsController {
   @ApiOperation({ summary: 'Dev only: Override trial period (disabled in production)' })
   async devOverrideTrial(@Body() dto: DevOverrideTrialDto) {
     // Only allow in development
-    if (process.env.NODE_ENV === 'production') {
-      return { message: 'Not available in production' };
+    if (this.configService.get<string>('nodeEnv') === 'production') {
+      throw new BadRequestException({ message: 'Not available', code: ErrorCode.ADMIN_UNAUTHORIZED });
     }
     return this.subscriptionsService.devOverrideTrial(dto.userId, dto.days);
   }

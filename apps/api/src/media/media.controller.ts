@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Delete, Body, Param, UseGuards, Query, BadRequestException } from '@nestjs/common';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { MediaService } from './media.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -24,7 +25,7 @@ export class MediaController {
     @Body() dto: UploadMediaDto,
   ) {
     if (!dto.fileData) {
-      throw new BadRequestException('No file data provided');
+      throw new BadRequestException({ message: 'No file data provided', code: ErrorCode.VALIDATION_ERROR });
     }
 
     const buffer = Buffer.from(dto.fileData, 'base64');
@@ -72,7 +73,7 @@ export class MediaController {
     @Param('id') id: string,
   ) {
     await this.mediaService.deleteMedia(id, userId);
-    return { message: 'Media deleted successfully' };
+    return { success: true };
   }
 
   // ── /photos alias routes (backward compatibility with Flutter client) ──
@@ -85,7 +86,7 @@ export class MediaController {
     @Param('babyMonId') babyMonId: string,
     @Body() dto: UploadMediaDto,
   ) {
-    if (!dto.fileData) throw new BadRequestException('No file data provided');
+    if (!dto.fileData) throw new BadRequestException({ message: 'No file data provided', code: ErrorCode.VALIDATION_ERROR });
     const buffer = Buffer.from(dto.fileData, 'base64');
     return this.mediaService.uploadMedia(userId, babyMonId, dto.fileName || 'upload', buffer, dto.fileType || 'image/jpeg', dto.fileSize || buffer.length);
   }
@@ -107,6 +108,6 @@ export class MediaController {
     @Param('id') id: string,
   ) {
     await this.mediaService.deleteMedia(id, userId);
-    return { message: 'Photo deleted successfully' };
+    return { success: true };
   }
 }

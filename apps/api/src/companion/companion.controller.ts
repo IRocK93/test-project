@@ -4,6 +4,7 @@ import { CompanionService } from './companion.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { TierGuard } from './tier.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { CurrentLocale } from '../common/decorators/current-locale.decorator';
 import { PaginationDto } from '../common/dto/pagination.dto';
 
 @ApiTags('companion')
@@ -15,8 +16,13 @@ export class CompanionController {
 
   @Get('daily-brief')
   @ApiOperation({ summary: 'Get personalized daily brief for PREMIUM subscribers' })
-  async getDailyBrief(@Param('babyMonId') babyMonId: string) {
-    return this.companionService.getDailyBrief(babyMonId);
+  async getDailyBrief(
+    @Param('babyMonId') babyMonId: string,
+    @Query('locale') locale?: string,
+    @CurrentLocale() resolvedLocale?: string,
+  ) {
+    const effectiveLocale = locale || resolvedLocale || 'en';
+    return this.companionService.getDailyBrief(babyMonId, effectiveLocale);
   }
 
   @Get('routine')
@@ -24,8 +30,11 @@ export class CompanionController {
   async getRoutine(
     @Param('babyMonId') babyMonId: string,
     @CurrentUser('id') userId: string,
+    @Query('locale') locale?: string,
+    @CurrentLocale() resolvedLocale?: string,
   ) {
-    return this.companionService.getRoutine(babyMonId, userId);
+    const effectiveLocale = locale || resolvedLocale || 'en';
+    return this.companionService.getRoutine(babyMonId, userId, effectiveLocale);
   }
 
   @Post('routine/:stepLabel/complete')
@@ -51,8 +60,11 @@ export class CompanionController {
   async getMilestones(
     @Param('babyMonId') babyMonId: string,
     @Query('status') status?: string,
+    @Query('locale') locale?: string,
+    @CurrentLocale() resolvedLocale?: string,
   ) {
-    return this.companionService.getMilestones(babyMonId, status);
+    const effectiveLocale = locale || resolvedLocale || 'en';
+    return this.companionService.getMilestones(babyMonId, status, effectiveLocale);
   }
 
   @Post('milestones/:expectationId/achieve')
@@ -80,8 +92,11 @@ export class CompanionController {
     @Param('babyMonId') babyMonId: string,
     @Query('category') category?: string,
     @Query() pagination?: PaginationDto,
+    @Query('locale') locale?: string,
+    @CurrentLocale() resolvedLocale?: string,
   ) {
-    return this.companionService.getAdvice(babyMonId, category, pagination?.skip ?? 0, pagination?.take ?? 10);
+    const effectiveLocale = locale || resolvedLocale || 'en';
+    return this.companionService.getAdvice(babyMonId, category, pagination?.skip ?? 0, pagination?.take ?? 10, effectiveLocale);
   }
 
   @Post('advice/:adviceCardId/bookmark')

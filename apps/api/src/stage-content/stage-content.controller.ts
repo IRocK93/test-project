@@ -1,8 +1,9 @@
 import { Controller, Get, Param, Query, UseGuards, Logger } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { StageContentService } from './stage-content.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { CurrentLocale } from '../common/decorators/current-locale.decorator';
 
 @ApiTags('stage-content')
 @UseGuards(JwtAuthGuard)
@@ -17,15 +18,25 @@ export class StageContentController {
 
   @Get('baby-mon/:babyMonId')
   @ApiOperation({ summary: 'Get stage content for a BabyMon' })
-  async getForBabyMon(@Param('babyMonId') babyMonId: string) {
-    return this.stageContentService.getForBabyMon(babyMonId);
+  async getForBabyMon(
+    @Param('babyMonId') babyMonId: string,
+    @Query('locale') locale?: string,
+    @CurrentLocale() resolvedLocale?: string,
+  ) {
+    const effectiveLocale = locale || resolvedLocale || 'en';
+    return this.stageContentService.getForBabyMon(babyMonId, effectiveLocale);
   }
 
   @Get(':stageKey')
-  async getByStageKey(@Param('stageKey') stageKey: string) {
+  async getByStageKey(
+    @Param('stageKey') stageKey: string,
+    @Query('locale') locale?: string,
+    @CurrentLocale() resolvedLocale?: string,
+  ) {
     try {
-      this.logger.log(`getByStageKey called with stageKey="${stageKey}"`);
-      const result = await this.stageContentService.getByStageKey(stageKey, null);
+      const effectiveLocale = locale || resolvedLocale || 'en';
+      this.logger.log(`getByStageKey called with stageKey="${stageKey}" locale="${effectiveLocale}"`);
+      const result = await this.stageContentService.getByStageKey(stageKey, null, effectiveLocale);
       this.logger.log(`getByStageKey returning: ${JSON.stringify(result).substring(0, 200)}`);
       return result;
     } catch (err) {

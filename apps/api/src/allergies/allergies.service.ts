@@ -1,5 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { validateAllergySeverity } from '../common/health-value-keys';
+import { AllergySeverity } from './dto/allergy.dto';
+import { ErrorCode } from '../common/enums/error-code.enum';
 
 @Injectable()
 export class AllergiesService {
@@ -16,9 +19,16 @@ export class AllergiesService {
   }
 
   async create(babyMonId: string, userId: string, data: {
-    name: string; triggers?: string; severity?: string; treatment?: string; notes?: string;
+    name: string; triggers?: string; severity?: AllergySeverity; treatment?: string; notes?: string;
     happenedAt?: string;
   }) {
+    if (data.severity) {
+      try {
+        validateAllergySeverity(data.severity);
+      } catch (err: any) {
+        throw new BadRequestException({ message: err.message, code: ErrorCode.VALIDATION_ERROR });
+      }
+    }
     // Check for duplicate allergy name for this baby
     const existing = await this.prisma.allergy.findFirst({
       where: { babyMonId, name: data.name, deletedAt: null },
@@ -59,7 +69,7 @@ export class AllergiesService {
 
   async addEvent(babyMonId: string, userId: string, allergyId: string, data: { happenedAt?: string; notes?: string }) {
     const allergy = await this.prisma.allergy.findFirst({ where: { id: allergyId, babyMonId, deletedAt: null } });
-    if (!allergy) throw new NotFoundException('Allergy not found');
+    if (!allergy) throw new NotFoundException({ message: 'Allergy not found', code: ErrorCode.ALLERGY_NOT_FOUND });
     if (allergy.status === 'CURED') {
       await this.prisma.allergy.update({ where: { id: allergyId }, data: { status: 'ACTIVE', curedAt: null } });
     }
@@ -74,14 +84,14 @@ export class AllergiesService {
 
   async deleteEvent(babyMonId: string, eventId: string) {
     const event = await this.prisma.allergyEvent.findFirst({ where: { id: eventId, babyMonId } });
-    if (!event) throw new NotFoundException('Allergy event not found');
+    if (!event) throw new NotFoundException({ message: 'Allergy event not found', code: ErrorCode.ALLERGY_EVENT_NOT_FOUND });
     return this.prisma.allergyEvent.delete({ where: { id: eventId } });
   }
 
   async cure(babyMonId: string, allergyId: string) {
     const allergy = await this.prisma.allergy.findFirst({ where: { id: allergyId, babyMonId, deletedAt: null } });
-    if (!allergy) throw new NotFoundException('Allergy not found');
-    if (allergy.status === 'CURED') throw new BadRequestException('Allergy is already marked as cured');
+    if (!allergy) throw new NotFoundException({ message: 'Allergy not found', code: ErrorCode.ALLERGY_NOT_FOUND });
+    if (allergy.status === 'CURED') throw new BadRequestException({ message: 'Allergy is already marked as cured', code: ErrorCode.ALLERGY_ALREADY_CURED });
     return this.prisma.allergy.update({
       where: { id: allergyId },
       data: { status: 'CURED', curedAt: new Date() },
@@ -90,8 +100,8 @@ export class AllergiesService {
 
   async reactivate(babyMonId: string, allergyId: string) {
     const allergy = await this.prisma.allergy.findFirst({ where: { id: allergyId, babyMonId, deletedAt: null } });
-    if (!allergy) throw new NotFoundException('Allergy not found');
-    if (allergy.status === 'ACTIVE') throw new BadRequestException('Allergy is already active');
+    if (!allergy) throw new NotFoundException({ message: 'Allergy not found', code: ErrorCode.ALLERGY_NOT_FOUND });
+    if (allergy.status === 'ACTIVE') throw new BadRequestException({ message: 'Allergy is already active', code: ErrorCode.ALLERGY_ALREADY_ACTIVE });
     return this.prisma.allergy.update({
       where: { id: allergyId },
       data: { status: 'ACTIVE', curedAt: null },
@@ -100,7 +110,7 @@ export class AllergiesService {
 
   async remove(babyMonId: string, allergyId: string) {
     const allergy = await this.prisma.allergy.findFirst({ where: { id: allergyId, babyMonId, deletedAt: null } });
-    if (!allergy) throw new NotFoundException('Allergy not found');
+    if (!allergy) throw new NotFoundException({ message: 'Allergy not found', code: ErrorCode.ALLERGY_NOT_FOUND });
     // Hard-delete all events first, then the allergy
     await this.prisma.allergyEvent.deleteMany({ where: { allergyId } });
     return this.prisma.allergy.delete({ where: { id: allergyId } });

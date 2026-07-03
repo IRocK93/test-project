@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Body, Query, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, ForbiddenException } from '@nestjs/common';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -14,7 +15,7 @@ export class PromoCodesController {
 
   private async requireAdmin(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
-    if (!user || user.role !== 'ADMIN') throw new ForbiddenException('Admin access required');
+    if (!user || user.role !== 'ADMIN') throw new ForbiddenException({ message: 'Admin access required', code: ErrorCode.ADMIN_UNAUTHORIZED });
   }
 
   @Get()
@@ -44,9 +45,9 @@ export class PromoCodesController {
     await this.requireAdmin(userId);
 
     const { prefix, count, type, valueDays, maxRedemptions, expiresAt, createdBy } = body;
-    if (!prefix || count < 1 || count > 500) throw new ForbiddenException('Invalid params: prefix required, count 1-500');
-    if (!['TRIAL_EXTEND', 'FULL_PREMIUM'].includes(type)) throw new ForbiddenException('Invalid type');
-    if (valueDays < 1 || valueDays > 365) throw new ForbiddenException('valueDays must be 1-365');
+    if (!prefix || count < 1 || count > 500) throw new ForbiddenException({ message: 'Invalid params: prefix required, count 1-500', code: ErrorCode.VALIDATION_ERROR });
+    if (!['TRIAL_EXTEND', 'FULL_PREMIUM'].includes(type)) throw new ForbiddenException({ message: 'Invalid type', code: ErrorCode.VALIDATION_ERROR });
+    if (valueDays < 1 || valueDays > 365) throw new ForbiddenException({ message: 'valueDays must be 1-365', code: ErrorCode.VALIDATION_ERROR });
 
     const generated: string[] = [];
     const existingCodes = new Set(

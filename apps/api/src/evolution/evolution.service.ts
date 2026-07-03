@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { BabyMonService } from '../baby-mon/baby-mon.service';
 import { AccessControlService } from '../common/access-control.service';
+import { ErrorCode } from '../common/enums/error-code.enum';
 import { xpForNextLevel } from '../xp/xp.service';
 import { StageCalculatorService } from '../common/stage-calculator.service';
 
@@ -22,12 +23,12 @@ export class EvolutionService {
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     const { hasAccess } = await this.accessControl.checkAccess(userId, babyMonId);
     if (!hasAccess) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.UNAUTHORIZED });
     }
 
     // Count non-deleted records manually — Prisma _count doesn't support where filters
@@ -81,12 +82,12 @@ export class EvolutionService {
     });
 
     if (!babyMon) {
-      throw new NotFoundException('BabyMon not found');
+      throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
     }
 
     const { hasAccess } = await this.accessControl.checkAccess(userId, babyMonId);
     if (!hasAccess) {
-      throw new ForbiddenException('Access denied');
+      throw new ForbiddenException({ message: 'Access denied', code: ErrorCode.UNAUTHORIZED });
     }
 
     const totalEntries = babyMon._count.milestones + babyMon._count.feedLogs + babyMon._count.healthRecords;

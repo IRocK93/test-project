@@ -1,10 +1,11 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../s3/s3.service';
 
 describe('UsersService', () => {
   let service: UsersService;
-  let prisma: any;
 
   const mockPrisma = {
     user: {
@@ -13,16 +14,19 @@ describe('UsersService', () => {
     },
   };
 
+  const mockS3 = { deleteFile: jest.fn() };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+      { provide: ConfigService, useValue: { get: jest.fn(() => undefined) } },
         UsersService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: S3Service, useValue: mockS3 },
       ],
     }).compile();
 
     service = module.get<UsersService>(UsersService);
-    prisma = module.get(PrismaService);
     jest.clearAllMocks();
   });
 

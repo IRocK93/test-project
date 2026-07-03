@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { FeedLogsService } from './feed-logs.service';
@@ -15,7 +16,6 @@ import { FeedingType } from './dto/feed-log.dto';
  */
 describe('FeedLogsService', () => {
   let service: FeedLogsService;
-  let prisma: any;
 
   const babyMonId = 'baby-1';
   const userId = 'user-1';
@@ -93,6 +93,7 @@ describe('FeedLogsService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+      { provide: ConfigService, useValue: { get: jest.fn(() => undefined) } },
         FeedLogsService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: BadgesService, useValue: mockBadges },
@@ -103,8 +104,9 @@ describe('FeedLogsService', () => {
     }).compile();
 
     service = module.get<FeedLogsService>(FeedLogsService);
-    prisma = module.get(PrismaService);
     jest.clearAllMocks();
+    // Reset default access mock after clearAllMocks
+    mockAccessControl.checkAccess.mockResolvedValue({ hasAccess: true });
   });
 
   // ─────────────────────────────────────────────────────────────
@@ -187,7 +189,7 @@ describe('FeedLogsService', () => {
         happenedAt: new Date(customDate),
       });
 
-      const result = await service.create(babyMonId, userId, {
+      await service.create(babyMonId, userId, {
         type: FeedingType.FORMULA,
         happenedAt: customDate,
       });
@@ -357,7 +359,7 @@ describe('FeedLogsService', () => {
 
       const result = await service.delete(feedLogId, userId);
 
-      expect(result.message).toContain('deleted');
+      expect(result.success).toBe(true);
 
       // Soft delete
       expect(mockPrisma.feedLog.update).toHaveBeenCalledWith(
