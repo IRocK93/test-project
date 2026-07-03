@@ -43,10 +43,14 @@ while [[ $# -gt 0 ]]; do
             cat <<USAGE
 Usage: $0 [--dname="..."] [--keytool=PATH] [--keystore-dir=PATH]
 
-  --dname        Distinguished name for the X.509 cert
-  --keytool      Path to keytool binary (default: $KEYTOOL_DEFAULT)
-  --keystore-dir Directory for upload-keystore.jks + key.properties
+  --dname=DN     Distinguished name for the X.509 cert
+                 (note: use --dname= form, NOT space-separated)
+  --keytool=PATH Path to keytool binary (default: $KEYTOOL_DEFAULT)
+  --keystore-dir=PATH Directory for upload-keystore.jks + key.properties
                  (default: $KEYSTORE_DIR)
+
+Note about your dname: replace defaults if/when you incorporate (e.g.
+  --dname='CN=BabyMon Inc., OU=Mobile, O=BabyMon Inc., L=New York, S=NY, C=US').
 
 Both files are gitignored. The script refuses to overwrite either file
 without explicit confirmation, so they stay in sync.
@@ -63,6 +67,26 @@ KEYTOOL="${KEYTOOL:-$KEYTOOL_DEFAULT}"
 
 # Sanity: files exist in the project tree
 [[ -d "$KEYSTORE_DIR" ]] || { echo "Not a directory: $KEYSTORE_DIR" >&2; exit 1; }
+
+# Pre-flight 1: keytool must be reachable
+if ! command -v "$KEYTOOL" >/dev/null 2>&1 && [[ ! -x "$KEYTOOL" ]]; then
+    echo "FATAL: cannot find keytool at: $KEYTOOL" >&2
+    echo "Install a JDK (java.com) or re-run with --keytool=/path/to/keytool" >&2
+    exit 3
+fi
+
+# Pre-flight 2: secrets must already be gitignored (cheap pre-check so we never
+# generate first then have to clean up)
+cd "$REPO_ROOT"
+if ! git check-ignore "$KEYSTORE_DIR/$KEYSTORE_FILE" "$KEYSTORE_DIR/$KEY_PROPERTIES" >/dev/null 2>&1; then
+    echo "FATAL: secrets would NOT be gitignored at:" >&2
+    echo "  $KEYSTORE_DIR/$KEYSTORE_FILE" >&2
+    echo "  $KEYSTORE_DIR/$KEY_PROPERTIES" >&2
+    echo "Add these patterns to your .gitignore and re-run:" >&2
+    echo "  apps/mobile/android/key.properties" >&2
+    echo "  apps/mobile/android/**.jks"       >&2
+    exit 2
+fi
 
 echo
 echo "target dir:  $KEYSTORE_DIR"
@@ -124,24 +148,17 @@ echo "Generated:"
 ls -la "$KEYSTORE_DIR/$KEYSTORE_FILE" "$KEYSTORE_DIR/$KEY_PROPERTIES"
 echo
 
-# Verify integrity
+# Verify integrity (temporarily disable pipefail so head closing early doesn't trip it)
+set +o pipefail
 "$KEYTOOL" -list \
     -storetype JKS \
     -keystore "$KEYSTORE_DIR/$KEYSTORE_FILE" \
     -storepass "$PASSWORD" 2>&1 | head -8
+set -o pipefail
 echo
 
-# Verify gitignored (defensive check — failed if someone mutated .gitignore)
-cd "$REPO_ROOT"
-if git check-ignore "$KEYSTORE_DIR/$KEYSTORE_FILE" "$KEYSTORE_DIR/$KEY_PROPERTIES" >/dev/null 2>&1; then
-    echo "OK: both files are gitignored (won't be committed by mistake)."
-else
-    echo "FATAL: files are NOT gitignored. Add the patterns below to .gitignore and re-run:"
-    echo "  apps/mobile/android/key.properties"
-    echo "  apps/mobile/android/**.jks" >&2
-    rm -f "$KEYSTORE_DIR/$KEYSTORE_FILE" "$KEYSTORE_DIR/$KEY_PROPERTIES"
-    exit 2
-fi
+# (gitignore pre-flight was done at top of script; no post-check needed)
+echo "OK: both files gitignored (verified by pre-flight check)."
 
 echo
 echo "======================================================================"

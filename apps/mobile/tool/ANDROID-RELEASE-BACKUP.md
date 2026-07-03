@@ -175,14 +175,24 @@ The applicationId change from `com.example.baby_mon` to `com.babymon.app`
 breaks the auto-generated file `apps/mobile/lib/firebase_options.dart`.
 When you add Firebase / FCM:
 
-```bash
-cd apps/mobile
-npx flutterfire configure --project=<your-firebase-project>
-```
-
-This regenerates `apps/mobile/lib/firebase_options.dart` with the new
-Android `applicationId` baked into FCM/gcm_sender_id. Without this
-re-run, push notifications will silently fail on Android.
+1. **First**, add the new Android app to your Firebase project:
+   - Open <https://console.firebase.google.com/>
+   - Select your project → ⚙ Project settings → Your apps → **Add app**
+   - Choose **Android**.
+   - **Application ID: type `com.babymon.app`** exactly (must match the
+     `applicationId` in `apps/mobile/android/app/build.gradle.kts`).
+   - Download the resulting `google-services.json` and place it at
+     `apps/mobile/android/app/google-services.json`.
+2. **Then**, regenerate the Dart-side config:
+   ```bash
+   cd apps/mobile
+   npx flutterfire configure --project=<your-firebase-project-id>
+   ```
+   This re-generates `apps/mobile/lib/firebase_options.dart` with the
+   new Android `applicationId` baked into the `messagingSenderId` /
+   `gcm_sender_id` fields. Without this re-run, **push notifications
+   will silently fail on Android** (Firebase rejects inbound FCM
+   messages keyed to the old `com.example.baby_mon`).
 
 ## Where to look for things in this codebase
 
