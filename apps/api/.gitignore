@@ -3,3 +3,6 @@
 .env.local
 .env.*.local
 !.env.example
+
+# Archive of broken migrations kept for forensic reference; do not commit
+prisma/_archive*/
