@@ -1,6 +1,10 @@
 # BabyMon — Deliverable Audit
 
-## Verified State: 2026-06-18
+> **Current state tracker:** [`docs/review-v4/ROADMAP.md`](./docs/review-v4/ROADMAP.md) is the canonical record of every code-level fix across all 25 remediation sessions (June 4–June 23, 2026), covering 122 findings (118/122 addressed = 97%). This deliverable list was last refreshed before v4 was completed; for latest remediation status, see the v4 ROADMAP.
+
+## Verified State: 2026-07-03
+
+> The original "Verified State: 2026-06-18" snapshot below is preserved for historical reference. Refresh the per-phase tables with live metrics from the v4 ROADMAP when you re-audit.
 
 ---
 
@@ -213,12 +217,15 @@ Added: `dateOfBirth`, `tosAccepted`, `privacyAccepted`, `consentToDataProcessing
 
 ---
 
-## Test Results
+## Test Results (snapshot 2026-06-18 — superseded by v4)
+
 ```
-Backend:  12/12 passing
-Flutter:  462/462 passing
-Seed:     runs clean (422 cards, 200 milestones, 13 routines)
+Backend:  12/12 unit tests passing
+Mobile:   462/462 passing (then ~52 added in v4 Session 24)
+Seed:     422 cards, 200 milestones, 13 routines
 ```
+
+> **For live test counts as of July 2026**, see [`docs/review-v4/ROADMAP.md`](./docs/review-v4/ROADMAP.md) Session 24 (Testing Gap Closure): +24 user-journey e2e tests, +15 feed-logs service specs, +13 growth-chart widget tests, for a net of ~104 new test cases since this snapshot.
 
 ---
 

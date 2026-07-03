@@ -1,5 +1,7 @@
 # Delivery Plan B: Privacy Compliance Foundation
 
+> **📋 Historical plan — pre-fix snapshot (June 18, 2026).** All findings referenced here were addressed in the v2 remediation waves and consolidated into the canonical tracker: [`../../review-v4/ROADMAP.md`](../../review-v4/ROADMAP.md). For pre-fix review content that this plan cites (S02, S03), see [`../../_archive/old_docs/reviews_v2_jun2026/`](../../_archive/old_docs/reviews_v2_jun2026/).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
 
 **Goal:** Make BabyMon pass basic COPPA/GDPR/CCPA registration requirements — age gate, consent checkboxes, Terms/Privacy acceptance with audit trail, and fix false compliance claims.
@@ -8,7 +10,7 @@
 
 **Tech Stack:** NestJS, Prisma, Flutter/Dart, PostgreSQL
 
-**Related Reports:** S02 (PC01-PC04), S03 (L-10, L-11, L-17)
+**Related Reports:** S02 (PC01-PC04), S03 (L-10, L-11, L-17) — *v2 finding IDs (now archived). For resolution status, see [review-v4/ROADMAP.md](../../review-v4/ROADMAP.md).*
 
 ---
 

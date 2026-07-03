@@ -1,5 +1,7 @@
 # Delivery Plan A: Access Control Remediation
 
+> **📋 Historical plan — pre-fix snapshot (June 18, 2026).** All findings referenced here were addressed in the v2 remediation waves and consolidated into the canonical tracker: [`../../review-v4/ROADMAP.md`](../../review-v4/ROADMAP.md). For pre-fix review content that this plan cites (S01, S08, S06), see [`../../_archive/old_docs/reviews_v2_jun2026/`](../../_archive/old_docs/reviews_v2_jun2026/).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Fix 4 critical IDOR vulnerabilities and 1 dynamic field injection vector in the NestJS backend
@@ -8,7 +10,7 @@
 
 **Tech Stack:** NestJS, Prisma, TypeScript, Jest
 
-**Related Reports:** S01 (S01-01 through S01-04), S08 (DM-C03), S06 (BA-C02)
+**Related Reports:** S01 (S01-01 through S01-04), S08 (DM-C03), S06 (BA-C02) — *v2 finding IDs (now archived). For resolution status, see [review-v4/ROADMAP.md](../../review-v4/ROADMAP.md).*
 
 ---
 

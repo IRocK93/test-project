@@ -1,5 +1,7 @@
 # Delivery Plan D: Data Accuracy — WHO Standards Fix
 
+> **📋 Historical plan — pre-fix snapshot (June 18, 2026).** All findings referenced here were addressed in the v2 remediation waves and consolidated into the canonical tracker: [`../../review-v4/ROADMAP.md`](../../review-v4/ROADMAP.md). For pre-fix review content that this plan cites (S08, S17), see [`../../_archive/old_docs/reviews_v2_jun2026/`](../../_archive/old_docs/reviews_v2_jun2026/).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
 
 **Goal:** Fix head circumference percentile calculation (currently uses weight standards), correct WHO weight-for-age data, and implement proper LMS-based percentile calculation.
@@ -8,7 +10,7 @@
 
 **Tech Stack:** TypeScript, NestJS
 
-**Related Reports:** S08 (DM-C01, DM-M04), S17 (DMN-C01, DMN-C02, DMN-H02)
+**Related Reports:** S08 (DM-C01, DM-M04), S17 (DMN-C01, DMN-C02, DMN-H02) — *v2 finding IDs (now archived). For resolution status, see [review-v4/ROADMAP.md](../../review-v4/ROADMAP.md).*
 
 ---
 

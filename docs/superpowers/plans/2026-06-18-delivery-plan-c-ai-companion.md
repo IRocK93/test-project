@@ -1,5 +1,7 @@
 # Delivery Plan C: AI Companion — Content Seed + Safety
 
+> **📋 Historical plan — pre-fix snapshot (June 18, 2026).** All findings referenced here were addressed in the v2 remediation waves and consolidated into the canonical tracker: [`../../review-v4/ROADMAP.md`](../../review-v4/ROADMAP.md). For pre-fix review content that this plan cites (S11), see [`../../_archive/old_docs/reviews_v2_jun2026/`](../../_archive/old_docs/reviews_v2_jun2026/).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax.
 
 **Goal:** Make the AI_COMPANION tier deliver functional value by seeding content tables and adding minimum safety guardrails. Fix the placeholder SHA-256, remove the mock engine default fallback, and add an output safety classifier.
@@ -8,7 +10,7 @@
 
 **Tech Stack:** Prisma, NestJS, Flutter/Dart, llamadart
 
-**Related Reports:** S11 (AI-C01 through AI-C04, AI-H01 through AI-H06)
+**Related Reports:** S11 (AI-C01 through AI-C04, AI-H01 through AI-H06) — *v2 finding IDs (now archived). For resolution status, see [review-v4/ROADMAP.md](../../review-v4/ROADMAP.md).*
 
 ---
 

@@ -45,3 +45,6 @@ coverage/
 tmp/
 temp/
 /nul
+
+# Archived documentation (preserved on local disk, not committed)
+_archive/
