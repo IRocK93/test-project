@@ -260,7 +260,7 @@
   <h3>2.2 Child profile information (you provide, about your child)</h3>
   <ul>
     <li>Baby's name and a free-text "special move" field.</li>
-    <li>Assigned gender tag — values are <code>MONIESE</code>, <code>MONIOUS</code>, or <code>MO</code> (BabyMon's gender-neutral naming; not free text).</li>
+    <li>Assigned gender label (boy / girl / unspecified, stored in a fixed legal set of values that we do not free-form-store).</li>
     <li>Date of birth, due date, conception date, or "idea" (planned-pregnancy) date.</li>
     <li>Optional personality trait tags chosen from a curated list.</li>
   </ul>
@@ -272,8 +272,10 @@
     <li>Health records (vaccinations, doctor visits, sick-day logs, allergies, medications, growth measurements including height and weight).</li>
     <li>Milestones (what your baby did for the first time — e.g., "rolled over", "first word").</li>
     <li>Journal entries (free-text notes about your day).</li>
-    <li>Photos and videos you upload (stored encrypted in transit; not stripped of EXIF by default — see &sect; 11 for our roadmap).</li>
+    <li>Photos and videos you upload — see the EXIF callout below.</li>
   </ul>
+
+  <div class="callout"><strong>About uploaded photos.</strong> Photos you upload to BabyMon retain their embedded metadata (EXIF), which can include GPS coordinates, device serial number, and the original timestamps. This information stays attached to your file in cloud storage until you replace the photo. If this concerns you, strip EXIF on your device before uploading, or contact us about a future server-side sanitisation option.</div>
 
   <h3>2.4 Usage and device data (collected automatically)</h3>
   <ul>
@@ -293,7 +295,8 @@
     <li><strong>To power the AI Companion.</strong> When you ask a parenting question, your question text is processed <em>entirely on your device</em> by a downloaded language model. See &sect; 7 for details.</li>
     <li><strong>To localize content.</strong> Match your recorded dates and milestones to stage-appropriate advice cards in your language.</li>
     <li><strong>To process subscription payments.</strong> If you subscribe to BabyMon Premium, we use Stripe to bill you. We never see or store your full card number.</li>
-    <li><strong>To deliver notifications you have enabled.</strong> Reminders for feedings, sleep windows, vaccinations, and developmental-check milestones.</li>
+    <li><strong>To deliver notifications you have enabled.</strong> Reminders for feedings, sleep windows, and developmental-check milestones.</li>
+    <li><strong>To surface vaccination-related guidance.</strong> We display age-appropriate vaccination schedule information sourced from public-health authorities and your pediatrician's recommendations; we do not schedule auto-reminders for upcoming doses. Logging completed vaccinations is supported; reminders for upcoming doses are not currently available.</li>
     <li><strong>To prevent abuse and protect security.</strong> Detect automated signup bots, brute-force password attacks, and unauthorized scraping.</li>
     <li><strong>To comply with legal obligations.</strong> Tax records for paid subscriptions (Stripe retains these), lawful government requests (see &sect; 8).</li>
   </ol>
@@ -388,11 +391,11 @@
       <tr><td><strong>Restriction of processing</strong></td><td>Email <a href="mailto:privacy@babymon.app"><code>privacy@babymon.app</code></a>; we pause non-essential processing (e.g. analytics) while preserving the data itself for re-activation</td></tr>
       <tr><td><strong>Objection</strong> to legitimate-interest processing</td><td>Email <a href="mailto:privacy@babymon.app"><code>privacy@babymon.app</code></a> with the specific processing you object to</td></tr>
       <tr><td><strong>Data portability</strong> &mdash; receive your data in a structured, machine-readable format</td><td>The Export tool produces JSON conforming to a documented schema (see <code>docs/05-API-CLIENT-GUIDE.md</code>)</td></tr>
-      <tr><td><strong>Withdraw consent</strong></td><td>Toggle off the corresponding consent in Settings &rarr; Privacy &rarr; Consent Categories</td></tr>
+      <tr><td><strong>Withdraw consent</strong></td><td>Toggle off push notifications per category in Settings &rarr; Notifications. Withdrawal of data-processing consent can be exercised by emailing <a href="mailto:privacy@babymon.app"><code>privacy@babymon.app</code></a> or by closing your account via Settings &rarr; Account &rarr; Delete account</td></tr>
       <tr><td><strong>Complaint to a supervisory authority</strong></td><td>If you believe we have processed your data unlawfully, you may lodge a complaint with your local data-protection authority. We will cooperate fully with any such investigation</td></tr>
     </tbody>
   </table>
-  <p>Under California's CCPA/CPRA, you also have the right to opt out of any "sale" of personal information. Because we do not sell personal information, this opt-out is automatically satisfied.</p>
+  <p>Under California's CCPA / CPRA, you have the right to opt out of any "sale" or "share for cross-context behavioural advertising" of personal information. We do not sell or share your personal information for cross-context behavioural advertising as those terms are defined in the CCPA / CPRA, so the opt-out links are unnecessary &mdash; but every other right in the table above is available to you, regardless of jurisdiction.</p>
 
   <h2 id="sec-11">11. Security Measures</h2>
   <p>We protect your data with a layered set of technical and organizational measures:</p>
