@@ -31,8 +31,8 @@ async function main() {
         id: SYSTEM_BABYMON_ID,
         ownerUserId: SYSTEM_USER_ID,
         name: 'System Default',
-        stageStartType: 'IDEA',
-        gender: 'UNKNOWN',
+        stageStartType: 'PLAN',
+        gender: 'MO',
       },
     });
     console.log('Created system BabyMon for default content');
@@ -41,10 +41,12 @@ async function main() {
   // Seed stage content for pregnancy weeks
   for (let week = 1; week <= 40; week++) {
     await prisma.stageContent.upsert({
+      // @ts-ignore — Prisma client stale; unique key is babymonId_stageKey_locale
       where: {
-        babymonId_stageKey: {
-          babymonId: SYSTEM_BABYMON_ID,
+        babymonId_stageKey_locale: {
           stageKey: `preg_week_${week}`,
+          locale: 'en',
+          babymonId: SYSTEM_BABYMON_ID,
         },
       },
       update: {},
@@ -53,21 +55,24 @@ async function main() {
         stageKey: `preg_week_${week}`,
         weekNumber: week,
         isPostBirth: false,
+        locale: 'en',
         summaryText: `Week ${week} of pregnancy: Your baby is growing beautifully. This is a crucial development stage where {name} is forming all their major organs.`,
         nurturingText: `Take time to rest and nourish yourself. Gentle movement, healthy eating, and plenty of water support {name}'s growth. Consider talking to your baby - they can hear you now!`,
         encouragementText: `You're doing amazing! Every day you nurture {name} brings you closer to meeting your little one. This week marks important milestones in development.`,
         xpThreshold: week * 10,
-      },
+      } as any,
     });
   }
 
   // Seed stage content for post-birth weeks (0-12)
   for (let week = 0; week <= 12; week++) {
     await prisma.stageContent.upsert({
+      // @ts-ignore — Prisma client stale; unique key is babymonId_stageKey_locale
       where: {
-        babymonId_stageKey: {
-          babymonId: SYSTEM_BABYMON_ID,
+        babymonId_stageKey_locale: {
           stageKey: `born_week_${week}`,
+          locale: 'en',
+          babymonId: SYSTEM_BABYMON_ID,
         },
       },
       update: {},
@@ -76,21 +81,24 @@ async function main() {
         stageKey: `born_week_${week}`,
         weekNumber: week,
         isPostBirth: true,
+        locale: 'en',
         summaryText: `Week ${week} after birth: {name} is developing new skills every day. ${week === 0 ? 'Welcome to the world, little one!' : ''}`,
         nurturingText: `Bonding time is precious. Respond to {name}'s cues - crying is their only way to communicate. Skin-to-skin contact helps regulate their temperature and builds connection.`,
         encouragementText: `You're an incredible parent! {name} feels safe and loved in your arms. Each day brings new discoveries as you learn each other's rhythms.`,
         xpThreshold: week * 15,
-      },
+      } as any,
     });
   }
 
   // Seed stage content for post-birth months (3-24)
   for (let month = 3; month <= 24; month++) {
     await prisma.stageContent.upsert({
+      // @ts-ignore — Prisma client stale; unique key is babymonId_stageKey_locale
       where: {
-        babymonId_stageKey: {
-          babymonId: SYSTEM_BABYMON_ID,
+        babymonId_stageKey_locale: {
           stageKey: `born_month_${month}`,
+          locale: 'en',
+          babymonId: SYSTEM_BABYMON_ID,
         },
       },
       update: {},
@@ -99,11 +107,12 @@ async function main() {
         stageKey: `born_month_${month}`,
         monthNumber: month,
         isPostBirth: true,
+        locale: 'en',
         summaryText: `Month ${month}: {name} continues to grow and discover the world. ${month >= 6 ? 'They may be starting solids soon!' : ''} ${month >= 12 ? 'Happy first birthday!' : ''}`,
         nurturingText: `Encourage exploration and play. {name} learns so much through interaction with you. ${month >= 6 ? 'This is a great time to introduce age-appropriate foods.' : ''}`,
         encouragementText: `What a journey! {name} is thriving thanks to your loving care. ${month >= 12 ? 'One year of amazing parenting!' : 'Enjoy each moment of this precious time.'}`,
         xpThreshold: month * 50,
-      },
+      } as any,
     });
   }
 
