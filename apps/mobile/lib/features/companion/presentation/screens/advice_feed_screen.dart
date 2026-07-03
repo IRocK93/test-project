@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/widgets/glass_surface.dart';
 import 'package:baby_mon/features/companion/presentation/providers/advice_feed_provider.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
@@ -16,20 +17,20 @@ class _CategoryInfo {
   const _CategoryInfo({this.key, required this.label, required this.icon});
 }
 
-const _categories = [
-  _CategoryInfo(key: null, label: 'All', icon: PhosphorIconsLight.lightbulb),
-  _CategoryInfo(key: 'GROWTH_HEALTH', label: 'Health', icon: PhosphorIconsLight.heartbeat),
-  _CategoryInfo(key: 'DEVELOPMENT', label: 'Development', icon: PhosphorIconsLight.brain),
-  _CategoryInfo(key: 'NUTRITION_FEEDING', label: 'Nutrition', icon: PhosphorIconsLight.appleLogo),
-  _CategoryInfo(key: 'SLEEP', label: 'Sleep', icon: PhosphorIconsLight.moon),
-  _CategoryInfo(key: 'PLAY_ACTIVITIES', label: 'Play', icon: PhosphorIconsLight.puzzlePiece),
-  _CategoryInfo(key: 'PARENT_WELLBEING', label: 'Wellbeing', icon: PhosphorIconsLight.heart),
+List<_CategoryInfo> _buildCategories(BuildContext context) => [
+  _CategoryInfo(key: null, label: context.l10n.allMilestones, icon: PhosphorIconsLight.lightbulb),
+  _CategoryInfo(key: 'GROWTH_HEALTH', label: context.l10n.health, icon: PhosphorIconsLight.heartbeat),
+  _CategoryInfo(key: 'DEVELOPMENT', label: context.l10n.developmentGuide, icon: PhosphorIconsLight.brain),
+  _CategoryInfo(key: 'NUTRITION_FEEDING', label: context.l10n.feeding, icon: PhosphorIconsLight.appleLogo),
+  _CategoryInfo(key: 'SLEEP', label: context.l10n.sleep, icon: PhosphorIconsLight.moon),
+  _CategoryInfo(key: 'PLAY_ACTIVITIES', label: context.l10n.quickStart, icon: PhosphorIconsLight.puzzlePiece),
+  _CategoryInfo(key: 'PARENT_WELLBEING', label: context.l10n.premiumPlan, icon: PhosphorIconsLight.heart),
 ];
 
 // ─── Helper builders ──────────────────────────────────────────────
 
 Widget _categoryChip(BuildContext context, String category) {
-  final cat = _categories
+  final cat = _buildCategories(context)
       .where((c) => c.key != null)
       .cast<_CategoryInfo?>()
       .firstWhere((c) => c!.key == category, orElse: () => null);
@@ -63,10 +64,10 @@ Widget _expertBadge(BuildContext context, String voice) {
     ),
     child: Text(
       isClinical
-          ? 'Clinical Guide'
+          ? context.l10n.clinicalGuide
           : voice == 'DEVELOPMENT'
-              ? 'Development Guide'
-              : 'General Guide',
+              ? context.l10n.developmentGuide
+              : context.l10n.generalGuide,
       style: TextStyle(fontSize: DesignTokens.font2xs, fontWeight: FontWeight.w600, color: context.colorScheme.primary),
     ),
   );
@@ -99,10 +100,10 @@ class AdviceFeedScreen extends ConsumerWidget {
               height: 40,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: _categories.length,
+                itemCount: _buildCategories(context).length,
                 separatorBuilder: (_, __) => const SizedBox(width: DesignTokens.spaceSm),
                 itemBuilder: (context, index) {
-                  final cat = _categories[index];
+                  final cat = _buildCategories(context)[index];
                   final isSelected = state.selectedCategory == cat.key;
                   return FilterChip(
                     selected: isSelected,
@@ -145,8 +146,8 @@ class AdviceFeedScreen extends ConsumerWidget {
     // Error state with retry (or upgrade prompt for tier errors)
     if (state.error != null && state.cards.isEmpty) {
       if (state.isTierError) {
-        return const UpgradePromptWidget(
-          featureName: 'Expert Advice',
+        return UpgradePromptWidget(
+          featureName: context.l10n.expertAdviceTitle,
           description: 'Upgrade to Premium to get stage-specific expert advice, '
               'clinical guidance, and personalized parenting tips.',
         );
@@ -159,14 +160,14 @@ class AdviceFeedScreen extends ConsumerWidget {
             children: [
               Icon(PhosphorIconsLight.wifiX, size: 48, color: context.textSecondary.withValues(alpha: 0.4)),
               const SizedBox(height: DesignTokens.spaceMd),
-              Text('Couldn\'t load advice', style: TextStyle(fontSize: DesignTokens.fontLg, fontWeight: FontWeight.w600, color: context.textSecondary)),
+              Text(context.l10n.couldNotLoadAdviceMessage, style: TextStyle(fontSize: DesignTokens.fontLg, fontWeight: FontWeight.w600, color: context.textSecondary)),
               const SizedBox(height: DesignTokens.spaceSm),
               Text(state.error!, textAlign: TextAlign.center, style: TextStyle(fontSize: DesignTokens.fontSm2, color: context.textCaption)),
               const SizedBox(height: DesignTokens.spaceXl),
               ElevatedButton.icon(
                 onPressed: () => notifier.retry(),
                 icon: const Icon(PhosphorIconsLight.arrowCounterClockwise, size: 18),
-                label: const Text('Retry'),
+                label: Text(context.l10n.retry),
               ),
             ],
           ),
@@ -182,7 +183,7 @@ class AdviceFeedScreen extends ConsumerWidget {
           children: [
             Icon(PhosphorIconsLight.notebook, size: 48, color: context.textSecondary.withValues(alpha: 0.4)),
             const SizedBox(height: DesignTokens.spaceMd),
-            Text('No advice cards yet', style: TextStyle(color: context.textSecondary)),
+            Text(context.l10n.noAdviceCards, style: TextStyle(color: context.textSecondary)),
           ],
         ),
       );
@@ -270,7 +271,7 @@ class _AdviceCardState extends State<_AdviceCard> {
                     children: [
                       Icon(PhosphorIconsLight.warning, size: 12, color: context.colorScheme.error),
                       const SizedBox(width: DesignTokens.spaceXs),
-                      Text('Call Doctor', style: TextStyle(fontSize: DesignTokens.fontXs, fontWeight: FontWeight.w700, color: context.colorScheme.error)),
+                      Text(context.l10n.callDoctor, style: TextStyle(fontSize: DesignTokens.fontXs, fontWeight: FontWeight.w700, color: context.colorScheme.error)),
                     ],
                   ),
                 ),
@@ -322,7 +323,7 @@ class _AdviceCardState extends State<_AdviceCard> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _expanded ? 'Show less' : 'Read more',
+                    _expanded ? context.l10n.showLess : context.l10n.readMore,
                     style: TextStyle(fontSize: DesignTokens.fontSm2, fontWeight: FontWeight.w600, color: context.colorScheme.primary),
                   ),
                   const SizedBox(width: DesignTokens.spaceXs),
@@ -349,7 +350,7 @@ class _AdviceCardState extends State<_AdviceCard> {
     final rating = widget.rating;
     return Row(
       children: [
-        Text('Was this helpful?', style: TextStyle(fontSize: DesignTokens.fontSm, color: context.textCaption)),
+        Text(context.l10n.wasThisHelpful, style: TextStyle(fontSize: DesignTokens.fontSm, color: context.textCaption)),
         const SizedBox(width: DesignTokens.spaceSm),
         GestureDetector(
           onTap: () => widget.onRate(true),

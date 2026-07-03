@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../domain/entities/feed_log.dart';
@@ -17,26 +18,26 @@ class FeedLogCard extends StatelessWidget {
     }
   }
 
-  String _labelForType(String type) {
+  String _labelForType(BuildContext context, String type) {
     switch (type) {
-      case 'BREASTMILK': return 'Breastmilk';
-      case 'FORMULA': return 'Formula';
-      case 'SOLID': return 'Solid';
+      case 'BREASTMILK': return context.l10n.breastmilkLabel;
+      case 'FORMULA': return context.l10n.formula;
+      case 'SOLID': return context.l10n.solidFood;
       default: return type;
     }
   }
 
-  String _summary(FeedLog log) {
+  String _summary(FeedLog log, BuildContext ctx) {
     final parts = <String>[];
     if (log.amount != null) parts.add('${log.amount}${log.unit ?? ''}');
-    return parts.isEmpty ? 'Logged' : parts.join(' ');
+    return parts.isEmpty ? ctx.l10n.logged : parts.join(' ');
   }
 
   @override
   Widget build(BuildContext context) {
     final timeStr = feedLog.happenedAt != null
         ? DateFormat('HH:mm').format(feedLog.happenedAt!)
-        : '--:--';
+        : context.l10n.noTimeFallback;
 
     return Dismissible(
       key: Key(feedLog.id),
@@ -45,13 +46,13 @@ class FeedLogCard extends StatelessWidget {
         return await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Delete Feed Log?'),
-            content: const Text('This cannot be undone.'),
+            title: Text(context.l10n.deleteFeedLogTitle),
+            content: Text(context.l10n.deleteConfirmText),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.l10n.cancel)),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                child: Text(context.l10n.delete, style: const TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -59,8 +60,8 @@ class FeedLogCard extends StatelessWidget {
       },
       onDismissed: (_) => onDelete(),
       background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 16),
+        alignment: AlignmentDirectional.centerEnd,
+        padding: const EdgeInsetsDirectional.only(end: 16),
         color: Colors.red,
         child: const Icon(Icons.delete, color: Colors.white),
       ),
@@ -69,11 +70,11 @@ class FeedLogCard extends StatelessWidget {
         color: const Color(0xFF1E1E1E),
         child: ListTile(
           leading: Text(_emojiForType(feedLog.type), style: const TextStyle(fontSize: 32)),
-          title: Text(_labelForType(feedLog.type), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+          title: Text(_labelForType(context, feedLog.type), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('$timeStr • ${_summary(feedLog)}', style: TextStyle(color: Colors.grey[400])),
+              Text('$timeStr • ${_summary(feedLog, context)}', style: TextStyle(color: Colors.grey[400])),
               if (feedLog.notes != null && feedLog.notes!.isNotEmpty)
                 Text(feedLog.notes!, style: TextStyle(color: Colors.grey[500], fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
             ],

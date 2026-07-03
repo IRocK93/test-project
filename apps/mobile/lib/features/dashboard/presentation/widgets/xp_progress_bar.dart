@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 
 class XpProgressBar extends StatelessWidget {
@@ -23,14 +24,14 @@ class XpProgressBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Level $level',
+              context.l10n.levelFallback(level),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.primary,
                   ),
             ),
             Text(
-              '$currentXp / $xpForNextLevel XP',
+              context.l10n.xpFormat(currentXp, xpForNextLevel, currentXp),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.grey,
                   ),

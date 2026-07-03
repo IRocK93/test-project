@@ -1,7 +1,6 @@
 library phosphor_flutter;
 
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class PhosphorIcon extends Icon {
   const PhosphorIcon(
@@ -35,8 +34,4 @@ class PhosphorIcon extends Icon {
   final double duotoneSecondaryOpacity;
   final Color? duotoneSecondaryColor;
 
-  @override
-  Widget build(BuildContext context) {
-    return super.build(context);
-  }
 }

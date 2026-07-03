@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
 
 class ThinkingIndicator extends StatefulWidget {
@@ -27,7 +28,7 @@ class _ThinkingIndicatorState extends State<ThinkingIndicator> with SingleTicker
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: DesignTokens.space5xl, bottom: DesignTokens.spaceMd),
+      padding: const EdgeInsetsDirectional.only(start: DesignTokens.space5xl, bottom: DesignTokens.spaceMd),
       child: Row(
         children: [
           _dot(0),
@@ -36,7 +37,7 @@ class _ThinkingIndicatorState extends State<ThinkingIndicator> with SingleTicker
           const SizedBox(width: 6),
           _dot(2),
           const SizedBox(width: 10),
-          Text('Thinking...', style: TextStyle(fontSize: 13, color: context.textCaption)),
+          Text(context.l10n.thinking, style: TextStyle(fontSize: 13, color: context.textCaption)),
         ],
       ),
     );

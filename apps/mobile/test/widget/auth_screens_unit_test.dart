@@ -28,6 +28,10 @@ class _FakeAuthRepository implements AuthRepository {
     required String email,
     required String password,
     String? name,
+    required DateTime dateOfBirth,
+    required bool tosAccepted,
+    required bool privacyAccepted,
+    required bool consentToDataProcessing,
   }) async => (
     user: User(id: '2', email: email, name: name, createdAt: DateTime(2024)),
     token: 'reg-token',
@@ -44,15 +48,15 @@ class _FakeAuthRepository implements AuthRepository {
   @override
   Future<bool> isLoggedIn() async => false;
   @override
-  Future<User?> getCurrentUser() async => null;
-  @override
-  Future<void> forgotPassword(String email) async {}
-  @override
-  Future<void> resetPassword(String token, String newPassword) async {}
-  @override
-  Future<void> sendVerificationEmail(String email) async {}
-  @override
-  Future<bool> checkEmailVerified() async => true;
+  Future<User?> getCurrentUser() async => null;  @override Future<void> forgotPassword(String email) async {}
+  @override Future<void> resetPassword(String token, String newPassword) async {}
+  @override Future<void> sendVerificationEmail() async {}
+  @override Future<bool> checkEmailVerified() async => true;
+  @override Future<String?> getAccessToken() async => null;
+  @override Future<({User user, String token})> googleLogin(String idToken) async => throw UnimplementedError();
+  @override Future<({User user, String token})> appleLogin(String idToken) async => throw UnimplementedError();
+  @override Future<({User user, String token})> facebookLogin(String accessToken) async => throw UnimplementedError();
+  @override Future<void> syncLocale() async {}
 }
 
 /// Builds a test app with GoRouter and ProviderScope.

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/utils/theme_text_utils.dart';
 import 'package:baby_mon/features/companion/presentation/providers/companion_provider.dart';
 
@@ -31,7 +32,7 @@ class SyncBanner extends ConsumerWidget {
       SyncStatus.error => (
           context.colorScheme.errorContainer,
           PhosphorIconsLight.warningCircle,
-          'Sync failed — tap to retry',
+          context.l10n.syncFailedTapRetry,
         ),
       _ => (Colors.transparent, null, ''),
     };

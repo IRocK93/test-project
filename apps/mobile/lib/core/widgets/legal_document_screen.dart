@@ -1,19 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 
+/// Type of legal document to display.
+enum LegalDocumentType {
+  termsOfService,
+  privacyPolicy,
+  childrensPrivacy,
+}
 
 class LegalDocumentScreen extends StatelessWidget {
-  final String title;
+  final LegalDocumentType type;
   final String content;
 
   const LegalDocumentScreen({
     super.key,
-    required this.title,
+    required this.type,
     required this.content,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Resolve title from context.l10n — safe because this widget is always
+    // built inside MaterialApp.router (unlike the GoRouter pageBuilder closure).
+    final title = switch (type) {
+      LegalDocumentType.termsOfService => context.l10n.termsOfService,
+      LegalDocumentType.privacyPolicy => context.l10n.privacyPolicy,
+      LegalDocumentType.childrensPrivacy => context.l10n.childrensPrivacyTitle,
+    };
+
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -60,7 +75,7 @@ class LegalDocumentScreen extends StatelessWidget {
         ));
       } else if (line.startsWith('- ') || line.startsWith('  - ')) {
         widgets.add(Padding(
-          padding: const EdgeInsets.only(left: 8, top: 2, bottom: 2),
+          padding: const EdgeInsetsDirectional.only(start: 8, top: 2, bottom: 2),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

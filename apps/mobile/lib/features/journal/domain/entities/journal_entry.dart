@@ -1,4 +1,4 @@
-enum JournalEventType { MILESTONE, FEEDING, HEALTH_RECORD, FEED_LOG }
+enum JournalEventType { milestone, feeding, healthRecord, feedLog }
 
 class JournalEntry {
   final String id;
@@ -25,7 +25,7 @@ class JournalEntry {
     return JournalEntry(
       id: json['id'] ?? '',
       babyMonId: json['babyMonId'] ?? json['baby_mon_id'] ?? '',
-      eventType: JournalEventType.MILESTONE,
+      eventType: JournalEventType.milestone,
       title: json['title'] ?? '',
       description: json['description'],
       emoji: _getMilestoneEmoji(json['category']),
@@ -39,7 +39,7 @@ class JournalEntry {
     return JournalEntry(
       id: json['id'] ?? '',
       babyMonId: json['babyMonId'] ?? json['baby_mon_id'] ?? '',
-      eventType: JournalEventType.FEED_LOG,
+      eventType: JournalEventType.feedLog,
       title: _getFeedTitle(json),
       description: _getFeedDescription(json),
       emoji: _getFeedEmoji(type),
@@ -52,7 +52,7 @@ class JournalEntry {
     return JournalEntry(
       id: json['id'] ?? '',
       babyMonId: json['babyMonId'] ?? json['baby_mon_id'] ?? '',
-      eventType: JournalEventType.HEALTH_RECORD,
+      eventType: JournalEventType.healthRecord,
       title: _getHealthTitle(json),
       description: json['notes'] ?? json['doctorName'] ?? json['location'],
       emoji: _getHealthEmoji(json['type']),
@@ -158,7 +158,7 @@ class JournalEntry {
 
   static String _getHealthTitle(Map<String, dynamic> json) {
     final type = json['type'] ?? 'CHECKUP';
-    return '${_healthTypeName(type)}';
+    return _healthTypeName(type);
   }
 
   static String _healthTypeName(String type) {
@@ -197,24 +197,24 @@ class JournalEntry {
 
   String get sourceBadge {
     switch (eventType) {
-      case JournalEventType.MILESTONE:
+      case JournalEventType.milestone:
         return 'Milestone';
-      case JournalEventType.FEED_LOG:
-      case JournalEventType.FEEDING:
+      case JournalEventType.feedLog:
+      case JournalEventType.feeding:
         return 'Feeding';
-      case JournalEventType.HEALTH_RECORD:
+      case JournalEventType.healthRecord:
         return 'Health';
     }
   }
 
   static String getEmojiForEventType(JournalEventType type) {
     switch (type) {
-      case JournalEventType.MILESTONE:
+      case JournalEventType.milestone:
         return '🌟';
-      case JournalEventType.FEED_LOG:
-      case JournalEventType.FEEDING:
+      case JournalEventType.feedLog:
+      case JournalEventType.feeding:
         return '🍼';
-      case JournalEventType.HEALTH_RECORD:
+      case JournalEventType.healthRecord:
         return '💊';
     }
   }

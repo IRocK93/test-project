@@ -6,7 +6,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/features/auth/auth.dart';
-import 'package:baby_mon/core/widgets/widgets.dart';
 import 'package:baby_mon/features/dashboard/dashboard.dart';
 import 'package:baby_mon/features/milestones/milestones.dart';
 import 'package:baby_mon/features/feeding/feeding.dart';
@@ -42,20 +41,20 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     _NavTab(PhosphorIconsLight.bowlFood, PhosphorIconsLight.bowlFood, context.l10n.feeding),
     _NavTab(PhosphorIconsLight.heart, PhosphorIconsLight.heart, context.l10n.health),
     _NavTab(PhosphorIconsLight.magicWand, PhosphorIconsLight.magicWand, context.l10n.companion),
-    _NavTab(PhosphorIconsLight.dotsSixVertical, PhosphorIconsLight.dotsSixVertical, 'More'),
+    _NavTab(PhosphorIconsLight.dotsSixVertical, PhosphorIconsLight.dotsSixVertical, context.l10n.more),
   ];
   /// Returns the real screen for visited tabs, [SizedBox.shrink] for others.
   /// IndexedStack builds all children eagerly — deferring unvisited tabs
   /// prevents their API calls from racing on first render.
   List<Widget> _buildScreenList() {
-    Widget _screen(int i, Widget child) =>
+    Widget screen(int i, Widget child) =>
         _visitedTabs.contains(i) ? child : const SizedBox.shrink();
     return [
-      _screen(0, const DashboardScreen()),
-      _screen(1, _scrollAware(1, const MilestonesScreen())),
-      _screen(2, _scrollAware(2, const FeedingScreen())),
-      _screen(3, _scrollAware(3, const HealthScreen())),
-      _screen(4, CompanionTab(babyMonId: _activeBabyMonId ?? '')),
+      screen(0, const DashboardScreen()),
+      screen(1, _scrollAware(1, const MilestonesScreen())),
+      screen(2, _scrollAware(2, const FeedingScreen())),
+      screen(3, _scrollAware(3, const HealthScreen())),
+      screen(4, CompanionTab(babyMonId: _activeBabyMonId ?? '')),
       const SizedBox.shrink(), // More tab placeholder
     ];
   }
@@ -134,9 +133,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       _switchInProgress = false;
     }
   }
-  void _openCompanion(BuildContext context) {
-    context.push('/companion/${_activeBabyMonId ?? ''}');
-  }
   // ═══ Gender helpers ═══
   String _genderEmoji(String? g) =>
       g == 'MONIESE' ? '♀' : g == 'MONIOUS' ? '♂' : '';
@@ -179,7 +175,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             Text(
               _activeBabyMonName.isNotEmpty
                   ? _activeBabyMonName
-                  : 'BabyMon',
+                  : context.l10n.appTitle,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
@@ -215,7 +211,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                             style: const TextStyle(fontSize: 14)),
                         const SizedBox(width: 8),
                         Text(
-                          parseString(bm['name']) ?? 'BabyMon',
+                          parseString(bm['name']) ?? context.l10n.appTitle,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
@@ -276,7 +272,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   ),
                 ),
                 Text(
-                  'More Features',
+                  context.l10n.moreFeatures,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: DesignTokens.spaceMd),
@@ -365,14 +361,14 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   // ═══ Drawer ═══
   Widget _buildDrawer() {
     final navItems = [
-      _DrawerSection('Main', [
+      _DrawerSection(context.l10n.main, [
         _DrawerItem(PhosphorIconsLight.house, context.l10n.dashboard, 0),
         _DrawerItem(PhosphorIconsLight.trophy, context.l10n.milestones, 1),
         _DrawerItem(PhosphorIconsLight.bowlFood, context.l10n.feeding, 2),
         _DrawerItem(PhosphorIconsLight.heart, context.l10n.health, 3),
         _DrawerItem(PhosphorIconsLight.magicWand, context.l10n.companion, 4),
       ]),
-      _DrawerSection('More', [
+      _DrawerSection(context.l10n.more, [
         _DrawerItem(PhosphorIconsLight.images, context.l10n.album, null, () =>
             _drawerNavigate(() => GoRouter.of(context).push('/album'))),
         _DrawerItem(PhosphorIconsLight.bookOpen, context.l10n.journal, null, () =>
@@ -420,7 +416,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 ),
                 const SizedBox(height: DesignTokens.spaceMd),
                 Text(
-                  'BabyMon',
+                  context.l10n.appTitle,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -430,7 +426,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 ),
                 const SizedBox(height: DesignTokens.spaceXs),
                 Text(
-                  'Your Parenting Companion',
+                  context.l10n.yourParentingCompanion,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -475,7 +471,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 // Secondary actions
                 _buildDrawerTile(
                   PhosphorIconsLight.gear,
-                  'Settings',
+                  context.l10n.settings,
                   Theme.of(context).brightness == Brightness.dark ? context.colorScheme.onPrimary : context.colorScheme.onSurface,
                   () => _drawerNavigate(
                     () => GoRouter.of(context).push('/settings'),
@@ -483,7 +479,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 ),
                 _buildDrawerTile(
                   PhosphorIconsLight.users,
-                  'Manage Partners',
+                  context.l10n.managePartners,
                   context.colorScheme.primary,
                   () => _drawerNavigate(
                     () => GoRouter.of(context).push('/partners'),
@@ -493,7 +489,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 // Logout
                 _buildDrawerTile(
                   PhosphorIconsLight.signOut,
-                  'Logout',
+                  context.l10n.logoutTitle,
                   context.colorScheme.error,
                   () => _logout(),
                 ),
@@ -520,7 +516,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 ),
                 const SizedBox(width: DesignTokens.spaceXs),
                 Text(
-                  'BabyMon v1.0.0',
+                  context.l10n.babyMonVersion,
                   style: Theme.of(context).textTheme.labelSmall,
                 ),
               ],
@@ -601,17 +597,17 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(context.l10n.logoutTitle),
+        content: Text(context.l10n.logoutMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
-              'Logout',
+              context.l10n.logoutTitle,
               style: Theme.of(ctx).textTheme.labelLarge?.copyWith(color: context.colorScheme.error),
             ),
           ),
@@ -744,8 +740,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   centerTitle: false,
                   titleSpacing: 0,
                   actions: [
-                    ThemeButton.icon(icon: PhosphorIconsLight.bell, onPressed: () { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notifications coming soon'), duration: Duration(seconds: 2))); }, tooltip: 'Notifications', variant: ThemeButtonVariant.text),
-                    ThemeButton.icon(icon: PhosphorIconsLight.plusCircle, onPressed: () => GoRouter.of(context).push('/create-baby-mon'), tooltip: 'Create BabyMon', variant: ThemeButtonVariant.text, foregroundColor: context.colorScheme.secondary),
+                    ThemeButton.icon(icon: PhosphorIconsLight.bell, onPressed: () { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.notificationsComingSoon), duration: const Duration(seconds: 2))); }, tooltip: context.l10n.notifications, variant: ThemeButtonVariant.text),
+                    ThemeButton.icon(icon: PhosphorIconsLight.plusCircle, onPressed: () => GoRouter.of(context).push('/create-baby-mon'), tooltip: context.l10n.createBabyMon, variant: ThemeButtonVariant.text, foregroundColor: context.colorScheme.secondary),
                     const SizedBox(width: DesignTokens.spaceXs),
                   ],
                 ),
@@ -816,7 +812,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                     _FloatingNavItem(
                       icon: PhosphorIconsLight.dotsSixVertical,
                       activeIcon: PhosphorIconsLight.dotsSixVertical,
-                      label: 'More',
+                      label: context.l10n.more,
                       isSelected: _currentIndex == _tabCount - 1,
                       onTap: _showMoreMenu,
                     ),
@@ -829,19 +825,19 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       // ── FAB ──
       floatingActionButton: _currentIndex == 0
           ? InfoFab(
-                tooltip: 'Quick actions',
+                tooltip: context.l10n.quickActions,
                 icon: PhosphorIconsLight.lightning,
                 children: [
                   InfoFabAction(
-                    tooltip: 'Journal',
-                    infoDescription: 'Journal',
+                    tooltip: context.l10n.journal,
+                    infoDescription: context.l10n.journal,
                     backgroundColor: AppColors.bentoGold,
                     onTap: () => context.push('/journal'),
                     child: const Icon(PhosphorIconsLight.bookOpen, color: Colors.white),
                   ),
                   InfoFabAction(
-                    tooltip: 'Album',
-                    infoDescription: 'Album',
+                    tooltip: context.l10n.album,
+                    infoDescription: context.l10n.album,
                     backgroundColor: AppColors.bentoPurple,
                     onTap: () => context.push('/album'),
                     child: const Icon(PhosphorIconsLight.images, color: Colors.white),
@@ -850,12 +846,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               )
           : _currentIndex == 3
               ? InfoFab(
-                  tooltip: 'Add a measurement, allergy, or clinic visit',
+                  tooltip: context.l10n.addHealthActionsTooltip,
                   icon: PhosphorIconsLight.plus,
                   children: [
                     InfoFabAction(
-                      tooltip: 'Add Measurement',
-                      infoDescription: 'Measurement',
+                      tooltip: context.l10n.addMeasurement,
+                      infoDescription: context.l10n.measurement,
                       backgroundColor: context.colorScheme.primary,
                       onTap: () {
                         ref.read(pendingAddActionProvider.notifier).state =
@@ -865,8 +861,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                           color: context.colorScheme.onPrimary),
                     ),
                     InfoFabAction(
-                      tooltip: 'Add Event',
-                      infoDescription: 'Event',
+                      tooltip: context.l10n.addEvent,
+                      infoDescription: context.l10n.event,
                       backgroundColor: context.colorScheme.tertiary,
                       onTap: () {
                         ref.read(pendingAddActionProvider.notifier).state =
@@ -876,8 +872,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                           color: context.colorScheme.onPrimary),
                     ),
                     InfoFabAction(
-                      tooltip: 'Add Medical Team',
-                      infoDescription: 'Med Team',
+                      tooltip: context.l10n.addMedicalContact,
+                      infoDescription: context.l10n.medTeamShortLabel,
                       backgroundColor: context.colorScheme.secondary,
                       onTap: () {
                         ref.read(pendingAddActionProvider.notifier).state =

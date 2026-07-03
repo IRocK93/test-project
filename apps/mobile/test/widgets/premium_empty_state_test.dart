@@ -73,7 +73,12 @@ void main() {
 
     testWidgets('noData preset renders correct text', (tester) async {
       await tester.pumpWidget(_wrapInApp(
-        PremiumEmptyState.noData(itemName: 'milestone'),
+        Builder(
+          builder: (context) => PremiumEmptyState.noData(
+            context: context,
+            itemName: 'milestone',
+          ),
+        ),
       ));
 
       expect(find.text('No milestone yet'), findsOneWidget);
@@ -84,7 +89,13 @@ void main() {
     testWidgets('noData preset renders action button when onAdd provided',
         (tester) async {
       await tester.pumpWidget(_wrapInApp(
-        PremiumEmptyState.noData(itemName: 'feeding', onAdd: () {}),
+        Builder(
+          builder: (context) => PremiumEmptyState.noData(
+            context: context,
+            itemName: 'feeding',
+            onAdd: () {},
+          ),
+        ),
       ));
 
       expect(find.text('Add feeding'), findsOneWidget);
@@ -93,7 +104,12 @@ void main() {
 
     testWidgets('comingSoon preset renders correct text', (tester) async {
       await tester.pumpWidget(_wrapInApp(
-        PremiumEmptyState.comingSoon(featureName: 'Chat'),
+        Builder(
+          builder: (context) => PremiumEmptyState.comingSoon(
+            context: context,
+            featureName: 'Chat',
+          ),
+        ),
       ));
 
       expect(find.text('Coming Soon'), findsOneWidget);
@@ -102,7 +118,9 @@ void main() {
 
     testWidgets('comingSoon preset defaults to wrench icon', (tester) async {
       await tester.pumpWidget(_wrapInApp(
-        PremiumEmptyState.comingSoon(),
+        Builder(
+          builder: (context) => PremiumEmptyState.comingSoon(context: context),
+        ),
       ));
 
       expect(find.byIcon(PhosphorIconsLight.wrench), findsOneWidget);

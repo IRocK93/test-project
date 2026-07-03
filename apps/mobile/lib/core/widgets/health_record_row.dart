@@ -106,8 +106,8 @@ class HealthRecordRow extends StatelessWidget {
         confirmDismiss: (_) => onConfirmDelete!(),
         background: Container(
           margin: const EdgeInsets.only(bottom: DesignTokens.spaceSm),
-          alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 24),
+          alignment: AlignmentDirectional.centerEnd,
+          padding: const EdgeInsetsDirectional.only(end: 24),
           decoration: BoxDecoration(
             color: context.colorScheme.error,
             borderRadius: BorderRadius.circular(DesignTokens.radiusMd),

@@ -1,7 +1,8 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import '../../domain/entities/health_record.dart';
 
-enum HealthCategory { CHECKUP, VACCINE, MEDICATION, MEASUREMENT, OTHER }
+enum HealthCategory { checkup, vaccine, medication, measurement, other }
 
 class HealthRecordForm extends StatefulWidget {
   final String babyMonId;
@@ -18,7 +19,7 @@ class _HealthRecordFormState extends State<HealthRecordForm> {
   final _valueCtrl = TextEditingController();
   final _unitCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
-  HealthCategory _category = HealthCategory.CHECKUP;
+  HealthCategory _category = HealthCategory.checkup;
   DateTime _date = DateTime.now();
   bool _saving = false;
 
@@ -60,45 +61,55 @@ class _HealthRecordFormState extends State<HealthRecordForm> {
     filled: true, fillColor: const Color(0xFF2A2A2A),
   );
 
+  String _categoryLabel(HealthCategory c) {
+    switch (c) {
+      case HealthCategory.checkup: return context.l10n.annualCheckup;
+      case HealthCategory.vaccine: return context.l10n.vaccination;
+      case HealthCategory.medication: return context.l10n.headCircumference;
+      case HealthCategory.measurement: return context.l10n.measurement;
+      case HealthCategory.other: return context.l10n.otherCategoryLabel;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 16, right: 16, top: 16),
+      padding: EdgeInsetsDirectional.only(bottom: MediaQuery.of(context).viewInsets.bottom, start: 16, end: 16, top: 16),
       child: Form(
         key: _formKey, child: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('Log Health Record', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            Text(context.l10n.logHealth, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
             IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(context)),
           ]),
           const SizedBox(height: 12),
           DropdownButtonFormField<HealthCategory>(
-            value: _category, dropdownColor: const Color(0xFF1E1E1E), style: const TextStyle(color: Colors.white),
-            decoration: _deco('Category'),
-            items: HealthCategory.values.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
+            initialValue: _category, dropdownColor: const Color(0xFF1E1E1E), style: const TextStyle(color: Colors.white),
+            decoration: _deco(context.l10n.healthCategory),
+            items: HealthCategory.values.map((c) => DropdownMenuItem(value: c, child: Text(_categoryLabel(c)))).toList(),
             onChanged: (v) => setState(() => _category = v!),
           ),
           const SizedBox(height: 12),
           TextFormField(controller: _titleCtrl, style: const TextStyle(color: Colors.white),
-            decoration: _deco('Title (optional)')),
+            decoration: _deco(context.l10n.titleOptional)),
           const SizedBox(height: 12),
           TextFormField(controller: _valueCtrl, style: const TextStyle(color: Colors.white),
-            decoration: _deco('Value'), keyboardType: TextInputType.number),
+            decoration: _deco(context.l10n.growthValue), keyboardType: TextInputType.number),
           const SizedBox(height: 12),
           TextFormField(controller: _unitCtrl, style: const TextStyle(color: Colors.white),
-            decoration: _deco('Unit (optional)')),
+            decoration: _deco(context.l10n.growthUnit)),
           const SizedBox(height: 12),
-          InkWell(onTap: _pickDate, child: InputDecorator(decoration: _deco('Date'),
-            child: Text(_date.day.toString() + '/' + _date.month.toString() + '/' + _date.year.toString(), style: const TextStyle(color: Colors.white))),
+          InkWell(onTap: _pickDate, child: InputDecorator(decoration: _deco(context.l10n.feedDateLabel),
+            child: Text('${_date.day}/${_date.month}/${_date.year}', style: const TextStyle(color: Colors.white))),
           ),
           const SizedBox(height: 12),
           TextFormField(controller: _notesCtrl, style: const TextStyle(color: Colors.white),
-            decoration: _deco('Notes (optional)'), maxLines: 2),
+            decoration: _deco(context.l10n.notesOptionalLabel), maxLines: 2),
           const SizedBox(height: 20),
           ElevatedButton(onPressed: _saving ? null : _submit,
             style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, padding: const EdgeInsets.symmetric(vertical: 16)),
             child: _saving ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Save', style: TextStyle(fontSize: 16))),
+              : Text(context.l10n.save, style: const TextStyle(fontSize: 16))),
           const SizedBox(height: 16),
         ]),
       ),

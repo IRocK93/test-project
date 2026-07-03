@@ -298,8 +298,8 @@ Full notice: docs/legal/childrens-privacy-notice.md
           pageBuilder: (context, state) => _pageTransition(
             context: context,
             state: state,
-            child: const LegalDocumentScreen(
-              title: 'Terms of Service',
+            child: LegalDocumentScreen(
+              type: LegalDocumentType.termsOfService,
               content: _termsOfServiceContent,
             ),
           ),
@@ -309,8 +309,8 @@ Full notice: docs/legal/childrens-privacy-notice.md
           pageBuilder: (context, state) => _pageTransition(
             context: context,
             state: state,
-            child: const LegalDocumentScreen(
-              title: 'Privacy Policy',
+            child: LegalDocumentScreen(
+              type: LegalDocumentType.privacyPolicy,
               content: _privacyPolicyContent,
             ),
           ),
@@ -320,8 +320,8 @@ Full notice: docs/legal/childrens-privacy-notice.md
           pageBuilder: (context, state) => _pageTransition(
             context: context,
             state: state,
-            child: const LegalDocumentScreen(
-              title: "Children's Privacy",
+            child: LegalDocumentScreen(
+              type: LegalDocumentType.childrensPrivacy,
               content: _childrensPrivacyContent,
             ),
           ),

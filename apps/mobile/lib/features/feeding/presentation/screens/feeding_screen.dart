@@ -8,6 +8,7 @@ import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/mixins/mixins.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/features/feeding/domain/entities/feed_log.dart';
@@ -234,7 +235,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
     final cutoffDate = DateTime(cutoff.year, cutoff.month, cutoff.day);
     final dayGroups = <String, List<FeedLog>>{};
     for (final log in _feedLogs) {
-      final dt = log.happenedAt;
+      final dt = log.happenedAt?.toLocal();
       if (dt == null) continue;
       final logDate = DateTime(dt.year, dt.month, dt.day);
       if (logDate.isBefore(cutoffDate)) continue;
@@ -485,13 +486,16 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                     final date = DateTime.tryParse(dateStr);
                     final label = date != null ? DateFormat('d/M').format(date) : dateStr;
                     final isSelected = _feedSelectedDate == dateStr;
-                    return SizedBox(
-                      width: barWidth,
-                      child: Text(label, textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: DesignTokens.fontSm,
-                            color: isSelected ? context.colorScheme.primary : context.colorScheme.onSurfaceVariant,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: SizedBox(
+                        width: barWidth,
+                        child: Text(label, textAlign: TextAlign.center,
+                          style: TextStyle(
+                              fontSize: DesignTokens.fontSm,
+                              color: isSelected ? context.colorScheme.primary : context.colorScheme.onSurfaceVariant,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
+                      ),
                     );
                   }),
                 ),
@@ -640,7 +644,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                                                 ),
                                               ),
                                               Text(
-                                                '${log.happenedAt != null ? '${DateFormat('MMM d, h:mm a').format(log.happenedAt!)}' : '--:--'}${log.amount != null ? '  ·  ${(log.amount! % 1 == 0) ? log.amount!.toInt().toString() : log.amount!.toStringAsFixed(1)} $unit' : ''}',
+                                                '${log.happenedAt != null ? '${DateFormat('MMM d, h:mm a').format(log.happenedAt!)}' : context.l10n.noTimeFallback}${log.amount != null ? '  ·  ${(log.amount! % 1 == 0) ? log.amount!.toInt().toString() : log.amount!.toStringAsFixed(1)} $unit' : ''}',
                                                 style: TextStyle(
                                                   fontSize: DesignTokens.fontSm,
                                                   color: context.colorScheme.onSurfaceVariant,
@@ -743,7 +747,7 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
               ),
               const SizedBox(height: DesignTokens.spaceMd),
               Semantics(
-                label: 'Select feeding amount',
+                label: context.l10n.selectFeedingAmount,
                 button: true,
                 child: GestureDetector(
                   onTap: () async {
@@ -857,6 +861,8 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
                       'happenedAt': DateTime(selectedDate.year, selectedDate.month, selectedDate.day, currentTime.hour, currentTime.minute).toIso8601String(),
                     });
                     setState(() => _feedLogs.insert(0, newLog));
+                    // Notify other screens (dashboard badges, journal)
+                    ref.read(appRefreshProvider.notifier).state++;
                     // Level-up celebration
                     final data = result.data;
                     if (data is Map && data['leveledUp'] == true) {
@@ -884,8 +890,9 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
     FeedType selectedType = type;
     double? selectedAmount = log.amount;
     final notesController = TextEditingController(text: log.notes ?? '');
-    DateTime logDate = log.happenedAt ?? DateTime.now();
-    TimeOfDay logTime = log.happenedAt != null ? TimeOfDay.fromDateTime(log.happenedAt!) : TimeOfDay.now();
+    final localHappenedAt = log.happenedAt?.toLocal();
+    DateTime logDate = localHappenedAt ?? DateTime.now();
+    TimeOfDay logTime = localHappenedAt != null ? TimeOfDay.fromDateTime(localHappenedAt) : TimeOfDay.now();
     final api = ref.read(apiClientProvider);
     bool isSaving = false;
     showModalBottomSheet<void>(context: context, isScrollControlled: true, builder: (ctx) => StatefulBuilder(builder: (ctx, setD) => Padding(
@@ -925,12 +932,24 @@ class _FeedingScreenState extends ConsumerState<FeedingScreen>
           Expanded(child: ThemeButton(text: 'Save', onPressed: () async {
             setD(() => isSaving = true);
             try {
+              final newHappenedAt = DateTime(logDate.year, logDate.month, logDate.day, logTime.hour, logTime.minute);
               await api.updateFeedLog(log.id, {
                 'type': selectedType.apiKey, 'amount': selectedAmount?.toString(), 'unit': selectedType.unit(_isMetric),
-                'happenedAt': DateTime(logDate.year, logDate.month, logDate.day, logTime.hour, logTime.minute).toIso8601String(),
+                'happenedAt': newHappenedAt.toIso8601String(),
                 'notes': notesController.text.isNotEmpty ? notesController.text : null,
               });
-              ref.read(appRefreshProvider.notifier).state++; if (ctx.mounted) Navigator.pop(ctx);
+              // Optimistic local update
+              setState(() {
+                _feedLogs[index] = FeedLog.fromJson({
+                  ...log.toJson(),
+                  'type': selectedType.apiKey,
+                  'amount': selectedAmount,
+                  'unit': selectedType.unit(_isMetric),
+                  'happenedAt': newHappenedAt.toIso8601String(),
+                  'notes': notesController.text.isNotEmpty ? notesController.text : null,
+                });
+              });
+              if (ctx.mounted) Navigator.pop(ctx);
             } catch (e) { setD(() => isSaving = false); if (ctx.mounted) showError(ctx, e); }
           }, isLoading: isSaving, fullWidth: true)),
         ]), const SizedBox(height: DesignTokens.spaceSm),

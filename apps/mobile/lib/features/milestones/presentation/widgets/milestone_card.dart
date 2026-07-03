@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import '../../domain/entities/milestone.dart';
 import 'package:intl/intl.dart';
@@ -10,7 +11,7 @@ class MilestoneCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = DateFormat('MMM d, yyyy').format(milestone.happenedAt ?? DateTime(2000));
+    final dateStr = DateFormat.yMMMd().format(milestone.happenedAt ?? DateTime(2000));
 
     return Dismissible(
       key: Key(milestone.id),
@@ -19,11 +20,11 @@ class MilestoneCard extends StatelessWidget {
         return await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Delete Milestone?'),
-            content: const Text('This cannot be undone.'),
+            title: Text(context.l10n.deleteMilestoneTitle),
+            content: Text(context.l10n.deleteConfirmText),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-              TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.l10n.cancelLabel)),
+              TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(context.l10n.deleteLabel, style: const TextStyle(color: Colors.red))),
             ],
           ),
         ) ?? false;
@@ -39,13 +40,13 @@ class MilestoneCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         color: const Color(0xFF1E1E1E),
         child: ExpansionTile(
-          leading: Text("🎯", style: const TextStyle(fontSize: 28)),
+          leading: const Text("🎯", style: TextStyle(fontSize: 28)),
           title: Text(milestone.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
           subtitle: Text(dateStr, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
           trailing: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(color: Colors.deepPurple.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(12)),
-            child: Text('+${5} XP', style: const TextStyle(color: Colors.deepPurpleAccent, fontSize: 12, fontWeight: FontWeight.bold)),
+            child: Text(context.l10n.xpValueLabel(5), style: const TextStyle(color: Colors.deepPurpleAccent, fontSize: 12, fontWeight: FontWeight.bold)),
           ),
           children: [
             if (milestone.notes != null && milestone.notes!.isNotEmpty)

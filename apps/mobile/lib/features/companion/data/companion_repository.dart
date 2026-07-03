@@ -8,9 +8,12 @@ class CompanionRepository {
 
   CompanionRepository(this._api);
 
-  Future<Map<String, dynamic>> getDailyBrief(String babyMonId) async {
+  Future<Map<String, dynamic>> getDailyBrief(String babyMonId, {String? locale}) async {
     try {
-      final res = await _api.get('/stage-content/$babyMonId/daily-brief');
+      final res = await _api.get(
+        '/stage-content/$babyMonId/daily-brief',
+        queryParameters: locale != null ? {'locale': locale} : null,
+      );
       return res.data as Map<String, dynamic>;
     } catch (e) {
       if (isTierRequiredError(e)) throw const TierRequiredException();
@@ -18,10 +21,13 @@ class CompanionRepository {
     }
   }
 
-  Future<Map<String, dynamic>> getRoutine(String babyMonId, {bool forceRefresh = false}) async {
+  Future<Map<String, dynamic>> getRoutine(String babyMonId, {bool forceRefresh = false, String? locale}) async {
     try {
+      final queryParams = <String, dynamic>{};
+      if (locale != null) queryParams['locale'] = locale;
       final res = await _api.get(
         '/stage-content/$babyMonId/routine',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
         forceRefresh: forceRefresh,
         options: Options(extra: {'forceRefresh': forceRefresh}),
       );
@@ -54,11 +60,14 @@ class CompanionRepository {
     }
   }
 
-  Future<Map<String, dynamic>> getMilestones(String babyMonId, {String? status, bool forceRefresh = false}) async {
+  Future<Map<String, dynamic>> getMilestones(String babyMonId, {String? status, bool forceRefresh = false, String? locale}) async {
     try {
-      final query = status != null ? '?status=$status' : '';
+      final queryParams = <String, dynamic>{};
+      if (status != null) queryParams['status'] = status;
+      if (locale != null) queryParams['locale'] = locale;
       final res = await _api.get(
-        '/stage-content/$babyMonId/milestones/expected$query',
+        '/stage-content/$babyMonId/milestones/expected',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
         forceRefresh: forceRefresh,
         options: Options(extra: {'forceRefresh': forceRefresh}),
       );
@@ -86,10 +95,15 @@ class CompanionRepository {
     }
   }
 
-  Future<Map<String, dynamic>> getAdvice(String babyMonId, {String? category, int skip = 0, int take = 10}) async {
+  Future<Map<String, dynamic>> getAdvice(String babyMonId, {String? category, int skip = 0, int take = 10, String? locale}) async {
     try {
-      final query = '?skip=$skip&take=$take${category != null ? '&category=$category' : ''}';
-      final res = await _api.get('/stage-content/$babyMonId/advice$query');
+      final queryParams = <String, dynamic>{
+        'skip': skip,
+        'take': take,
+      };
+      if (category != null) queryParams['category'] = category;
+      if (locale != null) queryParams['locale'] = locale;
+      final res = await _api.get('/stage-content/$babyMonId/advice', queryParameters: queryParams);
       return res.data as Map<String, dynamic>;
     } catch (e) {
       if (isTierRequiredError(e)) throw const TierRequiredException();

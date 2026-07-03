@@ -96,7 +96,7 @@ Widget _buildForm(
                     initialValue: name,
                     decoration: InputDecoration(
                       labelText: 'Baby\'s name',
-                      prefixIcon: Icon(
+                      prefixIcon: const Icon(
                         PhosphorIconsLight.baby,
                         color: AppColors.textSecondary,
                       ),
@@ -115,11 +115,11 @@ Widget _buildForm(
                     readOnly: true,
                     decoration: InputDecoration(
                       labelText: 'Date of birth',
-                      prefixIcon: Icon(
+                      prefixIcon: const Icon(
                         PhosphorIconsLight.calendar,
                         color: AppColors.textSecondary,
                       ),
-                      suffixIcon: Icon(
+                      suffixIcon: const Icon(
                         PhosphorIconsLight.caretDown,
                         color: AppColors.textSecondary,
                       ),
@@ -138,11 +138,11 @@ Widget _buildForm(
                     readOnly: true,
                     decoration: InputDecoration(
                       labelText: 'Gender',
-                      prefixIcon: Icon(
+                      prefixIcon: const Icon(
                         PhosphorIconsLight.user,
                         color: AppColors.textSecondary,
                       ),
-                      suffixIcon: Icon(
+                      suffixIcon: const Icon(
                         PhosphorIconsLight.caretDown,
                         color: AppColors.textSecondary,
                       ),

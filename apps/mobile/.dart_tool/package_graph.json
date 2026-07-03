@@ -46,9 +46,19 @@
         "flutter_launcher_icons",
         "flutter_lints",
         "flutter_test",
+        "image",
         "integration_test",
         "json_annotation",
         "json_serializable"
+      ]
+    },
+    {
+      "name": "image",
+      "version": "4.8.0",
+      "dependencies": [
+        "archive",
+        "meta",
+        "xml"
       ]
     },
     {
@@ -542,6 +552,28 @@
       ]
     },
     {
+      "name": "xml",
+      "version": "6.6.1",
+      "dependencies": [
+        "collection",
+        "meta",
+        "petitparser"
+      ]
+    },
+    {
+      "name": "meta",
+      "version": "1.18.0",
+      "dependencies": []
+    },
+    {
+      "name": "archive",
+      "version": "4.0.9",
+      "dependencies": [
+        "path",
+        "posix"
+      ]
+    },
+    {
       "name": "vm_service",
       "version": "15.1.0",
       "dependencies": []
@@ -576,15 +608,6 @@
       ]
     },
     {
-      "name": "image",
-      "version": "4.8.0",
-      "dependencies": [
-        "archive",
-        "meta",
-        "xml"
-      ]
-    },
-    {
       "name": "cli_util",
       "version": "0.4.2",
       "dependencies": [
@@ -604,11 +627,6 @@
     {
       "name": "args",
       "version": "2.7.0",
-      "dependencies": []
-    },
-    {
-      "name": "meta",
-      "version": "1.18.0",
       "dependencies": []
     },
     {
@@ -1125,14 +1143,6 @@
       "dependencies": []
     },
     {
-      "name": "archive",
-      "version": "4.0.9",
-      "dependencies": [
-        "path",
-        "posix"
-      ]
-    },
-    {
       "name": "win32_registry",
       "version": "2.1.0",
       "dependencies": [
@@ -1366,15 +1376,6 @@
       "dependencies": [
         "flutter",
         "pdf"
-      ]
-    },
-    {
-      "name": "xml",
-      "version": "6.6.1",
-      "dependencies": [
-        "collection",
-        "meta",
-        "petitparser"
       ]
     },
     {
@@ -1755,6 +1756,23 @@
       "dependencies": []
     },
     {
+      "name": "petitparser",
+      "version": "7.0.2",
+      "dependencies": [
+        "collection",
+        "meta"
+      ]
+    },
+    {
+      "name": "posix",
+      "version": "6.5.0",
+      "dependencies": [
+        "ffi",
+        "meta",
+        "path"
+      ]
+    },
+    {
       "name": "webdriver",
       "version": "3.1.0",
       "dependencies": [
@@ -1849,15 +1867,6 @@
         "collection",
         "meta",
         "pub_semver"
-      ]
-    },
-    {
-      "name": "posix",
-      "version": "6.5.0",
-      "dependencies": [
-        "ffi",
-        "meta",
-        "path"
       ]
     },
     {
@@ -1966,14 +1975,6 @@
         "package_config",
         "path",
         "plugin_platform_interface"
-      ]
-    },
-    {
-      "name": "petitparser",
-      "version": "7.0.2",
-      "dependencies": [
-        "collection",
-        "meta"
       ]
     },
     {

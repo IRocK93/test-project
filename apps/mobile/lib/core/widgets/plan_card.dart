@@ -23,6 +23,8 @@ class PlanCard extends StatelessWidget {
   final String? secondaryActionLabel;
   final VoidCallback? onSecondaryAction;
   final String? footerNote; // e.g. "Cancel anytime · 30-day refund"
+  final String recommendedLabel;
+  final String currentPlanLabel;
 
   const PlanCard({
     super.key,
@@ -39,6 +41,8 @@ class PlanCard extends StatelessWidget {
     this.secondaryActionLabel,
     this.onSecondaryAction,
     this.footerNote,
+    this.recommendedLabel = 'RECOMMENDED',
+    this.currentPlanLabel = 'Current plan',
   });
 
   @override
@@ -81,7 +85,7 @@ class PlanCard extends StatelessWidget {
               children: [
                 if (isRecommended) ...[
                   Text(
-                    'RECOMMENDED',
+                    recommendedLabel,
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -142,7 +146,7 @@ class PlanCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.only(top: 6, right: 8),
+                          padding: const EdgeInsetsDirectional.only(top: 6, end: 8),
                           child: Container(
                             width: 6,
                             height: 6,
@@ -169,13 +173,13 @@ class PlanCard extends StatelessWidget {
                 const SizedBox(height: DesignTokens.spaceMd),
                 if (primaryActionLabel != null && onPrimaryAction != null)
                   ThemeButton(
-                    text: isCurrent ? 'Current plan' : primaryActionLabel!,
+                    text: isCurrent ? currentPlanLabel : primaryActionLabel!,
                     onPressed: onPrimaryAction,
                     isDisabled: isCurrent,
                     isLoading: isBusy,
                     fullWidth: true,
                     backgroundColor: isRecommended ? accent : null,
-                    semanticLabel: isCurrent ? 'Current plan' : primaryActionLabel!,
+                    semanticLabel: isCurrent ? currentPlanLabel : primaryActionLabel!,
                   ),
                 if (secondaryActionLabel != null && onSecondaryAction != null) ...[
                   const SizedBox(height: DesignTokens.spaceSm),

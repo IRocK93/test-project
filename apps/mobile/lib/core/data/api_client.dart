@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
 import '../../core/constants/api_constants.dart';
 import 'response_cache.dart';
@@ -9,8 +10,6 @@ import 'locale_interceptor.dart';
 
 class ApiClient {
   late final Dio _dio;
-  /// Exposed for services that need Dio directly (e.g. streaming downloads).
-  Dio get dio => _dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final ResponseCache _cache = ResponseCache();
 
@@ -42,17 +41,19 @@ class ApiClient {
       },
     ));
 
-		    _dio.interceptors.add(InterceptorsWrapper(
-	      onRequest: (options, handler) async {
-	        final token = await _storage.read(key: StorageKeys.accessToken);
-	        if (token != null) {
-	          options.headers['Authorization'] = 'Bearer $token';
+    _dio.interceptors.add(LocaleInterceptor());
+
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) async {
+        final token = await _storage.read(key: StorageKeys.accessToken);
+        if (token != null) {
+          options.headers['Authorization'] = 'Bearer $token';
 	        }
 	        // Serve from cache for GET requests (skip if forceRefresh is set)
 	        if (options.method.toUpperCase() == 'GET') {
 	          final forceRefresh = options.extra['forceRefresh'] == true;
 	          if (!forceRefresh) {
-	            final cacheKey = _buildCacheKey(options.path, options.queryParameters);
+	            final cacheKey = _buildCacheKey(options.path, options.queryParameters, options.headers);
 	            final cached = _cache.get(cacheKey);
 	            if (cached != null) {
 	              return handler.resolve(cached);
@@ -65,28 +66,12 @@ class ApiClient {
 	        final method = response.requestOptions.method.toUpperCase();
 	        // Cache successful GET responses
 	        if (method == 'GET') {
-	          final cacheKey = _buildCacheKey(response.requestOptions.path, response.requestOptions.queryParameters);
+	          final cacheKey = _buildCacheKey(response.requestOptions.path, response.requestOptions.queryParameters, response.requestOptions.headers);
 	          _cache.set(cacheKey, response);
 	        }
-	        // Invalidate related GET caches on successful mutations
-	        if (method == 'POST' || method == 'PATCH' || method == 'DELETE' || method == 'PUT') {
-	          final url = response.requestOptions.path;
-	          // Strip /api prefix and action suffixes (with preceding UUID), keep resource UUIDs intact
-	          // so the pattern matches GET cache keys. Normalize trailing slashes.
-          final resource = url
-              .replaceAll(RegExp(r'^/api(/v1)?'), '')
-              .replaceAll(RegExp(r'/[a-f0-9-]{36}/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
-              .replaceAll(RegExp(r'/routine/[^/]+/complete$'), '/routine')
-              .replaceAll(RegExp(r'/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
-              .replaceAll(RegExp(r'/[a-f0-9-]{36}$'), '')   // strip trailing UUID for single-resource mutations
-              .replaceAll(RegExp(r'/+$'), '');
-          _cache.invalidatePattern(resource);
-          // Also invalidate the parent baby-mon dashboard — mutations on any
-          // sub-resource (milestones, feed-logs, etc.) should refresh counts.
-          final parentMatch = RegExp(r'^(/baby-mons/[a-f0-9-]+)').firstMatch(resource);
-          if (parentMatch != null) {
-            _cache.invalidatePattern(parentMatch.group(1)!);
-          }
+        // Invalidate related GET caches on successful mutations
+        if (method == 'POST' || method == 'PATCH' || method == 'DELETE' || method == 'PUT') {
+          _invalidateCachesForUrl(response.requestOptions.path);
         }
         return handler.next(response);
       },
@@ -95,25 +80,12 @@ class ApiClient {
         // server state — invalidate cache so subsequent GETs see fresh data.
         final method = error.requestOptions.method.toUpperCase();
         if (method == 'POST' || method == 'PATCH' || method == 'DELETE' || method == 'PUT') {
-          final url = error.requestOptions.path;
-          final resource = url
-              .replaceAll(RegExp(r'^/api(/v1)?'), '')
-              .replaceAll(RegExp(r'/[a-f0-9-]{36}/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
-              .replaceAll(RegExp(r'/routine/[^/]+/complete$'), '/routine')
-              .replaceAll(RegExp(r'/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
-              .replaceAll(RegExp(r'/[a-f0-9-]{36}$'), '')
-              .replaceAll(RegExp(r'/+$'), '');
-          _cache.invalidatePattern(resource);
-          final parentMatch = RegExp(r'^(/baby-mons/[a-f0-9-]+)').firstMatch(resource);
-          if (parentMatch != null) {
-            _cache.invalidatePattern(parentMatch.group(1)!);
-          }
+          _invalidateCachesForUrl(error.requestOptions.path);
         }
         return handler.next(error);
       },
     ));
 
-    _dio.interceptors.add(LocaleInterceptor());
     _dio.interceptors.add(BackoffInterceptor());
     _dio.interceptors.add(RetryInterceptor(
       storage: _storage,
@@ -459,6 +431,23 @@ class ApiClient {
     await _storage.delete(key: StorageKeys.userEmail);
   }
 
+  /// Creates a Dio instance pre-configured with the current auth token but
+  /// without API-specific interceptors (versioning, caching, etc.). Safe for
+  /// use with external download URLs that must not be prefixed with `/api/v1`.
+  Future<Dio> createDownloadDio({Duration? connectTimeout, Duration? receiveTimeout}) async {
+    final dio = Dio(BaseOptions(
+      connectTimeout: connectTimeout ?? const Duration(seconds: 30),
+      receiveTimeout: receiveTimeout ?? const Duration(hours: 2),
+      followRedirects: true,
+      maxRedirects: 10,
+    ));
+    final token = await _storage.read(key: StorageKeys.accessToken);
+    if (token != null) {
+      dio.options.headers['Authorization'] = 'Bearer $token';
+    }
+    return dio;
+  }
+
   Future<void> setSelectedBabyMonId(String? id) async {
     if (id == null || id.isEmpty) {
       await _storage.delete(key: StorageKeys.selectedBabyMonId);
@@ -510,10 +499,12 @@ class ApiClient {
     bool forceRefresh = false,
   }) async {
     final fullPath = _resolvePath(path);
-    // Build cache key including query params
+    // Build cache key including locale to prevent cross-locale cache poisoning
+    final prefs = await SharedPreferences.getInstance();
+    final locale = prefs.getString('user_locale') ?? 'en';
     final cacheKey = queryParameters != null && queryParameters.isNotEmpty
-        ? '$fullPath?${queryParameters.entries.map((e) => '${e.key}=${e.value}').join('&')}'
-        : fullPath;
+        ? '$fullPath|$locale?${queryParameters.entries.map((e) => '${e.key}=${e.value}').join('&')}'
+        : '$fullPath|$locale';
     if (!forceRefresh) {
       final cached = _cache.get(cacheKey);
       if (cached != null) return cached;
@@ -579,12 +570,43 @@ class ApiClient {
     );
   }
 
-  String _buildCacheKey(String path, Map<String, dynamic>? queryParameters) {
-    if (queryParameters == null || queryParameters.isEmpty) return path;
-    final params = queryParameters.entries
-        .map((e) => '${e.key}=${e.value}')
-        .join('&');
-    return '$path?$params';
+  String _buildCacheKey(String path, Map<String, dynamic>? queryParameters, Map<String, dynamic>? headers) {
+    final locale = headers?['Accept-Language'] ?? 'en';
+    var key = '$path|$locale';
+    if (queryParameters != null && queryParameters.isNotEmpty) {
+      final params = queryParameters.entries
+          .map((e) => '${e.key}=${e.value}')
+          .join('&');
+      key = '$key?$params';
+    }
+    return key;
+  }
+
+  void _invalidateCachesForUrl(String url) {
+    // Strip action suffixes and trailing UUIDs, keeping the full /api/v1 prefix
+    // so invalidation paths match cache keys (which also retain the prefix).
+    final resource = url
+        .replaceAll(RegExp(r'/[a-f0-9-]{36}/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
+        .replaceAll(RegExp(r'/routine/[^/]+/complete$'), '/routine')
+        .replaceAll(RegExp(r'/(achieve|complete|cure|reactivate|clear-all|respond|bookmark|rate|invite|sync)$'), '')
+        .replaceAll(RegExp(r'/[a-f0-9-]{36}$'), '')
+        .replaceAll(RegExp(r'/+$'), '');
+    _cache.invalidatePath(resource);
+    // Also invalidate the parent baby-mon resource
+    final parentMatch = RegExp(r'^(/api/v\d+/baby-mons/[a-f0-9-]+)').firstMatch(resource);
+    if (parentMatch != null) {
+      _cache.invalidatePath(parentMatch.group(1)!);
+    }
+    // Cross-resource invalidation: when a sub-resource is mutated at its
+    // top-level endpoint (e.g. PATCH /api/v1/feed-logs/{id}), invalidate
+    // all baby-mon sub-resource caches of the same type.
+    for (final subResource in ['feed-logs', 'health-records', 'sleep-logs',
+                               'milestones', 'growth-records', 'journal']) {
+      if (resource.contains('/$subResource')) {
+        _cache.invalidatePattern(subResource);
+        break;
+      }
+    }
   }
 
   String _resolvePath(String path) {

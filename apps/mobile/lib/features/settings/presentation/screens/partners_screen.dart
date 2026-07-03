@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -18,6 +19,24 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
   DateTime? _lastDataRefresh;
   static const _refreshCooldown = Duration(seconds: 10);
   final List<String> _roles = ['PARENT', 'GUARDIAN', 'GRANDPARENT'];
+
+  String _roleLabel(String role) {
+    switch (role) {
+      case 'PARENT': return context.l10n.parentRole;
+      case 'GUARDIAN': return context.l10n.guardianRole;
+      case 'GRANDPARENT': return context.l10n.grandparentRole;
+      default: return role;
+    }
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'ACCEPTED': return context.l10n.accepted;
+      case 'PENDING': return context.l10n.pending;
+      case 'DECLINED': return context.l10n.declined;
+      default: return status;
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -62,41 +81,46 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
   }
   Future<void> _invitePartner(String email, String role) async {
     final messenger = ScaffoldMessenger.of(context);
+    final noBabyMonText = context.l10n.noBabyMonFound;
+    final invitationSentText = context.l10n.invitationSent;
     if (_babyMonId == null) {
-      messenger.showSnackBar(const SnackBar(content: Text('No BabyMon found')));
+      messenger.showSnackBar(SnackBar(content: Text(noBabyMonText)));
       return;
     }
     try {
       await ref.read(apiClientProvider).invitePartner(_babyMonId!, email, role);
       await _fetchPartners();
-      messenger.showSnackBar(const SnackBar(content: Text('Invitation sent!')));
+      messenger.showSnackBar(SnackBar(content: Text(invitationSentText)));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
     }
   }
   Future<void> _respondToInvitation(String partnerId, String status) async {
     final messenger = ScaffoldMessenger.of(context);
+    final partnerAcceptedText = context.l10n.partnerAccepted;
+    final invitationDeclinedText = context.l10n.invitationDeclined;
     try {
       await ref.read(apiClientProvider).respondToInvitation(partnerId, status);
       await _fetchPartners();
-      messenger.showSnackBar(SnackBar(content: Text(status == 'ACCEPTED' ? 'Partner accepted!' : 'Invitation declined')));
+      messenger.showSnackBar(SnackBar(content: Text(status == 'ACCEPTED' ? partnerAcceptedText : invitationDeclinedText)));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
     }
   }
   Future<void> _removePartner(String partnerId, int index) async {
     final messenger = ScaffoldMessenger.of(context);
+    final partnerRemovedText = context.l10n.partnerRemoved;
     final confirmed = await ConfirmDeleteDialog.show(
       context,
-      title: 'Remove Partner',
-      message: 'Are you sure?',
-      confirmLabel: 'Remove',
+      title: context.l10n.removePartnerTitle,
+      message: context.l10n.areYouSure,
+      confirmLabel: context.l10n.removeLabel,
     );
     if (confirmed != true) return;
     try {
       await ref.read(apiClientProvider).removePartner(_babyMonId ?? '', partnerId);
       if (mounted) setState(() => _partners.removeAt(index));
-      messenger.showSnackBar(const SnackBar(content: Text('Partner removed')));
+      messenger.showSnackBar(SnackBar(content: Text(partnerRemovedText)));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
     }
@@ -107,10 +131,10 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const ScreenHeader(title: 'Partners'),
+      appBar: ScreenHeader(title: context.l10n.partners),
       body: PremiumBackground(
         child: _isLoading ? PremiumLoading.spinner()
-            : _partners.isEmpty ? PremiumEmptyState(icon: PhosphorIconsLight.userPlus, title: 'No partners yet', subtitle: 'Tap + to invite a co-parent', actionLabel: 'Invite Partner', onAction: _showInviteDialog)
+            : _partners.isEmpty ? PremiumEmptyState(icon: PhosphorIconsLight.userPlus,        title: context.l10n.noPartnersYet, subtitle: context.l10n.tapToInvite, actionLabel: context.l10n.invitePartnerTitle, onAction: _showInviteDialog)
             : RefreshIndicator(
               onRefresh: _fetchPartners,
               child: ListView.builder(
@@ -125,8 +149,8 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
                       key: Key(parseString(partner['id']) ?? index.toString()),
                       direction: DismissDirection.endToStart,
                       background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
+                        alignment: AlignmentDirectional.centerEnd,
+                        padding: const EdgeInsetsDirectional.only(end: 20),
                         color: AppColors.error,
                         child: const Icon(PhosphorIconsLight.trash, color: AppColors.textOnPrimary),
                       ),
@@ -144,7 +168,7 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
                             ),
                           ),
                           title: Text(
-                            parseString(user?['name']) ?? parseString(user?['email']) ?? 'Unknown',
+                            parseString(user?['name']) ?? parseString(user?['email']) ?? context.l10n.unknownPartner,
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -176,7 +200,7 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
                                       ),
                                     ),
                                     child: Text(
-                                      status,
+                                      _statusLabel(status),
                                       style: TextStyle(
                                         fontSize: 11,
                                         color: _statusColor(status),
@@ -185,7 +209,7 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    parseString(partner['role']) ?? 'PARENT',
+                                    parseString(partner['role']) ?? context.l10n.parentRole,
                                     style: const TextStyle(
                                       fontSize: 11,
                                       color: AppColors.textCaption,
@@ -202,13 +226,13 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
                                   onSelected: (action) =>
                                       _respondToInvitation(parseString(partner['id']) ?? '', action),
                                   itemBuilder: (ctx) => [
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: 'ACCEPTED',
-                                      child: Text('Accept'),
+                                      child: Text(context.l10n.accept),
                                     ),
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: 'DECLINED',
-                                      child: Text('Decline'),
+                                      child: Text(context.l10n.decline),
                                     ),
                                   ],
                                 )
@@ -238,19 +262,18 @@ class _PartnersScreenState extends ConsumerState<PartnersScreen> {
     String selectedRole = 'PARENT';
     bool isSaving = false;
     showModalBottomSheet<void>(context: context, isScrollControlled: true, builder: (ctx) => StatefulBuilder(builder: (ctx, setDialogState) => Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: 16, right: 16, top: 16),
+      padding: EdgeInsetsDirectional.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, start: 16, end: 16, top: 16),
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Text('Invite Partner', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)), const SizedBox(height: 16),
-        TextField(controller: emailController, decoration: const InputDecoration(labelText: 'Email', hintText: 'partner@email.com',                        prefixIcon: Icon(PhosphorIconsLight.envelope)), keyboardType: TextInputType.emailAddress),
+        Text(context.l10n.invitePartnerTitle, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)), const SizedBox(height: 16),
+        TextField(controller: emailController, decoration: InputDecoration(labelText: context.l10n.emailLabel, hintText: context.l10n.partnerEmailHint,                        prefixIcon: const Icon(PhosphorIconsLight.envelope)), keyboardType: TextInputType.emailAddress),
         const SizedBox(height: 12),
-        SegmentedButton<String>(segments: _roles.map((r) => ButtonSegment(value: r, label: Text(r[0].toUpperCase() + r.substring(1).toLowerCase()))).toList(), selected: {selectedRole}, onSelectionChanged: (s) => setDialogState(() => selectedRole = s.first)),
+        SegmentedButton<String>(segments: _roles.map((r) => ButtonSegment(value: r, label: Text(_roleLabel(r)))).toList(), selected: {selectedRole}, onSelectionChanged: (s) => setDialogState(() => selectedRole = s.first)),
         const SizedBox(height: 16),
         ThemeButton(
-          text: 'Send Invite',
+          text: context.l10n.sendInviteLabel,
           onPressed: () async { if (emailController.text.isEmpty) return; setDialogState(() => isSaving = true); await _invitePartner(emailController.text, selectedRole); if (ctx.mounted) Navigator.pop(ctx); },
           isLoading: isSaving,
-          fullWidth: true,
-          semanticLabel: 'Send partner invitation',
+          fullWidth: true,                semanticLabel: context.l10n.sendPartnerInvitationSemantic,
         ),
         const SizedBox(height: 16),
       ]),

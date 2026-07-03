@@ -12,6 +12,7 @@ class ApiConstants {
   static const String googleLogin = '/auth/google';
   static const String appleLogin = '/auth/apple';
   static const String facebookLogin = '/auth/facebook';
+  static const String updateLocale = '/users/me/locale';
 
   // BabyMon endpoints
   static const String babyMons = '/baby-mons';

@@ -27,7 +27,7 @@ class BabyInfoCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 32,
                   backgroundColor: AppColors.primaryLight,
                   child: Icon(Icons.child_care, size: 32, color: Colors.white),
@@ -40,7 +40,7 @@ class BabyInfoCard extends StatelessWidget {
                       Text(profile.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                       Text(
                         '${profile.age} · ${profile.weight} kg',
-                        style: TextStyle(color: AppColors.textSecondary),
+                        style: const TextStyle(color: AppColors.textSecondary),
                       ),
                     ],
                   ),

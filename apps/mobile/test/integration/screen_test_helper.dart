@@ -38,7 +38,7 @@ class TestApiClient extends StubApiClient {
       );
 
   @override
-  Future<Response> getEvolution(String babyMonId) async => _ok(
+  Future<Response> getEvolution(String babyMonId, {bool forceRefresh = false}) async => _ok(
         _responseData['getEvolution'] ??
             {
               'currentStage': 1,
@@ -47,15 +47,15 @@ class TestApiClient extends StubApiClient {
       );
 
   @override
-  Future<Response> getMilestones(String babyMonId) async =>
+  Future<Response> getMilestones(String babyMonId, {bool forceRefresh = false}) async =>
       _ok(_responseData['getMilestones'] ?? <dynamic>[]);
 
   @override
-  Future<Response> getFeedLogs(String babyMonId) async =>
+  Future<Response> getFeedLogs(String babyMonId, {bool forceRefresh = false}) async =>
       _ok(_responseData['getFeedLogs'] ?? <dynamic>[]);
 
   @override
-  Future<Response> getHealthRecords(String babyMonId) async =>
+  Future<Response> getHealthRecords(String babyMonId, {bool forceRefresh = false}) async =>
       _ok(_responseData['getHealthRecords'] ?? <dynamic>[]);
 
   @override
@@ -63,7 +63,7 @@ class TestApiClient extends StubApiClient {
       _ok(_responseData['getBadges'] ?? <dynamic>[]);
 
   @override
-  Future<Response> getGrowthRecords(String babyMonId, {String? type}) async =>
+  Future<Response> getGrowthRecords(String babyMonId, {String? type, bool forceRefresh = false}) async =>
       _ok(_responseData['getGrowthRecords'] ?? <dynamic>[]);
 
   @override
@@ -71,7 +71,7 @@ class TestApiClient extends StubApiClient {
       _ok(_responseData['getAllergies'] ?? <dynamic>[]);
 
   @override
-  Future<Response> getSleepLogs(String babyMonId) async =>
+  Future<Response> getSleepLogs(String babyMonId, {bool forceRefresh = false}) async =>
       _ok(_responseData['getSleepLogs'] ?? <dynamic>[]);
 
   @override

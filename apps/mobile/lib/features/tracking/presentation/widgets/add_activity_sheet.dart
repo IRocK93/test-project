@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:baby_mon/core/constants/app_colors.dart';
@@ -9,9 +10,9 @@ class AddActivitySheet extends StatefulWidget {
   final ActivityType type;
 
   const AddActivitySheet({
-    Key? key,
+    super.key,
     required this.type,
-  }) : super(key: key);
+  });
 
   @override
   State<AddActivitySheet> createState() => _AddActivitySheetState();
@@ -44,10 +45,10 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
+      padding: EdgeInsetsDirectional.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 24,
-        right: 24,
+        start: 24,
+        end: 24,
         top: 24,
       ),
       child: SingleChildScrollView(
@@ -56,7 +57,7 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Add ${_getTypeName()}',
+              '${context.l10n.addActivity} ${_getTypeName(context)}',
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -67,7 +68,7 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
             const SizedBox(height: 24),
             Consumer<ActivityProvider>(
               builder: (context, provider, _) => CustomButton(
-                text: 'Save Activity',
+                text: context.l10n.saveActivity,
                 isLoading: provider.isLoading,
                 onPressed: _saveActivity,
               ),
@@ -79,16 +80,16 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
     );
   }
 
-  String _getTypeName() {
+  String _getTypeName(BuildContext context) {
     switch (widget.type) {
       case ActivityType.feeding:
-        return 'Feeding';
+        return context.l10n.feedingFilter;
       case ActivityType.diaper:
-        return 'Diaper';
+        return context.l10n.diapersFilter;
       case ActivityType.sleep:
-        return 'Sleep';
+        return context.l10n.sleepFilter;
       case ActivityType.growth:
-        return 'Growth';
+        return context.l10n.growthFilter;
     }
   }
 
@@ -97,12 +98,12 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
       case ActivityType.feeding:
         return Column(
           children: [
-            const Text('Feeding Method'),
+            Text(context.l10n.feedingMethodLabel),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: ['Breast', 'Bottle', 'Solid', 'Pumped'].map((method) {
+              children: [context.l10n.breastLabel, context.l10n.bottleLabel, context.l10n.solidLabel, context.l10n.pumpedLabel].map((method) {
                 return ChoiceChip(
                   label: Text(method),
                   selected: _selectedMethod == method,
@@ -115,12 +116,12 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
       case ActivityType.diaper:
         return Column(
           children: [
-            const Text('Diaper Type'),
+            Text(context.l10n.diaperTypeLabel),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: ['Wet', 'Dirty', 'Both'].map((type) {
+              children: [context.l10n.wetLabel, context.l10n.dirtyLabel, context.l10n.bothLabel].map((type) {
                 return ChoiceChip(
                   label: Text(type),
                   selected: _selectedDiaperType == type,
@@ -133,7 +134,7 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
       case ActivityType.sleep:
         return Column(
           children: [
-            Text('Duration: $_sleepDuration minutes'),
+            Text(context.l10n.durationMinutesFormat(_sleepDuration)),
             Slider(
               value: _sleepDuration.toDouble(),
               min: 5,
@@ -148,7 +149,7 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
       case ActivityType.growth:
         return Column(
           children: [
-            Text('Weight: ${_weight.toStringAsFixed(1)} kg'),
+            Text(context.l10n.weightKgFormat(_weight.toStringAsFixed(1))),
             Slider(
               value: _weight,
               min: 1,
@@ -158,7 +159,7 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
               onChanged: (value) => setState(() => _weight = value),
             ),
             const SizedBox(height: 16),
-            Text('Height: ${_height.toStringAsFixed(0)} cm'),
+            Text(context.l10n.heightCmFormat(_height.toStringAsFixed(0))),
             Slider(
               value: _height,
               min: 30,
@@ -192,8 +193,8 @@ class _AddActivitySheetState extends State<AddActivitySheet> {
     if (success && mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Activity saved! +XP earned'),
+        SnackBar(
+          content: Text(context.l10n.activitySavedXP),
           backgroundColor: AppColors.success,
         ),
       );

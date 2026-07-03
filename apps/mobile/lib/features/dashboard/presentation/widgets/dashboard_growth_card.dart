@@ -5,6 +5,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/widgets/premium_double_bezel.dart';
 import 'package:baby_mon/features/health/domain/entities/growth_record.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 
 /// Growth card showing the latest weight measurement.
 class DashboardGrowthCard extends StatelessWidget {
@@ -14,11 +15,13 @@ class DashboardGrowthCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final measuredAt = latestGrowth.measuredAt != null
         ? DateFormat.yMMMd().format(latestGrowth.measuredAt!)
         : '';
+    final unitLabel = _localizeUnit(latestGrowth.unit, l10n);
     return Semantics(
-      label: 'Latest weight: ${latestGrowth.value} ${latestGrowth.unit ?? "kg"}, measured $measuredAt',
+      label: '${l10n.latestWeightLabel}: ${latestGrowth.value} $unitLabel',
       button: true,
       child: PremiumDoubleBezel(
         outerRadius: DesignTokens.radius2xl,
@@ -50,7 +53,7 @@ class DashboardGrowthCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Latest Weight',
+                  l10n.latestWeightLabel,
                   style: Theme.of(context)
                       .textTheme
                       .labelMedium
@@ -62,7 +65,7 @@ class DashboardGrowthCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${latestGrowth.value} ${latestGrowth.unit ?? 'kg'}',
+                  '${latestGrowth.value} $unitLabel',
                   style: Theme.of(context)
                       .textTheme
                       .titleLarge
@@ -110,7 +113,19 @@ class DashboardGrowthCard extends StatelessWidget {
           ),
         ],
       ),
-      ),
-    );
+	      ),
+	    );
+	  }
+
+  String _localizeUnit(String? unit, dynamic l10n) {
+    if (unit == null || unit.isEmpty) return l10n.kg;
+    switch (unit) {
+      case 'kg': return l10n.kg;
+      case 'cm': return l10n.cm;
+      case 'lb': return l10n.lb;
+      case 'oz': return l10n.oz;
+      case 'in': return l10n.unitInches;
+      default: return unit;
+    }
   }
 }

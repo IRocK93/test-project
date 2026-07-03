@@ -9,7 +9,7 @@ import '../../domain/models/model_download_state.dart';
 import '../../../../core/providers.dart';
 
 final modelDownloadServiceProvider = Provider<ModelDownloadService>((ref) {
-  return ModelDownloadService(dio: ref.read(apiClientProvider).dio);
+  return ModelDownloadService(apiClient: ref.read(apiClientProvider));
 });
 
 final modelManagerProvider = FutureProvider<ModelManager>((ref) async => ModelManager.create());

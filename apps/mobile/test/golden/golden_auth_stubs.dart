@@ -46,7 +46,7 @@ class GoldenLoginForm extends StatelessWidget {
                           color: AppColors.primary.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
+                        child: const Icon(
                           PhosphorIconsLight.baby,
                           size: 32,
                           color: AppColors.primary,
@@ -78,7 +78,7 @@ class GoldenLoginForm extends StatelessWidget {
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           labelText: 'Email',
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             PhosphorIconsLight.envelope,
                             color: AppColors.textSecondary,
                           ),
@@ -96,11 +96,11 @@ class GoldenLoginForm extends StatelessWidget {
                         obscureText: true,
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             PhosphorIconsLight.lock,
                             color: AppColors.textSecondary,
                           ),
-                          suffixIcon: Icon(
+                          suffixIcon: const Icon(
                             PhosphorIconsLight.eyeSlash,
                             color: AppColors.textSecondary,
                           ),
@@ -114,11 +114,11 @@ class GoldenLoginForm extends StatelessWidget {
                       const SizedBox(height: DesignTokens.spaceSm),
 
                       // Forgot password
-                      Align(
+                      const Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: null,
-                          child: const Text('Forgot Password?'),
+                          child: Text('Forgot Password?'),
                         ),
                       ),
                       const SizedBox(height: DesignTokens.spaceMd),
@@ -132,11 +132,11 @@ class GoldenLoginForm extends StatelessWidget {
                       const SizedBox(height: DesignTokens.spaceXl),
 
                       // Social divider
-                      Row(
+                      const Row(
                         children: [
-                          const Expanded(child: Divider()),
+                          Expanded(child: Divider()),
                           Padding(
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                               horizontal: DesignTokens.spaceMd,
                             ),
                             child: Text(
@@ -147,7 +147,7 @@ class GoldenLoginForm extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const Expanded(child: Divider()),
+                          Expanded(child: Divider()),
                         ],
                       ),
                       const SizedBox(height: DesignTokens.spaceLg),
@@ -160,7 +160,7 @@ class GoldenLoginForm extends StatelessWidget {
                           const SizedBox(width: DesignTokens.spaceMd),
                           _socialCircle(PhosphorIconsLight.appleLogo, Colors.black),
                           const SizedBox(width: DesignTokens.spaceMd),
-                          _socialCircle(PhosphorIconsLight.facebookLogo, Color(0xFF1877F2)),
+                          _socialCircle(PhosphorIconsLight.facebookLogo, const Color(0xFF1877F2)),
                         ],
                       ),
                       const SizedBox(height: DesignTokens.spaceXl),
@@ -248,7 +248,7 @@ class GoldenRegisterForm extends StatelessWidget {
                           color: AppColors.primary.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
+                        child: const Icon(
                           PhosphorIconsLight.baby,
                           size: 32,
                           color: AppColors.primary,
@@ -279,7 +279,7 @@ class GoldenRegisterForm extends StatelessWidget {
                       TextFormField(
                         decoration: InputDecoration(
                           labelText: 'Name (optional)',
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             PhosphorIconsLight.user,
                             color: AppColors.textSecondary,
                           ),
@@ -297,7 +297,7 @@ class GoldenRegisterForm extends StatelessWidget {
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           labelText: 'Email',
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             PhosphorIconsLight.envelope,
                             color: AppColors.textSecondary,
                           ),
@@ -315,11 +315,11 @@ class GoldenRegisterForm extends StatelessWidget {
                         obscureText: true,
                         decoration: InputDecoration(
                           labelText: 'Password',
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             PhosphorIconsLight.lock,
                             color: AppColors.textSecondary,
                           ),
-                          suffixIcon: Icon(
+                          suffixIcon: const Icon(
                             PhosphorIconsLight.eyeSlash,
                             color: AppColors.textSecondary,
                           ),
@@ -337,11 +337,11 @@ class GoldenRegisterForm extends StatelessWidget {
                         obscureText: true,
                         decoration: InputDecoration(
                           labelText: 'Confirm Password',
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             PhosphorIconsLight.lock,
                             color: AppColors.textSecondary,
                           ),
-                          suffixIcon: Icon(
+                          suffixIcon: const Icon(
                             PhosphorIconsLight.eyeSlash,
                             color: AppColors.textSecondary,
                           ),
@@ -362,11 +362,11 @@ class GoldenRegisterForm extends StatelessWidget {
                       const SizedBox(height: DesignTokens.spaceXl),
 
                       // Social divider
-                      Row(
+                      const Row(
                         children: [
-                          const Expanded(child: Divider()),
+                          Expanded(child: Divider()),
                           Padding(
-                            padding: const EdgeInsets.symmetric(
+                            padding: EdgeInsets.symmetric(
                               horizontal: DesignTokens.spaceMd,
                             ),
                             child: Text(
@@ -377,7 +377,7 @@ class GoldenRegisterForm extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const Expanded(child: Divider()),
+                          Expanded(child: Divider()),
                         ],
                       ),
                       const SizedBox(height: DesignTokens.spaceLg),
@@ -390,7 +390,7 @@ class GoldenRegisterForm extends StatelessWidget {
                           const SizedBox(width: DesignTokens.spaceMd),
                           _socialCircle(PhosphorIconsLight.appleLogo, Colors.black),
                           const SizedBox(width: DesignTokens.spaceMd),
-                          _socialCircle(PhosphorIconsLight.facebookLogo, Color(0xFF1877F2)),
+                          _socialCircle(PhosphorIconsLight.facebookLogo, const Color(0xFF1877F2)),
                         ],
                       ),
                       const SizedBox(height: DesignTokens.spaceXl),

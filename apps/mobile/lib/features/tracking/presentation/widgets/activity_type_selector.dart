@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:baby_mon/core/constants/app_colors.dart';
 import '../../domain/entities/activity.dart';
@@ -7,10 +8,10 @@ class ActivityTypeSelector extends StatelessWidget {
   final void Function(ActivityType?) onTypeSelected;
 
   const ActivityTypeSelector({
-    Key? key,
+    super.key,
     this.selectedType,
     required this.onTypeSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,11 +20,11 @@ class ActivityTypeSelector extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          _buildChip(null, 'All'),
-          _buildChip(ActivityType.feeding, 'Feeding'),
-          _buildChip(ActivityType.diaper, 'Diapers'),
-          _buildChip(ActivityType.sleep, 'Sleep'),
-          _buildChip(ActivityType.growth, 'Growth'),
+          _buildChip(null, context.l10n.allFilter),
+          _buildChip(ActivityType.feeding, context.l10n.feedingFilter),
+          _buildChip(ActivityType.diaper, context.l10n.diapersFilter),
+          _buildChip(ActivityType.sleep, context.l10n.sleepFilter),
+          _buildChip(ActivityType.growth, context.l10n.growthFilter),
         ],
       ),
     );

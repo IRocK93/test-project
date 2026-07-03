@@ -97,7 +97,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           // ── Glass orbs for depth ──
           Positioned(
             top: -80,
-            right: -60,
+            left: Directionality.of(context) == TextDirection.rtl ? -60 : null,
+            right: Directionality.of(context) == TextDirection.ltr ? -60 : null,
             child: Container(
               width: 200,
               height: 200,
@@ -109,7 +110,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           ),
           Positioned(
             bottom: -40,
-            left: -30,
+            left: Directionality.of(context) == TextDirection.ltr ? -30 : null,
+            right: Directionality.of(context) == TextDirection.rtl ? -30 : null,
             child: Container(
               width: 150,
               height: 150,

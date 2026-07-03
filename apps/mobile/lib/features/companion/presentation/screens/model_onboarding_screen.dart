@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/widgets/premium_background.dart';
 import 'package:baby_mon/features/companion/presentation/screens/model_download_screen.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
@@ -63,7 +63,7 @@ class ModelOnboardingScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: DesignTokens.spaceLg),
                 Text(
-                  'Your On-Device\nAI Companion',
+                  context.l10n.onDeviceAiTitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: DesignTokens.font2xl,
@@ -74,7 +74,7 @@ class ModelOnboardingScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: DesignTokens.spaceMd),
                 Text(
-                  'A parenting coach that runs entirely on your phone.\nNothing leaves your device.',
+                  context.l10n.parentingCoachSubtitle,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: DesignTokens.fontMd,
@@ -87,10 +87,10 @@ class ModelOnboardingScreen extends StatelessWidget {
                 // ── Default model card ──
                 _ModelCard(
                   icon: PhosphorIconsLight.rocketLaunch,
-                  title: 'Quick Start',
-                  subtitle: 'Instant answers, fast download',
+                  title: context.l10n.quickStart,
+                  subtitle: context.l10n.instantAnswersFast,
                   sizeLabel: _formatSize(manifestSizeBytes ?? 271000000),
-                  timeLabel: '~2 min on Wi‑Fi',
+                  timeLabel: context.l10n.twoMinWifiLabel,
                   badge: null,
                   onDownload: () => _startDownload(
                     context,
@@ -106,11 +106,11 @@ class ModelOnboardingScreen extends StatelessWidget {
                 const SizedBox(height: DesignTokens.spaceMd),
                 _ModelCard(
                     icon: PhosphorIconsLight.crown,
-                    title: 'Better Quality',
-                    subtitle: 'Deeper reasoning, nuanced advice',
+                    title: context.l10n.betterQuality,
+                    subtitle: context.l10n.deeperReasoningNuanced,
                     sizeLabel: _formatSize(premiumModelSizeBytes),
-                    timeLabel: '~10 min on Wi‑Fi',
-                    badge: 'PREMIUM',
+                    timeLabel: context.l10n.tenMinWifiLabel,
+                    badge: context.l10n.premiumPlan,
                     onDownload: () {
                       _showWifiGate(context, () => _startDownload(
                         context,
@@ -128,11 +128,10 @@ class ModelOnboardingScreen extends StatelessWidget {
                 // ── Skip ──
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // close onboarding
                     onSkip?.call();
                   },
                   child: Text(
-                    'Skip for now — use basic mode',
+                    context.l10n.skipUseBasic,
                     style: TextStyle(
                       color: context.textCaption,
                       fontSize: DesignTokens.fontMd,
@@ -336,9 +335,9 @@ class _ModelCard extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg),
                   ),
-                  child: const Text(
-                    'Download',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                  child: Text(
+                    context.l10n.downloadModel,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

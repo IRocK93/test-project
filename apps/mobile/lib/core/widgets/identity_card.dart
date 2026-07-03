@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -24,14 +25,14 @@ class IdentityCard extends StatelessWidget {
     this.onTap,
   });
 
-  String? get _planSubtitle {
+  String? _buildPlanSubtitle(BuildContext context) {
     if (planName.toUpperCase() == 'PREMIUM' &&
         trialDaysRemaining != null &&
         trialDaysRemaining! > 0) {
-      return 'Premium · $trialDaysRemaining trial days left';
+      return context.l10n.planPremiumTrial(trialDaysRemaining!);
     }
-    if (planName.toUpperCase() == 'PREMIUM') return 'Premium';
-    return 'Free plan';
+    if (planName.toUpperCase() == 'PREMIUM') return context.l10n.planPremium;
+    return context.l10n.planFree;
   }
 
   @override
@@ -125,19 +126,28 @@ class IdentityCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (_planSubtitle != null) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        _planSubtitle!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: context.colorScheme.primaryContainer,
-                          letterSpacing: 0.3,
-                          height: 1.2,
-                        ),
-                      ),
-                    ],
+                    Builder(
+                      builder: (context) {
+                        final planSubtitle = _buildPlanSubtitle(context);
+                        if (planSubtitle == null) return const SizedBox.shrink();
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(height: 6),
+                            Text(
+                              planSubtitle,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: context.colorScheme.primaryContainer,
+                                letterSpacing: 0.3,
+                                height: 1.2,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),

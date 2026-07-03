@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 /// Section showing milestone achievements as chips
 ///
@@ -10,7 +11,7 @@ class AchievementsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Milestones', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(context.l10n.milestones, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,

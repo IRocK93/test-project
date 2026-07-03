@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -265,7 +266,7 @@ class _RadialMenuOverlayState extends State<_RadialMenuOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scrimAnim;
-  late List<_ActionAnimConfig> _actionAnims;
+  List<_ActionAnimConfig>? _actionAnims;
   bool _isForward = true;
 
   // ── Animation constants ──
@@ -277,12 +278,37 @@ class _RadialMenuOverlayState extends State<_RadialMenuOverlay>
   static const double _actionSize = 48.0;
 
   /// Returns arc bounds — 80° span with 5° edge padding inside the quadrant.
-  /// This prevents the topmost item from clipping against the right display
+  /// This prevents the topmost item from clipping against the display
   /// edge while keeping generous spacing between actions.
-  static (double, double) _arcRange(int count) {
+  /// In RTL the arc is mirrored to the upper-right quadrant.
+  static (double, double) _arcRange(int count, TextDirection direction) {
     const span = math.pi * 4 / 9;                // 80°
-    const center = -3 * math.pi / 4;             // midway between left (-π) and up (-π/2) = -135°
+    final center = direction == TextDirection.rtl
+        ? -math.pi / 4                           // -45° — upper-right quadrant
+        : -3 * math.pi / 4;                      // -135° — upper-left quadrant
     return (center - span / 2, center + span / 2);
+  }
+
+  List<_ActionAnimConfig> _getActionAnims() {
+    if (_actionAnims != null) return _actionAnims!;
+    final count = widget.children.length;
+    final (arcStart, arcEnd) = _arcRange(count, Directionality.of(context));
+    _actionAnims = List.generate(count, (i) {
+      // Longer stagger for deliberate feel — wider gap between actions
+      final stagger = 0.10 + i * 0.12;
+      final totalSpan = arcEnd - arcStart;
+      final angle = arcStart +
+          (i / math.max(count - 1, 1)) * totalSpan;
+      return _ActionAnimConfig(
+        interval: Interval(
+          stagger,
+          (stagger + 0.30).clamp(0.0, 1.0),
+          curve: Curves.easeOutBack,
+        ),
+        angle: angle,
+      );
+    });
+    return _actionAnims!;
   }
 
   @override
@@ -303,23 +329,9 @@ class _RadialMenuOverlayState extends State<_RadialMenuOverlay>
       ),
     );
 
-    final count = widget.children.length;
-    final (arcStart, arcEnd) = _arcRange(count);
-    _actionAnims = List.generate(count, (i) {
-      // Longer stagger for deliberate feel — wider gap between actions
-      final stagger = 0.10 + i * 0.12;
-      final totalSpan = arcEnd - arcStart;
-      final angle = arcStart +
-          (i / math.max(count - 1, 1)) * totalSpan;
-      return _ActionAnimConfig(
-        interval: Interval(
-          stagger,
-          (stagger + 0.30).clamp(0.0, 1.0),
-          curve: Curves.easeOutBack,
-        ),
-        angle: angle,
-      );
-    });
+    // Note: _actionAnims is initialized lazily in _getActionAnims()
+    // because it depends on Directionality.of(context) which is not
+    // available during initState.
 
     // Guide ring haptic at t~0.2
     _controller.addStatusListener((status) {
@@ -359,7 +371,7 @@ class _RadialMenuOverlayState extends State<_RadialMenuOverlay>
             child: FadeTransition(
               opacity: _scrimAnim,
               child: Semantics(
-                label: 'Close menu',
+                label: context.l10n.closeMenu,
                 button: true,
                 child: GestureDetector(
                 onTap: _animateClose,
@@ -418,7 +430,7 @@ class _RadialMenuOverlayState extends State<_RadialMenuOverlay>
               onClose: () => _animateClose(lightHaptic: true),
               child: rawAction.child,
             );
-            final animCfg = _actionAnims[i];
+            final animCfg = _getActionAnims()[i];
             return AnimatedBuilder(
               animation: _controller,
               builder: (context, _) {

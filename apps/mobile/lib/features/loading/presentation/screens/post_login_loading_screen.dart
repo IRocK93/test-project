@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 /// Full-screen branded loading experience shown after sign-in.
 ///
 /// Pre-fetches dashboard data into the [ResponseCache] while displaying
@@ -19,14 +20,15 @@ class _PostLoginLoadingScreenState
     extends ConsumerState<PostLoginLoadingScreen> {
   static const _minDisplaySeconds = 6;
   static const _messageCycleSeconds = 2;
-  final List<String> _messages = const [
-    'Welcome back!',
-    'Loading your BabyMon…',
-    'Preparing your dashboard…',
-    'Almost ready…',
-  ];
   int _messageIndex = 0;
   Timer? _messageTimer;
+
+  List<String> _messages(BuildContext context) => [
+    context.l10n.loadingWelcomeBack,
+    context.l10n.loadingYourBabyMon,
+    context.l10n.loadingPreparingDashboard,
+    context.l10n.loadingAlmostReady,
+  ];
   @override
   void initState() {
     super.initState();
@@ -43,7 +45,7 @@ class _PostLoginLoadingScreenState
       const Duration(seconds: _messageCycleSeconds),
       (_) {
         if (mounted) {
-          setState(() => _messageIndex = (_messageIndex + 1) % _messages.length);
+          setState(() => _messageIndex = (_messageIndex + 1) % _messages(context).length);
         }
       },
     );
@@ -99,7 +101,8 @@ class _PostLoginLoadingScreenState
   @override
   Widget build(BuildContext context) {
     final cs = context.colorScheme;
-    final msg = _messages[_messageIndex % _messages.length];
+    final msgs = _messages(context);
+    final msg = msgs[_messageIndex % msgs.length];
     return Scaffold(
       body: PremiumBackground(
         showOrnaments: true,
@@ -143,8 +146,8 @@ class _PostLoginLoadingScreenState
                 // ── App name ──
                 FadeScaleIn(
                   delay: const Duration(milliseconds: 200),
-                  child: Text(
-                    'BabyMon',
+                    child: Text(
+                      context.l10n.appTitle,
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: cs.onSurface,

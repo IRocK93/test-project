@@ -2,70 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:baby_mon/core/constants/constants.dart';
-
-/// All 50 level names from the BabyMon Bloom Journey.
-const Map<int, String> _levelNames = {
-  1: 'Little Seed',
-  2: 'Tiny Gripper',
-  3: 'Sleep Sprout',
-  4: 'Gaze Keeper',
-  5: 'Dewdrop',
-  6: 'Burble Bud',
-  7: 'Smile Weaver',
-  8: 'Neck Knight',
-  9: 'Tummy Roller',
-  10: 'Giggle Pod',
-  11: 'Reach Star',
-  12: 'Babble Scholar',
-  13: 'Sitter Supreme',
-  14: 'Taste Adventurer',
-  15: 'Scoot Scout',
-  16: 'Cruiser Cadet',
-  17: 'Wave Wizard',
-  18: 'Pincer Prince/ss',
-  19: 'Stack Master',
-  20: 'Step Seeker',
-  21: 'Word Hoarder',
-  22: 'Melody Hummer',
-  23: 'Puzzle Prodigy',
-  24: 'Spoon Warrior',
-  25: 'No-Sayer',
-  26: 'Tower Climber',
-  27: 'Scribble Sage',
-  28: 'Dress Dancer',
-  29: 'Question Storm',
-  30: 'Story Dreamer',
-  31: 'Count Keeper',
-  32: 'Friend Finder',
-  33: 'Brave Heart',
-  34: 'Emotion Sage',
-  35: 'Jump Master',
-  36: 'Rhyme Weaver',
-  37: 'Helper Hand',
-  38: 'Joke Crafter',
-  39: 'Memory Vault',
-  40: 'Promise Keeper',
-  41: 'Pattern Seer',
-  42: 'Kindness Bloom',
-  43: 'Peace Maker',
-  44: 'Path Finder',
-  45: 'Song Weaver',
-  46: 'Wisdom Seed',
-  47: 'Story Teller',
-  48: 'Light Keeper',
-  49: 'Trail Blazer',
-  50: 'LUMINARY',
-};
-
-/// Phase descriptions for the 6 phases.
-const Map<int, String> _phaseDescriptions = {
-  1: 'Newborn cocoon — quiet, sacred, tiny miracles',
-  2: 'Putting down roots — first sounds, first rolls',
-  3: 'Vertical ambition — pulling up, cruising, first steps',
-  4: 'Running, jumping, pretending — a personality blossoms',
-  5: 'Confidence grows — empathy emerges, world expands',
-  6: 'Final climb — bright, kind, curious, ready for the world',
-};
+import 'package:baby_mon/l10n/l10n_ext.dart';
 
 /// Returns the phase number (1-6) for a given level (1-50).
 int _phaseForLevel(int level) {
@@ -171,8 +108,49 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
 
   bool get _isPhaseMilestone => widget.level % 5 == 0 && widget.level < 50;
   bool get _isLuminary => widget.level >= 50;
-  String get _levelName => _levelNames[widget.level] ?? 'Level ${widget.level}';
+  String get _levelName {
+    final lvl = widget.level;
+    if (lvl < 1 || lvl > 50) return context.l10n.levelFallback(lvl);
+    final keys = [
+      '', // index 0 unused
+      context.l10n.levelName1, context.l10n.levelName2, context.l10n.levelName3, context.l10n.levelName4, context.l10n.levelName5,
+      context.l10n.levelName6, context.l10n.levelName7, context.l10n.levelName8, context.l10n.levelName9, context.l10n.levelName10,
+      context.l10n.levelName11, context.l10n.levelName12, context.l10n.levelName13, context.l10n.levelName14, context.l10n.levelName15,
+      context.l10n.levelName16, context.l10n.levelName17, context.l10n.levelName18, context.l10n.levelName19, context.l10n.levelName20,
+      context.l10n.levelName21, context.l10n.levelName22, context.l10n.levelName23, context.l10n.levelName24, context.l10n.levelName25,
+      context.l10n.levelName26, context.l10n.levelName27, context.l10n.levelName28, context.l10n.levelName29, context.l10n.levelName30,
+      context.l10n.levelName31, context.l10n.levelName32, context.l10n.levelName33, context.l10n.levelName34, context.l10n.levelName35,
+      context.l10n.levelName36, context.l10n.levelName37, context.l10n.levelName38, context.l10n.levelName39, context.l10n.levelName40,
+      context.l10n.levelName41, context.l10n.levelName42, context.l10n.levelName43, context.l10n.levelName44, context.l10n.levelName45,
+      context.l10n.levelName46, context.l10n.levelName47, context.l10n.levelName48, context.l10n.levelName49, context.l10n.levelName50,
+    ];
+    return keys[lvl];
+  }
+
   int get _phase => _phaseForLevel(widget.level);
+
+  String _phaseDescForLevel(int lvl) {
+    final phase = _phaseForLevel(lvl);
+    switch (phase) {
+      case 1: return context.l10n.phaseDescSeed;
+      case 2: return context.l10n.phaseDescSprout;
+      case 3: return context.l10n.phaseDescGrowth;
+      case 4: return context.l10n.phaseDescTree;
+      case 5: return context.l10n.phaseDescPeak;
+      default: return context.l10n.phaseDescStar;
+    }
+  }
+
+  String _phaseEmblem(int phase) {
+    switch (phase) {
+      case 1: return context.l10n.phaseEmblemSeed;
+      case 2: return context.l10n.phaseEmblemSprout;
+      case 3: return context.l10n.phaseEmblemGrowth;
+      case 4: return context.l10n.phaseEmblemTree;
+      case 5: return context.l10n.phaseEmblemPeak;
+      default: return context.l10n.phaseEmblemStar;
+    }
+  }
 
   /// Particle type is based on the phase number:
   /// Phase 1-2: leaf (eco icon), Phase 3-4: sparkle (auto_awesome icon), Phase 5-6: star (star icon)
@@ -193,7 +171,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
     final reducedMotion = MediaQuery.of(context).disableAnimations;
 
     return Semantics(
-      label: 'Level up! Your BabyMon is now $_levelName.',
+      label: context.l10n.levelUpSemanticsFormat(widget.level, _levelName),
       child: GestureDetector(
         onTap: () {
           if (_controller.value > 0.25) {
@@ -256,7 +234,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
                         child: Opacity(
                           opacity: 0.5,
                           child: Text(
-                            'Tap anywhere to continue',
+                            context.l10n.tapAnywhereToContinue,
                             style: TextStyle(
                               fontSize: DesignTokens.fontSm2,
                               color: context.colorScheme.onPrimary.withValues(alpha: 0.7),
@@ -304,12 +282,12 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Phase ${widget.level}',
+                '${context.l10n.levelShort} ${widget.level}',
                 style: const TextStyle(fontSize: 36),
               ),
               const SizedBox(height: 2),
               Text(
-                'Lv ${widget.level}',
+                '${context.l10n.levelShort} ${widget.level}',
                 style: const TextStyle(
                   fontSize: DesignTokens.fontLg,
                   fontWeight: FontWeight.w900,
@@ -380,7 +358,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Phase Milestone',
+              context.l10n.phaseMilestone,
               style: TextStyle(
                 fontSize: DesignTokens.fontLg,
                 fontWeight: FontWeight.w700,
@@ -390,7 +368,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
             ),
             const SizedBox(height: 4),
             Text(
-              _phaseDescriptions[_phase] ?? '',
+              _phaseDescForLevel(widget.level),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: DesignTokens.fontSm2,
@@ -414,7 +392,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
       child: Opacity(
         opacity: reducedMotion ? 1.0 : opacity.clamp(0.0, 1.0),
         child: Text(
-          'Keep tracking — every moment counts!',
+          context.l10n.keepTrackingMoment,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: DesignTokens.fontMd,
@@ -426,17 +404,19 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
   }
 
   Widget _buildLuminaryRecap(bool reducedMotion) {
-    const phases = ['Seed', 'Sprout', 'Growth', 'Tree', 'Peak', 'Star'];
+    final emblems = <String>[
+      _phaseEmblem(1), _phaseEmblem(2), _phaseEmblem(3),
+      _phaseEmblem(4), _phaseEmblem(5), _phaseEmblem(6),
+    ];
 
     return Padding(
       padding: const EdgeInsets.only(top: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Phase emblems in sequence
           Row(
             mainAxisSize: MainAxisSize.min,
-            children: phases
+            children: emblems
                 .map((e) => Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 6),
                       child: Text(e, style: const TextStyle(fontSize: 28)),
@@ -445,9 +425,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
           ),
           const SizedBox(height: 16),
           Text(
-            'From a tiny seed to a shining soul.\n'
-            'You\'ve guided every step.\n'
-            'This is the work of an amazing parent.',
+            '${context.l10n.luminaryLine1}\n${context.l10n.luminaryLine2}\n${context.l10n.luminaryLine3}',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: DesignTokens.fontMd2,
@@ -457,7 +435,7 @@ class _LevelUpCelebrationState extends State<LevelUpCelebration>
           ),
           const SizedBox(height: 12),
           Text(
-            'Master Level',
+            context.l10n.masterLevel,
             style: TextStyle(
               fontSize: DesignTokens.font3xl,
               color: const Color(0xFFFFD700).withValues(alpha: 0.8),

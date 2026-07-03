@@ -6,6 +6,7 @@ import 'package:baby_mon/core/core.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/theme/theme_mode_provider.dart' hide AppThemeMode;
 import 'package:baby_mon/core/testing/stub_api_client.dart';
+import 'package:baby_mon/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Set up mock platform channels needed by screens that use platform plugins.
@@ -51,6 +52,8 @@ Widget goldenApp(
   required Brightness brightness,
   AppVisualStyle visualStyle = AppVisualStyle.glass,
   List<Override>? extraOverrides,
+  bool includeLocalizations = false,
+  Locale? locale,
 }) {
   final isDark = brightness == Brightness.dark;
   return ProviderScope(
@@ -71,6 +74,12 @@ Widget goldenApp(
       theme: visualStyle == AppVisualStyle.clay
           ? (isDark ? AppTheme.clayDarkTheme : AppTheme.clayLightTheme)
           : (isDark ? AppTheme.glassDarkTheme : AppTheme.glassLightTheme),
+      locale: locale,
+      localizationsDelegates:
+          includeLocalizations ? AppLocalizations.localizationsDelegates : null,
+      supportedLocales: includeLocalizations
+          ? AppLocalizations.supportedLocales
+          : const <Locale>[Locale('en', 'US')],
       home: Scaffold(body: child),
     ),
   );
@@ -84,5 +93,24 @@ Future<void> matchesGolden(
   await expectLater(
     find.byType(MaterialApp).first,
     matchesGoldenFile('goldens/$goldenFile'),
+  );
+}
+
+/// Wrap a widget with all required providers for golden tests,
+/// with explicit Hebrew locale so both RTL layout mirroring and real
+/// localized strings are exercised.
+Widget goldenRtlApp(
+  Widget child, {
+  required Brightness brightness,
+  AppVisualStyle visualStyle = AppVisualStyle.glass,
+  List<Override>? extraOverrides,
+}) {
+  return goldenApp(
+    child,
+    brightness: brightness,
+    visualStyle: visualStyle,
+    extraOverrides: extraOverrides,
+    includeLocalizations: true,
+    locale: const Locale('he'),
   );
 }

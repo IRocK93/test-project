@@ -24,7 +24,7 @@ class ExportService {
           ),
           if (subtitle != null) pw.Paragraph(text: subtitle),
           pw.SizedBox(height: 20),
-          pw.Table.fromTextArray(
+          pw.TableHelper.fromTextArray(
             headers: data.isNotEmpty ? data.first.keys.toList() : [],
             data: data.map((row) => row.values.map((v) => v.toString()).toList()).toList(),
           ),
@@ -53,7 +53,7 @@ class ExportService {
           children: [
             pw.Header(level: 0, text: title),
             pw.SizedBox(height: 20),
-            pw.Table.fromTextArray(
+            pw.TableHelper.fromTextArray(
               headers: data.isNotEmpty ? data.first.keys.toList() : [],
               data: data.map((row) => row.values.map((v) => v.toString()).toList()).toList(),
             ),
@@ -92,7 +92,7 @@ class ExportService {
         build: (context) => [
           pw.Header(level: 0, text: title),
           pw.SizedBox(height: 20),
-          pw.Table.fromTextArray(
+          pw.TableHelper.fromTextArray(
             headers: data.isNotEmpty ? data.first.keys.toList() : [],
             data: data.map((row) => row.values.map((v) => v.toString()).toList()).toList(),
           ),

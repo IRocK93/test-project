@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'data/api_client.dart';
@@ -22,3 +23,49 @@ final sharedPreferencesProvider = FutureProvider<SharedPreferences>((ref) async 
 });
 /// Currently selected BabyMon ID — updated when the user switches profiles.
 final selectedBabyMonIdProvider = StateProvider<String?>((ref) => null);
+
+// ── Locale / RTL support ──
+
+const _localePrefKey = 'user_locale';
+const _supportedLocales = {'en', 'es', 'fr', 'pt', 'de', 'ar', 'he', 'zh', 'it'};
+
+/// Loads the persisted locale code from SharedPreferences.
+Future<String> _loadLocalePref() async {
+  final prefs = await SharedPreferences.getInstance();
+  final stored = prefs.getString(_localePrefKey);
+  if (stored != null && _supportedLocales.contains(stored)) return stored;
+  return 'en';
+}
+
+/// Saves the locale code to SharedPreferences.
+Future<void> _saveLocalePref(String locale) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(_localePrefKey, locale);
+}
+
+/// Manages the app's active locale. Persists to SharedPreferences and
+/// triggers app-wide rebuilds so Flutter applies the correct text direction
+/// (LTR or RTL) automatically.
+class LocaleNotifier extends StateNotifier<Locale> {
+  LocaleNotifier() : super(const Locale('en')) {
+    _init();
+  }
+
+  Future<void> _init() async {
+    final code = await _loadLocalePref();
+    state = Locale(code);
+  }
+
+  /// Updates the locale and persists it locally.
+  /// Callers should also sync to the backend separately if authenticated.
+  Future<void> setLocale(String localeCode) async {
+    if (!_supportedLocales.contains(localeCode)) return;
+    if (state.languageCode == localeCode) return;
+    state = Locale(localeCode);
+    await _saveLocalePref(localeCode);
+  }
+}
+
+final localeProvider = StateNotifierProvider<LocaleNotifier, Locale>(
+  (ref) => LocaleNotifier(),
+);

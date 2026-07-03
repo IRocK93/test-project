@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 
@@ -25,7 +26,7 @@ class ConfirmDeleteDialog {
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         ),
         title: Text(
-          title ?? (itemType != null ? 'Delete $itemType' : 'Confirm Delete'),
+          title ?? (itemType != null ? '${context.l10n.deleteLabel} $itemType' : context.l10n.confirmDelete),
           style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
@@ -33,8 +34,8 @@ class ConfirmDeleteDialog {
         content: Text(
           message ??
               (itemType != null
-                  ? 'Are you sure you want to delete this $itemType? This action cannot be undone.'
-                  : 'Are you sure?'),
+                  ? context.l10n.confirmDeleteItem(itemType)
+                  : context.l10n.confirmDeleteDefault),
           style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
                 color: context.colorScheme.onSurfaceVariant,
                 height: 1.4,
@@ -47,7 +48,7 @@ class ConfirmDeleteDialog {
               foregroundColor: context.colorScheme.onSurfaceVariant,
             ),
             child: Text(
-              'Cancel',
+              context.l10n.cancelLabel,
               style: Theme.of(ctx).textTheme.labelLarge,
             ),
           ),
@@ -57,7 +58,7 @@ class ConfirmDeleteDialog {
               foregroundColor: confirmColor ?? context.colorScheme.error,
             ),
             child: Text(
-              confirmLabel ?? 'Delete',
+              confirmLabel ?? context.l10n.deleteLabel,
               style: Theme.of(ctx).textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: confirmColor ?? context.colorScheme.error,

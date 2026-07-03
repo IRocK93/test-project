@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
 import 'package:baby_mon/core/widgets/premium_double_bezel.dart';
 import 'package:baby_mon/core/widgets/premium_progress_bar.dart';
@@ -77,7 +78,7 @@ class DashboardXpCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'Experience',
+                    context.l10n.experience,
                     style: Theme.of(context)
                         .textTheme
                         .titleSmall
@@ -114,7 +115,7 @@ class DashboardXpCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 2),
                     Text(
-                      '/ $_xpForNextLevel XP',
+                      '/ $_xpForNextLevel ${context.l10n.xpShort}',
                       style: Theme.of(context)
                           .textTheme
                           .labelSmall
@@ -142,7 +143,7 @@ class DashboardXpCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  '$_levelName (Lv $_currentLevel)',
+                  '$_levelName (${context.l10n.levelShort} $_currentLevel)',
                   style: Theme.of(context)
                       .textTheme
                       .labelSmall
@@ -154,7 +155,7 @@ class DashboardXpCard extends StatelessWidget {
                 ),
               ),
               Text(
-                'Next: $_nextLevelName',
+                '${context.l10n.nextLabel}: $_nextLevelName',
                 style: Theme.of(context)
                     .textTheme
                     .labelSmall

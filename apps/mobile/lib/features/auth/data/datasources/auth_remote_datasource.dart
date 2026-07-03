@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/data/api_client.dart';
 import '../../domain/entities/user.dart';
 import 'package:baby_mon/core/constants/constants.dart';
@@ -158,5 +159,19 @@ class AuthRemoteDatasource {
     final refreshToken = data['refreshToken'] as String?;
     await _apiClient.saveTokens(token, refreshToken ?? '', user.id, userEmail: user.email);
     return (user: user, token: token);
+  }
+
+  /// Syncs the locally-saved locale preference to the backend.
+  /// Failures are silently ignored — this is a non-critical fire-and-forget operation.
+  Future<void> syncLocale() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final locale = prefs.getString('user_locale');
+      if (locale != null && locale.isNotEmpty) {
+        await _apiClient.patch(ApiConstants.updateLocale, data: {'locale': locale});
+      }
+    } catch (_) {
+      // Non-critical: locale sync failure should never block the auth flow.
+    }
   }
 }

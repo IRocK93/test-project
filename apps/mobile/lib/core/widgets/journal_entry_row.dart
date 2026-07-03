@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -16,6 +17,7 @@ class JournalEntryRow extends StatelessWidget {
   final String subtitle;
   final String trailingTime; // pre-formatted, e.g. "2:14 PM"
   final bool isPendingSync;
+  final bool isDeleted;
   final VoidCallback? onTap;
   final VoidCallback? onMore;
 
@@ -26,6 +28,7 @@ class JournalEntryRow extends StatelessWidget {
     required this.subtitle,
     required this.trailingTime,
     this.isPendingSync = false,
+    this.isDeleted = false,
     this.onTap,
     this.onMore,
   });
@@ -33,8 +36,10 @@ class JournalEntryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final titleColor =
-        isDark ? context.colorScheme.onPrimary : context.colorScheme.onSurface;
+    final titleColor = isDeleted
+        ? (isDark ? context.colorScheme.onPrimary : context.colorScheme.onSurface).withValues(alpha: 0.4)
+        : (isDark ? context.colorScheme.onPrimary : context.colorScheme.onSurface);
+    final decoration = isDeleted ? TextDecoration.lineThrough : TextDecoration.none;
 
     return Material(
       color: Colors.transparent,
@@ -89,15 +94,15 @@ class JournalEntryRow extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                               color: titleColor,
                               height: 1.3,
+                              decoration: decoration,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (isPendingSync) ...[
-                          const SizedBox(width: DesignTokens.spaceXs),
-                          Tooltip(
-                            message: 'Sync pending',
+                          const SizedBox(width: DesignTokens.spaceXs),                            Tooltip(
+                            message: context.l10n.syncPending,
                             child: Icon(
                               PhosphorIconsLight.cloudArrowUp,
                               size: 14,
@@ -114,8 +119,9 @@ class JournalEntryRow extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w400,
-                          color: context.colorScheme.onSurfaceVariant,
+                          color: context.colorScheme.onSurfaceVariant.withValues(alpha: isDeleted ? 0.4 : 1.0),
                           height: 1.3,
+                          decoration: decoration,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -139,9 +145,9 @@ class JournalEntryRow extends StatelessWidget {
                       height: 1.3,
                     ),
                   ),
-                  if (onMore != null)
+                  if (onMore != null && !isDeleted)
                     Semantics(
-                      label: 'More options',
+                      label: context.l10n.moreOptions,
                       button: true,
                       child: InkWell(
                       onTap: () {

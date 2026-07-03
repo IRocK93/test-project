@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
 
 class MonthlyAIReminder {
@@ -151,9 +152,9 @@ class _ReminderContentState extends State<_ReminderContent>
                             ),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
-                            'A Gentle Reminder',
-                            style: TextStyle(
+                          Text(
+                            context.l10n.gentleReminder,
+                            style: const TextStyle(
                               fontSize: DesignTokens.fontXl2,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -161,7 +162,7 @@ class _ReminderContentState extends State<_ReminderContent>
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Because your little one matters most',
+                            context.l10n.becauseYourLittleOne,
                             style: TextStyle(
                               fontSize: DesignTokens.fontMd,
                               color: Colors.white.withValues(alpha: 0.85),
@@ -185,8 +186,7 @@ class _ReminderContentState extends State<_ReminderContent>
                         children: [
                           // Main message
                           Text(
-                            'We love that you trust BabyMon to support your parenting journey. '
-                            'It means the world to us that you turn to our AI Companion for guidance.',
+                            context.l10n.gentleReminderMessage,
                             style: TextStyle(
                               fontSize: DesignTokens.fontMd2,
                               height: 1.6,
@@ -219,9 +219,7 @@ class _ReminderContentState extends State<_ReminderContent>
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    'Our AI Companion runs on your device and provides helpful information — '
-                                    'but it is not a doctor. Its advice may not always be right, complete, '
-                                    'or right for your child specifically.',
+                                    context.l10n.aiNotDoctorWarning,
                                     style: TextStyle(
                                       fontSize: DesignTokens.fontMd,
                                       height: 1.55,
@@ -238,22 +236,22 @@ class _ReminderContentState extends State<_ReminderContent>
                           // What to do instead
                           _adviceRow(
                             icon: PhosphorIconsLight.stethoscope,
-                            text: 'Always check with your pediatrician or healthcare provider about any concerns',
+                            text: context.l10n.alwaysCheckPediatrician,
                           ),
                           const SizedBox(height: 12),
                           _adviceRow(
                             icon: PhosphorIconsLight.phoneCall,
-                            text: 'Call your doctor right away if something feels wrong — trust your instincts',
+                            text: context.l10n.callDoctorRightAway,
                           ),
                           const SizedBox(height: 12),
                           _adviceRow(
                             icon: PhosphorIconsLight.bookOpen,
-                            text: 'Use our parenting advice as a starting point, not the final word',
+                            text: context.l10n.useAsStartingPoint,
                           ),
                           const SizedBox(height: 12),
                           _adviceRow(
                             icon: PhosphorIconsLight.shieldCheck,
-                            text: 'In an emergency, call 911 immediately — not the AI Companion',
+                            text: context.l10n.callEmergencyImmediately,
                           ),
 
                           const SizedBox(height: 24),
@@ -261,8 +259,7 @@ class _ReminderContentState extends State<_ReminderContent>
                           // Heartfelt closing
                           Center(
                             child: Text(
-                              'You\'re doing an amazing job.\n'
-                              'We just want to make sure you have the full picture.',
+                              context.l10n.youAreDoingAmazing,
                               style: TextStyle(
                                 fontSize: DesignTokens.fontSm2,
                                 height: 1.6,
@@ -292,9 +289,9 @@ class _ReminderContentState extends State<_ReminderContent>
                                   borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                                 ),
                               ),
-                              child: const Text(
-                                'I Understand — Thank You',
-                                style: TextStyle(
+                              child: Text(
+                                context.l10n.iUnderstandThankYou,
+                                style: const TextStyle(
                                   fontSize: DesignTokens.fontLg,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white,
@@ -306,7 +303,7 @@ class _ReminderContentState extends State<_ReminderContent>
                           TextButton(
                             onPressed: _close,
                             child: Text(
-                              'Remind me later',
+                              context.l10n.remindMeLater,
                               style: TextStyle(
                                 fontSize: DesignTokens.fontMd,
                                 color: context.textCaption,

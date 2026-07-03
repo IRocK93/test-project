@@ -37,6 +37,10 @@ class FakeAuthDatasource implements AuthRemoteDatasource {
     required String email,
     required String password,
     String? name,
+    required DateTime dateOfBirth,
+    required bool tosAccepted,
+    required bool privacyAccepted,
+    required bool consentToDataProcessing,
   }) async {
     if (nextRegisterError != null) throw nextRegisterError!;
     return nextRegisterResult ?? (
@@ -55,6 +59,21 @@ class FakeAuthDatasource implements AuthRemoteDatasource {
 
   @override
   Future<bool> isLoggedIn() async => isLoggedInResult;
+
+  @override
+  Future<String?> getAccessToken() async => null;
+
+  @override
+  Future<({User user, String token})> googleLogin(String idToken) async => throw UnimplementedError();
+
+  @override
+  Future<({User user, String token})> appleLogin(String idToken) async => throw UnimplementedError();
+
+  @override
+  Future<({User user, String token})> facebookLogin(String accessToken) async => throw UnimplementedError();
+
+  @override
+  Future<void> syncLocale() async {}
 
   @override
   Future<void> clearToken() async {}
@@ -113,7 +132,15 @@ void main() {
           token: 'reg-xyz',
         );
 
-        final result = await repository.register(email: 'new@test.com', password: 'pass', name: 'New');
+        final result = await repository.register(
+          email: 'new@test.com',
+          password: 'pass',
+          name: 'New',
+          dateOfBirth: DateTime(1990, 1, 1),
+          tosAccepted: true,
+          privacyAccepted: true,
+          consentToDataProcessing: true,
+        );
 
         expect(result.user.name, 'New');
         expect(result.token, 'reg-xyz');
@@ -123,7 +150,14 @@ void main() {
         fakeDatasource.nextRegisterError = Exception('Duplicate email');
 
         expect(
-          () => repository.register(email: 'x', password: 'y'),
+          () => repository.register(
+            email: 'x',
+            password: 'y',
+            dateOfBirth: DateTime(1990, 1, 1),
+            tosAccepted: true,
+            privacyAccepted: true,
+            consentToDataProcessing: true,
+          ),
           throwsA(isA<Exception>()),
         );
       });

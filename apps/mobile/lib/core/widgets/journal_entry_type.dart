@@ -22,6 +22,16 @@ enum JournalEntryType {
     PhosphorIconsLight.stethoscope,
     AppColors.secondary,
   ),
+  sleepLog(
+    'Sleep',
+    PhosphorIconsLight.moonStars,
+    Color(0xFF5C6BC0),
+  ),
+  growthRecord(
+    'Growth',
+    PhosphorIconsLight.scales,
+    Color(0xFF26A69A),
+  ),
   system(
     'System',
     PhosphorIconsLight.info,
@@ -44,6 +54,10 @@ enum JournalEntryType {
         return JournalEntryType.feedLog;
       case 'HEALTH_RECORD':
         return JournalEntryType.healthRecord;
+      case 'SLEEP_LOG':
+        return JournalEntryType.sleepLog;
+      case 'GROWTH_RECORD':
+        return JournalEntryType.growthRecord;
       case 'SYSTEM':
         return JournalEntryType.system;
       default:
@@ -60,6 +74,10 @@ enum JournalEntryType {
         return 'FEED_LOG';
       case JournalEntryType.healthRecord:
         return 'HEALTH_RECORD';
+      case JournalEntryType.sleepLog:
+        return 'SLEEP_LOG';
+      case JournalEntryType.growthRecord:
+        return 'GROWTH_RECORD';
       case JournalEntryType.system:
         return 'SYSTEM';
     }

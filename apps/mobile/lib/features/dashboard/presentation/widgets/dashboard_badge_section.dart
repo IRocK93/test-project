@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
 import 'package:baby_mon/core/widgets/premium_double_bezel.dart';
 
@@ -38,6 +39,29 @@ class DashboardBadgeSection extends StatelessWidget {
   int get _totalUnlocked => badges.length;
   int get _totalBadges => badgeDefinitions.length;
 
+  String _categoryLabel(String c, BuildContext ctx) {
+    switch (c) {
+      case 'milestones': return ctx.l10n.badgeCategoryMilestones;
+      case 'feeding': return ctx.l10n.badgeCategoryFeeding;
+      case 'sleep': return ctx.l10n.badgeCategorySleep;
+      case 'health': return ctx.l10n.badgeCategoryHealth;
+      case 'growth': return ctx.l10n.badgeCategoryGrowth;
+      case 'parenting': return ctx.l10n.badgeCategoryParenting;
+      case 'progression': return ctx.l10n.badgeCategoryProgression;
+      case 'traits': return ctx.l10n.badgeCategoryTraits;
+      default: return ctx.l10n.badgeCategoryOther;
+    }
+  }
+
+  String _tierLabel(String t, BuildContext ctx) {
+    switch (t) {
+      case 'DIAMOND': return ctx.l10n.badgeTierDiamond;
+      case 'GOLD': return ctx.l10n.badgeTierGold;
+      case 'SILVER': return ctx.l10n.badgeTierSilver;
+      default: return ctx.l10n.badgeTierBronze;
+    }
+  }
+
   Color _tierColor(String t) {
     switch (t) {
       case 'DIAMOND': return const Color(0xFFB366FF);
@@ -74,7 +98,7 @@ class DashboardBadgeSection extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Badges ($_totalUnlocked unlocked)',
+                context.l10n.badgesCountFormat(_totalUnlocked),
                 style: TextStyle(
                   fontSize: DesignTokens.fontMd,
                   fontWeight: FontWeight.w700,
@@ -119,7 +143,7 @@ class DashboardBadgeSection extends StatelessWidget {
               const SizedBox(width: DesignTokens.spaceSm),
               Expanded(
                 child: Text(
-                  'Achievements',
+                  context.l10n.achievements,
                   style: TextStyle(
                     fontSize: DesignTokens.fontLg,
                     fontWeight: FontWeight.w800,
@@ -129,7 +153,7 @@ class DashboardBadgeSection extends StatelessWidget {
                 ),
               ),
               Text(
-                '$_totalUnlocked / $_totalBadges',
+                context.l10n.badgesUnlockedCount(_totalUnlocked, _totalBadges, _totalUnlocked),
                 style: TextStyle(
                   fontSize: DesignTokens.fontSm2,
                   fontWeight: FontWeight.w700,
@@ -165,7 +189,7 @@ class DashboardBadgeSection extends StatelessWidget {
             const SizedBox(width: DesignTokens.spaceSm),
             Expanded(
               child: Text(
-                '${cat[0].toUpperCase()}${cat.substring(1)}',
+                _categoryLabel(cat, context),
                 style: TextStyle(
                   fontSize: DesignTokens.fontSm2,
                   fontWeight: FontWeight.w700,
@@ -211,7 +235,7 @@ class DashboardBadgeSection extends StatelessWidget {
     final t = parseString(b['tier']) ?? 'BRONZE';
     final iconPath = parseString(b['iconPath']) ?? parseString(b['icon']);
     return Semantics(
-      label: '$n${u ? ', ${t.toLowerCase()} tier' : ', locked'}',
+      label: u ? '$n, ${_tierLabel(t, context)}' : '$n, ${context.l10n.badgeLocked}',
       button: true,
       child: GestureDetector(
       onTap: () => _showBadgeDetail(context, b),
@@ -263,9 +287,9 @@ class DashboardBadgeSection extends StatelessWidget {
             const SizedBox(height: 12),
             Text(parseString(b['description']) ?? '', style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(color: context.colorScheme.onSurfaceVariant)),
             const SizedBox(height: 16),
-            Text('Keep tracking to unlock!', style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7), fontStyle: FontStyle.italic)),
+            Text(context.l10n.keepTracking, style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7), fontStyle: FontStyle.italic)),
           ]),
-          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Close', style: TextStyle(color: context.colorScheme.onSurfaceVariant)))],
+          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(context.l10n.close, style: TextStyle(color: context.colorScheme.onSurfaceVariant)))],
         ),
       );
       return;
@@ -303,7 +327,7 @@ class DashboardBadgeSection extends StatelessWidget {
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   _tierChip(t),
                   const SizedBox(width: 10),
-                  Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), decoration: BoxDecoration(color: const Color(0xFF2E7D32).withValues(alpha: 0.25), borderRadius: BorderRadius.circular(DesignTokens.radiusFull)), child: Text('+$xp XP', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF66BB6A)))),
+                  Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), decoration: BoxDecoration(color: const Color(0xFF2E7D32).withValues(alpha: 0.25), borderRadius: BorderRadius.circular(DesignTokens.radiusFull)), child: Text(context.l10n.plusXpFormat(xp), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF66BB6A)))),
                 ]),
                 const SizedBox(height: 20),
                 Container(constraints: const BoxConstraints(maxWidth: 300), child: Text(parseString(b['description']) ?? '', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.75), height: 1.5))),

@@ -1,10 +1,11 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:baby_mon/core/constants/app_colors.dart';
 import '../providers/profile_provider.dart';
 
 class ProfileHeader extends StatelessWidget {
-  const ProfileHeader({Key? key}) : super(key: key);
+  const ProfileHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +58,9 @@ class ProfileHeader extends StatelessWidget {
                       color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'Level',
-                      style: TextStyle(
+                    child: Text(
+                      context.l10n.levelLabel,
+                      style: const TextStyle(
                         color: AppColors.primary,
                         fontWeight: FontWeight.bold,
                       ),

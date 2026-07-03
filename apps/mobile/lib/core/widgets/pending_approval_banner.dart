@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -24,8 +25,8 @@ class PendingApprovalBanner extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     final label = count == 1
-        ? '1 change from your partner'
-        : '$count changes from your partner';
+        ? context.l10n.pendingApprovalSingle
+        : context.l10n.pendingApprovalPlural(count);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -82,7 +83,7 @@ class PendingApprovalBanner extends StatelessWidget {
                 ),
                 const SizedBox(width: DesignTokens.spaceSm),
                 Text(
-                  'Review',
+                  context.l10n.reviewLabel,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,

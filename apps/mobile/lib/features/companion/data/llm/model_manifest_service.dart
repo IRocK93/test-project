@@ -1,4 +1,4 @@
-import 'package:dio/dio.dart';
+import 'package:baby_mon/core/data/api_client.dart';
 
 class ModelManifest {
   final String version;
@@ -40,16 +40,13 @@ class ModelManifest {
 }
 
 class ModelManifestService {
-  final Dio _dio;
+  final ApiClient _apiClient;
 
-  ModelManifestService({Dio? dio})
-      : _dio = dio ?? Dio(BaseOptions(
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-        ));
+  ModelManifestService({required ApiClient apiClient})
+      : _apiClient = apiClient;
 
   Future<ModelManifest> fetchManifest(String apiBaseUrl) async {
-    final response = await _dio.get<Map<String, dynamic>>('$apiBaseUrl/models/companion-llm/manifest');
+    final response = await _apiClient.get('$apiBaseUrl/models/companion-llm/manifest');
     return ModelManifest.fromJson(response.data as Map<String, dynamic>);
   }
 }

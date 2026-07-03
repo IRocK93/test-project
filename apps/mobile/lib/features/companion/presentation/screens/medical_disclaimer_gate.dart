@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
 
 class MedicalDisclaimerGate extends StatefulWidget {
@@ -55,7 +56,7 @@ class _MedicalDisclaimerGateState extends State<MedicalDisclaimerGate>
                       shape: BoxShape.circle,
                     ),
                     child: Semantics(
-                      label: 'Warning: Medical disclaimer',
+                      label: context.l10n.warningMedicalDisclaimer,
                       child: Icon(PhosphorIconsLight.warning, size: 40, color: context.colorScheme.error),
                     ),
                   ),
@@ -63,17 +64,17 @@ class _MedicalDisclaimerGateState extends State<MedicalDisclaimerGate>
                 const SizedBox(height: 24),
 
                 // Title
-                const Center(
+                Center(
                   child: Text(
-                    'Medical & AI Disclaimer',
-                    style: TextStyle(fontSize: DesignTokens.fontXl2, fontWeight: FontWeight.w700),
+                    context.l10n.medicalAiDisclaimerTitle,
+                    style: const TextStyle(fontSize: DesignTokens.fontXl2, fontWeight: FontWeight.w700),
                     textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Center(
                   child: Text(
-                    'Please read carefully before using the AI Companion',
+                    context.l10n.readCarefullySubtitle,
                     style: TextStyle(fontSize: DesignTokens.fontMd, color: context.textSecondary),
                     textAlign: TextAlign.center,
                   ),
@@ -83,28 +84,28 @@ class _MedicalDisclaimerGateState extends State<MedicalDisclaimerGate>
                 // Key points
                 _disclaimerItem(
                   icon: PhosphorIconsLight.heartbeat,
-                  title: 'Not a Medical Device',
-                  body: 'BabyMon is not a medical device. It does not diagnose, treat, or provide medical advice.',
+                  title: context.l10n.notMedicalDeviceTitle,
+                  body: context.l10n.notMedicalDeviceDesc,
                 ),
                 _disclaimerItem(
                   icon: PhosphorIconsLight.warningOctagon,
-                  title: 'Not for Emergencies',
-                  body: 'If your child needs immediate medical attention, call 911 (or your local emergency number). Do not use the AI Companion for emergencies.',
+                  title: context.l10n.notForEmergenciesTitle,
+                  body: context.l10n.notForEmergenciesDesc,
                 ),
                 _disclaimerItem(
                   icon: PhosphorIconsLight.cpu,
-                  title: 'On-Device AI — No Human Review',
-                  body: 'The AI Companion runs entirely on your device. No professional reviews individual responses before you see them. AI-generated advice may be inaccurate, incomplete, or not applicable to your child.',
+                  title: context.l10n.onDeviceAiNoReviewTitle,
+                  body: context.l10n.onDeviceAiNoReviewDesc,
                 ),
                 _disclaimerItem(
                   icon: PhosphorIconsLight.user,
-                  title: 'You Are Responsible',
-                  body: 'You must independently verify any AI Companion advice with a qualified healthcare professional before acting on it. You assume all risks when using this feature.',
+                  title: context.l10n.youAreResponsibleTitle,
+                  body: context.l10n.youAreResponsibleDesc,
                 ),
                 _disclaimerItem(
                   icon: PhosphorIconsLight.shieldCheck,
-                  title: 'Your Data Stays On-Device',
-                  body: 'No child health data is sent to external AI services. All AI inference happens locally on your phone.',
+                  title: context.l10n.dataStaysOnDeviceTitle,
+                  body: context.l10n.dataStaysOnDeviceDesc,
                 ),
 
                 const SizedBox(height: 24),
@@ -114,7 +115,7 @@ class _MedicalDisclaimerGateState extends State<MedicalDisclaimerGate>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Semantics(
-                      label: 'I understand and accept the medical disclaimer',
+                      label: context.l10n.acceptMedicalDisclaimer,
                       checked: _accepted,
                       child: SizedBox(
                         width: 24,
@@ -127,10 +128,10 @@ class _MedicalDisclaimerGateState extends State<MedicalDisclaimerGate>
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'I understand that the AI Companion is not a substitute for professional medical advice. I accept all risks associated with using AI-generated parenting guidance.',
-                        style: TextStyle(fontSize: DesignTokens.fontSm2, height: 1.5),
+                        context.l10n.understandAcceptCheckbox,
+                        style: const TextStyle(fontSize: DesignTokens.fontSm2, height: 1.5),
                       ),
                     ),
                   ],
@@ -141,8 +142,8 @@ class _MedicalDisclaimerGateState extends State<MedicalDisclaimerGate>
                 // Accept button
                 Semantics(
                   label: _accepted
-                      ? 'I understand — Continue. Accept medical disclaimer'
-                      : 'I understand — Continue. Check the box to accept',
+                      ? context.l10n.acceptMedicalDisclaimer
+                      : context.l10n.checkToAccept,
                   enabled: _accepted,
                   button: true,
                   child: SizedBox(
@@ -157,9 +158,9 @@ class _MedicalDisclaimerGateState extends State<MedicalDisclaimerGate>
                           borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                         ),
                       ),
-                      child: const Text(
-                        'I Understand — Continue',
-                        style: TextStyle(fontSize: DesignTokens.fontLg, fontWeight: FontWeight.w600, color: Colors.white),
+                      child: Text(
+                        context.l10n.iUnderstandContinue,
+                        style: const TextStyle(fontSize: DesignTokens.fontLg, fontWeight: FontWeight.w600, color: Colors.white),
                       ),
                     ),
                   ),
@@ -170,12 +171,12 @@ class _MedicalDisclaimerGateState extends State<MedicalDisclaimerGate>
                 // Decline
                 Center(
                   child: Semantics(
-                    label: 'Decline disclaimer and go back',
+                    label: context.l10n.declineDisclaimer,
                     button: true,
                     child: TextButton(
                       onPressed: () => Navigator.of(context).pop(),
                       child: Text(
-                        'Go Back',
+                        context.l10n.goBack,
                         style: TextStyle(color: context.textSecondary, fontSize: DesignTokens.fontMd),
                       ),
                     ),

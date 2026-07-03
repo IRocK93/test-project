@@ -35,7 +35,7 @@ class MockApiClient implements ApiClient {
   @override Future<Response> getBabyMonStage(String id) => _stub.getBabyMonStage(id);
 
   // ── Milestones ──
-  @override Future<Response> getMilestones(String babyMonId) => _stub.getMilestones(babyMonId);
+  @override Future<Response> getMilestones(String babyMonId, {bool forceRefresh = false}) => _stub.getMilestones(babyMonId, forceRefresh: forceRefresh);
   @override Future<Response> createMilestone(String babyMonId, Map<String, dynamic> data) =>
       _stub.createMilestone(babyMonId, data);
   @override Future<Response> updateMilestone(String id, Map<String, dynamic> data) =>
@@ -43,7 +43,7 @@ class MockApiClient implements ApiClient {
   @override Future<Response> deleteMilestone(String id) => _stub.deleteMilestone(id);
 
   // ── Feed Logs ──
-  @override Future<Response> getFeedLogs(String babyMonId) => _stub.getFeedLogs(babyMonId);
+  @override Future<Response> getFeedLogs(String babyMonId, {bool forceRefresh = false}) => _stub.getFeedLogs(babyMonId, forceRefresh: forceRefresh);
   @override Future<Response> createFeedLog(String babyMonId, Map<String, dynamic> data) =>
       _stub.createFeedLog(babyMonId, data);
   @override Future<Response> updateFeedLog(String id, Map<String, dynamic> data) =>
@@ -51,7 +51,7 @@ class MockApiClient implements ApiClient {
   @override Future<Response> deleteFeedLog(String id) => _stub.deleteFeedLog(id);
 
   // ── Health Records ──
-  @override Future<Response> getHealthRecords(String babyMonId) => _stub.getHealthRecords(babyMonId);
+  @override Future<Response> getHealthRecords(String babyMonId, {bool forceRefresh = false}) => _stub.getHealthRecords(babyMonId, forceRefresh: forceRefresh);
   @override Future<Response> createHealthRecord(String babyMonId, Map<String, dynamic> data) =>
       _stub.createHealthRecord(babyMonId, data);
   @override Future<Response> updateHealthRecord(String id, Map<String, dynamic> data) =>
@@ -89,7 +89,7 @@ class MockApiClient implements ApiClient {
       _stub.deleteMedicalTeamMember(babyMonId, memberId);
 
   // ── Evolution ──
-  @override Future<Response> getEvolution(String babyMonId) => _stub.getEvolution(babyMonId);
+  @override Future<Response> getEvolution(String babyMonId, {bool forceRefresh = false}) => _stub.getEvolution(babyMonId, forceRefresh: forceRefresh);
 
   // ── Journal ──
   @override Future<Response> getJournal(String babyMonId, {String? type}) =>
@@ -105,9 +105,16 @@ class MockApiClient implements ApiClient {
   @override Future<Response> getSubscription() => _stub.getSubscription();
   @override Future<Response> devOverrideTrial(int days) => _stub.devOverrideTrial(days);
 
+  // ── Dashboard ──
+  @override Future<Response> getDashboard(String babyMonId, {bool forceRefresh = false}) => _stub.getDashboard(babyMonId, forceRefresh: forceRefresh);
+
+  // ── Promo Code ──
+  @override Future<Response> validatePromoCode(String code) => _stub.validatePromoCode(code);
+  @override Future<Response> redeemPromoCode(String code) => _stub.redeemPromoCode(code);
+
   // ── Growth ──
-  @override Future<Response> getGrowthRecords(String babyMonId, {String? type}) =>
-      _stub.getGrowthRecords(babyMonId, type: type);
+  @override Future<Response> getGrowthRecords(String babyMonId, {String? type, bool forceRefresh = false}) =>
+      _stub.getGrowthRecords(babyMonId, type: type, forceRefresh: forceRefresh);
   @override Future<Response> createGrowthRecord(String babyMonId, Map<String, dynamic> data) =>
       _stub.createGrowthRecord(babyMonId, data);
   @override Future<Response> updateGrowthRecord(String babyMonId, String recordId, Map<String, dynamic> data) =>
@@ -130,7 +137,7 @@ class MockApiClient implements ApiClient {
   @override Future<Response> deletePhoto(String id) => _stub.deletePhoto(id);
 
   // ── Sleep Logs ──
-  @override Future<Response> getSleepLogs(String babyMonId) => _stub.getSleepLogs(babyMonId);
+  @override Future<Response> getSleepLogs(String babyMonId, {bool forceRefresh = false}) => _stub.getSleepLogs(babyMonId, forceRefresh: forceRefresh);
   @override Future<Response> createSleepLog(String babyMonId, Map<String, dynamic> data) =>
       _stub.createSleepLog(babyMonId, data);
   @override Future<Response> updateSleepLog(String babyMonId, String id, Map<String, dynamic> data) =>
@@ -140,16 +147,20 @@ class MockApiClient implements ApiClient {
 
   // ── Stage Content ──
   @override Future<Response> getStageContent(String stageKey) => _stub.getStageContent(stageKey);
+  @override Future<Response> getStageContentForBabyMon(String babyMonId) => _stub.getStageContentForBabyMon(babyMonId);
 
   // ── Storage ──
-  @override Future<void> saveTokens(String accessToken, String refreshToken, String userId) =>
-      _stub.saveTokens(accessToken, refreshToken, userId);
+  @override Future<void> saveTokens(String accessToken, String refreshToken, String userId, {String? userEmail}) =>
+      _stub.saveTokens(accessToken, refreshToken, userId, userEmail: userEmail);
   @override Future<String?> getAccessToken() => _stub.getAccessToken();
   @override Future<String?> getUserId() => _stub.getUserId();
+  @override Future<String?> getUserEmail() => _stub.getUserEmail();
+  @override Future<void> clearAuth() => _stub.clearAuth();
   @override Future<void> setSelectedBabyMonId(String? id) => _stub.setSelectedBabyMonId(id);
   @override Future<String?> getSelectedBabyMonId() => _stub.getSelectedBabyMonId();
   @override Future<void> setTrialOverride(int days) => _stub.setTrialOverride(days);
   @override Future<int?> getTrialOverride() => _stub.getTrialOverride();
+  @override Future<Dio> createDownloadDio({Duration? connectTimeout, Duration? receiveTimeout}) => _stub.createDownloadDio(connectTimeout: connectTimeout, receiveTimeout: receiveTimeout);
 
   // ── Generic HTTP ──
   @override Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken}) =>
@@ -184,19 +195,19 @@ class StubController {
   Future<Response> getBabyMonStage(String id) => _ok();
 
   // ── Milestones ──
-  Future<Response> getMilestones(String babyMonId) => _ok();
+  Future<Response> getMilestones(String babyMonId, {bool forceRefresh = false}) => _ok();
   Future<Response> createMilestone(String babyMonId, Map<String, dynamic> data) => _ok();
   Future<Response> updateMilestone(String id, Map<String, dynamic> data) => _ok();
   Future<Response> deleteMilestone(String id) => _ok();
 
   // ── Feed Logs ──
-  Future<Response> getFeedLogs(String babyMonId) => _ok();
+  Future<Response> getFeedLogs(String babyMonId, {bool forceRefresh = false}) => _ok();
   Future<Response> createFeedLog(String babyMonId, Map<String, dynamic> data) => _ok();
   Future<Response> updateFeedLog(String id, Map<String, dynamic> data) => _ok();
   Future<Response> deleteFeedLog(String id) => _ok();
 
   // ── Health Records ──
-  Future<Response> getHealthRecords(String babyMonId) => _ok();
+  Future<Response> getHealthRecords(String babyMonId, {bool forceRefresh = false}) => _ok();
   Future<Response> createHealthRecord(String babyMonId, Map<String, dynamic> data) => _ok();
   Future<Response> updateHealthRecord(String id, Map<String, dynamic> data) => _ok();
   Future<Response> deleteHealthRecord(String id) => _ok();
@@ -222,7 +233,7 @@ class StubController {
   Future<Response> deleteMedicalTeamMember(String babyMonId, String memberId) => _ok();
 
   // ── Evolution ──
-  Future<Response> getEvolution(String babyMonId) => _ok();
+  Future<Response> getEvolution(String babyMonId, {bool forceRefresh = false}) => _ok();
 
   // ── Journal ──
   Future<Response> getJournal(String babyMonId, {String? type}) => _ok();
@@ -236,8 +247,15 @@ class StubController {
   Future<Response> getSubscription() => _ok();
   Future<Response> devOverrideTrial(int days) => _ok();
 
+  // ── Dashboard ──
+  Future<Response> getDashboard(String babyMonId, {bool forceRefresh = false}) => _ok();
+
+  // ── Promo Code ──
+  Future<Response> validatePromoCode(String code) => _ok();
+  Future<Response> redeemPromoCode(String code) => _ok();
+
   // ── Growth ──
-  Future<Response> getGrowthRecords(String babyMonId, {String? type}) => _ok();
+  Future<Response> getGrowthRecords(String babyMonId, {String? type, bool forceRefresh = false}) => _ok();
   Future<Response> createGrowthRecord(String babyMonId, Map<String, dynamic> data) => _ok();
   Future<Response> updateGrowthRecord(String babyMonId, String recordId, Map<String, dynamic> data) => _ok();
   Future<Response> deleteGrowthRecord(String babyMonId, String recordId) => _ok();
@@ -254,22 +272,26 @@ class StubController {
   Future<Response> deletePhoto(String id) => _ok();
 
   // ── Sleep Logs ──
-  Future<Response> getSleepLogs(String babyMonId) => _ok();
+  Future<Response> getSleepLogs(String babyMonId, {bool forceRefresh = false}) => _ok();
   Future<Response> createSleepLog(String babyMonId, Map<String, dynamic> data) => _ok();
   Future<Response> updateSleepLog(String babyMonId, String id, Map<String, dynamic> data) => _ok();
   Future<Response> deleteSleepLog(String babyMonId, String id) => _ok();
 
   // ── Stage Content ──
   Future<Response> getStageContent(String stageKey) => _ok();
+  Future<Response> getStageContentForBabyMon(String babyMonId) => _ok();
 
   // ── Storage ──
-  Future<void> saveTokens(String accessToken, String refreshToken, String userId) async {}
+  Future<void> saveTokens(String accessToken, String refreshToken, String userId, {String? userEmail}) async {}
   Future<String?> getAccessToken() async => null;
   Future<String?> getUserId() async => null;
+  Future<String?> getUserEmail() async => null;
+  Future<void> clearAuth() async {}
   Future<void> setSelectedBabyMonId(String? id) async {}
   Future<String?> getSelectedBabyMonId() async => null;
   Future<void> setTrialOverride(int days) async {}
   Future<int?> getTrialOverride() async => null;
+  Future<Dio> createDownloadDio({Duration? connectTimeout, Duration? receiveTimeout}) async => Dio();
 
   // ── Generic HTTP ──
   Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken}) => _ok();

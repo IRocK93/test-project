@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:baby_mon/app.dart';
-import 'package:baby_mon/core/router/app_router.dart';
 import 'package:baby_mon/features/auth/presentation/screens/login_screen.dart';
 import 'package:baby_mon/features/auth/presentation/screens/register_screen.dart';
 
@@ -95,9 +93,9 @@ void main() {
 
   testWidgets('Login screen navigates to register', (tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
+      ProviderScope(
         child: MaterialApp(
-          home: LoginScreen(),
+          home: const LoginScreen(),
           routes: {
             '/register': (context) => const RegisterScreen(),
           },

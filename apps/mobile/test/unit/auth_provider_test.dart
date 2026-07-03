@@ -41,6 +41,10 @@ class FakeAuthRepository implements AuthRepository {
     required String email,
     required String password,
     String? name,
+    required DateTime dateOfBirth,
+    required bool tosAccepted,
+    required bool privacyAccepted,
+    required bool consentToDataProcessing,
   }) async {
     if (nextRegisterError != null) throw nextRegisterError!;
     return nextRegisterResult ?? (
@@ -59,10 +63,37 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<({User user, String token})> googleLogin(String idToken) async {
+    return nextLoginResult ?? (
+      user: User(id: 'g1', email: 'google@test.com', createdAt: DateTime(2024)),
+      token: 'google-token',
+    );
+  }
+
+  @override
+  Future<({User user, String token})> appleLogin(String identityToken) async {
+    return nextLoginResult ?? (
+      user: User(id: 'a1', email: 'apple@test.com', createdAt: DateTime(2024)),
+      token: 'apple-token',
+    );
+  }
+
+  @override
+  Future<({User user, String token})> facebookLogin(String accessToken) async {
+    return nextLoginResult ?? (
+      user: User(id: 'f1', email: 'fb@test.com', createdAt: DateTime(2024)),
+      token: 'facebook-token',
+    );
+  }
+
+  @override
   Future<bool> isLoggedIn() async => shouldLoggedIn;
 
   @override
   Future<User?> getCurrentUser() async => currentUser;
+
+  @override
+  Future<String?> getAccessToken() async => 'test-token';
 
   @override
   Future<void> logout() async {
@@ -81,12 +112,17 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> sendVerificationEmail(String email) async {
-    lastVerificationEmail = email;
+  Future<void> sendVerificationEmail() async {
+    lastVerificationEmail = 'test@example.com';
   }
 
   @override
   Future<bool> checkEmailVerified() async => true;
+
+  @override
+  Future<void> syncLocale() async {
+    // No-op for tests — locale sync is fire-and-forget and non-critical.
+  }
 }
 
 void main() {
@@ -165,7 +201,15 @@ void main() {
           token: 'reg-token-456',
         );
 
-        await notifier.register('new@test.com', 'pass123', 'New User');
+        await notifier.register(
+          'new@test.com',
+          'pass123',
+          'New User',
+          DateTime(1990, 1, 1),
+          true, // tosAccepted
+          true, // privacyAccepted
+          true, // consentToDataProcessing
+        );
 
         expect(notifier.state.user, isNotNull);
         expect(notifier.state.user!.email, 'new@test.com');
@@ -178,7 +222,15 @@ void main() {
       test('sets error on failed registration', () async {
         fakeRepo.nextRegisterError = Exception('Email already exists');
 
-        await notifier.register('dup@test.com', 'pass', null);
+        await notifier.register(
+          'dup@test.com',
+          'pass',
+          null,
+          DateTime(1990, 1, 1),
+          true,
+          true,
+          true,
+        );
 
         expect(notifier.state.user, isNull);
         expect(notifier.state.error, isNotNull);
@@ -270,15 +322,15 @@ void main() {
         await future;
       });
 
-      test('handles cancelled/null response from service gracefully', () async {
-        // GoogleSignInService catches internally and returns null in test env.
-        // Provider treats null as "user cancelled" — no error set.
+      test('handles service error gracefully', () async {
+        // GoogleSignInService throws in test env (no platform plugin).
+        // Provider catch block sets a localized error.
         await notifier.googleLogin();
 
         expect(notifier.state.isLoading, isFalse);
         expect(notifier.state.user, isNull);
         expect(notifier.state.token, isNull);
-        expect(notifier.state.error, isNull);
+        expect(notifier.state.error, isNotNull);
       });
 
       test('clears isLoading after completion', () async {
@@ -319,8 +371,8 @@ void main() {
 
         expect(mockNotifier.state.isLoggedIn, isTrue);
         expect(mockNotifier.state.user, isNotNull);
-        expect(mockNotifier.state.user!.email, contains('gmail.com'));
-        expect(mockNotifier.state.token, startsWith('google-token-'));
+        expect(mockNotifier.state.user!.email, 'google@test.com');
+        expect(mockNotifier.state.token, 'google-token');
         expect(mockNotifier.state.isEmailVerified, isTrue);
         expect(mockNotifier.state.isLoading, isFalse);
         expect(mockNotifier.state.error, isNull);
@@ -362,9 +414,9 @@ void main() {
 
         expect(mockNotifier.state.isLoggedIn, isTrue);
         expect(mockNotifier.state.user, isNotNull);
-        expect(mockNotifier.state.user!.email, 'test@privaterelay.appleid.com');
-        expect(mockNotifier.state.user!.name, 'Apple Test User');
-        expect(mockNotifier.state.token, startsWith('apple-token-'));
+        expect(mockNotifier.state.user!.email, 'apple@test.com');
+        expect(mockNotifier.state.user!.name, isNull);
+        expect(mockNotifier.state.token, 'apple-token');
         expect(mockNotifier.state.isEmailVerified, isTrue);
         expect(mockNotifier.state.isLoading, isFalse);
         expect(mockNotifier.state.error, isNull);
@@ -419,9 +471,9 @@ void main() {
 
         expect(mockNotifier.state.isLoggedIn, isTrue);
         expect(mockNotifier.state.user, isNotNull);
-        expect(mockNotifier.state.user!.email, 'test@facebook.com');
-        expect(mockNotifier.state.user!.name, 'Facebook Test User');
-        expect(mockNotifier.state.token, startsWith('facebook-token-'));
+        expect(mockNotifier.state.user!.email, 'fb@test.com');
+        expect(mockNotifier.state.user!.name, isNull);
+        expect(mockNotifier.state.token, 'facebook-token');
         expect(mockNotifier.state.isEmailVerified, isTrue);
         expect(mockNotifier.state.isLoading, isFalse);
         expect(mockNotifier.state.error, isNull);
@@ -486,15 +538,15 @@ void main() {
         await future;
       });
 
-      test('handles cancelled/null response from service gracefully', () async {
-        // FacebookSignInService catches internally and returns null in test env.
-        // Provider treats null as "user cancelled" — no error set.
+      test('handles service error gracefully', () async {
+        // FacebookSignInService throws in test env (no platform plugin).
+        // Provider catch block sets a localized error.
         await notifier.facebookLogin();
 
         expect(notifier.state.isLoading, isFalse);
         expect(notifier.state.user, isNull);
         expect(notifier.state.token, isNull);
-        expect(notifier.state.error, isNull);
+        expect(notifier.state.error, isNotNull);
       });
 
       test('clears isLoading after completion', () async {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 
 class ChatInputBar extends StatefulWidget {
   final void Function(String text) onSend;
@@ -58,7 +59,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
                 maxLines: 4,
                 minLines: 1,
                 decoration: InputDecoration(
-                  hintText: 'Ask BabyMon Companion...',
+                  hintText: context.l10n.askCompanionHint,
                   hintStyle: TextStyle(color: context.textCaption, fontSize: 15),
                   filled: true,
                   fillColor: context.textSecondary.withValues(alpha: 0.06),
@@ -76,7 +77,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
                 borderRadius: BorderRadius.circular(DesignTokens.radiusXl),
               ),
               child: Semantics(
-                label: 'Send message',
+                label: context.l10n.sendMessage,
                 button: true,
                 enabled: _hasText && widget.enabled,
                 child: IconButton(

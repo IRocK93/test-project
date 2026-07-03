@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 
 class EvolutionVisualizer extends StatelessWidget {
@@ -25,33 +26,33 @@ class EvolutionVisualizer extends StatelessWidget {
     }
   }
 
-  String get _stageName {
+  String _stageName(BuildContext context) {
     switch (stage.toLowerCase()) {
       case 'egg':
-        return 'Egg';
+        return context.l10n.stageEgg;
       case 'hatchling':
-        return 'Hatchling';
+        return context.l10n.stageHatchling;
       case 'juvenile':
-        return 'Juvenile';
+        return context.l10n.stageJuvenile;
       case 'adult':
-        return 'Adult';
+        return context.l10n.stageAdult;
       default:
-        return 'Unknown';
+        return context.l10n.stageUnknown;
     }
   }
 
-  String get _stageDescription {
+  String _stageDescription(BuildContext context) {
     switch (stage.toLowerCase()) {
       case 'egg':
-        return 'Your BabyMon is developing in the egg. Keep the environment stable!';
+        return context.l10n.stageEggDescription;
       case 'hatchling':
-        return 'Your BabyMon has hatched! It needs lots of care and attention.';
+        return context.l10n.stageHatchlingDescription;
       case 'juvenile':
-        return 'Growing fast! Your BabyMon is becoming more active.';
+        return context.l10n.stageJuvenileDescription;
       case 'adult':
-        return 'Your BabyMon has reached maturity. Great job raising it!';
+        return context.l10n.stageAdultDescription;
       default:
-        return 'Unknown stage';
+        return context.l10n.stageUnknown;
     }
   }
 
@@ -63,14 +64,14 @@ class EvolutionVisualizer extends StatelessWidget {
           children: [
             Text(_stageEmoji, style: const TextStyle(fontSize: 32)),
             const SizedBox(width: 12),
-            Text(_stageName),
+            Text(_stageName(context)),
           ],
         ),
-        content: Text(_stageDescription),
+        content: Text(_stageDescription(context)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Got it!'),
+            child: Text(context.l10n.gotIt),
           ),
         ],
       ),
@@ -89,20 +90,19 @@ class EvolutionVisualizer extends StatelessWidget {
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            _stageEmoji,
-            style: const TextStyle(fontSize: 64),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(20),
+        children: [            Text(
+              _stageEmoji,
+              style: const TextStyle(fontSize: 64),
             ),
-            child: Text(
-              _stageName,
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                _stageName(context),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),

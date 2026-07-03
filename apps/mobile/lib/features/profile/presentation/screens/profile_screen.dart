@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/models/baby_profile.dart';
@@ -30,31 +31,31 @@ class ProfileScreen extends ConsumerWidget {
             onFieldUpdated: (field, value) => debugPrint('$field = $value'),
           ),
           const SizedBox(height: 16),
-          AchievementsSection(
+          const AchievementsSection(
             achievements: [
               AchievementItem(
                 title: 'First Smile',
                 icon: Icons.favorite,
-                color: const Color(0xFFFF6B6B),
+                color: Color(0xFFFF6B6B),
               ),
               AchievementItem(
                 title: 'First Step',
                 icon: Icons.directions_run,
-                color: const Color(0xFF00B4D8),
+                color: Color(0xFF00B4D8),
               ),
             ],
           ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () => _handleStageSelected(profile),
-            child: const Text('Add Stage'),
+            child: Text(context.l10n.addStage),
           ),
           ElevatedButton(
             onPressed: () => _handleStageSelected(profile),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFFFA726),
             ),
-            child: const Text('Export Data'),
+            child: Text(context.l10n.exportData),
           ),
         ],
       ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/features/companion/presentation/providers/llm_provider.dart';
 import 'package:baby_mon/features/companion/presentation/providers/companion_provider.dart';
@@ -34,6 +35,8 @@ class _ModelSettingsScreenState extends ConsumerState<ModelSettingsScreen> {
   }
   Future<void> _load() async {
     setState(() => _isLoading = true);
+    // Capture strings before any async gaps
+    final premiumPlanLabel = context.l10n.premiumPlan;
     try {
       final modelManager = await ref.read(modelManagerProvider.future);
       final installed = await modelManager.getInstalledVersions();
@@ -44,7 +47,7 @@ class _ModelSettingsScreenState extends ConsumerState<ModelSettingsScreen> {
         final api = ref.read(apiClientProvider);
         final subRes = await api.getSubscription();
         final subData = subRes.data as Map<String, dynamic>?;
-        isPremium = subData?['tier'] == 'PREMIUM';
+        isPremium = subData?['tier'] == premiumPlanLabel;
       } catch (_) {}
       if (mounted) {
         setState(() {
@@ -66,7 +69,7 @@ class _ModelSettingsScreenState extends ConsumerState<ModelSettingsScreen> {
     await _load();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Switched to ${_modelDisplayName(entry.version)}')),
+        SnackBar(content: Text(context.l10n.switchToModelMessage(_modelDisplayName(entry.version)))),
       );
     }
   }
@@ -78,7 +81,7 @@ class _ModelSettingsScreenState extends ConsumerState<ModelSettingsScreen> {
     await _load();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Switched to Basic mode')),
+        SnackBar(content: Text(context.l10n.switchedToBasic)),
       );
     }
   }
@@ -86,17 +89,15 @@ class _ModelSettingsScreenState extends ConsumerState<ModelSettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Model'),
+        title: Text(context.l10n.deleteModel),
         content: Text(
-          'Delete ${_modelDisplayName(entry.version)}?\n\n'
-          '${_formatBytes(entry.sizeBytes)} will be freed. '
-          'You can re-download this model at any time.',
+          context.l10n.deleteModelConfirm,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.l10n.cancel)),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Delete', style: TextStyle(color: ctx.colorScheme.error)),
+            child: Text(context.l10n.delete, style: TextStyle(color: ctx.colorScheme.error)),
           ),
         ],
       ),
@@ -149,8 +150,8 @@ class _ModelSettingsScreenState extends ConsumerState<ModelSettingsScreen> {
     });
   }
   String _modelDisplayName(String version) {
-    if (version.startsWith('smollm2')) return 'Quick Start';
-    if (version.startsWith('smollm3')) return 'Better Quality';
+    if (version.startsWith('smollm2')) return context.l10n.quickStart;
+    if (version.startsWith('smollm3')) return context.l10n.betterQuality;
     return version;
   }
   String _modelTechnicalName(String version) {
@@ -171,7 +172,7 @@ class _ModelSettingsScreenState extends ConsumerState<ModelSettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Model'),
+        title: Text(context.l10n.aiModelSection),
         centerTitle: false,
       ),
       body: _isLoading
@@ -180,12 +181,12 @@ class _ModelSettingsScreenState extends ConsumerState<ModelSettingsScreen> {
               padding: const EdgeInsets.all(DesignTokens.spaceLg),
               children: [
                 // ── Active model selection (radio buttons) ──
-                _SectionHeader(title: 'Active Model'),
+                _SectionHeader(title: context.l10n.activeModel),
                 const SizedBox(height: DesignTokens.spaceSm),
                 // Basic mode (no AI)
                 _RadioTile(
-                  title: 'Basic mode',
-                  subtitle: 'Content cards only, no on-device AI',
+                  title: context.l10n.basicMode,
+                  subtitle: context.l10n.contentCardsOnly,
                   icon: PhosphorIconsLight.noteBlank,
                   isSelected: _activeVersion == null,
                   onTap: _activeVersion != null ? _deactivateModel : null,
@@ -204,12 +205,12 @@ class _ModelSettingsScreenState extends ConsumerState<ModelSettingsScreen> {
                   const SizedBox(height: DesignTokens.spaceXl),
                 ],
                 // ── Available to download ──
-                _SectionHeader(title: _installed.isEmpty ? 'Download a Model' : 'Available to Download'),
+                _SectionHeader(title: _installed.isEmpty ? context.l10n.downloadAiModel : context.l10n.availableToDownload),
                 const SizedBox(height: DesignTokens.spaceSm),
                 // Quick Start — always available
                 _AvailableModelTile(
-                  name: 'Quick Start',
-                  description: 'Instant answers, fast download',
+                  name: context.l10n.quickStart,
+                  description: context.l10n.instantAnswersFast,
                   sizeBytes: 271000000,
                   isInstalled: _installed.any((e) => e.version.startsWith('smollm2')),
                   onDownload: () => _downloadModel(
@@ -221,8 +222,8 @@ class _ModelSettingsScreenState extends ConsumerState<ModelSettingsScreen> {
                 const SizedBox(height: DesignTokens.spaceSm),
                 // Better Quality — premium only
                 _AvailableModelTile(
-                  name: 'Better Quality',
-                  description: 'Deeper reasoning, nuanced advice',
+                  name: context.l10n.betterQuality,
+                  description: context.l10n.deeperReasoningNuanced,
                   sizeBytes: premiumModelSizeBytes,
                   isPremium: true,
                   userIsPremium: _isPremium,
@@ -236,8 +237,7 @@ class _ModelSettingsScreenState extends ConsumerState<ModelSettingsScreen> {
                 const SizedBox(height: DesignTokens.space3xl),
                 // ── Info footer ──
                 Text(
-                  'Models run entirely on your device. Nothing is sent to external servers. '
-                  'Downloaded models are stored locally and can be deleted at any time.',
+                  '${context.l10n.modelsRunOnDeviceDesc} ${context.l10n.modelsStoredLocallyDesc}',
                   style: TextStyle(
                     fontSize: DesignTokens.fontSm,
                     color: context.textCaption,
@@ -280,7 +280,7 @@ class _EmptyState extends StatelessWidget {
           Icon(PhosphorIconsLight.downloadSimple, size: 40, color: context.textCaption),
           const SizedBox(height: DesignTokens.spaceMd),
           Text(
-            'No AI model installed',
+            context.l10n.noAiModelInstalled,
             style: TextStyle(
               fontSize: DesignTokens.fontLg,
               fontWeight: FontWeight.w600,
@@ -289,7 +289,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: DesignTokens.spaceSm),
           Text(
-            'Download a model below to enable on-device AI.',
+            context.l10n.downloadModelBelow,
             style: TextStyle(fontSize: DesignTokens.fontSm, color: context.textSecondary),
           ),
         ],
@@ -341,9 +341,12 @@ class _InstalledModelTile extends StatelessWidget {
           padding: const EdgeInsets.all(DesignTokens.spaceMd),
           child: Row(
             children: [
+              // ignore: deprecated_member_use
               Radio<bool>(
                 value: true,
+                // ignore: deprecated_member_use
                 groupValue: isActive,
+                // ignore: deprecated_member_use
                 onChanged: (_) => onSetActive(),
                 visualDensity: VisualDensity.compact,
               ),
@@ -362,7 +365,7 @@ class _InstalledModelTile extends StatelessWidget {
               IconButton(
                 icon: Icon(PhosphorIconsLight.trash, size: 18, color: context.colorScheme.error.withValues(alpha: 0.7)),
                 onPressed: onDelete,
-                tooltip: 'Delete model',
+                tooltip: context.l10n.deleteModelTooltip,
                 visualDensity: VisualDensity.compact,
               ),
             ],
@@ -400,9 +403,12 @@ class _RadioTile extends StatelessWidget {
           padding: const EdgeInsets.all(DesignTokens.spaceMd),
           child: Row(
             children: [
+              // ignore: deprecated_member_use
               Radio<bool>(
                 value: true,
+                // ignore: deprecated_member_use
                 groupValue: isSelected,
+                // ignore: deprecated_member_use
                 onChanged: (_) => onTap?.call(),
                 visualDensity: VisualDensity.compact,
               ),
@@ -506,7 +512,7 @@ class _AvailableModelTile extends StatelessWidget {
                           borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
                         ),
                         child: Text(
-                          'PREMIUM',
+                          context.l10n.premiumPlan,
                           style: TextStyle(
                             fontSize: DesignTokens.font2xs,
                             fontWeight: FontWeight.w700,
@@ -532,10 +538,10 @@ class _AvailableModelTile extends StatelessWidget {
             TextButton(
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Better Quality requires a Premium subscription.')),
+                  SnackBar(content: Text(context.l10n.requiresSubscription)),
                 );
               },
-              child: const Text('Upgrade'),
+              child: Text(context.l10n.upgradeButton),
             )
           else
             SizedBox(
@@ -548,7 +554,7 @@ class _AvailableModelTile extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMd)),
                   padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceMd),
                 ),
-                child: const Text('Download', style: TextStyle(fontSize: DesignTokens.fontSm, fontWeight: FontWeight.w600)),
+                child: Text(context.l10n.startDownload, style: const TextStyle(fontSize: DesignTokens.fontSm, fontWeight: FontWeight.w600)),
               ),
             ),
         ],

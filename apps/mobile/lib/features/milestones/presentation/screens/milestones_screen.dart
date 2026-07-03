@@ -1,10 +1,10 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart' as semantics;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/providers.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/mixins/mixins.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
@@ -48,11 +48,11 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   @override
   IconData get emptyIcon => PhosphorIconsLight.sparkle;
   @override
-  String get emptyTitle => 'No milestones yet';
+  String get emptyTitle => context.l10n.noMilestones;
   @override
-  String get emptySubtitle => 'Tap the button below to add your first milestone.';
+  String get emptySubtitle => context.l10n.noMilestonesSubtitle;
   @override
-  String get emptyActionLabel => 'Add milestone';
+  String get emptyActionLabel => context.l10n.addMilestone;
   @override
   void onEmptyAction() => _showAddMilestoneDialog();
   @override
@@ -61,13 +61,15 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
     _milestones = parseItems(response.data).whereType<Map<String, dynamic>>().map(Milestone.fromJson).toList();
   }
   Future<bool> _deleteMilestone(String id, int index) async {
-    // Capture messenger upfront so we can safely use it after async gaps
+    // Capture messenger and strings upfront so we can safely use them after async gaps
     // (avoids `use_build_context_synchronously` warnings if the widget
     // unmounts mid-delete).
     final messenger = ScaffoldMessenger.of(context);
-    final confirmed = await ConfirmDeleteDialog.show(
+    final milestoneUndoneText = context.l10n.milestoneUndone;
+    final directionality = Directionality.of(context);
+    final confirmed =      await ConfirmDeleteDialog.show(
       context,
-      itemType: 'milestone',
+      itemType: context.l10n.milestoneSingular,
     );
     if (confirmed != true) return false;
     try {
@@ -77,8 +79,9 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
         if (flatIdx != -1) setState(() => _milestones.removeAt(flatIdx));
       }
       ref.read(appRefreshProvider.notifier).state++;
-      messenger.showSnackBar(const SnackBar(content: Text('Milestone deleted')));
-      semantics.SemanticsService.announce('Milestone deleted', ui.TextDirection.ltr);
+      messenger.showSnackBar(SnackBar(content: Text(milestoneUndoneText)));
+      // ignore: deprecated_member_use
+      semantics.SemanticsService.announce(milestoneUndoneText, directionality);
       return true;
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
@@ -88,8 +91,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   List<({String month, List<Milestone> items})> _groupedByMonth() {
     final groups = <String, List<Milestone>>{};
     for (final m in _milestones) {
-      final date = m.happenedAt;
-      final key = date != null ? DateFormat('MMMM yyyy').format(date) : 'Unknown';
+      final date = m.happenedAt;        final key = date != null ? DateFormat('MMMM yyyy').format(date) : context.l10n.unknownLabel;
       groups.putIfAbsent(key, () => []);
       groups[key]!.add(m);
     }
@@ -114,11 +116,11 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                     : RefreshIndicator(
                   onRefresh: onRefresh,
                   child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(
-                      DesignTokens.spaceMd,
-                      DesignTokens.spaceSm,
-                      DesignTokens.spaceMd,
-                      100,
+                    padding: const EdgeInsetsDirectional.only(
+                      start: DesignTokens.spaceMd,
+                      top: DesignTokens.spaceSm,
+                      end: DesignTokens.spaceMd,
+                      bottom: 100,
                     ),
                     itemCount: grouped.length,
                     itemBuilder: (context, groupIndex) {
@@ -138,7 +140,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                                 Container(
                                   width: 3,
                                   height: 20,
-                                  margin: const EdgeInsets.only(right: DesignTokens.spaceSm),
+                                  margin: const EdgeInsetsDirectional.only(end: DesignTokens.spaceSm),
                                   decoration: BoxDecoration(
                                     color: context.colorScheme.primary,
                                     borderRadius: BorderRadius.circular(2),
@@ -152,7 +154,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                                 ),
                                 const Spacer(),
                                 Text(
-                                  '${items.length} ${items.length == 1 ? 'milestone' : 'milestones'}',
+                                  context.l10n.milestoneCount(items.length, context.l10n.milestoneSingular, context.l10n.milestonePlural),
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -186,7 +188,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
               ),
       floatingActionButton: hasBabyMon
           ? Semantics(
-              label: 'Add milestone',
+              label: context.l10n.addMilestone,
               button: true,
               child: FloatingActionButton(
                 heroTag: 'add_milestone',
@@ -217,9 +219,8 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                isEditing ? 'Edit Milestone' : 'Add Milestone',
+            children: [                  Text(
+                isEditing ? context.l10n.editMilestoneTitle : context.l10n.addMilestoneTitle,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -227,16 +228,16 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
               const SizedBox(height: DesignTokens.spaceLg),
               TextField(
                 controller: titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  hintText: 'First smile',
+                decoration: InputDecoration(
+                  labelText: context.l10n.milestoneTitle,
+                  hintText: context.l10n.milestoneTitleHint,
                 ),
               ),
               const SizedBox(height: DesignTokens.spaceMd),
               TextField(
                 controller: notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Notes (optional)',
+                decoration: InputDecoration(
+                  labelText: context.l10n.notesOptionalLabel,
                 ),
                 maxLines: 2,
               ),
@@ -259,7 +260,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
               ),
               const SizedBox(height: DesignTokens.spaceLg),
               ThemeButton(
-                text: isEditing ? 'Update' : 'Save',
+                text: isEditing ? context.l10n.updateLabel : context.l10n.saveLabel,
                 onPressed: () async {
                   if (titleController.text.isEmpty) return;
                   setDialogState(() => isSaving = true);
@@ -300,7 +301,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                 },
                 isLoading: isSaving,
                 fullWidth: true,
-                semanticLabel: isEditing ? 'Update milestone' : 'Save milestone',
+                semanticLabel: isEditing ? context.l10n.updateMilestoneSemantic : context.l10n.saveMilestoneSemantic,
               ),
               const SizedBox(height: DesignTokens.spaceLg),
             ],

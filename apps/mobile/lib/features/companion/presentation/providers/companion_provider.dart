@@ -20,27 +20,32 @@ final llmInferenceServiceProvider = Provider<LlmInferenceService>((ref) {
 });
 
 final modelManifestServiceProvider = Provider<ModelManifestService>((ref) {
-  return ModelManifestService(dio: ref.read(apiClientProvider).dio);
+  return ModelManifestService(apiClient: ref.read(apiClientProvider));
 });
 
 final dailyBriefProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, babyMonId) {
-  return ref.read(companionRepositoryProvider).getDailyBrief(babyMonId);
+  final locale = ref.read(localeProvider).languageCode;
+  return ref.read(companionRepositoryProvider).getDailyBrief(babyMonId, locale: locale);
 });
 
 final routineProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, babyMonId) {
-  return ref.read(companionRepositoryProvider).getRoutine(babyMonId, forceRefresh: true);
+  final locale = ref.read(localeProvider).languageCode;
+  return ref.read(companionRepositoryProvider).getRoutine(babyMonId, forceRefresh: true, locale: locale);
 });
 
 final milestonesProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, babyMonId) {
-  return ref.read(companionRepositoryProvider).getMilestones(babyMonId, forceRefresh: true);
+  final locale = ref.read(localeProvider).languageCode;
+  return ref.read(companionRepositoryProvider).getMilestones(babyMonId, forceRefresh: true, locale: locale);
 });
 
 final adviceProvider = FutureProvider.family<Map<String, dynamic>, ({String babyMonId, String? category, int skip, int take})>((ref, params) {
+  final locale = ref.read(localeProvider).languageCode;
   return ref.read(companionRepositoryProvider).getAdvice(
     params.babyMonId,
     category: params.category,
     skip: params.skip,
     take: params.take,
+    locale: locale,
   );
 });
 

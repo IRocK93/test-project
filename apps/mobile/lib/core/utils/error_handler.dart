@@ -1,54 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
+import 'error_mapper.dart';
 import 'tier_required_exception.dart';
 
 /// Extracts a user-friendly error message from any error type.
 ///
-/// Prefers backend-provided messages, then falls back to generic text.
-/// Never exposes raw stack traces or DioException internals to users.
+/// Priority:
+///  1. Backend `code` field → localized fallback via [ErrorMapper]
+///  2. HTTP status code → generic fallback key
+///  3. Dio network error type → connection message
+///
+/// Never exposes raw backend `message` strings directly — they are
+/// hardcoded English that leak to non-English users.
 String extractErrorMessage(dynamic error) {
   if (error is DioException) {
-    // Backend often returns { message: '...' } in the response body
-    final serverMessage =
-        error.response?.data is Map ? error.response?.data['message'] : null;
-    if (serverMessage is String && serverMessage.isNotEmpty) {
-      return serverMessage;
+    // Prefer localized messages via ErrorMapper (uses backend code field
+    // or HTTP status code, never raw message text).
+    final key = ErrorMapper.toKey(error);
+    if (key != 'errorUnknown') {
+      return ErrorMapper.fallbackMessage(key);
     }
-    // DioException has human-readable messages for common HTTP errors
+
+    // Dio network-level errors (no HTTP response at all)
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        return 'Connection timed out. Please check your internet and try again.';
+        return 'Connection timed out. Please check your internet.';
       case DioExceptionType.connectionError:
-        return 'Could not connect to the server. Is the backend running?';
+        return 'Could not connect to the server.';
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
         if (statusCode == null) {
           return 'Something went wrong. Please try again.';
         }
-        switch (statusCode) {
-          case 400:
-            return 'Invalid request. Please check your input.';
-          case 401:
-            return 'Session expired. Please log in again.';
-          case 402:
-            return 'This feature requires a Premium subscription.';
-          case 403:
-            return 'You don\'t have permission to do that.';
-          case 404:
-            return 'Not found. The feature may not be available yet.';
-          case 409:
-            return 'This already exists. Please use a different value.';
-          case 429:
-            return 'Too many requests. Please wait a moment and try again.';
-          case 500:
-          case 502:
-          case 503:
-            return 'Server error. Please try again later.';
-          default:
-            return 'Something went wrong. Please try again.';
-        }
+        // Status codes already mapped by ErrorMapper.toKey above;
+        // this branch only hits truly unmapped codes.
+        return 'Something went wrong. Please try again.';
       default:
         return 'Network error. Please check your connection.';
     }
@@ -74,7 +63,11 @@ bool isTierRequiredError(dynamic error) {
   return false;
 }
 
-/// Shows a user-friendly error snackbar.
+/// Shows a localized user-friendly error snackbar.
+///
+/// Prefer this over [extractErrorMessage] in any widget context so users
+/// see text in their chosen language. Falls back to English for
+/// background / non-widget errors.
 ///
 /// Call this directly in catch blocks:
 /// ```dart
@@ -85,20 +78,20 @@ bool isTierRequiredError(dynamic error) {
 void showError(BuildContext context, dynamic error) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: Text(extractErrorMessage(error)),
+      content: Text(ErrorMapper.localize(context, error)),
       behavior: SnackBarBehavior.floating,
     ),
   );
 }
 
-/// Shows an error snackbar with a retry action.
+/// Shows a localized error snackbar with a retry action.
 void showErrorWithRetry(
     BuildContext context, dynamic error, VoidCallback onRetry) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: Text(extractErrorMessage(error)),
+      content: Text(ErrorMapper.localize(context, error)),
       behavior: SnackBarBehavior.floating,
-      action: SnackBarAction(label: 'Retry', onPressed: onRetry),
+      action: SnackBarAction(label: context.l10n.retry, onPressed: onRetry),
     ),
   );
 }

@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import '../../domain/entities/baby_mon_summary.dart';
 
@@ -22,14 +23,14 @@ class BadgeShowcase extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'No badges yet',
+              context.l10n.noBadges,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.grey,
                   ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Keep caring for your BabyMon to earn badges!',
+              context.l10n.keepCaringBadges,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.grey,
                   ),

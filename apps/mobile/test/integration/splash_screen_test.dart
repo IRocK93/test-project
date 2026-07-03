@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:baby_mon/features/splash/presentation/screens/splash_screen.dart';
 import 'package:baby_mon/core/providers.dart';
+import 'package:baby_mon/features/auth/presentation/providers/auth_provider.dart';
 import 'package:baby_mon/core/testing/stub_api_client.dart';
 
 import 'screen_test_helper.dart';

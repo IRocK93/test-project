@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/widgets/glass_surface.dart';
 import 'package:baby_mon/core/widgets/premium_stat_card.dart';
 
@@ -27,7 +28,7 @@ class DashboardStatsRow extends StatelessWidget {
       children: [
         Expanded(
           child: PremiumStatCard(
-            label: 'Milestones',
+            label: context.l10n.milestones,
             value: '${evolution?['milestoneCount'] ?? 0}',
             icon: PhosphorIconsLight.trophy,
             iconColor: AppColors.bentoGold,
@@ -36,7 +37,7 @@ class DashboardStatsRow extends StatelessWidget {
         ),
         Expanded(
           child: PremiumStatCard(
-            label: 'Feedings',
+            label: context.l10n.feeding,
             value: '${evolution?['feedLogCount'] ?? 0}',
             icon: PhosphorIconsLight.bowlFood,
             iconColor: AppColors.bentoCoral,
@@ -45,7 +46,7 @@ class DashboardStatsRow extends StatelessWidget {
         ),
         Expanded(
           child: PremiumStatCard(
-            label: 'Health',
+            label: context.l10n.health,
             value: '${evolution?['healthRecordCount'] ?? 0}',
             icon: PhosphorIconsLight.heart,
             iconColor: AppColors.bentoPurple,
@@ -54,7 +55,7 @@ class DashboardStatsRow extends StatelessWidget {
         ),
         Expanded(
           child: PremiumStatCard(
-            label: 'Sleep',
+            label: context.l10n.sleep,
             value: '${evolution?['sleepLogCount'] ?? 0}',
             icon: PhosphorIconsLight.moon,
             iconColor: AppColors.bentoBlue,

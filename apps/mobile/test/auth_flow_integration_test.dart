@@ -64,6 +64,10 @@ class _MockAuthRepository extends AuthRepository {
     required String email,
     required String password,
     String? name,
+    required DateTime dateOfBirth,
+    required bool tosAccepted,
+    required bool privacyAccepted,
+    required bool consentToDataProcessing,
   }) async {
     return (
       user: User(id: '2', email: email, name: name, createdAt: DateTime.now()),
@@ -85,9 +89,10 @@ class _MockAuthRepository extends AuthRepository {
   @override
   Future<void> logout() async {}
   @override Future<String?> getAccessToken() async => null;
-  @override Future<({String token, User user})> appleLogin(String idToken) async => throw UnimplementedError();
-  @override Future<({String token, User user})> facebookLogin(String accessToken) async => throw UnimplementedError();
-  @override Future<({String token, User user})> googleLogin(String idToken) async => throw UnimplementedError();
+  @override Future<({User user, String token})> appleLogin(String idToken) async => throw UnimplementedError();
+  @override Future<({User user, String token})> facebookLogin(String accessToken) async => throw UnimplementedError();
+  @override Future<({User user, String token})> googleLogin(String idToken) async => throw UnimplementedError();
+  @override Future<void> syncLocale() async {}
 
   @override
   Future<User?> getCurrentUser() async => null;
@@ -99,7 +104,7 @@ class _MockAuthRepository extends AuthRepository {
   Future<bool> checkEmailVerified() async => true;
 
   @override
-  Future<void> sendVerificationEmail(String email) async {
+  Future<void> sendVerificationEmail() async {
     await Future<void>.delayed(const Duration(milliseconds: 50));
   }
 

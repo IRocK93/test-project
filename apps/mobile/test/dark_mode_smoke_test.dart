@@ -105,9 +105,9 @@ void main() {
       final color = text.style?.color;
       expect(color, isNotNull);
       // In dark mode, textOnDark (0xFFF0F0F5) should be used
-      expect(color!.red, greaterThan(200));
-      expect(color.green, greaterThan(200));
-      expect(color.blue, greaterThan(200));
+      expect((color!.r * 255).round(), greaterThan(200));
+      expect((color.g * 255).round(), greaterThan(200));
+      expect((color.b * 255).round(), greaterThan(200));
     });
   });
 
@@ -197,7 +197,7 @@ void main() {
     testWidgets('SettingsRow renders in dark mode', (tester) async {
       await tester.pumpWidget(_darkApp(
         ListView(
-          children: [
+          children: const [
             SettingsRow(
               icon: Icons.settings,
               iconColor: Colors.blue,

@@ -113,10 +113,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) => Padding(
-          padding: EdgeInsets.only(
+          padding: EdgeInsetsDirectional.only(
             bottom: MediaQuery.of(ctx).viewInsets.bottom,
-            left: DesignTokens.spaceLg,
-            right: DesignTokens.spaceLg,
+            start: DesignTokens.spaceLg,
+            end: DesignTokens.spaceLg,
             top: DesignTokens.spaceLg,
           ),
           child: Column(
@@ -176,7 +176,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 },
                 isLoading: _isResetting,
                 fullWidth: true,
-                semanticLabel: 'Send password reset link',
+                semanticLabel: context.l10n.sendPasswordResetLinkSemantic,
               ),
               const SizedBox(height: DesignTokens.spaceLg),
             ],
@@ -300,7 +300,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           // Forgot password
                           Align(
-                            alignment: Alignment.centerRight,
+                            alignment: AlignmentDirectional.centerEnd,
                             child: TextButton(
                               onPressed: _showForgotPasswordSheet,
                               child: Text(context.l10n.forgotPassword),
@@ -387,7 +387,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               StaggeredFadeSlide(
                 index: 2,
                 child: Semantics(
-                    label: 'Navigate to register',
+                    label: context.l10n.navigateToRegister,
                     button: true,
                     child: GestureDetector(
                     onTap: () => context.go('/register'),

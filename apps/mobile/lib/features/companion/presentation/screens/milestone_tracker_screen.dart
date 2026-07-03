@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/features/companion/presentation/providers/companion_provider.dart';
 import 'package:baby_mon/features/companion/data/sync_persistence.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/sync_banner.dart';
@@ -22,19 +23,19 @@ class MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen>
   bool get wantKeepAlive => true;
   String? _selectedDomain;
   Set<String> _validMilestoneIds = {};
-  Map<String, dynamic>? _lastData;
 
-  static const _domains = [
-    {'key': null, 'label': 'All', 'icon': PhosphorIconsLight.star},
-    {'key': 'GROSS_MOTOR', 'label': 'Gross Motor', 'icon': PhosphorIconsLight.personSimpleRun},
-    {'key': 'FINE_MOTOR', 'label': 'Fine Motor', 'icon': PhosphorIconsLight.hand},
-    {'key': 'LANGUAGE_COMMUNICATION', 'label': 'Language', 'icon': PhosphorIconsLight.chatCircle},
-    {'key': 'COGNITIVE', 'label': 'Cognitive', 'icon': PhosphorIconsLight.brain},
-    {'key': 'SOCIAL_EMOTIONAL', 'label': 'Social', 'icon': PhosphorIconsLight.smiley},
+  static List<Map<String, dynamic>> _buildDomains(BuildContext context) => [
+    {'key': null, 'label': context.l10n.allMilestones, 'icon': PhosphorIconsLight.star},
+    {'key': 'GROSS_MOTOR', 'label': context.l10n.grossMotorLabel, 'icon': PhosphorIconsLight.personSimpleRun},
+    {'key': 'FINE_MOTOR', 'label': context.l10n.fineMotorLabel, 'icon': PhosphorIconsLight.hand},
+    {'key': 'LANGUAGE_COMMUNICATION', 'label': context.l10n.languageLabel, 'icon': PhosphorIconsLight.chatCircle},
+    {'key': 'COGNITIVE', 'label': context.l10n.cognitiveLabel, 'icon': PhosphorIconsLight.brain},
+    {'key': 'SOCIAL_EMOTIONAL', 'label': context.l10n.socialLabel, 'icon': PhosphorIconsLight.smiley},
   ];
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final milestonesAsync = ref.watch(milestonesProvider(widget.babyMonId));
 
     return milestonesAsync.when(
@@ -46,12 +47,12 @@ class MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen>
           children: [
             Icon(PhosphorIconsLight.warning, size: 48, color: context.textSecondary),
             const SizedBox(height: 12),
-            Text('Unable to load milestones', style: TextStyle(color: context.textSecondary)),
+            Text(context.l10n.unableToLoadMilestones, style: TextStyle(color: context.textSecondary)),
             const SizedBox(height: 16),
             TextButton.icon(
               onPressed: () => ref.invalidate(milestonesProvider(widget.babyMonId)),
               icon: const Icon(PhosphorIconsLight.arrowCounterClockwise, size: 18),
-              label: const Text('Retry'),
+              label: Text(context.l10n.retry),
             ),
           ],
         ),
@@ -160,10 +161,10 @@ class MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen>
             height: 40,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: _domains.length,
+              itemCount: _buildDomains(context).length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
-                final d = _domains[index];
+                final d = _buildDomains(context)[index];
                 final isSelected = _selectedDomain == d['key'];
                 return FilterChip(
                   selected: isSelected,
@@ -188,7 +189,7 @@ class MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen>
                     children: [
                       Icon(PhosphorIconsLight.checkCircle, size: 48, color: context.textSecondary.withValues(alpha: DesignTokens.opacityDim)),
                       const SizedBox(height: 12),
-                      Text('No milestones in this category', style: TextStyle(color: context.textSecondary)),
+                      Text(context.l10n.noMilestonesInCategory, style: TextStyle(color: context.textSecondary)),
                     ],
                   ),
                 )
@@ -336,7 +337,7 @@ class MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen>
                     if (isAchieved && milestone['achievedAt'] != null) ...[
                       const SizedBox(height: 6),
                       Text(
-                        'Achieved!',
+                        context.l10n.achieved,
                         style: TextStyle(fontSize: DesignTokens.fontSm, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600),
                       ),
                     ],
@@ -389,7 +390,7 @@ class MilestoneTrackerScreenState extends ConsumerState<MilestoneTrackerScreen>
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(isChecked ? 'Milestone undone' : 'Milestone achieved!'),
+        content: Text(isChecked ? context.l10n.milestoneUndone : context.l10n.milestoneAchievedNotification),
         backgroundColor: isChecked ? context.textSecondary : context.colorScheme.primary,
         duration: const Duration(seconds: 2),
       ));

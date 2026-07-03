@@ -51,9 +51,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> sendVerificationEmail(String email) async {
+  Future<void> sendVerificationEmail() async {
     try {
-      await _datasource.post('/api/auth/send-verification-email', data: {'email': email});
+      await _datasource.post('/api/auth/send-verification-email');
     } catch (e) {
       throw Exception('Failed to send verification email: $e');
     }
@@ -120,5 +120,10 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<({User user, String token})> facebookLogin(String accessToken) async {
     return await _datasource.facebookLogin(accessToken);
+  }
+
+  @override
+  Future<void> syncLocale() async {
+    await _datasource.syncLocale();
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/utils/tier_required_exception.dart';
 import 'package:baby_mon/features/companion/presentation/providers/companion_provider.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
@@ -35,14 +36,14 @@ class DailyBriefScreen extends ConsumerWidget {
               Icon(PhosphorIconsLight.warning, size: 48, color: context.textSecondary),
               const SizedBox(height: 16),
               Text(
-                'Unable to load companion',
+                context.l10n.unableToLoadCompanion,
                 style: TextStyle(color: context.textSecondary),
               ),
               const SizedBox(height: 16),
               TextButton.icon(
                 onPressed: () => ref.invalidate(dailyBriefProvider(babyMonId)),
                 icon: const Icon(PhosphorIconsLight.arrowCounterClockwise, size: 18),
-                label: const Text('Retry'),
+                label: Text(context.l10n.retry),
               ),
             ],
           ),
@@ -52,7 +53,7 @@ class DailyBriefScreen extends ConsumerWidget {
   }
 
   Widget _buildContent(BuildContext context, Map<String, dynamic> data) {
-    final babyName = data['babyName'] as String? ?? 'Your baby';
+    final babyName = data['babyName'] as String? ?? context.l10n.yourBaby;
     final age = data['age'] as String? ?? '';
     final stageName = data['stageName'] as String? ?? '';
     final focusOfWeek = data['focusOfWeek'] as String? ?? '';
@@ -170,7 +171,7 @@ class DailyBriefScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'THIS WEEK\'S FOCUS',
+                  context.l10n.thisWeeksFocus,
                   style: TextStyle(
                     fontSize: DesignTokens.font2xs,
                     fontWeight: FontWeight.w700,
@@ -214,7 +215,7 @@ class DailyBriefScreen extends ConsumerWidget {
               Icon(icon, size: 20, color: context.colorScheme.primary),
               const SizedBox(width: 8),
               Text(
-                'TIP OF THE DAY',
+                context.l10n.tipOfTheDay,
                 style: TextStyle(
                   fontSize: DesignTokens.font2xs,
                   fontWeight: FontWeight.w700,
@@ -259,7 +260,7 @@ class DailyBriefScreen extends ConsumerWidget {
               Icon(PhosphorIconsLight.clock, size: 20, color: context.colorScheme.primary),
               const SizedBox(width: 8),
               Text(
-                'TODAY\'S ROUTINE',
+                context.l10n.todaysRoutine,
                 style: TextStyle(
                   fontSize: DesignTokens.font2xs,
                   fontWeight: FontWeight.w700,
@@ -317,7 +318,7 @@ class DailyBriefScreen extends ConsumerWidget {
             Icon(PhosphorIconsLight.checkCircle, size: 20, color: context.colorScheme.primary),
             const SizedBox(width: 8),
             Text(
-              'DEVELOPMENTAL MILESTONES',
+              context.l10n.developmentalMilestones,
               style: TextStyle(
                 fontSize: DesignTokens.font2xs,
                 fontWeight: FontWeight.w700,
@@ -392,7 +393,7 @@ class DailyBriefScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        isClinical ? 'Clinical Guide' : 'Development Guide',
+        isClinical ? context.l10n.clinicalGuide : context.l10n.developmentGuide,
         style: TextStyle(fontSize: DesignTokens.font2xs, fontWeight: FontWeight.w600, color: context.colorScheme.primary),
       ),
     );

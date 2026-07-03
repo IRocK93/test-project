@@ -55,6 +55,7 @@ dev_dependencies:
   integration_test:
     sdk: flutter
 
+  image: any
 flutter:
   uses-material-design: true
   generate: true

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/core/utils/tier_required_exception.dart';
 import '../../data/companion_repository.dart';
@@ -62,11 +63,14 @@ class AdviceFeedState {
 class AdviceFeedNotifier extends StateNotifier<AdviceFeedState> {
   final CompanionRepository _repo;
   final String _babyMonId;
+  final String? _locale;
   static const int _take = 10;
 
-  AdviceFeedNotifier(this._repo, this._babyMonId) : super(const AdviceFeedState());
+  AdviceFeedNotifier(this._repo, this._babyMonId, {String? locale})
+      : _locale = locale,
+        super(const AdviceFeedState());
 
-  Future<void> loadCards() async {
+  Future<void> loadCards({String? locale}) async {
     if (state.isLoading || !state.hasMore) return;
     state = state.copyWith(isLoading: true, error: null, isTierError: false);
 
@@ -76,6 +80,7 @@ class AdviceFeedNotifier extends StateNotifier<AdviceFeedState> {
         category: state.selectedCategory,
         skip: state.skip,
         take: _take,
+        locale: locale,
       );
 
       final items = (result['items'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
@@ -102,17 +107,17 @@ class AdviceFeedNotifier extends StateNotifier<AdviceFeedState> {
   void changeCategory(String? category) {
     if (state.selectedCategory == category) return;
     state = AdviceFeedState(selectedCategory: category);
-    loadCards();
+    loadCards(locale: _locale);
   }
 
   Future<void> retry() async {
     state = state.clearError();
-    loadCards();
+    loadCards(locale: _locale);
   }
 
   void refresh() {
     state = const AdviceFeedState();
-    loadCards().then((_) => loadBookmarks());
+    loadCards(locale: _locale).then((_) => loadBookmarks());
   }
 
   // ─── Bookmarks ─────────────────────────────────────────────────
@@ -198,8 +203,9 @@ final adviceFeedProvider =
     StateNotifierProvider.family<AdviceFeedNotifier, AdviceFeedState, String>(
   (ref, babyMonId) {
     final repo = ref.read(companionRepositoryProvider);
-    final notifier = AdviceFeedNotifier(repo, babyMonId);
-    notifier.loadCards().then((_) => notifier.loadBookmarks());
+    final locale = ref.read(localeProvider).languageCode;
+    final notifier = AdviceFeedNotifier(repo, babyMonId, locale: locale);
+    notifier.loadCards(locale: locale).then((_) => notifier.loadBookmarks());
     return notifier;
   },
 );

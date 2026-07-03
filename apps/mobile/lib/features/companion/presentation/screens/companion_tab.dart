@@ -1,3 +1,4 @@
+import 'package:baby_mon/features/companion/data/llm/model_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +18,7 @@ import 'package:baby_mon/features/companion/presentation/providers/companion_pro
 import 'package:baby_mon/features/companion/presentation/providers/llm_provider.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
 import 'package:baby_mon/core/constants/api_constants.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
@@ -138,17 +140,16 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
       inferenceService.contentOnlyMode = true;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Your device does not support on-device AI. '
-                'Using parenting content cards instead (no internet required).'),
-            duration: Duration(seconds: 4),
+          SnackBar(
+            content: Text(context.l10n.deviceNotSupported),
+            duration: const Duration(seconds: 4),
           ),
         );
       }
       return;
     }
 
-    final modelManager;
+    final ModelManager modelManager;
     try {
       modelManager = await ref.read(modelManagerProvider.future);
     } catch (_) {
@@ -181,7 +182,7 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
         } catch (_) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to load AI model. Please try downloading it again.')),
+              SnackBar(content: Text(context.l10n.failedToLoadModel)),
             );
           }
           return;
@@ -204,10 +205,11 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
 
         // Check premium status
         bool isPremium = false;
+        final premiumPlanLabel = context.l10n.premiumPlan;
         try {
           final subRes = await ref.read(apiClientProvider).getSubscription();
           final tier = parseJsonMap(subRes.data)?['tier'] as String?;
-          isPremium = tier == 'PREMIUM';
+          isPremium = tier == premiumPlanLabel;
         } catch (_) {
           isPremium = false;
         }
@@ -234,9 +236,9 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
         const defaultUrl = 'https://huggingface.co/bartowski/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q4_K_M.gguf?download=true';
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Using offline model configuration. Consider checking your connection for the latest model.'),
-              duration: Duration(seconds: 3),
+            SnackBar(
+              content: Text(context.l10n.usingOfflineConfig),
+              duration: const Duration(seconds: 3),
             ),
           );
           Navigator.of(context).push(
@@ -258,7 +260,7 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
 
   String _resolveModelUrl(String url) {
     if (url.startsWith('http')) return url;
-    final baseUrl = ApiConstants.baseUrl;
+    const baseUrl = ApiConstants.baseUrl;
     return '$baseUrl$url';
   }
 
@@ -291,9 +293,9 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
     ref.read(llmInferenceServiceProvider).contentOnlyMode = true;
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('AI Companion unavailable. Using parenting content cards instead.'),
-          duration: Duration(seconds: 4),
+        SnackBar(
+          content: Text(context.l10n.aiCompanionUnavailable),
+          duration: const Duration(seconds: 4),
         ),
       );
     }
@@ -309,7 +311,7 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
       } catch (_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to load AI model. Please try downloading it again.')),
+            SnackBar(content: Text(context.l10n.failedToLoadModel)),
           );
         }
         return;
@@ -328,20 +330,22 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: const Text('Model Update Available'),
+        title: Text(context.l10n.modelUpdateAvailable),
         content: Text(
-          'A newer AI model is available (${manifest.name} ${manifest.version}).\n\n'
-          'Updating ensures you have the latest parenting guidance and improvements.\n\n'
-          'Download size: ~${(manifest.sizeBytes / (1024 * 1024)).toStringAsFixed(0)} MB',
+          context.l10n.updateAvailableMessage(
+            manifest.name,
+            manifest.version,
+            (manifest.sizeBytes / (1024 * 1024)).toStringAsFixed(0),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Later'),
+            child: Text(context.l10n.later),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Update Now'),
+            child: Text(context.l10n.updateNow),
           ),
         ],
       ),
@@ -498,14 +502,13 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
     // No BabyMon yet — show the same empty state as other feature screens
     if (widget.babyMonId.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Companion'), centerTitle: false),
+        appBar: AppBar(title: Text(context.l10n.companionTitle), centerTitle: false),
         body: PremiumEmptyState(
           icon: PhosphorIconsLight.baby,
-          title: 'Welcome to BabyMon!',
+          title: context.l10n.welcomeToBabymon,
           subtitle:
-              'Create your first BabyMon to unlock the AI Companion — '
-              'personalised routines, milestones, and parenting guidance.',
-          actionLabel: 'Create BabyMon',
+              context.l10n.unlockAiCompanion,
+          actionLabel: context.l10n.createBabyMon,
           onAction: () => GoRouter.of(context).push('/create-baby-mon'),
         ),
       );
@@ -513,7 +516,7 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Companion'),
+        title: Text(context.l10n.companionTitle),
         centerTitle: false,
         actions: [
           AnimatedBuilder(
@@ -526,7 +529,7 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
                 scale: scale,
                 child: IconButton(
                   icon: Icon(PhosphorIconsFill.chatCircleDots, color: color, size: 28),
-                  tooltip: 'Ask the Companion',
+                  tooltip: context.l10n.askCompanionTooltip,
                   onPressed: () => _openChatFlow(),
                 ),
               );
@@ -538,26 +541,26 @@ class _CompanionTabState extends ConsumerState<CompanionTab>
           labelColor: context.colorScheme.primary,
           unselectedLabelColor: context.textSecondary,
           indicatorColor: context.colorScheme.primary,
-          tabs: const [
+          tabs: [
             Tab(
-              icon: Icon(PhosphorIconsLight.sun, size: 22),
-              text: 'Today',
+              icon: const Icon(PhosphorIconsLight.sun, size: 22),
+              text: context.l10n.todayTab,
             ),
             Tab(
-              icon: Icon(PhosphorIconsLight.clock, size: 22),
-              text: 'Routine',
+              icon: const Icon(PhosphorIconsLight.clock, size: 22),
+              text: context.l10n.routineTab,
             ),
             Tab(
-              icon: Icon(PhosphorIconsLight.checkCircle, size: 22),
-              text: 'Milestones',
+              icon: const Icon(PhosphorIconsLight.checkCircle, size: 22),
+              text: context.l10n.milestonesTab,
             ),
             Tab(
-              icon: Icon(PhosphorIconsLight.notebook, size: 22),
-              text: 'Advice',
+              icon: const Icon(PhosphorIconsLight.notebook, size: 22),
+              text: context.l10n.adviceTab,
             ),
             Tab(
-              icon: Icon(PhosphorIconsLight.bookmarkSimple, size: 22),
-              text: 'Saved',
+              icon: const Icon(PhosphorIconsLight.bookmarkSimple, size: 22),
+              text: context.l10n.savedTab,
             ),
           ],
         ),

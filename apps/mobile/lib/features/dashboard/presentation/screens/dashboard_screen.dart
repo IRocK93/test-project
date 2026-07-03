@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:baby_mon/core/providers.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/core.dart';
 import 'package:baby_mon/core/data/api_client.dart';
 import 'package:baby_mon/core/widgets/responsive_wrapper.dart';
@@ -41,6 +42,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   bool _isLoading = true;
   bool _showDetails = false;
   bool _isRefreshing = false;
+  String? _error;
   DateTime? _lastDataRefresh;
   DateTime? _lastBackgroundResume;
   int? _previousLevel;
@@ -143,7 +145,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       final id = await api.getSelectedBabyMonId();
       if (id == null) {
         if (mounted) {
-          setState(() => _isLoading = false);
+          setState(() {
+            _isLoading = false;
+            _error = null;
+          });
         }
         return;
       }
@@ -165,18 +170,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         _previousLevel = newLevel;
       }
       // ── Render dashboard now with essential data ──
-	      _lastDataRefresh = DateTime.now();
-	      if (mounted) {
-	        setState(() {
-	          _isLoading = false;
-	          _isRefreshing = false;
-	        });
-	      }
-	    } catch (_) {
+      _lastDataRefresh = DateTime.now();
       if (mounted) {
         setState(() {
           _isLoading = false;
           _isRefreshing = false;
+          _error = null;
+        });
+      }
+    } catch (e) {
+      debugPrint('Dashboard load failed: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isRefreshing = false;
+          _error = context.l10n.errorUnknown;
         });
       }
     }
@@ -245,8 +253,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       final stage = parseJsonMap(data['stageContent']);
       if (stage != null) _stageContent = stage;
 
-      // Always refresh cosmetics from dedicated endpoints (correct field names + iconPath)
-      _loadCosmeticData(api);
+      // Refresh cosmetics from dedicated endpoints (correct field names + iconPath)
+      await Future.wait([
+        _fetchBadgeDefinitions(api),
+        _fetchBadges(api),
+      ]);
+      try {
+        final stageRes = await api.getStageContentForBabyMon(_babyMonId!);
+        final rawStage = stageRes.data;
+        if (mounted) {
+          setState(() {
+            _stageContent = parseJsonMap(rawStage);
+          });
+        }
+      } catch (e) { debugPrint('Failed to load stage content: $e'); }
     } catch (e) {
       debugPrint('Dashboard aggregated fetch failed, falling back: $e');
       // Fall back to individual fetches
@@ -256,32 +276,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         _fetchGrowth(api),
         _fetchAllergies(api),
       ]);
-      _loadCosmeticData(api);
+      await Future.wait([
+        _fetchBadgeDefinitions(api),
+        _fetchBadges(api),
+      ]);
+      try {
+        final stageRes = await api.getStageContentForBabyMon(_babyMonId!);
+        final rawStage = stageRes.data;
+        if (mounted) {
+          setState(() {
+            _stageContent = parseJsonMap(rawStage);
+          });
+        }
+      } catch (e) { debugPrint('Failed to load stage content: $e'); }
     }
     // Always fetch profile separately (user-level data)
     await _fetchProfile(api);
   }
 
-  /// Fires cosmetic data requests in the background after dashboard is rendered.
-  @Deprecated('Use _fetchDashboardAggregated instead')
-  Future<void> _loadCosmeticData(ApiClient api) async {
-    // Parallelize badge definitions + badges (both independent)
-    await Future.wait([
-      _fetchBadgeDefinitions(api),
-      _fetchBadges(api),
-    ]);
-    // Stage content depends on _evolution being set, so it runs after.
-    // Uses the BabyMon-specific endpoint which personalises {name} placeholders.
-    try {
-      final stageRes = await api.getStageContentForBabyMon(_babyMonId!);
-      final rawStage = stageRes.data;
-      if (mounted) {
-        setState(() {
-          _stageContent = parseJsonMap(rawStage);
-        });
-      }
-    } catch (e) { debugPrint('Failed to load stage content: $e'); }
-  }
   Future<void> _fetchBadgeDefinitions(ApiClient api) async {
     try {
       final defRes = await api.getBadgeDefinitions();
@@ -395,34 +407,38 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         d = diff.inDays % 30,
         w = diff.inDays ~/ 7;
     final p = <String>[];
-    if (y > 0) p.add('$y yr');
-    if (m > 0) p.add('$m mo');
-    if (d > 0 || p.isEmpty) p.add('$d d');
-    return '${p.join(' ')} ($w wk)';
+    final yr = context.l10n.yearAbbr;
+    final mo = context.l10n.monthAbbr;
+    final dy = context.l10n.dayAbbr;
+    final wk = context.l10n.weekAbbr;
+    if (y > 0) p.add('$y $yr');
+    if (m > 0) p.add('$m $mo');
+    if (d > 0 || p.isEmpty) p.add('$d $dy');
+    return '${p.join(' ')} ($w $wk)';
   }
   String get _etaText {
     if (_babyMon?.stageStartType != 'INCUBATING' || _babyMon?.referenceDate == null) return '';
     final r =
         _babyMon!.referenceDate!.add(const Duration(days: 280)).difference(DateTime.now());
-    return r.inDays <= 0 ? 'Due now!' : 'ETA: ${r.inDays} days';
+    return r.inDays <= 0 ? context.l10n.dueNowLabel : context.l10n.etaDaysLabel(r.inDays);
   }
   String get _stageLabel {
     switch (_babyMon?.stageStartType) {
       case 'INCUBATING':
-        return 'Incubating';
+        return context.l10n.incubatingStage;
       case 'PLAN':
-        return 'Plan';
+        return context.l10n.planLabel;
       case 'BORN':
       default:
         // Try referenceDate first, fall back to birthDate
         final ref = _babyMon?.referenceDate ?? _babyMon?.birthDate;
-        if (ref == null) return 'Born';
+        if (ref == null) return context.l10n.born;
         final d = DateTime.now().difference(ref).inDays;
-        if (d <= 28) return 'Neonate';
-        if (d <= 365) return 'Infant';
-        if (d <= 1095) return 'Toddler';
-        if (d <= 1825) return 'Preschooler';
-        return 'Child';
+        if (d <= 28) return context.l10n.neonateStage;
+        if (d <= 365) return context.l10n.infantStage;
+        if (d <= 1095) return context.l10n.toddlerStage;
+        if (d <= 1825) return context.l10n.preschoolerStage;
+        return context.l10n.childStage;
     }
   }
   Color _genderAccent(String? g) => g == 'MONIESE'
@@ -447,28 +463,61 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       body: ResponsiveWrapper(
         scrollable: false, // inner widgets handle their own scrolling
         child: PremiumBackground(
-          child: _isLoading
-              ? _buildLoadingState()
-              : (_babyMonId == null || _babyMonId!.isEmpty)
-                  ? _buildWelcomeScreen()
-                  : RefreshIndicator(
-                      onRefresh: () => _loadData(force: true),
-                      child: _buildReorderableDashboard(context),
-                    ),
+          child: _error != null
+              ? _buildErrorState()
+              : _isLoading
+                  ? _buildLoadingState()
+                  : (_babyMonId == null || _babyMonId!.isEmpty)
+                      ? _buildWelcomeScreen()
+                      : RefreshIndicator(
+                          onRefresh: () => _loadData(force: true),
+                          child: _buildReorderableDashboard(context),
+                        ),
         ),
       ),
     );
   }
   Widget _buildLoadingState() {
-    return PremiumLoading.spinner(message: 'Loading your dashboard...');
+    return PremiumLoading.spinner(message: context.l10n.loadingDashboardMessage);
+  }
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(DesignTokens.spaceLg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              PhosphorIconsLight.warningCircle,
+              size: 48,
+              color: context.colorScheme.error,
+            ),
+            const SizedBox(height: DesignTokens.spaceMd),
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context.colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: DesignTokens.spaceLg),
+            ThemeButton(
+              text: context.l10n.retry,
+              onPressed: () => _loadData(force: true),
+              icon: PhosphorIconsLight.arrowClockwise,
+            ),
+          ],
+        ),
+      ),
+    );
   }
   Widget _buildWelcomeScreen() {
     return PremiumEmptyState(
       icon: PhosphorIconsLight.baby,
-      title: 'Welcome to BabyMon!',
+      title: context.l10n.welcomeToBabymon,
       subtitle:
-          'Create your first BabyMon to start tracking milestones, feedings, and more.',
-      actionLabel: 'Create BabyMon',
+          context.l10n.createBabyMonPrompt,
+      actionLabel: context.l10n.createBabyMon,
       onAction: () => GoRouter.of(context).push('/create-baby-mon'),
     );
   }
@@ -525,7 +574,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Refreshing',
+                            context.l10n.refreshingLabel,
                             style: TextStyle(
                               fontSize: DesignTokens.font2xs,
                               fontWeight: FontWeight.w600,
@@ -640,14 +689,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             ? AppColors.genderMonious
             : AppColors.genderNeutral;
     return Semantics(
-      label: '${_babyMon?.name ?? 'Baby'}, level $_currentLevel',
+      label: '${_babyMon?.name ?? context.l10n.babyFallbackName}, level $_currentLevel',
       button: true,
       child: PremiumDoubleBezel(
         outerRadius: DesignTokens.radius2xl,
         gap: 5.0,
         outerColor: accent.withValues(alpha: 0.10),
         child: StageHero(
-        name: _babyMon?.name ?? 'Baby',
+        name: _babyMon?.name ?? context.l10n.babyFallbackName,
         level: _currentLevel,
         accent: accent,
         ageText: _babyMonAge.isNotEmpty ? _babyMonAge : null,
@@ -668,62 +717,62 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Identity ──
-        _detailRow('Age', _babyMonAge.isNotEmpty ? _babyMonAge : '—'),
+        _detailRow(context.l10n.ageLabel, _babyMonAge.isNotEmpty ? _babyMonAge : '—'),
         if (_babyMon?.birthDate != null)
-          _detailRow('Birth Date', _formatDate(_babyMon!.birthDate!)),
+          _detailRow(context.l10n.birthDate, _formatDate(_babyMon!.birthDate!)),
         if (_babyMon?.conceptionDate != null)
-          _detailRow('Conceived', _formatDate(_babyMon!.conceptionDate!)),
+          _detailRow(context.l10n.conceived, _formatDate(_babyMon!.conceptionDate!)),
         if (_babyMon?.middleName != null && _babyMon!.middleName!.isNotEmpty)
-          _detailRow('Middle Name', _babyMon!.middleName!),
+          _detailRow(context.l10n.middleName, _babyMon!.middleName!),
         if (_babyMon?.lastName != null && _babyMon!.lastName!.isNotEmpty)
-          _detailRow('Last Name', _babyMon!.lastName!),
-        _detailRow('Stage', _stageLabel),
+          _detailRow(context.l10n.lastName, _babyMon!.lastName!),
+        _detailRow(context.l10n.stageLabel, _stageLabel),
         _detailRow(
-          'Gender',
+          context.l10n.gender,
           _babyMon?.gender == 'MONIOUS'
-              ? 'Monious (Male)'
+              ? context.l10n.moniousMaleLabel
               : _babyMon?.gender == 'MONIESE'
-                  ? 'Moniese (Female)'
-                  : 'Mo (Neutral)',
+                  ? context.l10n.monieseFemaleLabel
+                  : context.l10n.moNeutralLabel,
         ),
         if (_babyMon?.bloodGroup != null && _babyMon!.bloodGroup!.isNotEmpty)
-          _detailRow('Blood Type', _babyMon!.bloodGroup!),
+          _detailRow(context.l10n.bloodType, _babyMon!.bloodGroup!),
         if (_babyMon?.eyeColor != null && _babyMon!.eyeColor!.isNotEmpty)
-          _detailRow('Eye Color', _babyMon!.eyeColor!),
+          _detailRow(context.l10n.eyeColorLabel, _eyeColorLabel(_babyMon!.eyeColor!)),
         // ── Growth ──
         if (_latestGrowth != null) ...[
-          _sectionHeader('Latest Growth'),
+          _sectionHeader(context.l10n.latestGrowthLabel),
           _detailRow(_growthTypeLabel(_latestGrowth!.type),
               '${_latestGrowth!.value.toStringAsFixed(1)} ${_latestGrowth!.unit ?? ''}'),
           if (_latestGrowth!.measuredAt != null)
-            _detailRow('Recorded', _formatDate(_latestGrowth!.measuredAt!)),
+            _detailRow(context.l10n.recordedLabel, _formatDate(_latestGrowth!.measuredAt!)),
         ],
         // ── Progress ──
-        _sectionHeader('Progress'),
-        _detailRow('Level', '$_currentLevel — ${parseString(_evolution?['levelName']) ?? 'Level $_currentLevel'}'),
-        _detailRow('XP', '${parseInt(_evolution?['currentXp']) ?? 0} / ${parseInt(_evolution?['xpForNextLevel']) ?? 50}'),
+        _sectionHeader(context.l10n.progressLabel),
+        _detailRow(context.l10n.levelLabel, '$_currentLevel — ${parseString(_evolution?['levelName']) ?? '$_currentLevel'}'),
+        _detailRow(context.l10n.xpShort, '${parseInt(_evolution?['currentXp']) ?? 0} / ${parseInt(_evolution?['xpForNextLevel']) ?? 50}'),
         // ── Family ──
         if (_parentName != null && _parentName!.isNotEmpty) ...[
-          _sectionHeader('Family'),
-          _detailRow('Parent', _parentName!),
+          _sectionHeader(context.l10n.familyLabel),
+          _detailRow(context.l10n.parentLabel, _parentName!),
         ],
         if (_babyMon?.biologicalMother != null && _babyMon!.biologicalMother!.isNotEmpty)
-          _detailRow('Mother', _babyMon!.biologicalMother!),
+          _detailRow(context.l10n.mother, _babyMon!.biologicalMother!),
         if (_babyMon?.biologicalFather != null && _babyMon!.biologicalFather!.isNotEmpty)
-          _detailRow('Father', _babyMon!.biologicalFather!),
+          _detailRow(context.l10n.father, _babyMon!.biologicalFather!),
         // ── Health ──
         if (_allergies.isNotEmpty) ...[
-          _sectionHeader('Allergies'),
+          _sectionHeader(context.l10n.allergies),
           ..._allergies.map((a) => _detailRow(
-                a.name ?? 'Unknown',
-                '${a.severity ?? 'Unknown'} severity${a.triggers != null && (a.triggers as List).isNotEmpty ? ' — triggers: ${(a.triggers as List).join(', ')}' : ''}',
+                a.name ?? context.l10n.unknownLabel,
+                '${a.severity ?? context.l10n.unknownLabel} severity${a.triggers != null && (a.triggers as List).isNotEmpty ? ' — triggers: ${(a.triggers as List).join(', ')}' : ''}',
               )),
         ],
         // ── Traits ──
         if (_babyMon != null && _babyMon!.traits.isNotEmpty)
-          _detailRow('Traits', _babyMon!.traits.join(', ')),
+          _detailRow(context.l10n.traits, _babyMon!.traits.map((t) => _traitLabel(t)).join(', ')),
         if (_babyMon?.specialMove != null && _babyMon!.specialMove!.isNotEmpty)
-          _detailRow('Special Move', _babyMon!.specialMove!),
+          _detailRow(context.l10n.specialMove, _babyMon!.specialMove!),
       ],
     );
   }
@@ -747,9 +796,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
   String _growthTypeLabel(String type) {
     switch (type) {
-      case 'WEIGHT': return 'Weight';
-      case 'HEIGHT': return 'Height';
-      case 'HEAD_CIRCUMFERENCE': return 'Head Circumference';
+      case 'WEIGHT': return context.l10n.weightLabel;
+      case 'HEIGHT': return context.l10n.heightLabelShort;
+      case 'HEAD_CIRCUMFERENCE': return context.l10n.headCircumference;
       default: return type;
     }
   }
@@ -790,9 +839,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Future<void> _shareBabyMon() async {
     final allergyText = _allergies.isNotEmpty
         ? _allergies
-            .map((a) => '• ${a.name ?? 'Unknown'} (${a.severity ?? 'Unknown'})')
+            .map((a) => '• ${a.name ?? context.l10n.unknownLabel} (${a.severity ?? context.l10n.unknownLabel})')
             .join('\n')
-        : 'None recorded';
+        : context.l10n.noneRecorded;
     // Name in LASTNAME, First format (no middle name, last name UPPERCASE)
     final lastName = _babyMon?.lastName ?? '';
     final firstName = _babyMon?.name ?? '';
@@ -800,15 +849,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         ? '${lastName.toUpperCase()}, $firstName'
         : firstName.isNotEmpty
             ? firstName
-            : 'Baby';
+            : context.l10n.babyFallbackName;
     final text = StringBuffer();
     text.writeln('BabyMon Card: $displayName');
-    text.writeln('Age: ${_babyMonAge.isNotEmpty ? _babyMonAge : 'N/A'}');
+    text.writeln('Age: ${_babyMonAge.isNotEmpty ? _babyMonAge : context.l10n.notAvailableAbbr}');
     final genderLabel = _babyMon?.gender == 'MALE' || _babyMon?.gender == 'MONIOUS'
-        ? 'Male'
+        ? context.l10n.maleGender
         : _babyMon?.gender == 'FEMALE' || _babyMon?.gender == 'MONIESE'
-            ? 'Female'
-            : 'Neutral';
+            ? context.l10n.femaleGender
+            : context.l10n.neutralGender;
     text.writeln('Gender: $genderLabel');
     if (_babyMon?.bloodGroup != null && _babyMon!.bloodGroup!.isNotEmpty) {
       text.writeln('Blood Type: ${_babyMon!.bloodGroup}');
@@ -826,8 +875,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     text.writeln('Allergies:');
     text.writeln(allergyText);
     text.writeln();
-    text.writeln('Shared via BabyMon');
-    await Share.share(text.toString(), subject: '${displayName} Card');
+    text.writeln(context.l10n.shareText);
+    await Share.share(text.toString(), subject: '$displayName Card');
   }
   Future<void> _editBabyMon() async {
     if (_babyMonId == null) return;
@@ -849,7 +898,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       }
     }
     final api = ref.read(apiClientProvider);
-    Set<String> traits = {...?_babyMon?.traits};
+    Set<String> traits = {...?_babyMon?.traits.map((t) => normalizeTrait(t))};
     String? bloodGroup = _babyMon?.bloodGroup;
     String? gender = _babyMon?.gender;
     String? eyeColor = _babyMon?.eyeColor;
@@ -924,7 +973,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 DesignTokens.radiusFull),
                           ),
                           child: Text(
-                            'EDIT PROFILE',
+                            context.l10n.editProfile.toUpperCase(),
                             style: Theme.of(context)
                                 .textTheme
                                 .labelSmall
@@ -939,7 +988,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         const SizedBox(width: DesignTokens.spaceSm),
                         Expanded(
                           child: Text(
-                            _babyMon?.name ?? 'BabyMon',
+                            _babyMon?.name ?? context.l10n.appTitle,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleMedium
@@ -961,25 +1010,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _editField(nameCtrl, 'First Name'),
+                          _editField(nameCtrl, context.l10n.firstNameLabel),
                           const SizedBox(height: DesignTokens.spaceMd),
-                          _editField(middleCtrl, 'Middle Name'),
+                          _editField(middleCtrl, context.l10n.middleName),
                           const SizedBox(height: DesignTokens.spaceMd),
-                          _editField(lastNameCtrl, 'Last Name'),
+                          _editField(lastNameCtrl, context.l10n.lastName),
                           const SizedBox(height: DesignTokens.spaceMd),
-                          _editTile(ctx, setD, 'Gender',
+                          _editTile(ctx, setD, context.l10n.gender,
                               gender == 'MONIOUS'
-                                  ? 'Monious'
+                                  ? context.l10n.moniousGender
                                   : gender == 'MONIESE'
-                                      ? 'Moniese'
-                                      : 'Mo', () async {
+                                      ? context.l10n.monieseGender
+                                      : context.l10n.moGender, () async {
                             final sel =
                                 await WheelPickerBottomSheet.show<String>(
                               context: ctx,
-                              title: 'Select Gender',
+                              title: context.l10n.selectGender,
                               columns: [
                                 WheelColumn<String>(
-                                  label: 'Gender',
+                                  label: context.l10n.gender,
                                   options: const [
                                     WheelOption(
                                         value: 'MONIOUS', label: 'Monious'),
@@ -994,30 +1043,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             if (sel != null) setD(() => gender = sel);
                           }),
                           const SizedBox(height: DesignTokens.spaceMd),
-                          _editTile(ctx, setD, 'Blood Type',
+                          _editTile(ctx, setD, context.l10n.bloodType,
                               bloodGroup == null || bloodGroup!.isEmpty
-                                  ? 'Not set'
+                                  ? context.l10n.notSet
                                   : bloodGroup!,
                               () async {
                             final sel =
                                 await WheelPickerBottomSheet.show<String>(
                               context: ctx,
-                              title: 'Select Blood Type',
+                              title: context.l10n.selectBloodType,
                               columns: [
                                 WheelColumn<String>(
-                                  label: 'Blood Type',
-                                  options: const [
-                                    WheelOption(value: '', label: 'Not set'),
-                                    WheelOption(value: 'A+', label: 'A+'),
-                                    WheelOption(value: 'A-', label: 'A-'),
-                                    WheelOption(value: 'B+', label: 'B+'),
-                                    WheelOption(value: 'B-', label: 'B-'),
-                                    WheelOption(
+                                  label: context.l10n.bloodType,
+                                  options: [
+                                    WheelOption(value: '', label: context.l10n.notSet),
+                                    const WheelOption(value: 'A+', label: 'A+'),
+                                    const WheelOption(value: 'A-', label: 'A-'),
+                                    const WheelOption(value: 'B+', label: 'B+'),
+                                    const WheelOption(value: 'B-', label: 'B-'),
+                                    const WheelOption(
                                         value: 'AB+', label: 'AB+'),
-                                    WheelOption(
+                                    const WheelOption(
                                         value: 'AB-', label: 'AB-'),
-                                    WheelOption(value: 'O+', label: 'O+'),
-                                    WheelOption(value: 'O-', label: 'O-'),
+                                    const WheelOption(value: 'O+', label: 'O+'),
+                                    const WheelOption(value: 'O-', label: 'O-'),
                                   ],
                                   initialValue: bloodGroup ?? '',
                                 ),
@@ -1026,26 +1075,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             if (sel != null) setD(() => bloodGroup = sel);
                           }),
                           const SizedBox(height: DesignTokens.spaceMd),
-                          _editTile(ctx, setD, 'Eye Color',
+                          _editTile(ctx, setD, context.l10n.eyeColorLabel,
                               eyeColor == null || eyeColor!.isEmpty
-                                  ? 'Not set'
+                                  ? context.l10n.notSet
                                   : eyeColor!,
                               () async {
                             final sel =
                                 await WheelPickerBottomSheet.show<String>(
                               context: ctx,
-                              title: 'Select Eye Color',
+                              title: context.l10n.selectEyeColor,
                               columns: [
                                 WheelColumn<String>(
-                                  label: 'Eye Color',
-                                  options: const [
-                                    WheelOption(value: '', label: 'Not set'),
-                                    WheelOption(value: 'Brown', label: 'Brown'),
-                                    WheelOption(value: 'Blue', label: 'Blue'),
-                                    WheelOption(value: 'Green', label: 'Green'),
-                                    WheelOption(value: 'Hazel', label: 'Hazel'),
-                                    WheelOption(value: 'Gray', label: 'Gray'),
-                                    WheelOption(value: 'Amber', label: 'Amber'),
+                                  label: context.l10n.eyeColorLabel,
+                                  options: [
+                                    WheelOption(value: '', label: context.l10n.notSet),
+                                    WheelOption(value: 'Brown', label: context.l10n.brownColor),
+                                    WheelOption(value: 'Blue', label: context.l10n.blueColor),
+                                    WheelOption(value: 'Green', label: context.l10n.greenColor),
+                                    WheelOption(value: 'Hazel', label: context.l10n.hazelColor),
+                                    WheelOption(value: 'Gray', label: context.l10n.grayColor),
+                                    WheelOption(value: 'Amber', label: context.l10n.amberColor),
                                   ],
                                   initialValue: eyeColor ?? '',
                                 ),
@@ -1054,19 +1103,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             if (sel != null) setD(() => eyeColor = sel);
                           }),
                           const SizedBox(height: DesignTokens.spaceMd),
-                          _editField(motherCtrl, 'Biological Mother'),
+                          _editField(motherCtrl, context.l10n.biologicalMotherLabel),
                           const SizedBox(height: DesignTokens.spaceMd),
-                          _editField(fatherCtrl, 'Biological Father'),
+                          _editField(fatherCtrl, context.l10n.biologicalFatherLabel),
                           const SizedBox(height: DesignTokens.spaceMd),
-                          _editField(parentCtrl, 'Parent/Guardian Name'),
+                          _editField(parentCtrl, context.l10n.parentGuardianNameLabel),
                           const SizedBox(height: DesignTokens.spaceMd),
-                          _editField(contactCtrl, 'Parent Contact #',
+                          _editField(contactCtrl, context.l10n.parentContactNumberLabel,
                               keyboardType: TextInputType.phone),
                           const SizedBox(height: DesignTokens.spaceMd),
                           // ── Traits: multi-select chips ──
                           _buildTraitsEditor(ctx, setD, traits),
                           const SizedBox(height: DesignTokens.spaceMd),
-                          _editField(specialMoveCtrl, 'Special Move'),
+                          _editField(specialMoveCtrl, context.l10n.specialMove),
                         ],
                       ),
                     ),
@@ -1077,13 +1126,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     padding: const EdgeInsets.symmetric(
                         horizontal: DesignTokens.spaceLg),
                     child: ThemeButton(
-                      text: 'Save Changes',
+                      text: context.l10n.saveChanges,
                       onPressed: () => Navigator.pop(ctx, true),
                       fullWidth: true,
                       icon: PhosphorIconsLight.check,
                       borderRadius: DesignTokens.radiusFull,
                       height: 56,
-                      semanticLabel: 'Save profile changes',
+                      semanticLabel: context.l10n.saveProfileChangesSemantic,
                     ),
                   ),
                   const SizedBox(height: DesignTokens.spaceSm),
@@ -1133,7 +1182,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Profile save failed: $e'),
+              content: Text('${context.l10n.profileSaveFailedMessage}: $e'),
               behavior: SnackBarBehavior.floating,
               backgroundColor: context.colorScheme.error,
             ),
@@ -1159,7 +1208,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('BabyMon save failed: $e'),
+              content: Text('${context.l10n.babyMonSaveFailedMessage}: $e'),
               behavior: SnackBarBehavior.floating,
               backgroundColor: context.colorScheme.error,
             ),
@@ -1171,7 +1220,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Updated!'),
+          content: Text(context.l10n.updated),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
@@ -1246,20 +1295,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       ),
     );
   }
-  static const List<String> _kDefaultTraits = [
-    'Curious',
-    'Peaceful',
-    'Playful',
-    'Gentle',
-    'Adventurous',
-    'Creative',
-  ];
+  String _traitLabel(String trait) {
+    final english = normalizeTrait(trait);
+    return traitDisplay(english, context.l10n);
+  }
+  String _eyeColorLabel(String color) {
+    switch (color) {
+      case 'Brown': return context.l10n.brownColor;
+      case 'Blue': return context.l10n.blueColor;
+      case 'Green': return context.l10n.greenColor;
+      case 'Hazel': return context.l10n.hazelColor;
+      case 'Gray': return context.l10n.grayColor;
+      case 'Amber': return context.l10n.amberColor;
+      default: return color;
+    }
+  }
   Widget _buildTraitsEditor(
       BuildContext ctx, StateSetter setD, Set<String> traits) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Traits',
+        Text(context.l10n.traits,
             style: Theme.of(context)
                 .textTheme
                 .labelMedium
@@ -1270,10 +1326,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           runSpacing: 6,
           children: [
             // Default traits as simple ChoiceChips
-            for (final trait in _kDefaultTraits)
+            for (final trait in kTraitKeys)
               ChoiceChip(
                 key: ValueKey('default_$trait'),
-                label: Text(trait, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                label: Text(_traitLabel(trait), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 selected: traits.contains(trait),
                 onSelected: (sel) {
                   setD(() => sel ? traits.add(trait) : traits.remove(trait));
@@ -1281,10 +1337,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 visualDensity: VisualDensity.compact,
               ),
             // Custom traits with delete
-            for (final trait in traits.where((t) => !_kDefaultTraits.contains(t)))
+            for (final trait in traits.where((t) => !kTraitKeys.contains(t)))
               Chip(
                 key: ValueKey('custom_$trait'),
-                label: Text(trait, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                label: Text(_traitLabel(trait), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 deleteIcon: const Icon(Icons.close, size: 14),
                 onDeleted: () => setD(() => traits.remove(trait)),
                 visualDensity: VisualDensity.compact,
@@ -1294,7 +1350,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             ActionChip(
               key: const ValueKey('add_custom'),
               avatar: const Icon(Icons.add, size: 14),
-              label: const Text('Add custom', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              label: Text(context.l10n.addCustom, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
               visualDensity: VisualDensity.compact,
               onPressed: () async {
                 if (_customTraitDialogOpen) return;
@@ -1304,22 +1360,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   final result = await showDialog<String>(
                     context: context,
                     builder: (dCtx) => AlertDialog(
-                      title: const Text('Add Custom Trait'),
+                      title: Text(context.l10n.addCustomTrait),
                       content: TextField(
                         controller: ctrl,
-                        decoration: const InputDecoration(
-                          hintText: 'e.g. Brave, Silly, Stubborn',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          hintText: context.l10n.customTraitHintText,
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(dCtx),
-                          child: const Text('Cancel'),
+                          child: Text(context.l10n.cancel),
                         ),
                         TextButton(
                           onPressed: () => Navigator.pop(dCtx, ctrl.text.trim()),
-                          child: const Text('Add'),
+                          child: Text(context.l10n.addLabel),
                         ),
                       ],
                     ),
@@ -1352,6 +1408,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
   Widget _buildXpCard() => DashboardXpCard(evolution: _evolution);
   Widget _buildQuickStatsRow() => DashboardStatsRow(evolution: _evolution);
+
+  String _localizeUnit(String? unit, String fallback) {
+    if (unit == null || unit.isEmpty) return fallback;
+    switch (unit) {
+      case 'kg': return context.l10n.kg;
+      case 'cm': return context.l10n.cm;
+      case 'lb': return context.l10n.lb;
+      case 'oz': return context.l10n.oz;
+      case 'in': return context.l10n.unitInches;
+      default: return unit;
+    }
+  }
+
   Widget _buildGrowthRow() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: DesignTokens.bentoPadding),
@@ -1359,8 +1428,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         if (_latestGrowth != null)
           Expanded(child: _buildMiniGrowthCard(
             icon: PhosphorIconsLight.scales,
-            label: 'Weight',
-            value: '${_latestGrowth!.value} ${_latestGrowth!.unit ?? 'kg'}',
+            label: context.l10n.weightLabelShort,
+            value: '${_latestGrowth!.value} ${_localizeUnit(_latestGrowth!.unit, context.l10n.kg)}',
             date: _latestGrowth!.measuredAt != null
                 ? DateFormat.yMMMd().format(_latestGrowth!.measuredAt!)
                 : '',
@@ -1370,8 +1439,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         if (_latestHeight != null)
           Expanded(child: _buildMiniGrowthCard(
             icon: PhosphorIconsLight.ruler,
-            label: 'Height',
-            value: '${_latestHeight!.value} ${_latestHeight!.unit ?? 'cm'}',
+            label: context.l10n.heightLabelShort,
+            value: '${_latestHeight!.value} ${_localizeUnit(_latestHeight!.unit, context.l10n.cm)}',
             date: _latestHeight!.measuredAt != null
                 ? DateFormat.yMMMd().format(_latestHeight!.measuredAt!)
                 : '',

@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 
 class AuthTextField extends StatefulWidget {
@@ -51,7 +52,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
         prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon) : null,
         suffixIcon: widget.obscureText
             ? Semantics(
-                label: 'Toggle password visibility',
+                label: context.l10n.togglePasswordVisibility,
                 child: IconButton(
                   icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
                   onPressed: () => setState(() => _obscureText = !_obscureText),

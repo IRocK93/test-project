@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/utils/theme_text_utils.dart';
 import 'package:baby_mon/core/widgets/glass_surface.dart';
 import 'package:baby_mon/features/companion/presentation/providers/advice_feed_provider.dart';
@@ -18,8 +19,8 @@ class SavedCardsScreen extends ConsumerWidget {
 
     // Show upgrade prompt if this is a tier error
     if (state.isTierError && state.cards.isEmpty) {
-      return const UpgradePromptWidget(
-        featureName: 'Saved Cards',
+      return UpgradePromptWidget(
+        featureName: context.l10n.savedCardsTitle,
         description: 'Upgrade to Premium to bookmark and save expert advice '
             'cards to your personal parenting library.',
       );
@@ -69,7 +70,7 @@ class SavedCardsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: DesignTokens.spaceLg),
             Text(
-              'No saved cards yet',
+              context.l10n.noSavedCards,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: context.textSecondary,
                   ),
@@ -203,7 +204,7 @@ class _SavedCardState extends State<_SavedCard> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      _expanded ? 'Show less' : 'Read more',
+                      _expanded ? context.l10n.showLess : context.l10n.readMore,
                       style: TextStyle(
                         fontSize: DesignTokens.fontSm2,
                         fontWeight: FontWeight.w600,
@@ -250,10 +251,10 @@ class _SavedCardState extends State<_SavedCard> {
 
   Widget _sourceBadge(BuildContext context, String source) {
     final label = source == 'CLINICAL'
-        ? 'Clinical Guide'
+        ? context.l10n.clinicalGuide
         : source == 'DEVELOPMENT'
-            ? 'Development Guide'
-            : 'General Guide';
+            ? context.l10n.developmentGuide
+            : context.l10n.generalGuide;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: DesignTokens.spaceSm,

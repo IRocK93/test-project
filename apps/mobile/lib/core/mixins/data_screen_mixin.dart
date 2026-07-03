@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:dio/dio.dart';
 
 /// Shared behavior mixin for all tab/CRUD screens in the app.
@@ -237,8 +238,8 @@ mixin DataScreenMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   Widget buildNoBabyMon() {
     return PremiumEmptyState(
       icon: Icons.child_care,
-      title: 'Welcome to BabyMon!',
-      subtitle: 'Create your first BabyMon to start tracking milestones, feedings, and more.',
+      title: context.l10n.welcomeToBabymon,
+      subtitle: context.l10n.createBabyMonPrompt,
       actionLabel: 'Create BabyMon',
       onAction: () => GoRouter.of(context).push('/create-baby-mon'),
     );

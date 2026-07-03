@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/companion_theme.dart';
 
@@ -22,7 +23,7 @@ class DashboardContentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final summary = parseString(stageContent['summaryText']);
-    final stageTitle = parseString(stageContent['title']) ?? 'Stage Insights';
+    final stageTitle = parseString(stageContent['title']) ?? context.l10n.stageInsights;
     final tips = stageContent['expertTips'] as List<dynamic>? ?? [];
 
     return Padding(
@@ -60,7 +61,7 @@ class DashboardContentCard extends StatelessWidget {
                               color: context.colorScheme.onSurface),
                     ),
                     Text(
-                      'Powered by Enas AI',
+                      context.l10n.poweredByEnasAi,
                       style: Theme.of(context)
                           .textTheme
                           .bodySmall
@@ -126,8 +127,8 @@ class DashboardContentCard extends StatelessWidget {
                     Expanded(
                       child: _ActionButton(
                         icon: PhosphorIconsLight.chatCircleDots,
-                        label: 'Ask Enas',
-                        subtitle: 'AI guidance',
+                        label: context.l10n.askEnas,
+                        subtitle: context.l10n.askCompanion,
                         color: context.colorScheme.primary,
                         onTap: onOpenChat,
                       ),
@@ -136,8 +137,8 @@ class DashboardContentCard extends StatelessWidget {
                     Expanded(
                       child: _ActionButton(
                         icon: PhosphorIconsLight.target,
-                        label: 'Milestones',
-                        subtitle: 'Track progress',
+                        label: context.l10n.milestones,
+                        subtitle: context.l10n.trackProgress,
                         color: context.colorScheme.tertiary,
                         onTap: onViewMilestones,
                       ),

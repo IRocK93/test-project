@@ -45,19 +45,20 @@ class StubAuthRepo implements AuthRepository {
     required String email,
     required String password,
     String? name,
+    required DateTime dateOfBirth,
+    required bool tosAccepted,
+    required bool privacyAccepted,
+    required bool consentToDataProcessing,
   }) async =>
       throw UnimplementedError();
   @override
   Future<({User user, String token})> biometricLogin() async =>
       throw UnimplementedError();
   @override
-  Future<void> forgotPassword(String email) async {}
-  @override
-  Future<void> resetPassword(String token, String newPassword) async {}
-  @override
-  Future<void> sendVerificationEmail(String email) async {}
-  @override
-  Future<bool> checkEmailVerified() async => true;
+  Future<void> forgotPassword(String email) async {}  @override Future<void> resetPassword(String token, String newPassword) async {}
+  @override Future<void> sendVerificationEmail() async {}
+  @override Future<bool> checkEmailVerified() async => true;
+  @override Future<void> syncLocale() async {}
 }
 
 /// Fake [AuthNotifier] that bypasses the real constructor's `_checkAuthStatus`.

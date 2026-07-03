@@ -107,25 +107,25 @@ class _PremiumBackgroundState extends ConsumerState<PremiumBackground> {
     if (isDark) {
       return [
         _radialOrb(
-          left: w * 0.8 - 120 + t * 20,
+          dx: w * 0.8 - 120 + t * 20,
           top: -80 - t * 30,
           size: 280,
           color: primary.withValues(alpha: 0.12),
         ),
         _radialOrb(
-          left: -60 + t * 25,
+          dx: -60 + t * 25,
           top: h * 0.6 - 100 - t * 15,
           size: 240,
           color: accent.withValues(alpha: 0.08),
         ),
         _radialOrb(
-          left: w * 0.3 - 80 + t * 15,
+          dx: w * 0.3 - 80 + t * 15,
           top: h * 0.25 - 80,
           size: 200,
           color: secondary.withValues(alpha: 0.06),
         ),
         _radialOrb(
-          left: w * 0.1 - 60,
+          dx: w * 0.1 - 60,
           top: h - 100 + t * 20,
           size: 180,
           color: primaryLight.withValues(alpha: 0.05),
@@ -135,25 +135,25 @@ class _PremiumBackgroundState extends ConsumerState<PremiumBackground> {
 
     return [
       _radialOrb(
-        left: w * 0.85 - 140 + t * 25,
+        dx: w * 0.85 - 140 + t * 25,
         top: -100 - t * 25,
         size: 320,
         color: primaryLight.withValues(alpha: 0.15),
       ),
       _radialOrb(
-        left: -80 + t * 20,
+        dx: -80 + t * 20,
         top: h * 0.55 - 120 - t * 20,
         size: 280,
         color: accentLight.withValues(alpha: 0.1),
       ),
       _radialOrb(
-        left: w * 0.25 - 90 + t * 18,
+        dx: w * 0.25 - 90 + t * 18,
         top: h * 0.2 - 90,
         size: 240,
         color: secondaryLight.withValues(alpha: 0.08),
       ),
       _radialOrb(
-        left: w * 0.5 - 70 - t * 15,
+        dx: w * 0.5 - 70 - t * 15,
         top: h * 0.75 - 80,
         size: 220,
         color: primary.withValues(alpha: 0.06),
@@ -162,13 +162,15 @@ class _PremiumBackgroundState extends ConsumerState<PremiumBackground> {
   }
 
   Widget _radialOrb({
-    required double left,
+    required double dx,
     required double top,
     required double size,
     required Color color,
   }) {
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
     return Positioned(
-      left: left,
+      left: isRtl ? null : dx,
+      right: isRtl ? dx : null,
       top: top,
       child: Container(
         width: size,

@@ -1,5 +1,4 @@
 // ignore_for_file: unused_element, unused_local_variable
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart' as semantics;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/providers.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/mixins/mixins.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:go_router/go_router.dart';
@@ -42,10 +42,11 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
     _windowEnd = 1.0;
   }
   Future<bool> _deleteRecord(String recordId, int index) async {
+    final growthRecordDeletedText = context.l10n.growthRecordDeleted;
     final confirmed = await ConfirmDeleteDialog.show(
       context,
-      title: 'Delete Growth Record',
-      message: 'Are you sure you want to delete this measurement?',
+      title: context.l10n.deleteGrowthRecordTitle,
+      message: context.l10n.deleteGrowthRecordMessage,
     );
     if (confirmed != true) return false;
     try {
@@ -56,8 +57,9 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
       ref.read(appRefreshProvider.notifier).state++;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Growth record deleted')));
-      semantics.SemanticsService.announce('Growth record deleted', ui.TextDirection.ltr);
+            SnackBar(content: Text(growthRecordDeletedText)));
+      // ignore: deprecated_member_use
+      semantics.SemanticsService.announce(growthRecordDeletedText, Directionality.of(context));
       }
       return true;
     } catch (e) {
@@ -83,42 +85,40 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
           TextButton.icon(
             onPressed: () {
               Navigator.pop(ctx);
-              _spotDialogOpen = false;
               _showEditRecordDialog(record);
             },
             icon: const Icon(PhosphorIconsLight.pencilSimple, size: 18),
-            label: const Text('Edit'),
+            label: Text(context.l10n.editProfile),
           ),
           TextButton.icon(
             onPressed: () => _deleteSpotRecord(ctx, record),
             icon: Icon(PhosphorIconsLight.trash, size: 18, color: context.colorScheme.error),
-            label: Text('Delete', style: TextStyle(color: context.colorScheme.error)),
+            label: Text(context.l10n.delete, style: TextStyle(color: context.colorScheme.error)),
           ),
           TextButton(
-            onPressed: () { Navigator.pop(ctx); _spotDialogOpen = false; },
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(context.l10n.cancel),
           ),
         ],
       ),
-    );
+    ).then((_) => _spotDialogOpen = false);
   }
   Future<void> _deleteSpotRecord(BuildContext ctx, GrowthRecord record) async {
     Navigator.pop(ctx); // close spot actions dialog
-    _spotDialogOpen = false;
     final confirmed = await ConfirmDeleteDialog.show(
       ctx,
-      title: 'Delete Growth Record',
-      message: 'Delete ${record.value.toStringAsFixed(1)} ${record.unit ?? _metricUnit(_selectedMetric)}?',
+      title: context.l10n.deleteGrowthRecordTitle,
+      message: context.l10n.deleteGrowthRecordMessage,
     );
     if (confirmed != true) return;
     try {
       await ref.read(apiClientProvider).deleteGrowthRecord(babyMonId!, record.id);
       setState(() => _records.remove(record));
       ref.read(appRefreshProvider.notifier).state++;
-      Navigator.pop(ctx);
+      if (ctx.mounted) Navigator.pop(ctx);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Growth record deleted')));
+          SnackBar(content: Text(context.l10n.growthRecordDeleted)));
       }
     } catch (e) {
       if (ctx.mounted) showError(ctx, e);
@@ -136,14 +136,14 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
       isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setD) => Padding(
-          padding: EdgeInsets.only(
+          padding: EdgeInsetsDirectional.only(
             bottom: MediaQuery.of(ctx).viewInsets.bottom,
-            left: 16, right: 16, top: 16),
+            start: 16, end: 16, top: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Edit ${_metricChipLabel(editMetric)} Record',
+              Text(context.l10n.editRecordTitle(_metricChipLabel(editMetric)),
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: 12),
               if (validationError != null)
@@ -160,7 +160,7 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
               const SizedBox(height: 12),
               TextField(
                 controller: notesController,
-                decoration: const InputDecoration(labelText: 'Notes (optional)'),
+                decoration: InputDecoration(labelText: context.l10n.notesOptionalLabel),
                 maxLines: 2),
               const SizedBox(height: 12),
               ListTile(
@@ -176,10 +176,10 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
                 }),
               const SizedBox(height: 16),
               ThemeButton(
-                text: 'Save Changes',
+                text: context.l10n.saveChanges,
                 onPressed: () async {
                   if (valueController.text.isEmpty) {
-                    setD(() => validationError = 'Please enter a value');
+                    setD(() => validationError = context.l10n.pleaseEnterValue);
                     return;
                   }
                   setD(() { validationError = null; isSaving = true; });
@@ -195,7 +195,7 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
                     if (mounted) {
                       _spotDialogOpen = false;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Growth record updated')));
+                        SnackBar(content: Text(context.l10n.growthRecordUpdated)));
                     }
                     // Background sync
                     loadData(force: true);
@@ -215,11 +215,11 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
   String _metricLabel(String m) {
     switch (m) {
       case 'WEIGHT':
-        return 'Weight (kg)';
+        return context.l10n.weightLabel;
       case 'HEIGHT':
-        return 'Height (cm)';
+        return context.l10n.heightLabel;
       case 'HEAD_CIRCUMFERENCE':
-        return 'Head (cm)';
+        return context.l10n.headLabel;
       default:
         return m;
     }
@@ -227,11 +227,10 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
   String _metricUnit(String m) {
     switch (m) {
       case 'WEIGHT':
-        return 'kg';
+        return context.l10n.kg;
       case 'HEIGHT':
-        return 'cm';
       case 'HEAD_CIRCUMFERENCE':
-        return 'cm';
+        return context.l10n.cm;
       default:
         return '';
     }
@@ -239,11 +238,11 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
   String _metricChipLabel(String m) {
     switch (m) {
       case 'WEIGHT':
-        return 'Weight';
+        return context.l10n.weightLabel;
       case 'HEIGHT':
-        return 'Height';
+        return context.l10n.heightLabel;
       case 'HEAD_CIRCUMFERENCE':
-        return 'Head';
+        return context.l10n.headLabel;
       default:
         return m;
     }
@@ -291,7 +290,7 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
                 ? 30 * oneDayMs
                 : 90 * oneDayMs;
     return Semantics(
-      label: 'Growth chart, ${spots.length} data points, ${_metricLabel(_selectedMetric)}, swipe to pan',
+      label: context.l10n.growthChartSemantics(spots.length, _metricLabel(_selectedMetric)),
       child: GestureDetector(
       onHorizontalDragUpdate: (details) {
         final dragRatio =
@@ -462,16 +461,16 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
         (1.0 / (_windowEnd - _windowStart).clamp(0.05, 1.0)).toStringAsFixed(1);
     return Scaffold(
       appBar: ScreenHeader(
-        title: 'Growth Chart',
+        title: context.l10n.growthChart,
         onBack: () => context.pop(),
         actions: [
           Center(
               child: Padding(
-                  padding: const EdgeInsets.only(right: 4),
+                  padding: const EdgeInsetsDirectional.only(end: 4),
                   child: Text('${zoomLevel}x',
                       style: TextStyle(
                           fontSize: DesignTokens.fontSm, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7))))),
-          ThemeButton.icon(icon: PhosphorIconsLight.target, onPressed: _resetZoom, tooltip: 'Reset zoom', variant: ThemeButtonVariant.text),
+          ThemeButton.icon(icon: PhosphorIconsLight.target, onPressed: _resetZoom, tooltip: context.l10n.resetZoom, variant: ThemeButtonVariant.text),
         ],
       ),
       body: PremiumBackground(
@@ -487,7 +486,7 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
                         child: Row(
                           children: _metrics.map((m) {
                             return Padding(
-                              padding: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsetsDirectional.only(end: 8),
                               child: FilterChip(
                                 label: Text(_metricChipLabel(m),
                                   style: TextStyle(color: _selectedMetric == m ? context.colorScheme.onPrimary : null)),
@@ -509,15 +508,15 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
                       child: Row(children: [
                         Text(_metricLabel(_selectedMetric), style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                         const Spacer(),
-                        ThemeButton.icon(icon: PhosphorIconsLight.magnifyingGlassMinus, onPressed: _zoomOut, tooltip: 'Zoom out', variant: ThemeButtonVariant.text, iconSize: 20),
+                        ThemeButton.icon(icon: PhosphorIconsLight.magnifyingGlassMinus, onPressed: _zoomOut, tooltip: context.l10n.zoomOut, variant: ThemeButtonVariant.text, iconSize: 20),
                         const SizedBox(width: 4),
-                        ThemeButton.icon(icon: PhosphorIconsLight.magnifyingGlassPlus, onPressed: _zoomIn, tooltip: 'Zoom in', variant: ThemeButtonVariant.text, iconSize: 20),
+                        ThemeButton.icon(icon: PhosphorIconsLight.magnifyingGlassPlus, onPressed: _zoomIn, tooltip: context.l10n.zoomIn, variant: ThemeButtonVariant.text, iconSize: 20),
                       ]),
                     ),
                     const SizedBox(height: 4),
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(DesignTokens.spaceXs, 0, DesignTokens.spaceMd, 20),
+                        padding: const EdgeInsetsDirectional.only(start: DesignTokens.spaceXs, top: 0, end: DesignTokens.spaceMd, bottom: 20),
                         child: _buildChart(),
                       ),
                     ),
@@ -526,7 +525,7 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
       ),
       floatingActionButton: hasBabyMon
           ? Semantics(
-              label: 'Add growth record',
+              label: context.l10n.addGrowthRecordSemantic,
               button: true,
               child: FadeScaleIn(
                 child: FloatingActionButton(
@@ -551,16 +550,16 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
         isScrollControlled: true,
         builder: (ctx) => StatefulBuilder(
             builder: (ctx, setD) => Padding(
-                padding: EdgeInsets.only(
+                padding: EdgeInsetsDirectional.only(
                     bottom: MediaQuery.of(ctx).viewInsets.bottom,
-                    left: 16,
-                    right: 16,
+                    start: 16,
+                    end: 16,
                     top: 16),
                 child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('Add ${_metricChipLabel(_selectedMetric)} Record',
+                      Text(context.l10n.addRecordTitle(_metricChipLabel(_selectedMetric)),
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge
@@ -594,17 +593,17 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
                           decoration: InputDecoration(
                               labelText: _metricLabel(_selectedMetric),
                               hintText: _selectedMetric == 'WEIGHT'
-                                  ? 'e.g., 7.5'
-                                  : 'e.g., 65',
+                                  ? context.l10n.growthValueHintWeight
+                                  : context.l10n.growthValueHintHeight,
                               suffixText: _metricUnit(_selectedMetric)),
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true)),
                       const SizedBox(height: 12),
                       TextField(
                           controller: notesController,
-                          decoration: const InputDecoration(
-                              labelText: 'Notes (optional)',
-                              hintText: 'e.g., 2 month checkup'),
+                          decoration: InputDecoration(
+                              labelText: context.l10n.notesOptionalLabel,
+                              hintText: context.l10n.noteOptionalHint),
                           maxLines: 2),
                       const SizedBox(height: 12),
                       ListTile(
@@ -622,10 +621,10 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
                           }),
                       const SizedBox(height: 16),
                       ThemeButton(
-                          text: 'Save',
+                          text: context.l10n.save,
                           onPressed: () async {
                               if (valueController.text.isEmpty) {
-                                setD(() => validationError = 'Please enter a value');
+                                setD(() => validationError = context.l10n.pleaseEnterValue);
                                 return;
                               }
                               setD(() { validationError = null; isSaving = true; });
@@ -657,7 +656,7 @@ class _GrowthChartScreenState extends ConsumerState<GrowthChartScreen>
                             },
                           isLoading: isSaving,
                           fullWidth: true,
-                          semanticLabel: 'Save growth record'),
+                          semanticLabel: context.l10n.saveGrowthRecordSemantic),
                     ]))));
   }
 }

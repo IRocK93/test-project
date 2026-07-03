@@ -21,6 +21,10 @@ export 'api_constants.dart' show ApiConstants, StorageKeys, AppConstants;
 // ── Strings ──
 export 'app_strings.dart' show AppStrings;
 
+// ── Traits ──
+export 'trait_constants.dart'
+    show kTraitKeys, kTraitLocaleToEnglish, normalizeTrait, traitDisplay, traitFlavorText;
+
 // ── Design System ──
 export '../theme/design_tokens.dart' show DesignTokens, QuickThemeAccess;
 export '../theme/app_theme.dart' show AppTheme;

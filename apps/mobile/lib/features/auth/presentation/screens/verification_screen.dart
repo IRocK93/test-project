@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/features/auth/auth.dart';
 import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
 class VerificationScreen extends ConsumerStatefulWidget {
   final String email;
@@ -15,13 +16,14 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
   bool _isResending = false;
   bool _isChecking = false;
   String? _message;
+  bool _isError = false;
   Future<void> _resendVerification() async {
     setState(() { _isResending = true; _message = null; });
     try {
-      await ref.read(authProvider.notifier).sendVerificationEmail(widget.email);
-      if (mounted) setState(() => _message = 'Verification email sent! Check your inbox.');
+      await ref.read(authProvider.notifier).sendVerificationEmail();
+      if (mounted) setState(() { _message = context.l10n.emailSentSuccess; _isError = false; });
     } catch (e) {
-      if (mounted) setState(() => _message = 'Failed to send verification email. Please try again.');
+      if (mounted) setState(() { _message = context.l10n.emailSendFailed; _isError = true; });
     } finally {
       if (mounted) setState(() => _isResending = false);
     }
@@ -31,9 +33,9 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
     try {
       final isVerified = await ref.read(authProvider.notifier).checkEmailVerified();
       if (isVerified && mounted) { context.go('/home'); }
-      else if (mounted) { setState(() => _message = 'Email not yet verified. Please check your inbox.'); }
+      else if (mounted) { setState(() { _message = context.l10n.emailNotVerified; _isError = false; }); }
     } catch (e) {
-      if (mounted) setState(() => _message = 'Failed to check verification status.');
+      if (mounted) setState(() { _message = context.l10n.checkVerificationFailed; _isError = true; });
     } finally {
       if (mounted) setState(() => _isChecking = false);
     }
@@ -74,7 +76,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                               child: Icon(PhosphorIconsLight.envelope, size: 40, color: colorScheme.primary),
                             ),
                             const SizedBox(height: DesignTokens.spaceLg),
-                            Text('Verify Your Email',
+                            Text(context.l10n.verifyEmailTitle,
                               style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
                               textAlign: TextAlign.center),
                             const SizedBox(height: DesignTokens.spaceMd),
@@ -90,7 +92,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                                 textAlign: TextAlign.center),
                             ),
                             const SizedBox(height: DesignTokens.spaceMd),
-                            Text('Please check your inbox and click the verification link to continue.',
+                            Text(context.l10n.verifyEmailSubtitle,
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.4),
                               textAlign: TextAlign.center),
                             const SizedBox(height: DesignTokens.space2xl),
@@ -100,22 +102,22 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.all(DesignTokens.spaceMd),
                                   decoration: BoxDecoration(
-                                    color: _message!.contains('Failed') ? colorScheme.error.withValues(alpha: 0.1) : colorScheme.primary.withValues(alpha: 0.1),
+                                    color: _isError ? colorScheme.error.withValues(alpha: 0.1) : colorScheme.primary.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(DesignTokens.radiusSm),
-                                    border: Border.all(color: _message!.contains('Failed') ? colorScheme.error.withValues(alpha: 0.2) : colorScheme.primary.withValues(alpha: 0.2), width: 0.5),
+                                    border: Border.all(color: _isError ? colorScheme.error.withValues(alpha: 0.2) : colorScheme.primary.withValues(alpha: 0.2), width: 0.5),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        _message!.contains('Failed') ? PhosphorIconsLight.warningCircle : PhosphorIconsLight.checkCircle,
+                                        _isError ? PhosphorIconsLight.warningCircle : PhosphorIconsLight.checkCircle,
                                         size: 16,
-                                        color: _message!.contains('Failed') ? colorScheme.error : colorScheme.primary,
+                                        color: _isError ? colorScheme.error : colorScheme.primary,
                                       ),
                                       const SizedBox(width: 8),
                                       Flexible(
                                         child: Text(_message!,
-                                          style: TextStyle(color: _message!.contains('Failed') ? colorScheme.error : colorScheme.primary, fontWeight: FontWeight.w500, fontSize: DesignTokens.fontSm2),
+                                          style: TextStyle(color: _isError ? colorScheme.error : colorScheme.primary, fontWeight: FontWeight.w500, fontSize: DesignTokens.fontSm2),
                                           textAlign: TextAlign.center),
                                       ),
                                     ],
@@ -123,23 +125,23 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                                 ),
                               ),
                             ThemeButton(
-                              text: 'Continue',
+                              text: context.l10n.continueButton,
                               onPressed: _checkVerification,
                               isLoading: _isChecking,
                               fullWidth: true,
                               trailingIcon: PhosphorIconsLight.check,
                               borderRadius: DesignTokens.radiusFull,
                               height: 56,
-                              semanticLabel: 'Check email verification',
+                              semanticLabel: context.l10n.verificationCheckSemantic,
                             ),
                             const SizedBox(height: DesignTokens.spaceMd),
                             ThemeButton(
-                              text: 'Resend Verification Email',
+                              text: context.l10n.resendVerificationEmail,
                               onPressed: _resendVerification,
                               isLoading: _isResending,
                               variant: ThemeButtonVariant.outlined,
                               fullWidth: true,
-                              semanticLabel: 'Resend verification email',
+                              semanticLabel: context.l10n.verificationResendSemantic,
                             ),
                           ],
                         ),
@@ -151,7 +153,7 @@ class _VerificationScreenState extends ConsumerState<VerificationScreen> {
                     child: TextButton.icon(
                     onPressed: () => context.go('/login'),
                     icon: const Icon(PhosphorIconsLight.arrowLeft, size: 18),
-                    label: const Text('Back to Login'),
+                    label: Text(context.l10n.backToLogin),
                     style: TextButton.styleFrom(foregroundColor: colorScheme.onPrimary),
                   ),
                   ),

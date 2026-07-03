@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 // ignore_for_file: unused_element
 import '../../domain/entities/milestone.dart';
@@ -57,7 +58,7 @@ class _MilestoneFormState extends State<MilestoneForm> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 16, right: 16, top: 16),
+      padding: EdgeInsetsDirectional.only(bottom: MediaQuery.of(context).viewInsets.bottom, start: 16, end: 16, top: 16),
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -68,7 +69,7 @@ class _MilestoneFormState extends State<MilestoneForm> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Add Milestone', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text(context.l10n.addMilestoneTitle, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
                   IconButton(icon: const Icon(Icons.close, color: Colors.grey), onPressed: () => Navigator.pop(context)),
                 ],
               ),
@@ -76,15 +77,15 @@ class _MilestoneFormState extends State<MilestoneForm> {
               TextFormField(
                 controller: _titleController,
                 style: const TextStyle(color: Colors.white),
-                decoration: _inputDeco('Title *'),
-                validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                decoration: _inputDeco(context.l10n.titleRequired),
+                validator: (v) => v == null || v.trim().isEmpty ? context.l10n.requiredValidation : null,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _category,
+                initialValue: _category,
                 dropdownColor: const Color(0xFF1E1E1E),
                 style: const TextStyle(color: Colors.white),
-                decoration: _inputDeco('Category'),
+                decoration: _inputDeco(context.l10n.categoryLabel),
                 items: ["Motor","Cognitive","Language","Social","Physical","Emotional","Health","Sleep","Feeding","Play","Development","Diaper"].map((c) {
                   return DropdownMenuItem(value: c, child: Text(c));
                 }).toList(),
@@ -94,7 +95,7 @@ class _MilestoneFormState extends State<MilestoneForm> {
               InkWell(
                 onTap: _pickDate,
                 child: InputDecorator(
-                  decoration: _inputDeco('Date'),
+                  decoration: _inputDeco(context.l10n.dateLabel),
                   child: Text(
                     '${_date.day}/${_date.month}/${_date.year}',
                     style: const TextStyle(color: Colors.white),
@@ -105,7 +106,7 @@ class _MilestoneFormState extends State<MilestoneForm> {
               TextFormField(
                 controller: _descController,
                 style: const TextStyle(color: Colors.white),
-                decoration: _inputDeco('Description (optional)'),
+                decoration: _inputDeco(context.l10n.descriptionOptional),
                 maxLines: 3,
               ),
               const SizedBox(height: 20),
@@ -117,7 +118,7 @@ class _MilestoneFormState extends State<MilestoneForm> {
                 ),
                 child: _isLoading
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text('Save Milestone', style: TextStyle(fontSize: 16)),
+                    : Text(context.l10n.saveMilestoneTitle, style: const TextStyle(fontSize: 16)),
               ),
               const SizedBox(height: 16),
             ],

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:baby_mon/features/companion/data/companion_repository.dart';
 import 'package:baby_mon/features/companion/data/llm/rag_service.dart';
 import 'package:baby_mon/features/companion/data/llm/system_prompt_builder.dart';
@@ -70,7 +71,10 @@ class LlmInferenceService {
     //    First message: full identity + disclaimer + RAG
     //    Subsequent:    context-only (RAG) — stops model from repeating itself
     if (!_sessionStarted) {
-      print('[PROMPT] === FIRST (full identity) ===\n$systemPrompt\n=== END ===');
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('[PROMPT] === FIRST (full identity) ===\n$systemPrompt\n=== END ===');
+      }
       _engine.startSession(systemPrompt);
       _sessionStarted = true;
     } else {
@@ -82,7 +86,10 @@ class LlmInferenceService {
         feedingSummary: feedingSummary,
         growthSummary: growthSummary,
       );
-      print('[PROMPT] === Subsequent (context-only) ===\n$contextPrompt\n=== END ===');
+      if (kDebugMode) {
+        // ignore: avoid_print
+        print('[PROMPT] === Subsequent (context-only) ===\n$contextPrompt\n=== END ===');
+      }
       _engine.updateSystemPrompt(contextPrompt);
     }
 

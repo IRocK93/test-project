@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/features/auth/auth.dart';
 import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
 class ResetPasswordScreen extends ConsumerStatefulWidget {
@@ -30,7 +31,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     try {
       await ref.read(authProvider.notifier).resetPassword(widget.token, _newPasswordController.text);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password reset successful. Please login.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.passwordResetSuccess)));
         Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
       }
     } catch (e) {
@@ -86,7 +87,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                               ),
                               const SizedBox(height: DesignTokens.spaceLg),
                               Text(
-                                'Reset Password',
+                                context.l10n.resetPasswordTitle,
                                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.w700,
                                   fontSize: DesignTokens.fontXl2,
@@ -94,7 +95,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                               ),
                               const SizedBox(height: DesignTokens.spaceXs),
                               Text(
-                                'Enter your new password below.',
+                                context.l10n.resetPasswordSubtitle,
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 14),
                               ),
                               const SizedBox(height: DesignTokens.space2xl),
@@ -102,10 +103,10 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                               TextFormField(
                                 controller: _newPasswordController,
                                 decoration: InputDecoration(
-                                  labelText: 'New Password',
+                                  labelText: context.l10n.newPasswordLabel,
                                   prefixIcon: const Icon(PhosphorIconsLight.lock),
                                   suffixIcon: Semantics(
-                                    label: 'Toggle password visibility',
+                                    label: context.l10n.togglePasswordVisibility,
                                     child: IconButton(
                                       icon: Icon(_obscureNewPassword
                                           ? PhosphorIconsLight.eyeSlash
@@ -116,7 +117,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                                 ),
                                 obscureText: _obscureNewPassword,
                                 validator: (value) => value!.length < 6
-                                    ? 'Password must be at least 6 characters'
+                                    ? context.l10n.passwordMinLength
                                     : null,
                               ),
                               const SizedBox(height: DesignTokens.spaceMd),
@@ -124,10 +125,10 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                               TextFormField(
                                 controller: _confirmPasswordController,
                                 decoration: InputDecoration(
-                                  labelText: 'Confirm Password',
+                                  labelText: context.l10n.confirmPassword,
                                   prefixIcon: const Icon(PhosphorIconsLight.lock),
                                   suffixIcon: Semantics(
-                                    label: 'Toggle password visibility',
+                                    label: context.l10n.togglePasswordVisibility,
                                     child: IconButton(
                                       icon: Icon(_obscureConfirmPassword
                                           ? PhosphorIconsLight.eyeSlash
@@ -139,20 +140,20 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                                 ),
                                 obscureText: _obscureConfirmPassword,
                                 validator: (value) => value != _newPasswordController.text
-                                    ? 'Passwords do not match'
+                                    ? context.l10n.passwordsDoNotMatch
                                     : null,
                               ),
                               const SizedBox(height: DesignTokens.space2xl),
                               // ── Reset Button ──
                               ThemeButton(
-                                text: 'Reset Password',
+                                text: context.l10n.resetPassword,
                                 onPressed: _resetPassword,
                                 isLoading: _isResetting,
                                 fullWidth: true,
                                 trailingIcon: PhosphorIconsLight.check,
                                 borderRadius: DesignTokens.radiusFull,
                                 height: 56,
-                                semanticLabel: 'Reset your password',
+                                semanticLabel: context.l10n.resetPasswordSemantic,
                               ),
                             ],
                           ),

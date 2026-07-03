@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
 
@@ -12,6 +13,7 @@ import 'package:baby_mon/core/theme/design_tokens.dart';
 /// Color of the dot/rail is derived deterministically from [seed] so
 /// the same milestone renders the same color across reloads.
 class MilestoneTimelineRow extends StatelessWidget {
+  static final _monthFmt = DateFormat.MMM();
   final String title;
   final String? notes;
   final DateTime? date;
@@ -60,7 +62,7 @@ class MilestoneTimelineRow extends StatelessWidget {
               children: [
                 if (date != null)
                   Text(
-                    '${_monthShort(date!)} ${date!.day}',
+                    '${_monthFmt.format(date!)} ${date!.day}',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -130,7 +132,7 @@ class MilestoneTimelineRow extends StatelessWidget {
             Container(
               width: 4,
               height: 44,
-              margin: const EdgeInsets.only(right: DesignTokens.spaceMd),
+              margin: const EdgeInsetsDirectional.only(end: DesignTokens.spaceMd),
               decoration: BoxDecoration(
                 color: _dotColor,
                 borderRadius: BorderRadius.circular(2),
@@ -165,7 +167,7 @@ class MilestoneTimelineRow extends StatelessWidget {
             ),
             if (isPendingSync)
               Padding(
-                padding: const EdgeInsets.only(left: DesignTokens.spaceSm),
+                padding: const EdgeInsetsDirectional.only(start: DesignTokens.spaceSm),
                 child: Icon(
                   PhosphorIconsLight.cloudArrowUp,
                   color: context.colorScheme.tertiary,
@@ -189,8 +191,8 @@ class MilestoneTimelineRow extends StatelessWidget {
         direction: DismissDirection.endToStart,
         confirmDismiss: (_) => onConfirmDelete!(),
         background: Container(
-          alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 24),
+          alignment: AlignmentDirectional.centerEnd,
+          padding: const EdgeInsetsDirectional.only(end: 24),
           decoration: BoxDecoration(
             color: context.colorScheme.error,
             borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
@@ -204,11 +206,5 @@ class MilestoneTimelineRow extends StatelessWidget {
     return content;
   }
 
-  String _monthShort(DateTime d) {
-    const months = [
-      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
-    ];
-    return months[d.month - 1];
-  }
+
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart' as intl;
+import 'core/providers.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_mode_provider.dart';
 import 'package:baby_mon/features/auth/auth.dart';
@@ -16,8 +18,12 @@ class BabyMonApp extends ConsumerWidget {
     final isLoggedIn = ref.watch(isLoggedInProvider);
     final style = ref.watch(appVisualStyleProvider);
     final themeMode = ref.watch(themeModeResolverProvider);
+    final locale = ref.watch(localeProvider);
 
     final styleKey = '${style.name}_$isLoggedIn';
+
+    // Sync intl package locale so DateFormat, NumberFormat, etc. localize correctly.
+    intl.Intl.defaultLocale = locale.toLanguageTag();
 
     // Keep GoRouter singleton in sync with auth state (avoids recreating router)
     AppRouter.updateLoginState(isLoggedIn);
@@ -34,6 +40,7 @@ class BabyMonApp extends ConsumerWidget {
         theme: AppTheme.resolve(visualStyle: styleKey, brightness: Brightness.light),
         darkTheme: AppTheme.resolve(visualStyle: styleKey, brightness: Brightness.dark),
         themeMode: themeMode,
+        locale: locale,
         debugShowCheckedModeBanner: false,
         routerConfig: AppRouter.instance,
         // i18n

@@ -1,8 +1,10 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/l10n/l10n_ext.dart';
 
 /// First-launch language picker shown before login/register.
@@ -30,6 +32,10 @@ class _LanguageOnboardingScreenState extends State<LanguageOnboardingScreen>
     _LanguageOption(code: 'fr', flag: '🇫🇷', nativeName: 'Français'),
     _LanguageOption(code: 'de', flag: '🇩🇪', nativeName: 'Deutsch'),
     _LanguageOption(code: 'pt', flag: '🇵🇹', nativeName: 'Português'),
+    _LanguageOption(code: 'ar', flag: '🇸🇦', nativeName: 'العربية'),
+    _LanguageOption(code: 'he', flag: '🇮🇱', nativeName: 'עברית'),
+    _LanguageOption(code: 'zh', flag: '🇨🇳', nativeName: '中文'),
+    _LanguageOption(code: 'it', flag: '🇮🇹', nativeName: 'Italiano'),
   ];
 
   String _selected = 'en';
@@ -60,6 +66,10 @@ class _LanguageOnboardingScreenState extends State<LanguageOnboardingScreen>
   Future<void> _saveAndContinue() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_localeKey, _selected);
+    // Notify the localeProvider so MaterialApp.router rebuilds with the new locale
+    if (mounted) {
+      ProviderScope.containerOf(context).read(localeProvider.notifier).setLocale(_selected);
+    }
     if (mounted) context.go('/login');
   }
 
@@ -117,89 +127,89 @@ class _LanguageOnboardingScreenState extends State<LanguageOnboardingScreen>
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: DesignTokens.space3xl),
-                    // Glass card with language list
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
-                      child: BackdropFilter(
-                        filter: ui.ImageFilter.blur(
-                          sigmaX: DesignTokens.glassBlurMd,
-                          sigmaY: DesignTokens.glassBlurMd,
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.all(DesignTokens.spaceLg),
-                          decoration: BoxDecoration(
-                            color: AppColors.glassWhite,
-                            borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
-                            border: Border.all(
-                              color: AppColors.glassBorder,
-                              width: DesignTokens.glassBorderWidth,
-                            ),
+                    // Glass card with language list — scrollable to prevent overflow
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
+                        child: BackdropFilter(
+                          filter: ui.ImageFilter.blur(
+                            sigmaX: DesignTokens.glassBlurMd,
+                            sigmaY: DesignTokens.glassBlurMd,
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: _languages.map((lang) {
-                              final isSelected = _selected == lang.code;
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: DesignTokens.spaceSm),
-                                child: Semantics(
-                                  label: '${lang.nativeName}, ${isSelected ? "selected" : "not selected"}',
-                                  button: true,
-                                  selected: isSelected,
-                                  child: InkWell(
-                                    onTap: () => setState(() => _selected = lang.code),
-                                    borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                                    child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
-                                      curve: Curves.easeInOut,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: DesignTokens.spaceMd,
-                                        vertical: DesignTokens.spaceMd,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? cs.primaryContainer.withValues(alpha: 0.5)
-                                            : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? cs.primary.withValues(alpha: 0.4)
-                                              : Colors.transparent,
-                                          width: 1.5,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.glassWhite,
+                              borderRadius: BorderRadius.circular(DesignTokens.radius2xl),
+                              border: Border.all(
+                                color: AppColors.glassBorder,
+                                width: DesignTokens.glassBorderWidth,
+                              ),
+                            ),
+                            child: ListView(
+                              padding: const EdgeInsets.all(DesignTokens.spaceLg),
+                              children: _languages.map((lang) {
+                                final isSelected = _selected == lang.code;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: DesignTokens.spaceSm),
+                                  child: Semantics(
+                                    label: '${lang.nativeName}, ${isSelected ? "selected" : "not selected"}',
+                                    button: true,
+                                    selected: isSelected,
+                                    child: InkWell(
+                                      onTap: () => setState(() => _selected = lang.code),
+                                      borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                                      child: AnimatedContainer(
+                                        duration: const Duration(milliseconds: 200),
+                                        curve: Curves.easeInOut,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: DesignTokens.spaceMd,
+                                          vertical: DesignTokens.spaceMd,
                                         ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Text(lang.flag, style: const TextStyle(fontSize: 24)),
-                                          const SizedBox(width: DesignTokens.spaceMd),
-                                          Expanded(
-                                            child: Text(
-                                              lang.nativeName,
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                                color: cs.onSurface,
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? cs.primaryContainer.withValues(alpha: 0.5)
+                                              : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? cs.primary.withValues(alpha: 0.4)
+                                                : Colors.transparent,
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Text(lang.flag, style: const TextStyle(fontSize: 24)),
+                                            const SizedBox(width: DesignTokens.spaceMd),
+                                            Expanded(
+                                              child: Text(
+                                                lang.nativeName,
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                                  color: cs.onSurface,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                          if (isSelected)
-                                            Icon(
-                                              Icons.check_circle,
-                                              color: cs.primary,
-                                              size: 22,
-                                            ),
-                                        ],
+                                            if (isSelected)
+                                              Icon(
+                                                Icons.check_circle,
+                                                color: cs.primary,
+                                                size: 22,
+                                              ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
+                                );
+                              }).toList(),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    const Spacer(),
-                    // Continue button
+                    const SizedBox(height: DesignTokens.spaceMd),
                     ElevatedButton(
                       onPressed: _saveAndContinue,
                       style: ElevatedButton.styleFrom(

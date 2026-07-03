@@ -137,7 +137,7 @@ class SettingsRow extends StatelessWidget {
             trailing!
           else if (onTap != null)
             Padding(
-              padding: const EdgeInsets.only(left: DesignTokens.spaceSm),
+              padding: const EdgeInsetsDirectional.only(start: DesignTokens.spaceSm),
               child: Icon(
                 PhosphorIconsLight.caretRight,
                 size: 22,

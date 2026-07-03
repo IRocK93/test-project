@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/core.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 
 /// Discover screen — placeholder for future content with premium glassmorphism design.
 class DiscoverScreen extends StatelessWidget {
@@ -12,7 +13,7 @@ class DiscoverScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       appBar: ScreenHeader(
-        title: 'Discover',
+        title: context.l10n.discoverTitle,
         onBack: () => popOrGoHome(context),
       ),
       body: PremiumBackground(
@@ -53,7 +54,7 @@ class DiscoverScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(DesignTokens.radiusFull),
                     ),
                     child: Text(
-                      'COMING SOON',
+                      context.l10n.comingSoonTag,
                       style: TextStyle(
                         fontSize: DesignTokens.font2xs,
                         fontWeight: FontWeight.w700,
@@ -69,7 +70,7 @@ class DiscoverScreen extends StatelessWidget {
                 StaggeredFadeSlide(
                   index: 2,
                   child: Text(
-                    'Discover',
+                    context.l10n.discoverTitle,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.5,
@@ -79,12 +80,12 @@ class DiscoverScreen extends StatelessWidget {
                 const SizedBox(height: DesignTokens.spaceSm),
 
                 // ── Description ──
-                const StaggeredFadeSlide(
+                StaggeredFadeSlide(
                   index: 3,
                   child: Text(
-                    'New features, tips, and community content coming your way.',
+                    context.l10n.discoverDescription,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 15,
                       height: 1.6,
                       letterSpacing: 0.3,
@@ -128,7 +129,7 @@ class DiscoverScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Stay tuned!',
+                              context.l10n.stayTunedTitle,
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
@@ -138,7 +139,7 @@ class DiscoverScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'We\'re working on something special',
+                              context.l10n.stayTunedSubtitle,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: context.colorScheme.onSurfaceVariant,
@@ -158,17 +159,17 @@ class DiscoverScreen extends StatelessWidget {
       ),
       // ── InfoFab: Get notified / explore IP ──
       floatingActionButton: InfoFab(
-          tooltip: 'Discover actions',
+          tooltip: context.l10n.discoverActions,
           icon: PhosphorIconsLight.compass,
           children: [
             InfoFabAction(
-              tooltip: 'Notify me when ready',
+              tooltip: context.l10n.notifyMeWhenReady,
               infoDescription: 'Notify',
               backgroundColor: context.colorScheme.primary,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('We\'ll notify you when Discover launches!'),
+                    content: Text(context.l10n.notifyWhenReady),
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
@@ -179,13 +180,13 @@ class DiscoverScreen extends StatelessWidget {
               child: Icon(PhosphorIconsLight.bell, color: context.colorScheme.onPrimary),
             ),
             InfoFabAction(
-              tooltip: 'What\'s coming',
+              tooltip: context.l10n.whatsComing,
               infoDescription: 'Discover',
               backgroundColor: context.colorScheme.primary,
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('Discover features: Tips, community content, stage-based insights, and more!'),
+                    content: Text(context.l10n.discoverComingSoon),
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(DesignTokens.radiusMd),

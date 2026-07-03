@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../domain/entities/activity.dart';
@@ -7,7 +8,7 @@ import '../widgets/activity_type_selector.dart';
 import '../widgets/add_activity_sheet.dart';
 
 class TrackingScreen extends StatefulWidget {
-  const TrackingScreen({Key? key}) : super(key: key);
+  const TrackingScreen({super.key});
 
   @override
   State<TrackingScreen> createState() => _TrackingScreenState();
@@ -37,7 +38,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Activity Log'),
+        title: Text(context.l10n.appTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
@@ -48,7 +49,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddActivitySheet(ActivityType.feeding),
         icon: const Icon(Icons.add),
-        label: const Text('Add Activity'),
+        label: Text(context.l10n.addActivity),
       ),
       body: Consumer<ActivityProvider>(
         builder: (context, provider, _) {
@@ -61,11 +62,11 @@ class _TrackingScreenState extends State<TrackingScreen> {
           return RefreshIndicator(
             onRefresh: () => provider.loadActivities(type: provider.filterType),
             child: provider.activities.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
-                      'No activities yet. Start tracking!',
+                      context.l10n.noActivitiesMessage,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         color: Colors.grey,
                       ),

@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import '../../domain/entities/health_record.dart';
 import 'package:intl/intl.dart';
@@ -22,7 +23,7 @@ class HealthRecordCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateStr = record.happenedAt != null
         ? DateFormat('MMM d, yyyy').format(record.happenedAt!)
-        : 'No date';
+        : context.l10n.noDateFallback;
 
     return Dismissible(
       key: Key(record.id),
@@ -31,11 +32,11 @@ class HealthRecordCard extends StatelessWidget {
         return await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Delete Health Record?'),
-            content: const Text('This cannot be undone.'),
+            title: Text(context.l10n.deleteHealthRecordTitle),
+            content: Text(context.l10n.deleteConfirmText),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-              TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.l10n.cancel)),
+              TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(context.l10n.delete, style: const TextStyle(color: Colors.red))),
             ],
           ),
         ) ?? false;

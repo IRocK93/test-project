@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/core.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/mixins/mixins.dart';
@@ -26,11 +27,11 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen>
   @override
   IconData get emptyIcon => PhosphorIconsLight.camera;
   @override
-  String get emptyTitle => 'Start your baby album';
+  String get emptyTitle => context.l10n.startAlbum;
   @override
-  String get emptySubtitle => 'Tap + to add photos';
+  String get emptySubtitle => context.l10n.tapToAddPhotos;
   @override
-  String get emptyActionLabel => 'Add a photo';
+  String get emptyActionLabel => context.l10n.addPhoto;
   @override
   void onEmptyAction() => _pickFromGallery();
   @override
@@ -39,8 +40,9 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen>
     _photos = parseItemsTyped(response.data);
   }
   Future<void> _uploadPhoto(File file) async {
-    // Capture messenger upfront so we can safely use it after async gaps.
+    // Capture messenger and strings upfront so we can safely use them after async gaps.
     final messenger = ScaffoldMessenger.of(context);
+    final photoUploadedText = context.l10n.photoUploaded;
     if (babyMonId == null) return;
     try {
       final bytes = await file.readAsBytes();
@@ -52,7 +54,7 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen>
       });
       await loadData(force: true);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Photo uploaded!')),
+        SnackBar(content: Text(photoUploadedText)),
       );
     } catch (e) {
       messenger.showSnackBar(
@@ -72,16 +74,17 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen>
   }
   Future<void> _deletePhoto(String id, int index) async {
     final messenger = ScaffoldMessenger.of(context);
+    final photoDeletedText = context.l10n.photoDeleted;
     final confirmed = await ConfirmDeleteDialog.show(
       context,
-      title: 'Delete Photo',
-      message: 'Remove this photo?',
+      title: context.l10n.deletePhotoTitle,
+      message: context.l10n.removePhotoConfirm,
     );
     if (!confirmed) return;
     try {
       await ref.read(apiClientProvider).deletePhoto(id);
       setState(() => _photos.removeAt(index));
-      messenger.showSnackBar(const SnackBar(content: Text('Photo deleted')));
+      messenger.showSnackBar(SnackBar(content: Text(photoDeletedText)));
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
     }
@@ -112,7 +115,7 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen>
     final grouped = _groupedPhotos();
     return Scaffold(
       appBar: ScreenHeader(
-        title: 'Album',
+        title: context.l10n.albumTitle,
         onBack: () => popOrGoHome(context),
       ),
       body: PremiumBackground(
@@ -143,18 +146,18 @@ class _AlbumScreenState extends ConsumerState<AlbumScreen>
             ),
       floatingActionButton: hasBabyMon
           ? InfoFab(
-              tooltip: 'Add a photo to your album',
+              tooltip: context.l10n.addPhoto,
               icon: PhosphorIconsLight.camera,
               children: [
                 InfoFabAction(
-                  tooltip: 'Take a photo',
-                  infoDescription: 'Camera',
+                  tooltip: context.l10n.takePhotoAction,
+                  infoDescription: context.l10n.cameraLabel,
                   onTap: _pickFromCamera,
                   child: Icon(PhosphorIconsLight.camera, color: context.colorScheme.onPrimary),
                 ),
                 InfoFabAction(
-                  tooltip: 'Pick from gallery',
-                  infoDescription: 'Gallery',
+                  tooltip: context.l10n.pickFromGallery,
+                  infoDescription: context.l10n.galleryLabel,
                   onTap: _pickFromGallery,
                   child: Icon(PhosphorIconsLight.images, color: context.colorScheme.onPrimary),
                 ),

@@ -29,7 +29,7 @@ class GoldenErrorBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
+                const Text(
                   'Something went wrong',
                   style: TextStyle(
                     fontSize: 15,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/features/companion/domain/models/chat_message.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/chat_bubble.dart';
 import 'package:baby_mon/features/companion/presentation/widgets/chat_input_bar.dart';
@@ -81,19 +82,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     'allergic reaction swelling',
   ];
 
-  static const _emergencyResponse =
-      '**MEDICAL EMERGENCY**\n\n'
-      'Based on what you\'ve described, this may be a medical emergency.\n\n'
-      '**Please stop using this app immediately and call 911 (or your local '
-      'emergency number) right now.**\n\n'
-      'If you are outside the US, here are emergency numbers:\n'
-      '• UK / Australia: 999 or 112\n'
-      '• EU: 112\n'
-      '• India: 102 or 112\n\n'
-      'Do not wait. Do not drive yourself to the hospital if the situation is '
-      'life-threatening — call an ambulance.\n\n'
-      'The AI Companion is NOT a substitute for emergency medical services. '
-      'It cannot diagnose or treat medical emergencies.';
+  String _emergencyResponse() => context.l10n.emergencyResponseFull;
 
   bool _isMedicalEmergency(String text) {
     final lower = text.toLowerCase();
@@ -142,7 +131,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         inferenceService.contentOnlyMode = true;
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Couldn\'t load model. Switched to Basic mode.')),
+            SnackBar(content: Text(context.l10n.couldNotLoadModelMessage)),
           );
         }
       }
@@ -192,6 +181,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  String _safetyWarning(SafetyCategory c) {
+    switch (c) {
+      case SafetyCategory.emergency: return context.l10n.safetyWarningEmergency;
+      case SafetyCategory.medication: return context.l10n.safetyWarningMedication;
+      case SafetyCategory.antiVaccine: return context.l10n.safetyWarningAntiVax;
+      case SafetyCategory.hallucination: return context.l10n.safetyWarningHallucination;
+      default: return '';
+    }
+  }
+
   @override
   void dispose() {
     // Unload model to free RAM when leaving chat
@@ -211,7 +210,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     if (_isMedicalEmergency(text)) {
       setState(() {
         _messages.add(ChatMessage(role: ChatRole.user, content: text, timestamp: DateTime.now()));
-        _messages.add(ChatMessage(role: ChatRole.assistant, content: _emergencyResponse, timestamp: DateTime.now()));
+        _messages.add(ChatMessage(role: ChatRole.assistant, content: _emergencyResponse(), timestamp: DateTime.now()));
       });
       _scrollToBottom();
       return;
@@ -219,7 +218,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
     final inferenceService = ref.read(llmInferenceServiceProvider);
     if (!inferenceService.isReady) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('AI model not loaded. Please download the model first.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.modelNotLoaded)));
       return;
     }
     setState(() {
@@ -254,7 +253,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           setState(() {
             _messages[assistantIndex] = ChatMessage(
               role: ChatRole.assistant,
-              content: '$fullResponse\n\n⚠️ ${safety.warning}',
+              content: '$fullResponse${context.l10n.safetyWarningPrefix}${_safetyWarning(safety.category)}',
               timestamp: assistantMessage.timestamp,
             );
           });
@@ -266,7 +265,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         if (mounted) {
           setState(() {
             _isGenerating = false;
-            _messages[assistantIndex] = ChatMessage(role: ChatRole.assistant, content: '[Error generating response. Please try again.]', timestamp: assistantMessage.timestamp);
+            _messages[assistantIndex] = ChatMessage(role: ChatRole.assistant, content: context.l10n.errorGeneratingResponse, timestamp: assistantMessage.timestamp);
           });
         }
         _scrollToBottom();
@@ -286,11 +285,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ask the Companion'),
+        title: Text(context.l10n.askCompanion),
         actions: [
           IconButton(
             icon: Icon(PhosphorIconsLight.info, color: context.textSecondary),
-            tooltip: 'About the AI Companion',
+            tooltip: context.l10n.aboutAiCompanion,
             onPressed: _showAboutDialog,
           ),
         ],
@@ -329,7 +328,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: Icon(PhosphorIconsLight.chatCircleDots, size: 48, color: context.colorScheme.primary),
             ),
             const SizedBox(height: DesignTokens.spaceXl),
-            const Text('Ask the Companion', style: TextStyle(fontSize: DesignTokens.fontXl2, fontWeight: FontWeight.w700)),
+            Text(context.l10n.askCompanion, style: const TextStyle(fontSize: DesignTokens.fontXl2, fontWeight: FontWeight.w700)),
             const SizedBox(height: DesignTokens.spaceSm),
             Text(
               'I\'m powered by an on-device AI that runs entirely on your phone. '
@@ -339,8 +338,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
             const SizedBox(height: DesignTokens.space2xl),
             _suggestionChip('What should my 4-month-old\'s sleep schedule look like?'),
-            _suggestionChip('Is it normal for my baby to refuse solids at 6 months?'),
-            _suggestionChip('When should I be concerned about a fever?'),
+            _suggestionChip(context.l10n.isItNormalRefuseSolids),
+            _suggestionChip(context.l10n.whenConcernedFever),
           ],
         ),
       ),
@@ -362,15 +361,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('About the AI Companion'),
-        content: const Text(
-          'The AI Companion runs entirely on your device using a small language model. '
-          'No data leaves your phone.\n\n'
-          'Responses are grounded in parenting and child development content.\n\n'
-          'The AI Companion is not a substitute for professional medical advice. '
-          'Always consult your healthcare provider for medical concerns.',
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Got it'))],
+        title: Text(context.l10n.aboutAiCompanion),
+        content: Text(context.l10n.aboutAiCompanionDialogText),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: Text(context.l10n.gotIt))],
       ),
     );
   }

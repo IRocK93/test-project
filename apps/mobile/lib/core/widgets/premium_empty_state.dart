@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../theme/design_tokens.dart';
@@ -27,27 +28,29 @@ class PremiumEmptyState extends StatelessWidget {
 
   /// Quick preset for "No data yet" with add action
   static PremiumEmptyState noData({
+    required BuildContext context,
     required String itemName,
     VoidCallback? onAdd,
   }) {
     return PremiumEmptyState(
       icon: PhosphorIconsLight.mailbox,
-      title: 'No $itemName yet',
-      subtitle: 'Tap + to add your first $itemName',
-      actionLabel: onAdd != null ? 'Add $itemName' : null,
+      title: context.l10n.emptyStateNoDataTitle(itemName),
+      subtitle: context.l10n.emptyStateNoDataSubtitle(itemName),
+      actionLabel: onAdd != null ? context.l10n.addItemAction(itemName) : null,
       onAction: onAdd,
     );
   }
 
   /// Quick preset for "Coming soon" feature
   static PremiumEmptyState comingSoon({
+    required BuildContext context,
     String featureName = 'This feature',
     IconData icon = PhosphorIconsLight.wrench,
   }) {
     return PremiumEmptyState(
       icon: icon,
-      title: 'Coming Soon',
-      subtitle: '$featureName is under development.',
+      title: context.l10n.emptyStateComingSoonTitle,
+      subtitle: context.l10n.emptyStateComingSoonSubtitle(featureName),
     );
   }
 

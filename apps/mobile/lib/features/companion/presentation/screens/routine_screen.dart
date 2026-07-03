@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/utils/tier_required_exception.dart';
 import 'package:baby_mon/features/companion/data/sync_persistence.dart';
 import 'package:baby_mon/features/companion/presentation/providers/companion_provider.dart';
@@ -53,12 +54,12 @@ class RoutineScreenState extends ConsumerState<RoutineScreen>
             children: [
               Icon(PhosphorIconsLight.warning, size: 48, color: context.textSecondary),
               const SizedBox(height: 16),
-              Text('Unable to load routine', style: TextStyle(color: context.textSecondary)),
+              Text(context.l10n.unableToLoadRoutine, style: TextStyle(color: context.textSecondary)),
               const SizedBox(height: 16),
               TextButton.icon(
                 onPressed: () => ref.invalidate(routineProvider(widget.babyMonId)),
                 icon: const Icon(PhosphorIconsLight.arrowCounterClockwise, size: 18),
-                label: const Text('Retry'),
+                label: Text(context.l10n.retry),
               ),
             ],
           ),
@@ -107,7 +108,7 @@ class RoutineScreenState extends ConsumerState<RoutineScreen>
       if (effectiveCompleted.contains(k)) { effectiveCompleted.remove(k); } else { effectiveCompleted.add(k); }
     }
     final completed = effectiveCompleted.length;
-    final title = template['title'] as String? ?? 'Daily Routine';
+    final title = template['title'] as String? ?? context.l10n.dailyRoutineTitle;
     final description = template['description'] as String? ?? '';
 
     return Scaffold(
@@ -201,9 +202,9 @@ class RoutineScreenState extends ConsumerState<RoutineScreen>
                 children: [
                   Icon(PhosphorIconsLight.clock, size: 20, color: context.colorScheme.primary),
                   const SizedBox(width: 8),
-                  const Text(
-                    'TODAY\'S SCHEDULE',
-                    style: TextStyle(fontSize: DesignTokens.font2xs, fontWeight: FontWeight.w700, letterSpacing: 1.2),
+                  Text(
+                    context.l10n.todaysSchedule,
+                    style: const TextStyle(fontSize: DesignTokens.font2xs, fontWeight: FontWeight.w700, letterSpacing: 1.2),
                   ),
                 ],
               ),
@@ -242,9 +243,9 @@ class RoutineScreenState extends ConsumerState<RoutineScreen>
                   children: [
                     Icon(PhosphorIconsLight.moonStars, size: 20, color: context.colorScheme.primary),
                     const SizedBox(width: 8),
-                    const Text(
-                      'BEDTIME RITUAL',
-                      style: TextStyle(fontSize: DesignTokens.font2xs, fontWeight: FontWeight.w700, letterSpacing: 1.2),
+                    Text(
+                      context.l10n.bedtimeRitual,
+                      style: const TextStyle(fontSize: DesignTokens.font2xs, fontWeight: FontWeight.w700, letterSpacing: 1.2),
                     ),
                   ],
                 ),
@@ -296,7 +297,7 @@ class RoutineScreenState extends ConsumerState<RoutineScreen>
             ),
             const SizedBox(height: DesignTokens.spaceLg),
             Text(
-              'Routine Coming Soon',
+              context.l10n.routineComingSoon,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),

@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -125,7 +126,7 @@ class PremiumStatCard extends StatelessWidget {
 
     if (onTap != null) {
       return Semantics(
-        label: 'Tap',
+        label: context.l10n.semanticTap,
         button: true,
         child: GestureDetector(onTap: onTap, child: statTile),
       );

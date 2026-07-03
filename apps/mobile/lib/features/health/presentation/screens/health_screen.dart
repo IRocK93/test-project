@@ -1,4 +1,3 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart' as semantics;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/providers.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/mixins/mixins.dart';
 import 'package:baby_mon/features/settings/settings.dart';
 import 'package:baby_mon/core/constants/constants.dart';
@@ -14,6 +14,7 @@ import 'package:baby_mon/core/utils/utils.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/features/health/domain/entities/health_record.dart';
 import 'package:baby_mon/features/health/domain/entities/allergy.dart';
+import 'package:baby_mon/features/health/domain/entities/health_value_keys.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
 import 'package:baby_mon/features/dashboard/presentation/widgets/level_up_celebration.dart';
 class HealthScreen extends ConsumerStatefulWidget {
@@ -113,38 +114,94 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     HealthCategory.bowelMovement, HealthCategory.vaccination,
     HealthCategory.allergy, HealthCategory.other,
   ];
-  static const List<String> _injurySeverities = ['Mild', 'Moderate', 'Severe', 'Critical'];
-  static const List<String> _bowelColors = ['Brown', 'Green', 'Yellow', 'Red', 'Black', 'White / Clay', 'Orange'];
-  static const List<String> _vaccines = [
-    'Other', 'Hepatitis B (HepB)', 'Rotavirus (RV)', 'DTaP', 'Hib', 'Pneumococcal (PCV13)', 'Polio (IPV)',
-    'Influenza (Flu)', 'MMR', 'Varicella (Chickenpox)', 'Hepatitis A (HepA)', 'Meningococcal (MenACWY)',
-    'COVID-19', 'HPV', 'Tdap', 'RSV',
+  /// Returns injury severity options as (apiKey, localizedLabel) pairs.
+  List<MapEntry<String, String>> get _injurySeverityOptions => [
+    MapEntry(InjurySeverityKey.mild, context.l10n.severityMild),
+    MapEntry(InjurySeverityKey.moderate, context.l10n.severityModerate),
+    MapEntry(InjurySeverityKey.severe, context.l10n.severitySevere),
+    MapEntry(InjurySeverityKey.critical, context.l10n.severityCritical),
   ];
-  static const List<String> _allergySeverities = ['Mild', 'Moderate', 'Severe', 'Life-Threatening'];
-  static const List<String> _allergyOptions = [
-    'Other', 'Peanuts', 'Tree Nuts', 'Milk (Dairy)', 'Eggs', 'Soy', 'Wheat', 'Fish', 'Shellfish',
-    'Sesame', 'Pollen (Hay Fever)', 'Dust Mites', 'Mold', 'Pet Dander', 'Insect Stings',
-    'Latex', 'Penicillin', 'NSAIDs', 'Sulfa Drugs',
+  /// Returns bowel color options as (apiKey, localizedLabel) pairs.
+  List<MapEntry<String, String>> get _bowelColorOptions => [
+    MapEntry(BowelColorKey.brown, context.l10n.colorBrown),
+    MapEntry(BowelColorKey.green, context.l10n.colorGreen),
+    MapEntry(BowelColorKey.yellow, context.l10n.colorYellow),
+    MapEntry(BowelColorKey.red, context.l10n.colorRed),
+    MapEntry(BowelColorKey.black, context.l10n.colorBlack),
+    MapEntry(BowelColorKey.whiteClay, context.l10n.colorWhiteClay),
+    MapEntry(BowelColorKey.orange, context.l10n.colorOrange),
+  ];
+  /// Returns allergy severity options as (apiKey, localizedLabel) pairs.
+  List<MapEntry<String, String>> get _allergySeverityOptions => [
+    MapEntry(AllergySeverityKey.mild, context.l10n.allergySeverityMild),
+    MapEntry(AllergySeverityKey.moderate, context.l10n.allergySeverityModerate),
+    MapEntry(AllergySeverityKey.severe, context.l10n.allergySeveritySevere),
+    MapEntry(AllergySeverityKey.lifeThreatening, context.l10n.allergySeverityLifeThreatening),
   ];
   IconData _categoryIcon(String cat) =>
       HealthCategory.fromApiKey(cat)?.icon ?? PhosphorIconsLight.note;
-  String _categoryLabel(String cat) =>
-      HealthCategory.fromApiKey(cat)?.label ??
-      (cat.isEmpty ? '' : cat[0].toUpperCase() + cat.substring(1).toLowerCase());
+  String _categoryLabel(String cat) {
+    final hc = HealthCategory.fromApiKey(cat);
+    if (hc != null) return _healthCategoryLabel(hc);
+    return (cat.isEmpty ? '' : cat[0].toUpperCase() + cat.substring(1).toLowerCase());
+  }
+  String _healthCategoryLabel(HealthCategory c) {
+    switch (c) {
+      case HealthCategory.weight: return context.l10n.weightCategoryLabel;
+      case HealthCategory.height: return context.l10n.heightCategoryLabel;
+      case HealthCategory.headCircumference: return context.l10n.headCircCategoryLabel;
+      case HealthCategory.temperature: return context.l10n.bodyTempCategoryLabel;
+      case HealthCategory.hospital: return context.l10n.hospitalCategoryLabel;
+      case HealthCategory.clinic: return context.l10n.clinicCategoryLabel;
+      case HealthCategory.injury: return context.l10n.injuryCategoryLabel;
+      case HealthCategory.bowelMovement: return context.l10n.bowelCategoryLabel;
+      case HealthCategory.vaccination: return context.l10n.vaccinationCategoryLabel;
+      case HealthCategory.allergy: return context.l10n.allergyCategoryLabel;
+      case HealthCategory.other: return context.l10n.otherCategoryLabel;
+      case HealthCategory.allergyEvent: return context.l10n.allergyCategoryLabel;
+    }
+  }
+
+  // ── Display-time localization of API keys stored in the backend ──
+  String? _localizeDisplayValue(String category, dynamic value) {
+    if (value == null) return null;
+    final v = value.toString();
+    final localizer = HealthValueLocalizer(context.l10n);
+    final cat = HealthCategory.fromApiKey(category);
+    switch (cat) {
+      case HealthCategory.injury:
+        return InjurySeverityKey.all.contains(v) ? localizer.localizeInjurySeverity(v) : v;
+      case HealthCategory.bowelMovement:
+        return BowelColorKey.all.contains(v) ? localizer.localizeBowelColor(v) : v;
+      case HealthCategory.vaccination:
+        return VaccineKey.all.contains(v) ? localizer.localizeVaccine(v) : v;
+      default:
+        return v;
+    }
+  }
+
+  String? _localizeDisplayUnit(String category, String? unit) {
+    if (unit == null) return null;
+    if (category == HealthCategory.bowelMovement.apiKey && StoolTypeKey.all.contains(unit)) {
+      return HealthValueLocalizer(context.l10n).localizeStoolType(unit);
+    }
+    return unit;
+  }
   Future<bool> _deleteRecord(String id, int index) async {
-    // Capture messenger upfront so we can safely use it after async gaps.
+    // Capture messenger and strings upfront so we can safely use them after async gaps.
     final messenger = ScaffoldMessenger.of(context);
+    final entryDeletedText = context.l10n.entryDeleted;
     final confirmed = await ConfirmDeleteDialog.show(
       context,
-      title: 'Delete Record',
-      message: 'Delete this health record?',
+      title: context.l10n.deleteRecordLabel,
+      message: context.l10n.deleteRecordMessage,
     );
     if (confirmed != true) return false;
     try {
       await ref.read(apiClientProvider).deleteHealthRecord(id);
       setState(() => _records.removeAt(index));
-      ref.read(appRefreshProvider.notifier).state++;
-      messenger.showSnackBar(const SnackBar(content: Text('Deleted')));
+      loadData(force: true);
+      messenger.showSnackBar(SnackBar(content: Text(entryDeletedText)));
       return true;
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
@@ -152,19 +209,23 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     }
   }
   Future<bool> _deleteAllergyEvent(String eventId) async {
-    // Capture messenger upfront so we can safely use it after async gaps.
+    // Capture messenger and strings upfront so we can safely use them after async gaps.
     final messenger = ScaffoldMessenger.of(context);
+    final entryDeletedText = context.l10n.entryDeleted;
+    final healthEventDeletedText = context.l10n.healthEventDeleted;
+    final directionality = Directionality.of(context);
     final confirmed = await ConfirmDeleteDialog.show(
       context,
-      title: 'Delete Event',
-      message: 'Delete this allergy event? (The allergy itself will remain)',
+      title: context.l10n.deleteEventLabel,
+      message: context.l10n.deleteEventMessage,
     );
     if (confirmed != true) return false;
     try {
       await ref.read(apiClientProvider).deleteAllergyEvent(babyMonId!, eventId);
-      ref.read(appRefreshProvider.notifier).state++;
-      messenger.showSnackBar(const SnackBar(content: Text('Event deleted')));
-      semantics.SemanticsService.announce('Health event deleted', ui.TextDirection.ltr);
+      loadData(force: true);
+      messenger.showSnackBar(SnackBar(content: Text(entryDeletedText)));
+      // ignore: deprecated_member_use
+      semantics.SemanticsService.announce(healthEventDeletedText, directionality);
       return true;
     } catch (e) {
       messenger.showSnackBar(SnackBar(content: Text(extractErrorMessage(e))));
@@ -184,16 +245,16 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
                     StaggeredFadeSlide(
                       index: 0,
                       child: Padding(
-                        padding: const EdgeInsets.only(
+                        padding: const EdgeInsetsDirectional.only(
                           top: 7,
-                          left: DesignTokens.spaceMd,
-                          right: DesignTokens.spaceMd,
+                          start: DesignTokens.spaceMd,
+                          end: DesignTokens.spaceMd,
                         ),
                         child: Row(children: [
                           Expanded(
                             child: _NavTile(
                               icon: PhosphorIconsLight.chartLine,
-                              label: 'Growth',
+                              label: context.l10n.growth,
                               color: context.colorScheme.primary,
                               onTap: () => context.push('/growth-chart'),
                             ),
@@ -202,7 +263,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
                           Expanded(
                             child: _NavTile(
                               icon: PhosphorIconsLight.moon,
-                              label: 'Sleep',
+                              label: context.l10n.sleep,
                               color: const Color(0xFF5C6BC0),
                               onTap: () => context.push('/sleep'),
                             ),
@@ -220,11 +281,11 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Align(
-                      alignment: Alignment.centerLeft,
+                      alignment: AlignmentDirectional.centerStart,
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: DesignTokens.spaceXs),
                         child: FilterChip(
-                          label: const Text('All records'),
+                          label: Text(context.l10n.allMilestones),
                           selected: _selectedCategory == 'ALL',
                           onSelected: (_) => setState(() => _selectedCategory = 'ALL'),
                         ),
@@ -240,9 +301,9 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
                 child: filtered.isEmpty
                     ? PremiumEmptyState(
                         icon: PhosphorIconsLight.stethoscope,
-                        title: 'No health records yet',
-                        subtitle: 'Tap the + button to add a measurement, allergy, or clinic visit.',
-                        actionLabel: 'Add record',
+                        title: context.l10n.noHealthRecordsTitle,
+                        subtitle: context.l10n.noHealthRecordsSubtitle,
+                        actionLabel: context.l10n.addRecordAction,
                         onAction: _showEventDialog,
                       )
                     : RefreshIndicator(
@@ -267,9 +328,9 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
       child: Row(
         children: categories.map((category) {
           return Padding(
-            padding: const EdgeInsets.only(right: DesignTokens.spaceSm),
+            padding: const EdgeInsetsDirectional.only(end: DesignTokens.spaceSm),
             child: FilterChip(
-              label: Text(category.label),
+              label: Text(_healthCategoryLabel(category)),
               selected: _selectedCategory == category.apiKey,
               onSelected: (_) => setState(() => _selectedCategory = category.apiKey),
             ),
@@ -284,10 +345,14 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     final isAllergyEvent = entry.isAllergyEvent;
     final iconColor = isAllergyEvent ? context.colorScheme.tertiary : context.colorScheme.primary;
     final iconData = isAllergyEvent ? PhosphorIconsLight.warning : _categoryIcon(entry.category);
-    final title = entry.title ?? _categoryLabel(entry.category);
-    final value = entry.value?.toString();
+    final title = isAllergyEvent && entry.title != null
+        ? (AllergyNameKey.all.contains(entry.title!) ? HealthValueLocalizer(context.l10n).localizeAllergyName(entry.title!) : entry.title!)
+        : _categoryLabel(entry.category);
+    // Localize API keys stored in the backend; fall back to raw value for legacy data.
+    final localizedValue = _localizeDisplayValue(entry.category, entry.value);
+    final localizedUnit = _localizeDisplayUnit(entry.category, entry.unit);
     final dateStr = entry.happenedAt != null ? DateFormat.yMMMd().format(entry.happenedAt!) : '';
-    final semLabel = '$title${value != null ? ', $value ${entry.unit ?? ''}' : ''}${dateStr.isNotEmpty ? ', $dateStr' : ''}${isAllergyEvent ? ' (allergy event)' : ''}';
+    final semLabel = '$title${localizedValue != null ? ', $localizedValue ${localizedUnit ?? ''}' : ''}${dateStr.isNotEmpty ? ', $dateStr' : ''}${isAllergyEvent ? ' (allergy event)' : ''}';
     return Semantics(
       label: semLabel,
       button: true,
@@ -295,8 +360,8 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
       padding: const EdgeInsets.only(bottom: DesignTokens.spaceSm),
       child: HealthRecordRow(
         title: title,
-        value: value,
-        unit: entry.unit,
+        value: localizedValue,
+        unit: localizedUnit,
         date: entry.happenedAt,
         notes: entry.notes,
         icon: iconData,
@@ -326,13 +391,13 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
           final minorU = selectedCategory.minorUnit;
           final computedVal = selectedCategory.computeValue(major, minor);
           return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: DesignTokens.spaceLg, right: DesignTokens.spaceLg, top: DesignTokens.spaceLg),
+          padding: EdgeInsetsDirectional.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, start: DesignTokens.spaceLg, end: DesignTokens.spaceLg, top: DesignTokens.spaceLg),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('Add Measurement', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+            Text(context.l10n.addMeasurement, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: DesignTokens.spaceMd),
             SegmentedButton<HealthCategory>(
               segments: _measurementCategories.map((c) =>
-                ButtonSegment(value: c, label: Text(c.label, maxLines: 2, textAlign: TextAlign.center, style: const TextStyle(fontSize: DesignTokens.fontXs))),
+                ButtonSegment(value: c, label: Text(_healthCategoryLabel(c), maxLines: 2, textAlign: TextAlign.center, style: const TextStyle(fontSize: DesignTokens.fontXs))),
               ).toList(),
               selected: {selectedCategory},
               onSelectionChanged: (s) => setD(() { selectedCategory = s.first; major = 0; minor = 0; }),
@@ -375,18 +440,18 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
                 padding: const EdgeInsets.only(bottom: DesignTokens.spaceSm),
                 child: Text(validationError!, style: TextStyle(color: context.colorScheme.error, fontSize: DesignTokens.fontSm)),
               ),
-            TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Title (optional)', hintText: 'e.g. Morning weigh-in')),
+            TextField(controller: titleCtrl, decoration: InputDecoration(labelText: context.l10n.titleOptional, hintText: context.l10n.noteOptionalHint)),
             const SizedBox(height: DesignTokens.spaceMd),
-            TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: 'Notes (optional)'), maxLines: 2),
+            TextField(controller: notesCtrl, decoration: InputDecoration(labelText: context.l10n.notesOptionalLabel), maxLines: 2),
             const SizedBox(height: DesignTokens.spaceMd),
             ListTile(leading: Icon(PhosphorIconsLight.calendar, color: context.colorScheme.primary), title: Text(DateFormat.yMMMd().format(selectedDate), style: TextStyle(color: ctx.textPrimary)),
               onTap: () async { final p = await showDatePicker(context: ctx, initialDate: selectedDate, firstDate: DateTime(2020), lastDate: DateTime.now()); if (p != null) setD(() => selectedDate = p); }),
             const SizedBox(height: DesignTokens.spaceLg),
             ThemeButton(
-              text: 'Save',
+              text: context.l10n.save,
               onPressed: () async {
                 if (computedVal <= 0) {
-                  setD(() => validationError = 'Please enter a valid measurement value');
+                  setD(() => validationError = context.l10n.pleaseEnterValidValue);
                   return;
                 }
                 setD(() { validationError = null; saving = true; });
@@ -395,7 +460,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
                   if (babyMonId == null) return;
                   final result = await api.createHealthRecord(babyMonId!, {
                     'category': selectedCategory.apiKey,
-                    'title': titleCtrl.text.isNotEmpty ? titleCtrl.text : selectedCategory.label,
+                    'title': titleCtrl.text.isNotEmpty ? titleCtrl.text : _healthCategoryLabel(selectedCategory),
                     'notes': notesCtrl.text.isNotEmpty ? notesCtrl.text : null,
                     'happenedAt': selectedDate.toIso8601String(),
                     'value': computedVal,
@@ -414,7 +479,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
               },
               isLoading: saving,
               fullWidth: true,
-              semanticLabel: 'Save health measurement',
+              semanticLabel: context.l10n.saveHealthMeasurement,
             ),
             const SizedBox(height: DesignTokens.spaceLg),
           ]),
@@ -425,7 +490,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
   }
   Widget _buildDial({required int value, required int max, required String unit, int step = 1, required ValueChanged<int> onChanged}) {
     return Column(mainAxisSize: MainAxisSize.min, children: [
-      ThemeButton.icon(icon: PhosphorIconsLight.caretUp, onPressed: () { if (value + step <= max) onChanged(value + step); }, semanticLabel: 'Increase value', variant: ThemeButtonVariant.text),
+      ThemeButton.icon(icon: PhosphorIconsLight.caretUp, onPressed: () { if (value + step <= max) onChanged(value + step); }, semanticLabel: context.l10n.increaseValue, variant: ThemeButtonVariant.text),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceMd, vertical: DesignTokens.spaceSm),
         decoration: BoxDecoration(border: Border.all(color: context.colorScheme.outline), borderRadius: BorderRadius.circular(8)),
@@ -435,7 +500,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
           Text(unit, style: TextStyle(fontSize: DesignTokens.fontMd, fontWeight: FontWeight.w600, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7))),
         ]),
       ),
-      ThemeButton.icon(icon: PhosphorIconsLight.caretDown, onPressed: () { if (value - step >= 0) onChanged(value - step); }, semanticLabel: 'Decrease value', variant: ThemeButtonVariant.text),
+      ThemeButton.icon(icon: PhosphorIconsLight.caretDown, onPressed: () { if (value - step >= 0) onChanged(value - step); }, semanticLabel: context.l10n.decreaseValue, variant: ThemeButtonVariant.text),
     ]);
   }
   void _showEventDialog() {
@@ -445,11 +510,11 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
         builder: (ctx, setD) => Padding(
           padding: const EdgeInsets.all(DesignTokens.spaceLg),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('Add Event', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+            Text(context.l10n.addEvent, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: DesignTokens.spaceLg),
             ..._eventCategories.map((category) => ListTile(
               leading: Icon(category.icon, color: context.colorScheme.primary),
-              title: Text(category.label),
+              title: Text(_healthCategoryLabel(category)),
               trailing: const Icon(PhosphorIconsLight.caretRight),
               onTap: () {
                 Navigator.pop(ctx);
@@ -469,39 +534,41 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add Medical Team'),
+        title: Text(context.l10n.addMedicalContact),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Name', hintText: 'Dr. Smith'),
+              decoration: InputDecoration(labelText: context.l10n.nameLabel, hintText: context.l10n.drSmithHint),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: roleCtrl,
-              decoration: const InputDecoration(labelText: 'Role / Phone', hintText: 'Pediatrician'),
+              decoration: InputDecoration(labelText: context.l10n.rolePhoneLabel, hintText: context.l10n.pediatricianHint),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(context.l10n.cancel)),
           TextButton(
             onPressed: () async {
               final name = nameCtrl.text.trim();
+              final medicalTeamAddedText = context.l10n.medicalTeamAdded;
+              final failedToAddText = context.l10n.failedToAdd;
               if (name.isEmpty) return;
               try {
                 await ref.read(apiClientProvider).createMedicalTeamMember(
                   babyMonId!,
                   {'name': name, 'role': roleCtrl.text.trim()},
                 );
-                messenger.showSnackBar(const SnackBar(content: Text('Medical team member added')));
+                messenger.showSnackBar(SnackBar(content: Text(medicalTeamAddedText)));
               } catch (_) {
-                messenger.showSnackBar(const SnackBar(content: Text('Failed to add')));
+                messenger.showSnackBar(SnackBar(content: Text(failedToAddText)));
               }
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Add'),
+            child: Text(context.l10n.addLabel),
           ),
         ],
       ),
@@ -520,40 +587,40 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     final isNew = prefillName == null;
     bool saving = false;
     String? validationError;
-    bool _allergyIsOther = false;
-    final _allergyOtherCtrl = TextEditingController();
-    String? _allergySeverity;
+    bool allergyIsOther = false;
+    final allergyOtherCtrl = TextEditingController();
+    String? allergySeverity;
     showModalBottomSheet<void>(
       context: context, isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setD) => Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: DesignTokens.spaceLg, right: DesignTokens.spaceLg, top: DesignTokens.spaceLg),
+          padding: EdgeInsetsDirectional.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, start: DesignTokens.spaceLg, end: DesignTokens.spaceLg, top: DesignTokens.spaceLg),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text(isNew ? 'Add Allergy' : 'Record Allergy Event', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+            Text(isNew ? context.l10n.addAllergyTitle : context.l10n.recordAllergyEventTitle, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: DesignTokens.spaceLg),
             if (isNew) ...[
               _AllergyPicker(
                 value: nameCtrl.text,
                 onChanged: (v) {
-                  setD(() { nameCtrl.text = v; _allergyIsOther = v == 'Other'; });
+                  setD(() { nameCtrl.text = v; allergyIsOther = v == AllergyNameKey.other; });
                 },
-                showOtherField: _allergyIsOther,
-                otherCtrl: _allergyOtherCtrl,
+                showOtherField: allergyIsOther,
+                otherCtrl: allergyOtherCtrl,
               ),
               const SizedBox(height: DesignTokens.spaceMd),
-              TextField(controller: triggersCtrl, decoration: const InputDecoration(labelText: 'Triggers', hintText: 'e.g. Ingestion, Skin contact, Airborne')),
+              TextField(controller: triggersCtrl, decoration: InputDecoration(labelText: context.l10n.triggers, hintText: context.l10n.triggersHint)),
               const SizedBox(height: DesignTokens.spaceMd),
               ListTile(
-                title: Text('Severity: ${_allergySeverity ?? 'Tap to select'}'),
+                title: Text('${context.l10n.allergySeverity}: ${allergySeverity != null ? HealthValueLocalizer(context.l10n).localizeAllergySeverity(allergySeverity!) : context.l10n.tapToSelect}'),
                 trailing: const Icon(PhosphorIconsLight.caretDown),
                 contentPadding: EdgeInsets.zero,
                 onTap: () async {
-                  final v = await WheelPickerBottomSheet.show<String>(context: ctx, title: 'Severity', columns: [WheelColumn<String>(label: '', options: _allergySeverities.map((s) => WheelOption(value: s, label: s)).toList())]);
-                  if (v != null) setD(() => _allergySeverity = v);
+                  final v = await WheelPickerBottomSheet.show<String>(context: ctx, title: context.l10n.allergySeverity, columns: [WheelColumn<String>(label: '', options: _allergySeverityOptions.map((e) => WheelOption(value: e.key, label: e.value)).toList())]);
+                  if (v != null) setD(() => allergySeverity = v);
                 },
               ),
               const SizedBox(height: DesignTokens.spaceMd),
-              TextField(controller: treatmentCtrl, decoration: const InputDecoration(labelText: 'Treatment', hintText: 'e.g. EpiPen, Antihistamine, Avoidance')),
+              TextField(controller: treatmentCtrl, decoration: InputDecoration(labelText: context.l10n.treatment, hintText: context.l10n.treatmentHint)),
               const SizedBox(height: DesignTokens.spaceMd),
             ],
             ListTile(
@@ -569,7 +636,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
               },
             ),
             const SizedBox(height: DesignTokens.spaceSm),
-            TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: 'Notes (optional)'), maxLines: 2),
+            TextField(controller: notesCtrl, decoration: InputDecoration(labelText: context.l10n.notesOptionalLabel), maxLines: 2),
             const SizedBox(height: 20),
             if (validationError != null)
               Padding(
@@ -577,11 +644,15 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
                 child: Text(validationError!, style: TextStyle(color: context.colorScheme.error, fontSize: DesignTokens.fontSm)),
               ),
             ThemeButton(
-              text: 'Save',
+              text: context.l10n.save,
               onPressed: () async {
-                final allergyName = nameCtrl.text == 'Other' ? _allergyOtherCtrl.text.trim() : nameCtrl.text;
+                final allergyName = nameCtrl.text == AllergyNameKey.other ? allergyOtherCtrl.text.trim() : nameCtrl.text;
+                final pleaseEnterNameText = context.l10n.pleaseEnterName;
+                final allergyAddedText = context.l10n.allergyAdded;
+                final allergyEventRecordedText = context.l10n.allergyEventRecorded;
+                final failedToSaveText = context.l10n.failedToSave;
                 if (isNew && allergyName.isEmpty) {
-                  setD(() => validationError = 'Please enter an allergy name');
+                  setD(() => validationError = pleaseEnterNameText);
                   return;
                 }
                 setD(() { validationError = null; saving = true; });
@@ -593,7 +664,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
                     await api.createAllergy(babyMonId!, {
                       'name': allergyName,
                       'triggers': triggersCtrl.text,
-                      'severity': _allergySeverity ?? severityCtrl.text,
+                      'severity': allergySeverity ?? severityCtrl.text,
                       'treatment': treatmentCtrl.text,
                       'happenedAt': happenedAt,
                       'notes': notesCtrl.text.isNotEmpty ? notesCtrl.text : null,
@@ -605,21 +676,21 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
                       'notes': notesCtrl.text.isNotEmpty ? notesCtrl.text : null,
                     });
                   }
-                  ref.read(appRefreshProvider.notifier).state++;
-                  messenger.showSnackBar(SnackBar(content: Text(isNew ? 'Allergy added!' : 'Allergy event recorded!')));
+                  loadData(force: true);
+                  messenger.showSnackBar(SnackBar(content: Text(isNew ? allergyAddedText : allergyEventRecordedText)));
                   if (ctx.mounted) Navigator.pop(ctx);
                 } on DioException catch (e) {
                   setD(() => saving = false);
                   final msg = parseString(parseJsonMap(e.response?.data)?['message']);
-                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(msg ?? 'Failed to save. Please try again.')));
+                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(msg ?? failedToSaveText)));
                 } catch (e) {
                   setD(() => saving = false);
-                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Failed to save. Please try again.')));
+                  if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(failedToSaveText)));
                 }
               },
               isLoading: saving,
               fullWidth: true,
-              semanticLabel: 'Save allergy',
+              semanticLabel: context.l10n.saveAllergy,
             ),
             const SizedBox(height: DesignTokens.spaceLg),
           ]),
@@ -633,10 +704,10 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     final titleCtrl = TextEditingController();
     final notesCtrl = TextEditingController();
     final extraCtrl1 = TextEditingController();
-    String? _injurySeverity;
-    String? _bowelColor;
-    bool _vaccineIsOther = false;
-    final _vaccineOtherCtrl = TextEditingController();
+    String? injurySeverity;
+    String? bowelColor;
+    bool vaccineIsOther = false;
+    final vaccineOtherCtrl = TextEditingController();
     DateTime selectedDate = DateTime.now();
     bool saving = false;
     final staffCtrl = TextEditingController();
@@ -645,10 +716,10 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     final isInjuryOrBowelOrVax = category == HealthCategory.injury || category == HealthCategory.bowelMovement || category == HealthCategory.vaccination;
     final showTitle = !isInjuryOrBowelOrVax;
     String formLabel1() {
-      if (isHospitalOrClinic) return 'Reason';
-      if (category == HealthCategory.injury) return 'Severity';
-      if (category == HealthCategory.bowelMovement) return 'Color';
-      if (category == HealthCategory.vaccination) return 'Vaccine Name';
+      if (isHospitalOrClinic) return context.l10n.reasonLabel;
+      if (category == HealthCategory.injury) return context.l10n.allergySeverity;
+      if (category == HealthCategory.bowelMovement) return context.l10n.colorLabel;
+      if (category == HealthCategory.vaccination) return context.l10n.vaccineNameLabel;
       return '';
     }
     final showStaff = isHospitalOrClinic;
@@ -657,27 +728,38 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
     final showTime = category == HealthCategory.bowelMovement;
     final showVenue = category == HealthCategory.vaccination;
     final venueCtrl = TextEditingController();
-    String? stoolType;
+    String? stoolTypeKey;
     String? validationError;
-    final stoolTypes = ['Watery (Diarrhea)', 'Loose', 'Mushy', 'Soft & Formed', 'Normal', 'Firm', 'Hard Pellets', 'Constipated'];
+    final l10n = context.l10n;
+    final localizer = HealthValueLocalizer(l10n);
+    final stoolTypeOptions = [
+      MapEntry(StoolTypeKey.watery, l10n.stoolTypeWatery),
+      MapEntry(StoolTypeKey.loose, l10n.stoolTypeLoose),
+      MapEntry(StoolTypeKey.mushy, l10n.stoolTypeMushy),
+      MapEntry(StoolTypeKey.softFormed, l10n.stoolTypeSoftFormed),
+      MapEntry(StoolTypeKey.normal, l10n.stoolTypeNormal),
+      MapEntry(StoolTypeKey.firm, l10n.stoolTypeFirm),
+      MapEntry(StoolTypeKey.hardPellets, l10n.stoolTypeHardPellets),
+      MapEntry(StoolTypeKey.constipated, l10n.stoolTypeConstipated),
+    ];
     showModalBottomSheet<void>(
       context: context, isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setD) => Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, left: DesignTokens.spaceLg, right: DesignTokens.spaceLg, top: DesignTokens.spaceLg),
+          padding: EdgeInsetsDirectional.only(bottom: MediaQuery.of(ctx).viewInsets.bottom, start: DesignTokens.spaceLg, end: DesignTokens.spaceLg, top: DesignTokens.spaceLg),
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('Add ${category.label}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+            Text('${context.l10n.addLabel} ${_healthCategoryLabel(category)}', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: DesignTokens.spaceLg),
             if (showTitle) ...[
-              TextField(controller: titleCtrl, decoration: InputDecoration(labelText: 'Name / Title', hintText: 'e.g. ${category == HealthCategory.hospital ? 'ER Visit' : 'Annual Checkup'}')),
+              TextField(controller: titleCtrl, decoration: InputDecoration(labelText: context.l10n.nameTitle, hintText: 'e.g. ${category == HealthCategory.hospital ? context.l10n.erVisitHint : context.l10n.annualCheckup}')),
               const SizedBox(height: DesignTokens.spaceMd),
             ],
             if (showStaff) ...[
-              TextField(controller: staffCtrl, decoration: const InputDecoration(labelText: 'Attending Staff')),
+              TextField(controller: staffCtrl, decoration: InputDecoration(labelText: context.l10n.attendingStaff)),
               const SizedBox(height: DesignTokens.spaceMd),
             ],
             if (showTime) ...[
-              TextField(controller: timeCtrl, decoration: const InputDecoration(labelText: 'Time'), readOnly: true,
+              TextField(controller: timeCtrl, decoration: InputDecoration(labelText: context.l10n.time), readOnly: true,
                 onTap: () async {
                   final t = await showTimePicker(context: ctx, initialTime: TimeOfDay.now());
                   if (t != null) setD(() => timeCtrl.text = t.format(ctx));
@@ -687,30 +769,30 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
             if (showExtra1) ...[
               if (category == HealthCategory.injury) ...[
                 ListTile(
-                  title: Text('Severity: ${_injurySeverity ?? 'Tap to select'}'),
+                  title: Text('${context.l10n.allergySeverity}: ${injurySeverity != null ? localizer.localizeInjurySeverity(injurySeverity!) : context.l10n.tapToSelect}'),
                   trailing: const Icon(PhosphorIconsLight.caretDown),
                   onTap: () async {
-                    final v = await WheelPickerBottomSheet.show<String>(context: ctx, title: 'Severity', columns: [WheelColumn<String>(label: '', options: _injurySeverities.map((s) => WheelOption(value: s, label: s)).toList())]);
-                    if (v != null) setD(() => _injurySeverity = v);
+                    final v = await WheelPickerBottomSheet.show<String>(context: ctx, title: context.l10n.allergySeverity, columns: [WheelColumn<String>(label: '', options: _injurySeverityOptions.map((e) => WheelOption(value: e.key, label: e.value)).toList())]);
+                    if (v != null) setD(() => injurySeverity = v);
                   },
                 ),
               ] else if (category == HealthCategory.bowelMovement) ...[
                 ListTile(
-                  title: Text('Color: ${_bowelColor ?? 'Tap to select'}'),
+                  title: Text('${context.l10n.colorLabel}: ${bowelColor != null ? localizer.localizeBowelColor(bowelColor!) : context.l10n.tapToSelect}'),
                   trailing: const Icon(PhosphorIconsLight.caretDown),
                   onTap: () async {
-                    final v = await WheelPickerBottomSheet.show<String>(context: ctx, title: 'Color', columns: [WheelColumn<String>(label: '', options: _bowelColors.map((s) => WheelOption(value: s, label: s)).toList())]);
-                    if (v != null) setD(() => _bowelColor = v);
+                    final v = await WheelPickerBottomSheet.show<String>(context: ctx, title: context.l10n.colorLabel, columns: [WheelColumn<String>(label: '', options: _bowelColorOptions.map((e) => WheelOption(value: e.key, label: e.value)).toList())]);
+                    if (v != null) setD(() => bowelColor = v);
                   },
                 ),
               ] else if (category == HealthCategory.vaccination) ...[
                 _VaccinePicker(
                   value: extraCtrl1.text,
                   onChanged: (v) {
-                    setD(() { extraCtrl1.text = v; _vaccineIsOther = v == 'Other'; });
+                    setD(() { extraCtrl1.text = v; vaccineIsOther = v == VaccineKey.other; });
                   },
-                  showOtherField: _vaccineIsOther,
-                  otherCtrl: _vaccineOtherCtrl,
+                  showOtherField: vaccineIsOther,
+                  otherCtrl: vaccineOtherCtrl,
                 ),
               ] else ...[
                 TextField(controller: extraCtrl1, decoration: InputDecoration(labelText: formLabel1())),
@@ -718,26 +800,26 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
               const SizedBox(height: DesignTokens.spaceMd),
             ],
             if (showExtra2) ...[
-              TextField(controller: (() { final c = TextEditingController(); return c; })(), decoration: InputDecoration(labelText: category == HealthCategory.injury ? 'Description' : category == HealthCategory.vaccination ? 'Location on body' : 'Outcome')),
+              TextField(controller: (() { final c = TextEditingController(); return c; })(), decoration: InputDecoration(labelText: category == HealthCategory.injury ? context.l10n.description : category == HealthCategory.vaccination ? context.l10n.locationOnBody : context.l10n.outcomeLabel)),
               const SizedBox(height: DesignTokens.spaceMd),
             ],
             if (category == HealthCategory.bowelMovement) ...[
               const SizedBox(height: 4),
-              Text('Consistency (choose one)', style: TextStyle(fontSize: DesignTokens.fontSm, fontWeight: FontWeight.w500, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7))),
+              Text(context.l10n.consistencyLabel, style: TextStyle(fontSize: DesignTokens.fontSm, fontWeight: FontWeight.w500, color: context.colorScheme.onSurfaceVariant.withValues(alpha: 0.7))),
               const SizedBox(height: 6),
-              Wrap(spacing: 6, runSpacing: 6, children: stoolTypes.map((t) => ChoiceChip(
-                label: Text(t, style: const TextStyle(fontSize: DesignTokens.fontSm)),
-                selected: stoolType == t,
-                onSelected: (sel) => setD(() => stoolType = sel ? t : null),
+              Wrap(spacing: 6, runSpacing: 6, children: stoolTypeOptions.map((e) => ChoiceChip(
+                label: Text(e.value, style: const TextStyle(fontSize: DesignTokens.fontSm)),
+                selected: stoolTypeKey == e.key,
+                onSelected: (sel) => setD(() => stoolTypeKey = sel ? e.key : null),
                 selectedColor: context.colorScheme.primaryContainer,
               )).toList()),
               const SizedBox(height: DesignTokens.spaceMd),
             ],
             if (showVenue) ...[
-              TextField(controller: venueCtrl, decoration: const InputDecoration(labelText: 'Venue')),
+              TextField(controller: venueCtrl, decoration: InputDecoration(labelText: context.l10n.venue)),
               const SizedBox(height: DesignTokens.spaceMd),
             ],
-            TextField(controller: notesCtrl, decoration: const InputDecoration(labelText: 'Notes (optional)'), maxLines: 2),
+            TextField(controller: notesCtrl, decoration: InputDecoration(labelText: context.l10n.notesOptionalLabel), maxLines: 2),
             const SizedBox(height: DesignTokens.spaceMd),
             ListTile(leading: Icon(PhosphorIconsLight.calendar, color: context.colorScheme.primary), title: Text(DateFormat.yMMMd().format(selectedDate), style: TextStyle(color: ctx.textPrimary)),
               onTap: () async { final p = await showDatePicker(context: ctx, initialDate: selectedDate, firstDate: DateTime(2020), lastDate: DateTime.now()); if (p != null) setD(() => selectedDate = p); }),
@@ -748,9 +830,9 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
                 child: Text(validationError!, style: TextStyle(color: context.colorScheme.error, fontSize: DesignTokens.fontSm)),
               ),
             ThemeButton(
-              text: 'Save',
+              text: context.l10n.save,
               onPressed: () async {                  if (titleCtrl.text.isEmpty && category == HealthCategory.other) {
-                  setD(() => validationError = 'Please enter a description');
+                  setD(() => validationError = context.l10n.pleaseEnterDescription);
                   return;
                 }
                 setD(() { validationError = null; saving = true; });
@@ -759,20 +841,28 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
                   if (babyMonId == null) return;
                   final data = <String, dynamic>{
                     'category': apiKey,
-                    'title': titleCtrl.text.isNotEmpty ? titleCtrl.text : category.label,
+                    'title': titleCtrl.text.isNotEmpty ? titleCtrl.text : _healthCategoryLabel(category),
                     'notes': notesCtrl.text.isNotEmpty ? notesCtrl.text : null,
                     'happenedAt': selectedDate.toIso8601String(),
                   };
-                  final extras = <String>[];
-                  if (category == HealthCategory.injury && _injurySeverity != null) extras.add('Severity: $_injurySeverity');
-                  if (category == HealthCategory.bowelMovement && _bowelColor != null) extras.add('Color: $_bowelColor');
-                  if (category == HealthCategory.vaccination && extraCtrl1.text.isNotEmpty) {
-                    final vaxName = extraCtrl1.text == 'Other' ? _vaccineOtherCtrl.text.trim() : extraCtrl1.text;
-                    if (vaxName.isNotEmpty) extras.add('Vaccine: $vaxName');
+                  // Store primary enum key in [value] so it can be localized at display time.
+                  if (category == HealthCategory.injury && injurySeverity != null) {
+                    data['value'] = injurySeverity;
                   }
+                  if (category == HealthCategory.bowelMovement && bowelColor != null) {
+                    data['value'] = bowelColor;
+                  }
+                  if (category == HealthCategory.vaccination && extraCtrl1.text.isNotEmpty) {
+                    final vaxKey = extraCtrl1.text == VaccineKey.other ? vaccineOtherCtrl.text.trim() : extraCtrl1.text;
+                    if (vaxKey.isNotEmpty) data['value'] = vaxKey;
+                  }
+                  // Store stool type (API key) in [unit] for bowel movements — it will be localized at display.
+                  if (category == HealthCategory.bowelMovement && stoolTypeKey != null) {
+                    data['unit'] = stoolTypeKey;
+                  }
+                  final extras = <String>[];
                   if (extraCtrl1.text.isNotEmpty && category != HealthCategory.injury && category != HealthCategory.bowelMovement && category != HealthCategory.vaccination) extras.add('${formLabel1()}: ${extraCtrl1.text}');
-                  if (category == HealthCategory.bowelMovement && stoolType != null) extras.add('Consistency: $stoolType');
-                  if (showVenue && venueCtrl.text.isNotEmpty) extras.add('Venue: ${venueCtrl.text}');
+                  if (showVenue && venueCtrl.text.isNotEmpty) extras.add('${context.l10n.venuePrefix} ${venueCtrl.text}');
                   if (extras.isNotEmpty) {
                     data['notes'] = '${extras.join(' | ')}${notesCtrl.text.isNotEmpty ? '\n${notesCtrl.text}' : ''}';
                   }
@@ -790,7 +880,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen>
               },
               isLoading: saving,
               fullWidth: true,
-              semanticLabel: 'Save health event',
+              semanticLabel: context.l10n.saveHealthEvent,
             ),
             const SizedBox(height: DesignTokens.spaceMd),
           ]),
@@ -856,31 +946,58 @@ class _VaccinePicker extends StatefulWidget {
 class _VaccinePickerState extends State<_VaccinePicker> {
   final _searchCtrl = TextEditingController();
   @override void dispose() { _searchCtrl.dispose(); super.dispose(); }
+
+  String _localizeVaccine(String key, dynamic l10n) {
+    final localizer = HealthValueLocalizer(l10n);
+    return localizer.localizeVaccine(key);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final displayValue = widget.value.isEmpty ? '' : _localizeVaccine(widget.value, l10n);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       ListTile(
         contentPadding: EdgeInsets.zero,
-        title: Text(widget.value.isEmpty ? 'Vaccine: Tap to select' : 'Vaccine: ${widget.value}', maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(widget.value.isEmpty ? l10n.vaccineTapToSelect : '${l10n.vaccinePrefix} $displayValue', maxLines: 1, overflow: TextOverflow.ellipsis),
         trailing: const Icon(PhosphorIconsLight.caretDown),
         onTap: () => _showPicker(context),
       ),
       if (widget.showOtherField)
         Padding(
           padding: const EdgeInsets.only(top: 8),
-          child: TextField(controller: widget.otherCtrl, decoration: const InputDecoration(labelText: 'Vaccine name', hintText: 'Enter custom vaccine')),
+          child: TextField(controller: widget.otherCtrl, decoration: InputDecoration(labelText: l10n.vaccineName, hintText: l10n.enterCustomVaccine)),
         ),
     ]);
   }
   void _showPicker(BuildContext context) {
-    final vaccines = _HealthScreenState._vaccines;
+    final l10n = context.l10n;
+    final vaccines = [
+      MapEntry(VaccineKey.other, l10n.vaccineOther),
+      MapEntry(VaccineKey.hepB, l10n.vaccineHepB),
+      MapEntry(VaccineKey.rotavirus, l10n.vaccineRotavirus),
+      MapEntry(VaccineKey.dtap, l10n.vaccineDTaP),
+      MapEntry(VaccineKey.hib, l10n.vaccineHib),
+      MapEntry(VaccineKey.pcv13, l10n.vaccinePCV13),
+      MapEntry(VaccineKey.ipv, l10n.vaccineIPV),
+      MapEntry(VaccineKey.flu, l10n.vaccineFlu),
+      MapEntry(VaccineKey.mmr, l10n.vaccineMMR),
+      MapEntry(VaccineKey.varicella, l10n.vaccineVaricella),
+      MapEntry(VaccineKey.hepA, l10n.vaccineHepA),
+      MapEntry(VaccineKey.menACWY, l10n.vaccineMenACWY),
+      MapEntry(VaccineKey.covid, l10n.vaccineCOVID),
+      MapEntry(VaccineKey.hpv, l10n.vaccineHPV),
+      MapEntry(VaccineKey.tdap, l10n.vaccineTdap),
+      MapEntry(VaccineKey.rsv, l10n.vaccineRSV),
+    ];
+    const otherValue = VaccineKey.other;
     _searchCtrl.clear();
     showModalBottomSheet(
       context: context, isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setD) {
           final query = _searchCtrl.text.toLowerCase();
-          final filtered = vaccines.where((v) => v.toLowerCase().contains(query)).toList();
+          final filtered = vaccines.where((v) => v.value.toLowerCase().contains(query)).toList();
           return Padding(
             padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -889,16 +1006,16 @@ class _VaccinePickerState extends State<_VaccinePicker> {
                 child: TextField(
                   controller: _searchCtrl,
                   autofocus: true,
-                  decoration: const InputDecoration(hintText: 'Search vaccines...', prefixIcon: Icon(PhosphorIconsLight.magnifyingGlass), border: OutlineInputBorder()),
+                  decoration: InputDecoration(hintText: l10n.searchVaccines, prefixIcon: const Icon(PhosphorIconsLight.magnifyingGlass), border: const OutlineInputBorder()),
                   onChanged: (_) => setD(() {}),
                 ),
               ),
               Flexible(child: ListView(
                 shrinkWrap: true,
                 children: filtered.map((v) => ListTile(
-                  title: Text(v, style: TextStyle(fontWeight: v == widget.value ? FontWeight.w700 : FontWeight.w400, color: v == 'Other' ? Theme.of(context).colorScheme.primary : null)),
+                  title: Text(v.value, style: TextStyle(fontWeight: v.key == widget.value ? FontWeight.w700 : FontWeight.w400, color: v.key == otherValue ? Theme.of(context).colorScheme.primary : null)),
                   onTap: () {
-                    widget.onChanged(v);
+                    widget.onChanged(v.key);
                     Navigator.pop(ctx);
                   },
                 )).toList(),
@@ -922,51 +1039,81 @@ class _AllergyPicker extends StatefulWidget {
 class _AllergyPickerState extends State<_AllergyPicker> {
   final _searchCtrl = TextEditingController();
   @override void dispose() { _searchCtrl.dispose(); super.dispose(); }
-  static const _allergyExplanations = {
-    'Peanuts': 'Legume allergy, often severe, can cause anaphylaxis',
-    'Tree Nuts': 'Almonds, walnuts, cashews — often lifelong',
-    'Milk (Dairy)': 'Cow milk protein allergy, common in infants',
-    'Eggs': 'Often outgrown by school age',
-    'Soy': 'Soybean allergy, common in formula-fed babies',
-    'Wheat': 'Protein allergy, distinct from celiac disease',
-    'Fish': 'Often lifelong, salmon and cod most common',
-    'Shellfish': 'Shrimp, crab, lobster — usually permanent',
-    'Sesame': 'Seed allergy, found in tahini, hummus, oils',
-    'Pollen (Hay Fever)': 'Seasonal allergic rhinitis, sneezing, itchy eyes',
-    'Dust Mites': 'Year-round indoor allergen in bedding and carpets',
-    'Mold': 'Damp areas, outdoor or indoor — triggers asthma',
-    'Pet Dander': 'Cats and dogs, skin flakes cause reactions',
-    'Insect Stings': 'Bees, wasps, hornets — can cause severe reactions',
-    'Latex': 'Rubber allergy, common in medical settings',
-    'Penicillin': 'Common antibiotic allergy, can cause hives or rash',
-    'NSAIDs': 'Ibuprofen, aspirin type anti-inflammatory drugs',
-    'Sulfa Drugs': 'Sulfonamide antibiotics, distinct from sulfites',
-  };
+
+  String _localizeAllergyName(String key, dynamic l10n) {
+    final localizer = HealthValueLocalizer(l10n);
+    return localizer.localizeAllergyName(key);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final displayValue = widget.value.isEmpty ? '' : _localizeAllergyName(widget.value, l10n);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       ListTile(
         contentPadding: EdgeInsets.zero,
-        title: Text(widget.value.isEmpty ? 'Allergy: Tap to select' : 'Allergy: ${widget.value}', maxLines: 1, overflow: TextOverflow.ellipsis),
+        title: Text(widget.value.isEmpty ? l10n.allergyTapToSelect : '${l10n.allergyPrefix} $displayValue', maxLines: 1, overflow: TextOverflow.ellipsis),
         trailing: const Icon(PhosphorIconsLight.caretDown),
         onTap: () => _showPicker(context),
       ),
       if (widget.showOtherField)
         Padding(
           padding: const EdgeInsets.only(top: 8),
-          child: TextField(controller: widget.otherCtrl, decoration: const InputDecoration(labelText: 'Allergy name', hintText: 'Enter custom allergy')),
+          child: TextField(controller: widget.otherCtrl, decoration: InputDecoration(labelText: l10n.allergyNameField, hintText: l10n.enterCustomAllergy)),
         ),
     ]);
   }
   void _showPicker(BuildContext context) {
-    final allergies = _HealthScreenState._allergyOptions;
+    final l10n = context.l10n;
+    final allergies = [
+      MapEntry(AllergyNameKey.other, l10n.allergyOtherOption),
+      MapEntry(AllergyNameKey.peanuts, l10n.allergyPeanutsOption),
+      MapEntry(AllergyNameKey.treeNuts, l10n.allergyTreeNutsOption),
+      MapEntry(AllergyNameKey.milkDairy, l10n.allergyMilkDairyOption),
+      MapEntry(AllergyNameKey.eggs, l10n.allergyEggsOption),
+      MapEntry(AllergyNameKey.soy, l10n.allergySoyOption),
+      MapEntry(AllergyNameKey.wheat, l10n.allergyWheatOption),
+      MapEntry(AllergyNameKey.fish, l10n.allergyFishOption),
+      MapEntry(AllergyNameKey.shellfish, l10n.allergyShellfishOption),
+      MapEntry(AllergyNameKey.sesame, l10n.allergySesameOption),
+      MapEntry(AllergyNameKey.pollen, l10n.allergyPollenOption),
+      MapEntry(AllergyNameKey.dustMites, l10n.allergyDustMitesOption),
+      MapEntry(AllergyNameKey.mold, l10n.allergyMoldOption),
+      MapEntry(AllergyNameKey.petDander, l10n.allergyPetDanderOption),
+      MapEntry(AllergyNameKey.insectStings, l10n.allergyInsectStingsOption),
+      MapEntry(AllergyNameKey.latex, l10n.allergyLatexOption),
+      MapEntry(AllergyNameKey.penicillin, l10n.allergyPenicillinOption),
+      MapEntry(AllergyNameKey.nsaids, l10n.allergyNSAIDsOption),
+      MapEntry(AllergyNameKey.sulfaDrugs, l10n.allergySulfaDrugsOption),
+    ];
+    final explanations = {
+      AllergyNameKey.peanuts: l10n.allergyExplanationPeanuts,
+      AllergyNameKey.treeNuts: l10n.allergyExplanationTreeNuts,
+      AllergyNameKey.milkDairy: l10n.allergyExplanationMilkDairy,
+      AllergyNameKey.eggs: l10n.allergyExplanationEggs,
+      AllergyNameKey.soy: l10n.allergyExplanationSoy,
+      AllergyNameKey.wheat: l10n.allergyExplanationWheat,
+      AllergyNameKey.fish: l10n.allergyExplanationFish,
+      AllergyNameKey.shellfish: l10n.allergyExplanationShellfish,
+      AllergyNameKey.sesame: l10n.allergyExplanationSesame,
+      AllergyNameKey.pollen: l10n.allergyExplanationPollen,
+      AllergyNameKey.dustMites: l10n.allergyExplanationDustMites,
+      AllergyNameKey.mold: l10n.allergyExplanationMold,
+      AllergyNameKey.petDander: l10n.allergyExplanationPetDander,
+      AllergyNameKey.insectStings: l10n.allergyExplanationInsectStings,
+      AllergyNameKey.latex: l10n.allergyExplanationLatex,
+      AllergyNameKey.penicillin: l10n.allergyExplanationPenicillin,
+      AllergyNameKey.nsaids: l10n.allergyExplanationNSAIDs,
+      AllergyNameKey.sulfaDrugs: l10n.allergyExplanationSulfaDrugs,
+    };
+    const otherValue = AllergyNameKey.other;
     _searchCtrl.clear();
     showModalBottomSheet(
       context: context, isScrollControlled: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setD) {
           final query = _searchCtrl.text.toLowerCase();
-          final filtered = allergies.where((a) => a.toLowerCase().contains(query)).toList();
+          final filtered = allergies.where((a) => a.value.toLowerCase().contains(query)).toList();
           return Padding(
             padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -975,17 +1122,17 @@ class _AllergyPickerState extends State<_AllergyPicker> {
                 child: TextField(
                   controller: _searchCtrl,
                   autofocus: true,
-                  decoration: const InputDecoration(hintText: 'Search allergies...', prefixIcon: Icon(PhosphorIconsLight.magnifyingGlass), border: OutlineInputBorder()),
+                  decoration: InputDecoration(hintText: l10n.searchAllergies, prefixIcon: const Icon(PhosphorIconsLight.magnifyingGlass), border: const OutlineInputBorder()),
                   onChanged: (_) => setD(() {}),
                 ),
               ),
               Flexible(child: ListView(
                 shrinkWrap: true,
                 children: filtered.map((a) => ListTile(
-                  title: Text(a, style: TextStyle(fontWeight: a == widget.value ? FontWeight.w700 : FontWeight.w400, color: a == 'Other' ? Theme.of(context).colorScheme.primary : null)),
-                  subtitle: _allergyExplanations[a] != null ? Text(_allergyExplanations[a]!, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)) : null,
+                  title: Text(a.value, style: TextStyle(fontWeight: a.key == widget.value ? FontWeight.w700 : FontWeight.w400, color: a.key == otherValue ? Theme.of(context).colorScheme.primary : null)),
+                  subtitle: explanations[a.key] != null ? Text(explanations[a.key]!, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)) : null,
                   onTap: () {
-                    widget.onChanged(a);
+                    widget.onChanged(a.key);
                     Navigator.pop(ctx);
                   },
                 )).toList(),

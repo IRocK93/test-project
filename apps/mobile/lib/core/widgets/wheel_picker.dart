@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import '../utils/json_utils.dart';
 import 'package:baby_mon/core/constants/constants.dart';
@@ -51,15 +52,15 @@ class WheelPickerBottomSheet {
       context: context,
       isScrollControlled: true,
       builder: (ctx) => _WheelPickerSheet<String>(
-        title: 'Select Time',
+        title: context.l10n.wheelPickerSelectTime,
         columns: [
           WheelColumn<String>(
-            label: 'Hour',
+            label: context.l10n.wheelPickerHour,
             options: List.generate(12, (i) => WheelOption(value: '${i + 1}', label: '${i + 1}')),
             initialValue: '$hour12',
           ),
           WheelColumn<String>(
-            label: 'Min',
+            label: context.l10n.wheelPickerMinute,
             options: List.generate(60, (i) => WheelOption(value: i.toString().padLeft(2, '0'), label: i.toString().padLeft(2, '0'))),
             initialValue: init.minute.toString().padLeft(2, '0'),
           ),
@@ -107,7 +108,7 @@ class WheelPickerBottomSheet {
       context: context,
       isScrollControlled: true,
       builder: (ctx) => _WheelPickerSheet<String>(
-        title: 'Select $type ($majorLabel)',
+        title: context.l10n.wheelPickerSelectMeasurement(type, majorLabel),
         columns: [
           WheelColumn<String>(label: majorLabel, options: List.generate(maxMajor + 1, (i) => WheelOption(value: '$i', label: '$i')), initialValue: '$majorVal'),
           WheelColumn<String>(label: '.', options: List.generate(10, (i) => WheelOption(value: '$i', label: '.$i')), initialValue: '${decimalVal.clamp(0, 9)}'),
@@ -127,10 +128,10 @@ class WheelPickerBottomSheet {
       context: context,
       isScrollControlled: true,
       builder: (ctx) => _WheelPickerSheet<String>(
-        title: 'Select Range',
+        title: context.l10n.wheelPickerSelectRange,
         columns: [
-          WheelColumn<String>(label: 'Range', options: List.generate(10, (i) => WheelOption(value: '${i + 1}', label: '${i + 1}')), initialValue: '$initialRange'),
-          WheelColumn<String>(label: 'Unit', options: ['Days', 'Weeks', 'Months'].map((u) => WheelOption(value: u, label: u)).toList(), initialValue: initialUnit),
+          WheelColumn<String>(label: context.l10n.wheelPickerRange, options: List.generate(10, (i) => WheelOption(value: '${i + 1}', label: '${i + 1}')), initialValue: '$initialRange'),
+          WheelColumn<String>(label: context.l10n.wheelPickerUnit, options: [context.l10n.daysUnitLabel, context.l10n.weeksUnitLabel, context.l10n.monthsUnitLabel].map((u) => WheelOption(value: u, label: u)).toList(), initialValue: initialUnit),
         ],
       ),
     );
@@ -149,14 +150,15 @@ class WheelPickerBottomSheet {
     late int maxMajor;
     late String majorLabel;
     late String title;
+    final l10n = context.l10n;
     if (feedType == 'SOLID') {
       maxMajor = isMetric ? 500 : 18;
       majorLabel = isMetric ? 'g' : 'oz';
-      title = 'Amount (g)';
+      title = l10n.amountLabelG;
     } else {
       maxMajor = isMetric ? 350 : 12;
       majorLabel = isMetric ? 'ml' : 'oz';
-      title = 'Amount ($majorLabel)';
+      title = l10n.amountLabelUnit(majorLabel);
     }
     majorVal = majorVal.clamp(0, maxMajor);
     final result = await showModalBottomSheet<List<String>>(
@@ -166,7 +168,7 @@ class WheelPickerBottomSheet {
         title: title,
         columns: [
           WheelColumn<String>(label: majorLabel, options: List.generate(maxMajor + 1, (i) => WheelOption(value: '$i', label: '$i')), initialValue: '$majorVal'),
-          WheelColumn<String>(label: '.', options: List.generate(10, (i) => WheelOption(value: '$i', label: '.$i')), initialValue: '${decimalVal.clamp(0, 9)}'),
+          WheelColumn<String>(label: context.l10n.wheelPickerUnit, options: List.generate(10, (i) => WheelOption(value: '$i', label: '.$i')), initialValue: '${decimalVal.clamp(0, 9)}'),
         ],
       ),
     );
@@ -269,7 +271,7 @@ class _WheelPickerSheetState<T> extends State<_WheelPickerSheet<T>> {
                       Navigator.pop(context, selections.values.toList());
                     }
                   },
-                  child: const Text('Done', style: TextStyle(fontWeight: FontWeight.w600)),
+                  child: Text(context.l10n.doneLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                 ),
               ],
             ),

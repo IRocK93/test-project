@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 
 /// A polished upgrade prompt shown when the user tries to access a
 /// PREMIUM-tier companion feature without a Premium subscription.
@@ -52,7 +53,7 @@ class UpgradePromptWidget extends StatelessWidget {
 
             // ── Heading ──
             Text(
-              'Premium Feature',
+              context.l10n.premiumFeatureHeading,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.3,
@@ -107,14 +108,14 @@ class UpgradePromptWidget extends StatelessWidget {
                     borderRadius: BorderRadius.circular(DesignTokens.radiusMd),
                   ),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(PhosphorIconsLight.crown, size: 20),
-                    SizedBox(width: DesignTokens.spaceSm),
+                    const Icon(PhosphorIconsLight.crown, size: 20),
+                    const SizedBox(width: DesignTokens.spaceSm),
                     Text(
-                      'Upgrade to Premium',
-                      style: TextStyle(
+                      context.l10n.upgradeToPremiumCTA,
+                      style: const TextStyle(
                         fontSize: DesignTokens.fontLg,
                         fontWeight: FontWeight.w700,
                       ),
@@ -140,7 +141,7 @@ class UpgradePromptWidget extends StatelessWidget {
                 if (context.canPop()) context.pop();
               },
               child: Text(
-                'Maybe later',
+                context.l10n.maybeLater,
                 style: TextStyle(
                   color: context.colorScheme.onSurfaceVariant,
                 ),

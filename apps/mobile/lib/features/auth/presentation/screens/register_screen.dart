@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/features/auth/auth.dart';
 import 'package:baby_mon/core/constants/constants.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
 import 'package:baby_mon/core/widgets/responsive_wrapper.dart';
 import '../../../../core/utils/validators.dart';
@@ -69,38 +70,38 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return AppColors.success;
   }
 
-  String get _strengthLabel {
+  String _strengthLabel(BuildContext context) {
     final s = _passwordStrength;
     if (s == 0) return '';
-    if (s < 0.3) return 'Weak';
-    if (s < 0.6) return 'Fair';
-    if (s < 0.8) return 'Good';
-    return 'Strong';
+    if (s < 0.3) return context.l10n.passwordWeak;
+    if (s < 0.6) return context.l10n.passwordFair;
+    if (s < 0.8) return context.l10n.passwordGood;
+    return context.l10n.passwordStrong;
   }
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
     if (_dateOfBirth == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select your date of birth')),
+        SnackBar(content: Text(context.l10n.pleaseSelectDob)),
       );
       return;
     }
     if (!_tosAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You must accept the Terms of Service')),
+        SnackBar(content: Text(context.l10n.mustAcceptTos)),
       );
       return;
     }
     if (!_privacyAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You must accept the Privacy Policy')),
+        SnackBar(content: Text(context.l10n.mustAcceptPrivacy)),
       );
       return;
     }
     if (!_consentToDataProcessing) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You must consent to data processing')),
+        SnackBar(content: Text(context.l10n.mustConsentData)),
       );
       return;
     }
@@ -199,7 +200,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                           // Title
                           Text(
-                            'Create Account',
+                            context.l10n.createAccountTitle,
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
@@ -208,7 +209,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           ),
                           const SizedBox(height: DesignTokens.spaceXs),
                           Text(
-                            'Join BabyMon today',
+                            context.l10n.createAccountSubtitle,
                             style: TextStyle(
                               fontSize: 14,
                               color: cs.onSurfaceVariant,
@@ -219,9 +220,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           // Name
                           TextFormField(
                             controller: _nameController,
-                            decoration: const InputDecoration(
-                              labelText: 'Name (optional)',
-                              prefixIcon: Icon(PhosphorIconsLight.user),
+                            decoration: InputDecoration(
+                              labelText: context.l10n.nameOptionalLabel,
+                              prefixIcon: const Icon(PhosphorIconsLight.user),
                             ),
                           ),
                           const SizedBox(height: DesignTokens.spaceMd),
@@ -229,9 +230,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           // Email
                           TextFormField(
                             controller: _emailController,
-                            decoration: const InputDecoration(
-                              labelText: 'Email',
-                              prefixIcon: Icon(PhosphorIconsLight.envelope),
+                            decoration: InputDecoration(
+                              labelText: context.l10n.emailLabel,
+                              prefixIcon: const Icon(PhosphorIconsLight.envelope),
                             ),
                             keyboardType: TextInputType.emailAddress,
                             validator: emailValidator,
@@ -242,10 +243,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           TextFormField(
                             controller: _passwordController,
                             decoration: InputDecoration(
-                              labelText: 'Password',
+                              labelText: context.l10n.passwordLabel,
                               prefixIcon: const Icon(PhosphorIconsLight.lock),
                               suffixIcon: Semantics(
-                                label: 'Toggle password visibility',
+                                label: context.l10n.togglePasswordVisibility,
                                 child: IconButton(
                                   icon: Icon(_obscurePassword ? PhosphorIconsLight.eyeSlash : PhosphorIconsLight.eye),
                                   onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -271,11 +272,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               ),
                             ),
                             Align(
-                              alignment: Alignment.centerRight,
+                              alignment: AlignmentDirectional.centerEnd,
                               child: Padding(
-                                padding: const EdgeInsets.only(top: 2),
+                                padding: const EdgeInsetsDirectional.only(top: 2),
                                 child: Text(
-                                  _strengthLabel,
+                                  _strengthLabel(context),
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -292,10 +293,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           TextFormField(
                             controller: _confirmPasswordController,
                             decoration: InputDecoration(
-                              labelText: 'Confirm Password',
+                              labelText: context.l10n.confirmPassword,
                               prefixIcon: const Icon(PhosphorIconsLight.lock),
                               suffixIcon: Semantics(
-                                label: 'Toggle password visibility',
+                                label: context.l10n.togglePasswordVisibility,
                                 child: IconButton(
                                   icon: Icon(_obscureConfirmPassword ? PhosphorIconsLight.eyeSlash : PhosphorIconsLight.eye),
                                   onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
@@ -317,7 +318,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 initialDate: _dateOfBirth ?? DateTime(now.year - 25),
                                 firstDate: DateTime(1900),
                                 lastDate: now.subtract(const Duration(days: 365 * 18)),
-                                helpText: 'Select your date of birth',
+                                helpText: context.l10n.selectDateOfBirth,
                               );
                               if (picked != null) {
                                 setState(() => _dateOfBirth = picked);
@@ -325,7 +326,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             },
                             child: InputDecorator(
                               decoration: InputDecoration(
-                                labelText: 'Date of Birth',
+                                labelText: context.l10n.dateOfBirthLabel,
                                 prefixIcon: const Icon(PhosphorIconsLight.calendar),
                                 suffixIcon: _dateOfBirth != null
                                     ? IconButton(
@@ -338,7 +339,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               child: Text(
                                 _dateOfBirth != null
                                     ? '${_dateOfBirth!.month}/${_dateOfBirth!.day}/${_dateOfBirth!.year}'
-                                    : 'Tap to select',
+                                    : context.l10n.tapToSelectLabel,
                                 style: TextStyle(
                                   color: _dateOfBirth != null
                                       ? Theme.of(context).textTheme.bodyLarge?.color
@@ -361,9 +362,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 child: Text.rich(
                                   TextSpan(
                                     children: [
-                                      const TextSpan(text: 'I accept the '),
+                                      TextSpan(text: context.l10n.iAcceptThe),
                                       TextSpan(
-                                        text: 'Terms of Service',
+                                        text: context.l10n.termsOfServiceLink,
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: context.colorScheme.primary,
@@ -392,9 +393,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 child: Text.rich(
                                   TextSpan(
                                     children: [
-                                      const TextSpan(text: 'I accept the '),
+                                      TextSpan(text: context.l10n.iAcceptThe),
                                       TextSpan(
-                                        text: 'Privacy Policy',
+                                        text: context.l10n.privacyPolicyLink,
                                         style: TextStyle(
                                           fontSize: 13,
                                           color: context.colorScheme.primary,
@@ -418,9 +419,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             child: CheckboxListTile(
                               value: _consentToDataProcessing,
                               onChanged: (v) => setState(() => _consentToDataProcessing = v ?? false),
-                              title: const Text(
-                                'I consent to processing of child health & development data',
-                                style: TextStyle(fontSize: 13),
+                              title: Text(
+                                context.l10n.dataConsentText,
+                                style: const TextStyle(fontSize: 13),
                               ),
                               controlAffinity: ListTileControlAffinity.leading,
                               contentPadding: EdgeInsets.zero,
@@ -443,13 +444,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                           // Register button
                           ThemeButton(
-                            text: 'Sign Up',
+                            text: context.l10n.signUp,
                             onPressed: _register,
                             isLoading: authState.isLoading,
                             fullWidth: true,
                             trailingIcon: PhosphorIconsLight.heart,
                             borderRadius: DesignTokens.radiusFull,
-                            semanticLabel: 'Create your account',
+                            semanticLabel: context.l10n.createYourAccount,
                           ),
                         ],
                       ),
@@ -464,21 +465,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 index: 1,
                 child: Column(
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Expanded(child: Divider(color: AppColors.divider)),
+                          const Expanded(child: Divider(color: AppColors.divider)),
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: DesignTokens.spaceMd),
+                            padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceMd),
                             child: Text(
-                              'OR',
-                              style: TextStyle(
+                              context.l10n.orDivider,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textOnDark,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
-                          Expanded(child: Divider(color: AppColors.divider)),
+                          const Expanded(child: Divider(color: AppColors.divider)),
                         ],
                       ),
                       const SizedBox(height: DesignTokens.spaceLg),
@@ -503,21 +504,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               StaggeredFadeSlide(
                 index: 2,
                 child: Semantics(
-                    label: 'Navigate to login',
+                    label: context.l10n.navigateToLogin,
                     button: true,
                     child: GestureDetector(
                     onTap: () => context.go('/login'),
                     child: RichText(
-                      text: const TextSpan(
-                        style: TextStyle(
+                      text: TextSpan(
+                        style: const TextStyle(
                           fontSize: 14,
                           color: AppColors.textOnDark,
                         ),
                         children: [
-                          TextSpan(text: 'Already have an account? '),
+                          TextSpan(text: '${context.l10n.hasAccount} '),
                           TextSpan(
-                            text: 'Login',
-                            style: TextStyle(
+                            text: context.l10n.loginButton,
+                            style: const TextStyle(
                               color: AppColors.textOnDark,
                               fontWeight: FontWeight.w600,
                             ),
@@ -570,14 +571,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         child: Icon(PhosphorIconsLight.baby, size: 40, color: cs.primary),
                       ),
                       const SizedBox(height: DesignTokens.spaceLg),
-                      const Text(
-                        'Create Account',
-                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white),
+                      Text(
+                        context.l10n.createAccountTitle,
+                        style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white),
                       ),
                       const SizedBox(height: DesignTokens.spaceXs),
-                      const Text(
-                        'Join BabyMon today',
-                        style: TextStyle(fontSize: 15, color: Colors.white70),
+                      Text(
+                        context.l10n.joinToday,
+                        style: const TextStyle(fontSize: 15, color: Colors.white70),
                       ),
                       const SizedBox(height: DesignTokens.space2xl),
                       Row(
@@ -634,18 +635,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 // Name
                                 TextFormField(
                                   controller: _nameController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Name (optional)',
-                                    prefixIcon: Icon(PhosphorIconsLight.user),
+                                  decoration: InputDecoration(
+                                    labelText: context.l10n.nameOptionalLabel,
+                                    prefixIcon: const Icon(PhosphorIconsLight.user),
                                   ),
                                 ),
                                 const SizedBox(height: DesignTokens.spaceMd),
                                 // Email
                                 TextFormField(
                                   controller: _emailController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Email',
-                                    prefixIcon: Icon(PhosphorIconsLight.envelope),
+                                  decoration: InputDecoration(
+                                    labelText: context.l10n.emailLabel,
+                                    prefixIcon: const Icon(PhosphorIconsLight.envelope),
                                   ),
                                   keyboardType: TextInputType.emailAddress,
                                   validator: emailValidator,
@@ -655,7 +656,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 TextFormField(
                                   controller: _passwordController,
                                   decoration: InputDecoration(
-                                    labelText: 'Password',
+                                    labelText: context.l10n.passwordLabel,
                                     prefixIcon: const Icon(PhosphorIconsLight.lock),
                                     suffixIcon: IconButton(
                                       icon: Icon(_obscurePassword ? PhosphorIconsLight.eyeSlash : PhosphorIconsLight.eye),
@@ -685,7 +686,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 TextFormField(
                                   controller: _confirmPasswordController,
                                   decoration: InputDecoration(
-                                    labelText: 'Confirm Password',
+                                    labelText: context.l10n.confirmPassword,
                                     prefixIcon: const Icon(PhosphorIconsLight.lock),
                                     suffixIcon: IconButton(
                                       icon: Icon(_obscureConfirmPassword ? PhosphorIconsLight.eyeSlash : PhosphorIconsLight.eye),
@@ -722,13 +723,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 const SizedBox(height: DesignTokens.spaceMd),
                                 // Sign Up button
                                 ThemeButton(
-                                  text: 'Sign Up',
+                                  text: context.l10n.signUpButton,
                                   onPressed: _register,
                                   isLoading: authState.isLoading,
                                   fullWidth: true,
                                   trailingIcon: PhosphorIconsLight.heart,
                                   borderRadius: DesignTokens.radiusFull,
-                                  semanticLabel: 'Create your account',
+                                  semanticLabel: context.l10n.createYourAccount,
                                 ),
                               ],
                             ),
@@ -740,14 +741,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     // Login link
                     GestureDetector(
                       onTap: () => context.go('/login'),
-                      child: RichText(
-                        text: const TextSpan(
-                          style: TextStyle(fontSize: 14),
+                      child: RichText(                            text: TextSpan(
+                          style: const TextStyle(fontSize: 14),
                           children: [
-                            TextSpan(text: 'Already have an account? '),
+                            TextSpan(text: '${context.l10n.alreadyHaveAccount} '),
                             TextSpan(
-                              text: 'Login',
-                              style: TextStyle(fontWeight: FontWeight.w600),
+                              text: context.l10n.loginButton,
+                              style: const TextStyle(fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
@@ -765,10 +765,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Widget _socialCircle(IconData icon, Color color, VoidCallback onTap) {
     final label = icon == Icons.g_mobiledata
-        ? 'Sign up with Google'
+        ? context.l10n.signUpWithGoogle
         : icon == Icons.apple
-            ? 'Sign up with Apple'
-            : 'Sign up with Facebook';
+            ? context.l10n.signUpWithApple
+            : context.l10n.signUpWithFacebook;
     return Tooltip(
       message: label,
       preferBelow: false,

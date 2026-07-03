@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,51 +28,51 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   // Prices are kept in a single list so a future remote-config
   // upgrade is a one-line change. Number formatting happens at
   // render-time so the values stay parseable.
-  static const List<_PlanSpec> _plans = [
+  List<_PlanSpec> get _plans => [
     _PlanSpec(
-      name: 'Free',
+      name: context.l10n.freePlan,
       price: '\$0',
-      period: 'forever',
-      tierName: 'FREE',
+      period: context.l10n.periodForever,
+      tierName: context.l10n.planFreeTierName,
       isRecommended: false,
       features: [
-        'Basic tracking (milestones, feeding, health)',
-        'Export your data anytime',
-        '1 BabyMon profile',
-        '7-day history',
-        'Push notifications',
-        'Offline entry creation',
+        context.l10n.freePlanFeature1,
+        context.l10n.freePlanFeature2,
+        context.l10n.freePlanFeature3,
+        context.l10n.freePlanFeature4,
+        context.l10n.freePlanFeature5,
+        context.l10n.freePlanFeature6,
       ],
     ),
     _PlanSpec(
-      name: 'Premium',
+      name: context.l10n.premiumPlan,
       price: '\$4.99',
-      period: 'month',
-      tierName: 'PREMIUM',
+      period: context.l10n.periodMonth,
+      tierName: context.l10n.planPremiumTierName,
       isRecommended: true,
-      premiumHeader: 'Everything in Free, plus:',
+      premiumHeader: context.l10n.planEverythingInFree,
       features: [
-        'AI-powered stage content & tips',
-        'Unlimited history',
-        'Multiple BabyMon profiles',
-        'Priority support',
-        'Badge animations & effects',
-        'Evolution narratives',
-        'Photo album (S3 storage)',
+        context.l10n.planAiStageContent,
+        context.l10n.planUnlimitedHistory,
+        context.l10n.planMultiBabyMon,
+        context.l10n.planPrioritySupport,
+        context.l10n.planBadgeAnimations,
+        context.l10n.planEvolutionNarratives,
+        context.l10n.planPhotoAlbum,
       ],
-      footerNote: '\$4.99/month, auto-renews. Cancel at least 24 hours before renewal.',
+      footerNote: context.l10n.planPricingFooter,
     ),
   ];
   // Feature comparison matrix.
-  static const List<_ComparisonRow> _comparison = [
-    _ComparisonRow('Milestones, feeding, health', true, true),
-    _ComparisonRow('Push notifications', true, true),
-    _ComparisonRow('Export your data', true, true),
-    _ComparisonRow('7-day history', true, true),
-    _ComparisonRow('AI-powered stage content', false, true),
-    _ComparisonRow('Multiple BabyMon profiles', false, true),
-    _ComparisonRow('Unlimited history', false, true),
-    _ComparisonRow('Cloud photo album', false, true),
+  List<_ComparisonRow> get _comparison => [
+    _ComparisonRow(context.l10n.planMilestonesFeeding, true, true),
+    _ComparisonRow(context.l10n.planPushNotifications, true, true),
+    _ComparisonRow(context.l10n.planExportData, true, true),
+    _ComparisonRow(context.l10n.plan7DayHistory, true, true),
+    _ComparisonRow(context.l10n.planAiStageContent, false, true),
+    _ComparisonRow(context.l10n.planMultiBabyMon, false, true),
+    _ComparisonRow(context.l10n.planUnlimitedHistory, false, true),
+    _ComparisonRow(context.l10n.planPhotoAlbum, false, true),
   ];
   @override
   void initState() {
@@ -133,7 +134,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                     controller: _promoController,
                     textCapitalization: TextCapitalization.characters,
                     decoration: InputDecoration(
-                      hintText: 'Have a promo code?',
+                      hintText: context.l10n.havePromoCode,
                       prefixIcon: const Icon(PhosphorIconsLight.tag, size: 20),
                       suffixIcon: _promoLoading
                           ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
@@ -153,7 +154,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                   child: FilledButton(
                     onPressed: _promoLoading ? null : _applyPromoCode,
                     style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: DesignTokens.spaceLg)),
-                    child: const Text('Apply', style: TextStyle(fontSize: DesignTokens.fontSm)),
+                    child: Text(context.l10n.apply, style: const TextStyle(fontSize: DesignTokens.fontSm)),
                   ),
                 ),
               ],
@@ -180,11 +181,11 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Promo Code'),
+          title: Text(context.l10n.promoCodeTitle),
           content: Text(desc),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Apply')),
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.l10n.cancelLabel)),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(context.l10n.apply)),
           ],
         ),
       );
@@ -194,7 +195,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       final redeem = await api.redeemPromoCode(code);
       final result = redeem.data as Map<String, dynamic>;
       setState(() {
-        _promoSuccess = 'Code applied! ${result['valueDays']} days of ${result['type'] == 'FULL_PREMIUM' ? 'Premium' : 'trial extension'} granted.';
+        final days = result['valueDays'] ?? 0;
+        final type = result['type'] == 'FULL_PREMIUM' ? context.l10n.premiumPlan : context.l10n.freePlan;
+        _promoSuccess = '${context.l10n.promoCodeAppliedTitle} ${context.l10n.promoCodeAppliedBody('$days', type)}';
         _promoController.clear();
         _promoLoading = false;
       });
@@ -202,7 +205,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       // Refresh subscription status
       _loadSubscription();
     } catch (e) {
-      final msg = e is DioException ? (e.response?.data?['message'] ?? 'Invalid code') : 'Something went wrong';
+      final msg = e is DioException ? (e.response?.data?['message'] ?? context.l10n.invalidCode) : context.l10n.somethingWentWrong;
       setState(() { _promoError = msg.toString(); _promoLoading = false; });
     }
   }
@@ -218,14 +221,14 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       final plansData = plansResp.data is Map ? plansResp.data as Map<String, dynamic> : <String, dynamic>{};
       final plans = (plansData['plans'] as List?)?.cast<Map<String, dynamic>>() ?? [];
       final premium = plans.firstWhere(
-        (p) => p['tier'] == 'PREMIUM',
+        (p) => p['tier'] == context.l10n.premiumPlan,
         orElse: () => <String, dynamic>{},
       );
       final priceId = premium['stripePriceId'] as String?;
       if (priceId == null || priceId.isEmpty) {
         if (mounted) {
           messenger.showSnackBar(
-            const SnackBar(content: Text('Payment is not configured yet. Please try again later.')),
+            SnackBar(content: Text(context.l10n.paymentNotConfigured)),
           );
         }
         return;
@@ -245,14 +248,14 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
       } else {
         if (mounted) {
           messenger.showSnackBar(
-            const SnackBar(content: Text('Could not start checkout. Please try again.')),
+            SnackBar(content: Text(context.l10n.couldNotStartCheckout)),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Could not upgrade. Please try again.')),
+          SnackBar(content: Text(context.l10n.couldNotUpgrade)),
         );
       }
     } finally {
@@ -264,17 +267,17 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     // iOS: Settings > Apple ID > Subscriptions
     // Android: Play Store > Payments & subscriptions > Subscriptions
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('To restore a purchase, go to your app store account settings and tap Restore.'),
-        duration: Duration(seconds: 4),
+      SnackBar(
+        content: Text(context.l10n.appStoreSettings),
+        duration: const Duration(seconds: 4),
       ),
     );
   }
   void _openSupport() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Contact us at support@babymon.app'),
-        duration: Duration(seconds: 3),
+      SnackBar(
+        content: Text(context.l10n.supportEmail),
+        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -282,7 +285,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: ScreenHeader(
-        title: 'Plans',
+        title: context.l10n.plansTitle,
         onBack: () => GoRouter.of(context).pop(),
       ),
       body: PremiumBackground(
@@ -327,14 +330,16 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                         isCurrent: isCurrent,
                         isRecommended: spec.isRecommended,
                         isBusy: _isUpgrading,
+                        recommendedLabel: context.l10n.recommendedBadge,
+                        currentPlanLabel: context.l10n.currentPlanLabel,
                         primaryActionLabel: isCurrent
                             ? null
-                            : (spec.tierName == 'PREMIUM'
-                                ? 'Upgrade to Premium'
-                                : 'Choose Free'),
+                            : (spec.tierName == context.l10n.premiumPlan
+                                ? context.l10n.upgradeToPremiumLabel
+                                : context.l10n.chooseFreeLabel),
                         onPrimaryAction: isCurrent
                             ? null
-                            : (spec.tierName == 'PREMIUM'
+                            : (spec.tierName == context.l10n.premiumPlan
                                 ? _upgradeToPremium
                                 : null),
                         footerNote: spec.footerNote,
@@ -342,7 +347,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                     );
                   }),
                   // ── Comparison Matrix ──
-                  const _SectionTitle('Compare features'),
+                  _SectionTitle(context.l10n.compareFeatures),
                   const SizedBox(height: DesignTokens.spaceSm),
                   _ComparisonHeader(),
                   Container(
@@ -439,7 +444,7 @@ class _Hero extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Choose your plan',
+          context.l10n.chooseYourPlan,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.5,
@@ -448,7 +453,7 @@ class _Hero extends StatelessWidget {
         ),
         const SizedBox(height: DesignTokens.spaceSm),
         Text(
-          'Start free. Upgrade anytime. Cancel in two taps.',
+          context.l10n.planSubtitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontSize: DesignTokens.fontMd,
             height: 1.5,
@@ -467,7 +472,7 @@ class _CurrentPlanBanner extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    final isPremium = currentPlan == 'PREMIUM';
+    final isPremium = currentPlan == context.l10n.premiumPlan;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = isPremium ? context.colorScheme.primary : context.colorScheme.primary;
     final bg = accent.withValues(alpha: isDark ? 0.10 : 0.06);
@@ -512,7 +517,7 @@ class _CurrentPlanBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isPremium ? 'Premium' : 'Free plan',
+                  isPremium ? context.l10n.premiumPlanLabel : context.l10n.freePlanLabel,
                   style: TextStyle(
                     fontSize: DesignTokens.fontLg,
                     fontWeight: FontWeight.w700,
@@ -522,7 +527,7 @@ class _CurrentPlanBanner extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  isPremium ? 'Renews monthly' : 'Free forever',
+                  isPremium ? context.l10n.renewMonthly : context.l10n.freeForever,
                   style: TextStyle(
                     fontSize: DesignTokens.fontSm2,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -544,7 +549,7 @@ class _CurrentPlanBanner extends StatelessWidget {
                     BorderRadius.circular(DesignTokens.radiusFull),
               ),
               child: Text(
-                '${trialDaysRemaining}d left',
+                context.l10n.daysLeft(trialDaysRemaining.toString()),
                 style: TextStyle(
                   fontSize: DesignTokens.fontSm,
                   fontWeight: FontWeight.w800,
@@ -590,8 +595,8 @@ class _ComparisonHeader extends StatelessWidget {
             child: SizedBox.shrink(),
           ),
           Expanded(
-            child: Text(
-              'FREE',
+            child:              Text(
+              context.l10n.planFreeTierName,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: DesignTokens.font2xs,
@@ -603,7 +608,7 @@ class _ComparisonHeader extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              'PREMIUM',
+              context.l10n.premiumPlan,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: DesignTokens.font2xs,
@@ -643,7 +648,7 @@ class _TrustBand extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                'Secured by Stripe',
+                context.l10n.securedByStripe,
                 style: TextStyle(
                   fontSize: DesignTokens.fontSm,
                   fontWeight: FontWeight.w700,
@@ -655,7 +660,7 @@ class _TrustBand extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '30-day money-back guarantee · Cancel anytime through your app store settings. Auto-renews at \$4.99/month unless cancelled 24 hours before renewal.',
+            context.l10n.moneyBackGuarantee,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: DesignTokens.fontSm,
@@ -691,20 +696,20 @@ class _SubscriptionFooter extends StatelessWidget {
             runSpacing: 4,
             alignment: WrapAlignment.center,
             children: [
-              _FooterLink(label: 'Restore purchases', onTap: onRestore),
+              _FooterLink(label: context.l10n.restorePurchases, onTap: onRestore),
               const _FooterDot(),
-              _FooterLink(label: 'Terms', onTap: onTerms),
+              _FooterLink(label: context.l10n.termsLink, onTap: onTerms),
               const _FooterDot(),
-              _FooterLink(label: 'Privacy', onTap: onPrivacy),
+              _FooterLink(label: context.l10n.privacyLink, onTap: onPrivacy),
               const _FooterDot(),
-              _FooterLink(label: 'Children', onTap: onChildrensPrivacy),
+              _FooterLink(label: context.l10n.childrenLink, onTap: onChildrensPrivacy),
             ],
           ),
           const SizedBox(height: DesignTokens.spaceSm),
           TextButton.icon(
             onPressed: onSupport,
             icon: const Icon(PhosphorIconsLight.headset, size: 16),
-            label: const Text('Need help? Talk to support'),
+            label: Text(context.l10n.needHelp),
             style: TextButton.styleFrom(
               foregroundColor: context.colorScheme.primary,
               textStyle: const TextStyle(

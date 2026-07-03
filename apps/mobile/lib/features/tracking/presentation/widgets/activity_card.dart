@@ -8,10 +8,10 @@ class ActivityCard extends StatelessWidget {
   final VoidCallback? onDelete;
 
   const ActivityCard({
-    Key? key,
+    super.key,
     required this.activity,
     this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class ActivityCard extends StatelessWidget {
       direction: DismissDirection.endToStart,
       background: Container(
         color: AppColors.error,
-        alignment: Alignment.centerRight,
+        alignment: AlignmentDirectional.centerEnd,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: const Icon(Icons.delete, color: Colors.white),
       ),

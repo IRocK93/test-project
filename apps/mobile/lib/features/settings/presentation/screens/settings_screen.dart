@@ -11,7 +11,6 @@ import 'package:baby_mon/core/utils/error_handler.dart';
 import 'package:baby_mon/l10n/l10n_ext.dart';
 const String measurementUnitsKey = 'measurement_units';
 const String _biometricsEnabledKey = 'biometrics_enabled';
-const String _localeKey = 'user_locale';
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
   @override
@@ -26,7 +25,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isEditingName = false;
   bool _isMetric = true;
   bool _biometricsEnabled = false;
-  String _locale = 'en';
   @override
   void initState() {
     super.initState();
@@ -34,7 +32,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _loadSettings();
       _loadUnitPref();
       _loadBiometricsPref();
-      _loadLocalePref();
       _loadActiveBabyMon();
     });
   }
@@ -77,34 +74,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (mounted) setState(() => _biometricsEnabled = !enabled);
     }
   }
-  Future<void> _loadLocalePref() async {
-    // Prefer backend-stored locale, fall back to local SharedPreferences
-    String locale = 'en';
-    try {
-      final api = ref.read(apiClientProvider);
-      final profileRes = await api.getProfile();
-      final backendLocale = parseJsonMap(profileRes.data)?['locale'] as String?;
-      if (backendLocale != null && backendLocale.isNotEmpty) {
-        locale = backendLocale;
-        final prefs = await ref.read(sharedPreferencesProvider.future);
-        await prefs.setString(_localeKey, locale);
-      } else {
-        final prefs = await ref.read(sharedPreferencesProvider.future);
-        locale = prefs.getString(_localeKey) ?? 'en';
-      }
-    } catch (_) {
-      final prefs = await ref.read(sharedPreferencesProvider.future);
-      locale = prefs.getString(_localeKey) ?? 'en';
-    }
-    if (mounted) setState(() => _locale = locale);
-  }
   Future<void> _saveLocalePref(String locale) async {
     HapticFeedback.selectionClick();
     try {
-      final prefs = await ref.read(sharedPreferencesProvider.future);
-      await prefs.setString(_localeKey, locale);
+      // Update provider first for immediate RTL layout change
+      await ref.read(localeProvider.notifier).setLocale(locale);
+      // Sync to backend
       await ref.read(apiClientProvider).patch('/users/me/locale', data: {'locale': locale});
-      if (mounted) setState(() => _locale = locale);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -114,29 +90,50 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
   Future<void> _showLanguagePicker() async {
+    final currentLocale = ref.read(localeProvider).languageCode;
+    const flags = {
+      'en': '🇬🇧', 'es': '🇪🇸', 'fr': '🇫🇷', 'pt': '🇵🇹',
+      'de': '🇩🇪', 'ar': '🇸🇦', 'he': '🇮🇱', 'zh': '🇨🇳',
+      'it': '🇮🇹',
+    };
+    final languages = [
+      ('en', flags['en']!, context.l10n.languageEnglish),
+      ('es', flags['es']!, context.l10n.languageSpanish),
+      ('fr', flags['fr']!, context.l10n.languageFrench),
+      ('pt', flags['pt']!, context.l10n.languagePortuguese),
+      ('de', flags['de']!, context.l10n.languageGerman),
+      ('ar', flags['ar']!, context.l10n.languageArabic),
+      ('he', flags['he']!, context.l10n.languageHebrew),
+      ('zh', flags['zh']!, context.l10n.languageChinese),
+      ('it', flags['it']!, context.l10n.languageItalian),
+    ];
     final selected = await showDialog<String>(
       context: context,
       builder: (ctx) => SimpleDialog(
         title: Text(context.l10n.selectLanguage),
-        children: [
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx, 'en'),
+        children: languages.map((lang) {
+          final code = lang.$1;
+          final flag = lang.$2;
+          final label = lang.$3;
+          final isSelected = currentLocale == code;
+          return SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, code),
             child: Row(
               children: [
-                const Icon(PhosphorIconsLight.globe),
+                Text(flag, style: const TextStyle(fontSize: 22)),
                 const SizedBox(width: DesignTokens.spaceMd),
-                Text(context.l10n.english),
-                if (_locale == 'en') ...[
+                Text(label),
+                if (isSelected) ...[
                   const Spacer(),
-                  Icon(PhosphorIconsLight.check, color: context.colorScheme.primary),
+                  Icon(PhosphorIconsLight.check, color: ctx.colorScheme.primary),
                 ],
               ],
             ),
-          ),
-        ],
+          );
+        }).toList(),
       ),
     );
-    if (selected != null && selected != _locale) {
+    if (selected != null && selected != currentLocale) {
       await _saveLocalePref(selected);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -226,8 +223,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       barrierDismissible: false,        builder: (ctx) => AlertDialog(
         content: Row(children: [
-          ButtonLoading(),
-          SizedBox(width: DesignTokens.spaceMd),
+          const ButtonLoading(),
+          const SizedBox(width: DesignTokens.spaceMd),
           Text(context.l10n.exportingData),
         ]),
       ),
@@ -474,6 +471,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (mounted) router.go('/login');
     }
   }
+  String _localeName(BuildContext context) {
+    final code = ref.watch(localeProvider).languageCode;
+    const flags = {
+      'en': '🇬🇧', 'es': '🇪🇸', 'fr': '🇫🇷', 'pt': '🇵🇹',
+      'de': '🇩🇪', 'ar': '🇸🇦', 'he': '🇮🇱', 'zh': '🇨🇳',
+      'it': '🇮🇹',
+    };
+    final flag = flags[code] ?? '';
+    final name = switch (code) {
+      'en' => context.l10n.languageEnglish,
+      'es' => context.l10n.languageSpanish,
+      'fr' => context.l10n.languageFrench,
+      'pt' => context.l10n.languagePortuguese,
+      'de' => context.l10n.languageGerman,
+      'ar' => context.l10n.languageArabic,
+      'he' => context.l10n.languageHebrew,
+      'zh' => context.l10n.languageChinese,
+      'it' => context.l10n.languageItalian,
+      _ => code.toUpperCase(),
+    };
+    return '$flag $name';
+  }
+
   void _showComingSoon(String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(context.l10n.featureComingSoon(feature))),
@@ -540,25 +560,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         icon: PhosphorIconsLight.globe,
                         iconColor: context.colorScheme.primary,
                         title: context.l10n.languageSetting,
-                        subtitle: context.l10n.currentLanguage,
-                        trailing: Text(
-                          _locale.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: DesignTokens.fontMd,
-                            fontWeight: FontWeight.w600,
-                            color: context.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
+                        subtitle: _localeName(context),
                         onTap: _showLanguagePicker,
                       ),
-                  SettingsRow(
+                      SettingsRow(
                     icon: PhosphorIconsLight.scales,
                     iconColor: context.colorScheme.primary,
                     title: context.l10n.measurementUnits,
                     trailing: SegmentedButton<bool>(
                         segments: [
-                          ButtonSegment(value: true, label: Text(context.l10n.metric)),
-                          ButtonSegment(value: false, label: Text(context.l10n.imperial)),
+                          ButtonSegment(value: true, label: Text(context.l10n.metric), enabled: true),
+                          ButtonSegment(value: false, label: Text(context.l10n.imperial), enabled: true),
                         ],
                         selected: {_isMetric},
                         onSelectionChanged: (v) => _saveUnitPref(v.first),

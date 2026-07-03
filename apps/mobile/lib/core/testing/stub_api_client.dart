@@ -9,6 +9,8 @@ import 'package:baby_mon/core/data/api_client.dart';
 /// This lives in `lib/` (not `test/`) so it can be imported via
 /// `package:baby_mon/core/testing/stub_api_client.dart` from any test file.
 class StubApiClient implements ApiClient {
+  Dio get dio => Dio();
+
   Response<dynamic> _ok() => Response<dynamic>(
         data: <String, dynamic>{},
         statusCode: 200,
@@ -128,6 +130,9 @@ class StubApiClient implements ApiClient {
   @override Future<String?> getSelectedBabyMonId() async => null;
   @override Future<void> setTrialOverride(int d) async {}
   @override Future<int?> getTrialOverride() async => null;
+
+  // ── Downloads ──
+  @override Future<Dio> createDownloadDio({Duration? connectTimeout, Duration? receiveTimeout}) async => Dio();
 
   // ── Generic HTTP ──
   @override Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters, Options? options, CancelToken? cancelToken}) async => _ok();

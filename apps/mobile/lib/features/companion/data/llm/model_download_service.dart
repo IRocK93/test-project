@@ -4,18 +4,23 @@ import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import '../../domain/models/model_download_state.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/data/api_client.dart';
 
 class ModelDownloadService {
-  final Dio _dio;
+  final ApiClient _apiClient;
   CancelToken? _cancelToken;
+  Dio? _downloadDio;
 
-  ModelDownloadService({Dio? dio})
-      : _dio = dio ?? Dio(BaseOptions(
-          connectTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(hours: 2),
-          followRedirects: true,
-          maxRedirects: 10,
-        ));
+  ModelDownloadService({required ApiClient apiClient})
+      : _apiClient = apiClient;
+
+  Future<Dio> _getDownloadDio() async {
+    _downloadDio ??= await _apiClient.createDownloadDio(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(hours: 2),
+    );
+    return _downloadDio!;
+  }
 
   Stream<ModelDownloadState> download({
     required String url,
@@ -77,7 +82,8 @@ class ModelDownloadService {
       }
 
       final headers = <String, String>{if (existingSize > 0) 'Range': 'bytes=$existingSize-'};
-      final response = await _dio.get<ResponseBody>(url,
+      final dio = await _getDownloadDio();
+      final response = await dio.get<ResponseBody>(url,
         options: Options(
           headers: headers,
           responseType: ResponseType.stream,
@@ -157,7 +163,8 @@ class ModelDownloadService {
 
   Future<bool> _checkConnectivity(String url) async {
     try {
-      final response = await _dio.head<Response>(url, options: Options(receiveTimeout: const Duration(seconds: 10)));
+      final dio = await _getDownloadDio();
+      final response = await dio.head<Response>(url, options: Options(receiveTimeout: const Duration(seconds: 10)));
       final statusCode = response.statusCode;
       return statusCode != null && statusCode >= 200 && statusCode < 500;
     } catch (_) {
@@ -167,7 +174,8 @@ class ModelDownloadService {
 
   Future<int?> _getContentLength(String url) async {
     try {
-      final response = await _dio.head<Response>(url);
+      final dio = await _getDownloadDio();
+      final response = await dio.head<Response>(url);
       final length = response.headers.value('content-length');
       return length != null ? int.tryParse(length) : null;
     } catch (_) {

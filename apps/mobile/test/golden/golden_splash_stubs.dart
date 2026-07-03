@@ -36,7 +36,7 @@ class GoldenSplashScreen extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
+                  child: const Icon(
                     PhosphorIconsLight.baby,
                     size: 40,
                     color: Colors.white,

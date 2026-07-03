@@ -55,6 +55,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
         super(const AuthState()) {
     _checkAuthStatus();
   }
+
+  /// Syncs the locally-saved locale preference to the backend via the repository.
+  /// Fire-and-forget: failures are silently ignored so auth flow is never blocked.
+  void _syncLocaleToBackend() {
+    // ignore: unawaited_futures
+    _repository.syncLocale().catchError((_) {
+      // Non-critical: locale sync failure should never block the auth flow.
+    });
+  }
   Future<void> _checkAuthStatus() async {
     try {
       final loggedIn = await _repository.isLoggedIn();
@@ -63,6 +72,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // Token is retrieved from secure storage by ApiClient via getAccessToken()
         final token = await _repository.getAccessToken();
         state = AuthState(user: user, token: token);
+        // Fire-and-forget: re-sync locale in case it changed on another device
+        _syncLocaleToBackend();
       }
     } catch (e) {
       state = AuthState(error: extractErrorMessage(e));
@@ -78,6 +89,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final normalized = email.toLowerCase().trim();
       final result = await _repository.login(email: normalized, password: password);
       state = AuthState(user: result.user, token: result.token);
+      // Fire-and-forget: sync locale selected during onboarding
+      _syncLocaleToBackend();
     } catch (e) {
       state = AuthState(error: extractErrorMessage(e));
     }
@@ -104,6 +117,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         consentToDataProcessing: consentToDataProcessing,
       );
       state = AuthState(user: result.user, token: result.token, isEmailVerified: false);
+      // Fire-and-forget: sync locale selected during onboarding
+      _syncLocaleToBackend();
     } catch (e) {
       state = AuthState(error: extractErrorMessage(e));
     }
@@ -113,16 +128,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final result = await _repository.biometricLogin();
       state = AuthState(user: result.user, token: result.token);
+      // Fire-and-forget: sync locale selected during onboarding
+      _syncLocaleToBackend();
     } catch (e) {
       state = AuthState(error: extractErrorMessage(e));
     }
   }
-  Future<void> sendVerificationEmail(String email) async {
+  Future<void> sendVerificationEmail() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      // Call backend endpoint to send verification email
-      // For now, just simulate success
-      await Future<void>.delayed(const Duration(seconds: 1));
+      await _repository.sendVerificationEmail();
       state = state.copyWith(isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: extractErrorMessage(e));
@@ -130,10 +145,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
   Future<bool> checkEmailVerified() async {
-    // Email verification is optional/cosmetic; skip the backend call
-    // that results in a 404. Always allow login to proceed.
-    state = state.copyWith(isLoading: false, isEmailVerified: true);
-    return true;
+    state = state.copyWith(isLoading: true);
+    try {
+      final isVerified = await _repository.checkEmailVerified();
+      state = state.copyWith(isLoading: false, isEmailVerified: isVerified);
+      return isVerified;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: extractErrorMessage(e));
+      return false;
+    }
   }
   Future<void> googleLogin() async {
     state = state.copyWith(isLoading: true, error: null);
@@ -151,6 +171,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         token: result.token,
         isEmailVerified: true, // Google emails are pre-verified
       );
+      // Fire-and-forget: sync locale selected during onboarding
+      _syncLocaleToBackend();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: extractErrorMessage(e));
     }
@@ -188,6 +210,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         token: result.token,
         isEmailVerified: true,
       );
+      // Fire-and-forget: sync locale selected during onboarding
+      _syncLocaleToBackend();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: extractErrorMessage(e));
     }
@@ -216,6 +240,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         token: result.token,
         isEmailVerified: true,
       );
+      // Fire-and-forget: sync locale selected during onboarding
+      _syncLocaleToBackend();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: extractErrorMessage(e));
     }

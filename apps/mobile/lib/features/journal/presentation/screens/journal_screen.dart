@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/core.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/mixins/mixins.dart';
 import 'package:baby_mon/core/utils/error_handler.dart';
@@ -25,14 +26,30 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
   List _proposals = [];
   String _selectedFilterKey = 'ALL';
   final Map<String, int> _filterCounts = {'ALL': 0};
-  // Filter definitions with display labels and stable keys.
+  // Filter definitions with stable keys only — labels resolved via l10n at build time.
   static const List<_FilterSpec> _filters = [
-    _FilterSpec('All', 'ALL'),
-    _FilterSpec('Milestones', 'MILESTONE'),
-    _FilterSpec('Feeding', 'FEED_LOG'),
-    _FilterSpec('Health', 'HEALTH_RECORD'),
-    _FilterSpec('System', 'SYSTEM'),
+    _FilterSpec('ALL'),
+    _FilterSpec('MILESTONE'),
+    _FilterSpec('FEED_LOG'),
+    _FilterSpec('HEALTH_RECORD'),
+    _FilterSpec('SLEEP_LOG'),
+    _FilterSpec('GROWTH_RECORD'),
+    _FilterSpec('SYSTEM'),
   ];
+
+  String _filterLabel(String key) {
+    final l10n = context.l10n;
+    switch (key) {
+      case 'ALL': return l10n.allFilter;
+      case 'MILESTONE': return l10n.milestones;
+      case 'FEED_LOG': return l10n.feeding;
+      case 'HEALTH_RECORD': return l10n.health;
+      case 'SLEEP_LOG': return l10n.sleepFilter;
+      case 'GROWTH_RECORD': return l10n.growthFilter;
+      case 'SYSTEM': return l10n.systemFilter;
+      default: return key;
+    }
+  }
   @override
   Future<void> fetchData() async {
     final api = ref.read(apiClientProvider);
@@ -94,9 +111,9 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
     final entryType = entry['entryType']?.toString();
     final confirmed = await ConfirmDeleteDialog.show(
       context,
-      title: 'Delete entry?',
-      message: 'This entry will be removed from your journal.',
-      confirmLabel: 'Delete',
+      title: context.l10n.deleteEntryTitle,
+      message: context.l10n.journalDeleteMessage,
+      confirmLabel: context.l10n.deleteLabel,
     );
     if (!confirmed) return;
     try {
@@ -118,14 +135,14 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
       await loadData();
       if (mounted) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Entry deleted')),
+          SnackBar(content: Text(context.l10n.entryDeleted)),
         );
       }
     } catch (e) {
       if (mounted) {
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text('Could not delete. Please try again.'),
+          SnackBar(
+            content: Text(context.l10n.couldNotDelete),
           ),
         );
       }
@@ -191,11 +208,14 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
   String _entrySubtitle(Map<String, dynamic> entry) {
     final type = JournalEntryType.fromString(entry['entryType']?.toString());
     if (type == JournalEntryType.feedLog) {
-      final value = entry['value'];
+      final amount = entry['amount'] ?? entry['value']; // 'amount' from FeedLog model, 'value' fallback
       final unit = entry['unit'];
-      if (value != null) {
-        return unit != null ? '$value $unit' : '$value';
+      final feedType = entry['type']?.toString();
+      if (amount != null) {
+        final amountStr = unit != null ? '$amount $unit' : '$amount';
+        return feedType != null ? '$feedType — $amountStr' : amountStr;
       }
+      return feedType ?? type.label;
     }
     if (type == JournalEntryType.healthRecord) {
       final value = entry['value'];
@@ -207,6 +227,25 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
     if (type == JournalEntryType.milestone) {
       final notes = entry['notes']?.toString();
       if (notes != null && notes.isNotEmpty) return notes;
+    }
+    if (type == JournalEntryType.sleepLog) {
+      final start = entry['startTime']?.toString();
+      final end = entry['endTime']?.toString();
+      if (start != null && end != null) {
+        final s = DateTime.tryParse(start);
+        final e = DateTime.tryParse(end);
+        if (s != null && e != null) {
+          final d = e.difference(s);
+          return d.inHours > 0 ? '${d.inHours}h ${d.inMinutes.remainder(60)}m' : '${d.inMinutes}m';
+        }
+      }
+    }
+    if (type == JournalEntryType.growthRecord) {
+      final value = entry['value'];
+      final unit = entry['unit'];
+      if (value != null) {
+        return unit != null ? '$value $unit' : '$value';
+      }
     }
     return type.label;
   }
@@ -223,7 +262,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
     final groups = _groupEntriesByDate();
     return Scaffold(
       appBar: ScreenHeader(
-        title: 'Journey Journal',
+        title: context.l10n.journeyJournal,
         onBack: () => popOrGoHome(context),
       ),
       body: PremiumBackground(
@@ -246,11 +285,11 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
                     // ── Filter Chips ──
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          DesignTokens.spaceLg,
-                          DesignTokens.spaceMd,
-                          DesignTokens.spaceLg,
-                          DesignTokens.spaceSm,
+                        padding: const EdgeInsetsDirectional.only(
+                          start: DesignTokens.spaceLg,
+                          top: DesignTokens.spaceMd,
+                          end: DesignTokens.spaceLg,
+                          bottom: DesignTokens.spaceSm,
                         ),
                         child: SizedBox(
                           height: 40,
@@ -264,7 +303,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
                               final selected =
                                   _selectedFilterKey == f.key;
                               return _FilterPill(
-                                label: f.label,
+                                label: _filterLabel(f.key),
                                 count: _filterCounts[f.key] ?? 0,
                                 selected: selected,
                                 onTap: () => _selectFilter(f.key),
@@ -279,11 +318,9 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
                       SliverFillRemaining(
                         child: PremiumEmptyState(
                           icon: PhosphorIconsLight.bookOpen,
-                          title: 'Your journal is empty',
-                          subtitle:
-                              'Milestones, feedings, and health records '
-                              'you add will appear here.',
-                          actionLabel: 'Add a milestone',
+                          title: context.l10n.journalEmpty,
+                          subtitle: context.l10n.journalEmptySubtitle,
+                          actionLabel: context.l10n.addMilestoneAction,
                           onAction: () => context.go('/home'),
                         ),
                       )
@@ -327,18 +364,18 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
       isScrollControlled: true,
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            DesignTokens.spaceLg,
-            DesignTokens.spaceLg,
-            DesignTokens.spaceLg,
-            DesignTokens.spaceLg,
+          padding: const EdgeInsetsDirectional.only(
+            start: DesignTokens.spaceLg,
+            top: DesignTokens.spaceLg,
+            end: DesignTokens.spaceLg,
+            bottom: DesignTokens.spaceLg,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Pending Approvals',
+                context.l10n.pendingApprovals,
                 style: TextStyle(
                   fontSize: DesignTokens.fontLg2,
                   fontWeight: FontWeight.w700,
@@ -347,8 +384,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
               ),
               const SizedBox(height: 4),
               Text(
-                'Review changes from your partner before they appear in '
-                'the journal.',
+                context.l10n.pendingApprovalsSubtitle,
                 style: TextStyle(
                   fontSize: DesignTokens.fontSm2,
                   color: context.colorScheme.onSurfaceVariant,
@@ -387,9 +423,8 @@ class _JournalScreenState extends ConsumerState<JournalScreen>
 //  Local sub-widgets
 // ═══════════════════════════════════════════════
 class _FilterSpec {
-  final String label;
   final String key;
-  const _FilterSpec(this.label, this.key);
+  const _FilterSpec(this.key);
 }
 class _FilterPill extends StatelessWidget {
   final String label;
@@ -490,6 +525,7 @@ class _JournalEntryTile extends StatelessWidget {
     final type =
         JournalEntryType.fromString(entry['entryType']?.toString());
     final isPending = entry['syncStatus'] == 'PENDING';
+    final isDeleted = entry['deletedAt'] != null;
     return Padding(
       // Mirror the row's outer margin so the swipe background aligns
       // edge-to-edge with the rounded card.
@@ -501,7 +537,7 @@ class _JournalEntryTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         child: Dismissible(
           key: ValueKey(entry['id'] ?? '${title}_$time'),
-          direction: DismissDirection.endToStart,
+          direction: isDeleted ? DismissDirection.none : DismissDirection.endToStart,
           confirmDismiss: (_) async {
             // Trigger the existing confirm dialog flow. The row is
             // optimistically removed when the dialog confirms.
@@ -510,14 +546,13 @@ class _JournalEntryTile extends StatelessWidget {
           },
           background: Container(
             color: context.colorScheme.error,
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: DesignTokens.space2xl),              child: Row(
+            alignment: AlignmentDirectional.centerEnd,
+            padding: const EdgeInsetsDirectional.only(end: DesignTokens.space2xl),              child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(PhosphorIconsLight.trash, color: context.colorScheme.onPrimary, size: 20),
-                const SizedBox(width: DesignTokens.spaceSm),
-                Text(
-                  'Delete',
+                const SizedBox(width: DesignTokens.spaceSm),                  Text(
+                  context.l10n.deleteLabel,
                   style: TextStyle(
                     color: context.colorScheme.onPrimary,
                     fontSize: DesignTokens.fontMd,
@@ -533,6 +568,7 @@ class _JournalEntryTile extends StatelessWidget {
             subtitle: subtitle,
             trailingTime: time,
             isPendingSync: isPending,
+            isDeleted: isDeleted,
             onTap: () {
               // Future: open entry detail screen.
             },
@@ -558,8 +594,8 @@ class _ProposalRow extends StatelessWidget {
         proposal['proposer']?['name']?.toString() ?? 'Your partner';
     final entryType = proposal['entryType']?.toString() ?? '';
     final summary = entryType.isEmpty
-        ? 'Change proposed'
-        : '$entryType change proposed';
+        ? context.l10n.changeProposed
+        : context.l10n.entryTypeChangeProposed(entryType);
     return Container(
       padding: const EdgeInsets.all(DesignTokens.spaceLg),
       decoration: BoxDecoration(
@@ -600,7 +636,7 @@ class _ProposalRow extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'From: $proposer',
+            context.l10n.fromProposerFormat(proposer),
             style: TextStyle(
               fontSize: DesignTokens.fontSm2,
               color: context.colorScheme.onSurfaceVariant,
@@ -613,7 +649,7 @@ class _ProposalRow extends StatelessWidget {
               TextButton.icon(
                 onPressed: onDecline,
                 icon: const Icon(PhosphorIconsLight.x, size: 18),
-                label: const Text('Decline'),
+                label: Text(context.l10n.decline),
                 style: TextButton.styleFrom(
                   foregroundColor: context.colorScheme.error,
                 ),
@@ -622,7 +658,7 @@ class _ProposalRow extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onAccept,
                 icon: const Icon(PhosphorIconsLight.check, size: 18),
-                label: const Text('Accept'),
+                label: Text(context.l10n.accept),
                 style: FilledButton.styleFrom(
                   backgroundColor: context.colorScheme.primary,
                   foregroundColor: context.colorScheme.onPrimary,

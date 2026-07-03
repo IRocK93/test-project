@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/utils/json_utils.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:baby_mon/core/providers.dart';
 import 'package:baby_mon/core/constants/constants.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
@@ -55,34 +56,25 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
   bool _loadingStep = false;
   int _loadingMessageIndex = 0;
   Timer? _loadingTimer;
-  static const List<String> _loadingMessages = [
-    'Weaving the nest…',
-    'Gathering tiny blankets…',
-    'Warming the incubator…',
-    'Preparing a gentle arrival…',
-    'Writing the first lullaby…',
-    'Almost ready…',
+  List<String> _loadingMessages() => [
+    context.l10n.weavingTheNest,
+    context.l10n.gatheringBlankets,
+    context.l10n.warmingIncubator,
+    context.l10n.preparingArrival,
+    context.l10n.writingLullaby,
+    context.l10n.almostReadyMessage,
   ];
   // ── Calendar state ──
   DateTime _calendarMonth =
       DateTime(DateTime.now().year, DateTime.now().month);
-  static const List<String> _traitOptions = [
-    'Curious',
-    'Peaceful',
-    'Playful',
-    'Gentle',
-    'Adventurous',
-    'Creative',
+  List<String> _traitOptions() => [
+    context.l10n.traitCurious,
+    context.l10n.traitPeaceful,
+    context.l10n.traitPlayful,
+    context.l10n.traitGentle,
+    context.l10n.traitAdventurous,
+    context.l10n.traitCreative,
   ];
-  static const Map<String, String> traitFlavorText = {
-    'Curious': 'Curious — always exploring the world with wide eyes.',
-    'Peaceful':
-        'Peaceful — a calm presence that soothes everyone around them.',
-    'Playful': 'Playful — finding joy in every tiny moment.',
-    'Gentle': 'Gentle — the softest touch, the kindest heart.',
-    'Adventurous': 'Adventurous — ready to discover something new every day.',
-    'Creative': 'Creative — seeing the world differently, beautifully.',
-  };
   // ── Suggested name rotation ──
   static const List<String> _suggestedNames = [
     'Luna',
@@ -167,15 +159,15 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
   String _getMjMessage() {
     switch (_currentStep) {
       case 0:
-        return 'Every great journey begins with a single heartbeat.';
+        return context.l10n.mjMessageStep0;
       case 1:
-        return 'Names carry stories. What will yours be called?';
+        return context.l10n.mjMessageStep1;
       case 2:
-        return 'Every journey begins at a different point. When did yours begin?';
+        return context.l10n.mjMessageStep2;
       case 3:
-        return "Every BabyMon has a unique spirit. Let's discover yours.";
+        return context.l10n.mjMessageStep3;
       case 4:
-        return "You've written the first page of your story together.\nAre you ready to begin?";
+        return context.l10n.mjMessageStep4;
       default:
         return '';
     }
@@ -267,6 +259,10 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
       _showParticles = true;
     });
     _particleController.forward(from: 0);
+    final failedToCreateBabyMonText = context.l10n.failedToCreateBabyMon;
+    final serverErrorPleaseRetryText = context.l10n.serverErrorPleaseRetry;
+    final cannotConnectServerText = context.l10n.cannotConnectServer;
+    final requestFailedRetryText = context.l10n.requestFailedRetry;
     try {
       final data = <String, dynamic>{
         'name': _nameController.text.trim(),
@@ -306,7 +302,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
           return;
         }
         setState(() {
-          _loadingMessageIndex = (_loadingMessageIndex + 1) % _loadingMessages.length;
+          _loadingMessageIndex = (_loadingMessageIndex + 1) % _loadingMessages().length;
         });
       });
       // Navigate home after the loading phase
@@ -319,10 +315,10 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         _showParticles = false;
       });
       _particleController.reset();
-      String message = 'Failed to create BabyMon';
+      String message = failedToCreateBabyMonText;
       if (e is DioException) {
         if (e.response?.statusCode == 404) {
-          message = 'Server error. Please try again.';
+          message = serverErrorPleaseRetryText;
         } else if (e.response?.data != null) {
           final data = e.response!.data;
           if (data is Map) {
@@ -335,9 +331,9 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
           }
         } else if (e.type == DioExceptionType.connectionError ||
             e.type == DioExceptionType.connectionTimeout) {
-          message = 'Cannot connect to server. Please check your connection.';
+          message = cannotConnectServerText;
         } else {
-          message = 'Request failed. Please try again.';
+          message = requestFailedRetryText;
         }
       }
       if (mounted) {
@@ -497,7 +493,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
               Opacity(
                 opacity: _splashLine1Opacity.value,
                 child: Text(
-                  'Every great journey\nbegins with a single heartbeat.',
+                  context.l10n.splashHeadline,
                   textAlign: TextAlign.center,
                   style: Theme.of(context)
                       .textTheme
@@ -514,7 +510,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
               Opacity(
                 opacity: _splashLine2Opacity.value,
                 child: Text(
-                  'Yours started the moment\nyou decided to welcome a new life.',
+                  context.l10n.splashSubheadline,
                   textAlign: TextAlign.center,
                   style: Theme.of(context)
                       .textTheme
@@ -540,7 +536,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                     );
                   },
                   child: ThemeButton(
-                    text: 'Begin Your Journey',
+                    text: context.l10n.beginYourJourney,
                     onPressed:
                         _splashButtonOpacity.value > 0.8
                             ? _onSplashBegin
@@ -549,7 +545,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                     icon: PhosphorIconsLight.heart,
                     borderRadius: DesignTokens.radiusFull,
                     height: 56,
-                    semanticLabel: 'Begin your BabyMon journey',
+                    semanticLabel: context.l10n.beginJourneySemantic,
                   ),
                 ),
               ),
@@ -633,7 +629,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
             child: TextField(
               controller: _nameController,
               decoration: InputDecoration(
-                hintText: 'Enter a name...',
+                hintText: context.l10n.nameHint,
                 hintStyle:
                     Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: _textColor.withValues(alpha: 0.35),
@@ -744,23 +740,23 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                 _buildStageCard(
                   value: 'BORN',
                   icon: PhosphorIconsLight.baby,
-                  title: 'Born',
-                  description: 'A gentle arrival.\nThe world welcomed them.',
-                  subText: 'Your BabyMon is already in the wild.\nWhen did you first meet?',
+                  title: context.l10n.born,
+                  description: context.l10n.bornStageDesc,
+                  subText: context.l10n.bornStageSubtext,
                 ),
                 _buildStageCard(
                   value: 'INCUBATING',
                   icon: PhosphorIconsLight.heart,
-                  title: 'Incubating',
-                  description: 'A beautiful surprise.\nThe journey began in stillness.',
-                  subText: 'Expecting a surprise!\nWhen is it due?',
+                  title: context.l10n.incubatingStage,
+                  description: context.l10n.incubatingStageDesc,
+                  subText: context.l10n.incubatingStageSubtext,
                 ),
                 _buildStageCard(
                   value: 'PLAN',
                   icon: PhosphorIconsLight.lightbulb,
-                  title: 'Plan',
-                  description: 'A heartfelt wish.\nLong before they existed,\nthey were loved.',
-                  subText: "Wouldn't it be nice to catch\n1 or 2 little BabyMons?",
+                  title: context.l10n.planLabel,
+                  description: context.l10n.planStageDesc,
+                  subText: context.l10n.planStageSubtext,
                 ),
               ],
             ),
@@ -924,7 +920,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         : _stageType == 'PLAN'
             ? DateTime(now.year, now.month, now.day).add(const Duration(days: 365))
             : DateTime(now.year, now.month, now.day);
-    const weekdayHeaders = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+    final weekdayHeaders = [context.l10n.weekdayMo, context.l10n.weekdayTu, context.l10n.weekdayWe, context.l10n.weekdayTh, context.l10n.weekdayFr, context.l10n.weekdaySa, context.l10n.weekdaySu];
     return PremiumDoubleBezel(
       outerRadius: DesignTokens.radius2xl,
       gap: 5.0,
@@ -1085,7 +1081,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                 }
               },
               child: Text(
-                'Today',
+                context.l10n.today,
                 style: TextStyle(
                   color: context.colorScheme.primary,
                   fontWeight: FontWeight.w600,
@@ -1113,7 +1109,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
             children: [
               _buildGenderOrb(
                 value: 'MONIESE',
-                label: 'Moniese',
+                label: context.l10n.monieseLabel,
                 gradientColors: [
                   AppColors.genderMonieseAccent,
                   AppColors.genderMoniese,
@@ -1122,7 +1118,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
               ),
               _buildGenderOrb(
                 value: 'MONIOUS',
-                label: 'Monious',
+                label: context.l10n.moniousLabel,
                 gradientColors: [
                   AppColors.genderMoniousAccent,
                   AppColors.genderMonious,
@@ -1131,7 +1127,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
               ),
               _buildGenderOrb(
                 value: 'MO',
-                label: 'Neutral',
+                label: context.l10n.neutralGender,
                 gradientColors: [
                   AppColors.genderNeutralAccent,
                   AppColors.genderNeutral,
@@ -1143,7 +1139,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
           const SizedBox(height: DesignTokens.space2xl),
           // ── Trait hint ──
           Text(
-            'What words feel like them?',
+            context.l10n.spiritTraitHint,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: _textColor.withValues(alpha: 0.6),
                   fontStyle: FontStyle.italic,
@@ -1154,19 +1150,21 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
           Wrap(
             spacing: DesignTokens.spaceSm,
             runSpacing: DesignTokens.spaceSm,
-            children: _traitOptions.map((trait) {
-              final selected = _selectedTraits.contains(trait);
+            children: List.generate(kTraitKeys.length, (i) {
+              final key = kTraitKeys[i];
+              final display = _traitOptions()[i];
+              final selected = _selectedTraits.contains(key);
               return FilterChip(
-                label: Text(trait),
+                label: Text(display),
                 selected: selected,
                 onSelected: (s) {
                   setState(() {
                     if (s) {
-                      _selectedTraits.add(trait);
-                      _lastTappedTrait = trait;
+                      _selectedTraits.add(key);
+                      _lastTappedTrait = key;
                     } else {
-                      _selectedTraits.remove(trait);
-                      if (_lastTappedTrait == trait) {
+                      _selectedTraits.remove(key);
+                      if (_lastTappedTrait == key) {
                         _lastTappedTrait = _selectedTraits.isNotEmpty
                             ? _selectedTraits.last
                             : null;
@@ -1195,7 +1193,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                 ),
                 visualDensity: VisualDensity.compact,
               );
-            }).toList(),
+            }),
           ),
           const SizedBox(height: DesignTokens.spaceSm),
           // ── Flavor text ──
@@ -1221,7 +1219,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                     padding: const EdgeInsets.only(
                         top: DesignTokens.spaceSm),
                     child: Text(
-                      traitFlavorText[_lastTappedTrait] ?? '',
+                      traitFlavorText(_lastTappedTrait, context.l10n),
                       style: Theme.of(context)
                           .textTheme
                           .bodySmall
@@ -1237,7 +1235,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
           const SizedBox(height: DesignTokens.space2xl),
           // ── Special gift ──
           Text(
-            "Every BabyMon has a special gift. What's yours?",
+            context.l10n.spiritSpecialGiftHint,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: _textColor.withValues(alpha: 0.6),
                   fontStyle: FontStyle.italic,
@@ -1252,7 +1250,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
             child: TextField(
               controller: _specialMoveController,
               decoration: InputDecoration(
-                hintText: 'e.g. "Loves bath time", "Funny laugh"',
+                hintText: context.l10n.specialGiftHint,
                 hintStyle:
                     Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: _textColor.withValues(alpha: DesignTokens.opacityDim),
@@ -1422,25 +1420,25 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                     if (_gender.isNotEmpty)
                       _reviewRow(
                         PhosphorIconsLight.genderIntersex,
-                        'Gender',
+                        context.l10n.gender,
                         _gender == 'MONIESE'
                             ? 'Moniese'
                             : _gender == 'MONIOUS'
                                 ? 'Monious'
-                                : 'Neutral',
+                                : context.l10n.neutralGender,
                       ),
                     // ── Traits ──
                     if (_selectedTraits.isNotEmpty)
                       _reviewRow(
                         PhosphorIconsLight.sparkle,
-                        'Traits',
-                        _selectedTraits.join(', '),
+                        context.l10n.traits,
+                        _selectedTraits.map((k) => traitDisplay(k, context.l10n)).join(', '),
                       ),
                     // ── Special gift ──
                     if (_specialMoveController.text.trim().isNotEmpty)
                       _reviewRow(
                         PhosphorIconsLight.lightning,
-                        'Special gift',
+                        context.l10n.specialGiftLabel,
                         _specialMoveController.text.trim(),
                       ),
                     const SizedBox(height: DesignTokens.spaceLg),
@@ -1456,15 +1454,15 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                       },
                       child: ThemeButton(
                         text: _isLoading
-                            ? 'Writing the next page...'
-                            : 'Begin Your Story',
+                            ? context.l10n.writingNextPage
+                            : context.l10n.beginYourStory,
                         onPressed: _isLoading ? null : _createBabyMon,
                         isLoading: _isLoading,
                         fullWidth: true,
                         icon: PhosphorIconsLight.heart,
                         borderRadius: DesignTokens.radiusFull,
                         height: 56,
-                        semanticLabel: 'Begin your story',
+                        semanticLabel: context.l10n.beginStorySemantic,
                       ),
                     ),
                     const SizedBox(height: DesignTokens.spaceSm),
@@ -1481,7 +1479,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
     );
   }
   Widget _buildLoadingPhase() {
-    final msg = _loadingMessages[_loadingMessageIndex];
+    final msg = _loadingMessages()[_loadingMessageIndex];
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: DesignTokens.space2xl),
@@ -1573,31 +1571,31 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         : _stageType == 'INCUBATING'
             ? _conceptionDate
             : _ideaDate;
-    if (date == null) return 'The journey has begun';
+    if (date == null) return context.l10n.journeyBegun;
     final hour = date.hour;
     final weekday = DateFormat('EEEE').format(date);
     final month = DateFormat('MMMM').format(date);
     final day = DateFormat('d').format(date);
     String timeOfDay;
     if (hour >= 5 && hour < 12) {
-      timeOfDay = 'morning';
+      timeOfDay = context.l10n.timeOfDayMorning;
     } else if (hour >= 12 && hour < 17) {
-      timeOfDay = 'afternoon';
+      timeOfDay = context.l10n.timeOfDayAfternoon;
     } else if (hour >= 17 && hour < 22) {
-      timeOfDay = 'evening';
+      timeOfDay = context.l10n.timeOfDayEvening;
     } else {
-      timeOfDay = 'night';
+      timeOfDay = context.l10n.timeOfDayNight;
     }
     return 'A $weekday $timeOfDay · $month $day';
   }
   String get _stageDescriptor {
     switch (_stageType) {
       case 'BORN':
-        return 'A gentle arrival';
+        return context.l10n.gentleArrival;
       case 'INCUBATING':
-        return 'A beautiful surprise';
+        return context.l10n.beautifulSurprise;
       case 'PLAN':
-        return 'A heartfelt wish';
+        return context.l10n.heartfeltWish;
       default:
         return '';
     }
@@ -1738,18 +1736,18 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusLg),
         ),
-        title: const Text('Add Custom Trait'),
+        title: Text(context.l10n.addCustomTrait),
         content: TextField(
           controller: traitController,
-          decoration: const InputDecoration(
-              hintText: 'e.g., Brave, Silly, Kind'),
+          decoration: InputDecoration(
+              hintText: context.l10n.customTraitHintText),
           maxLength: 20,
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
+            child: Text(context.l10n.cancel,
                 style: Theme.of(context).textTheme.labelLarge),
           ),
           TextButton(
@@ -1760,7 +1758,7 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
               }
               Navigator.pop(ctx);
             },
-            child: const Text('Add'),
+            child: Text(context.l10n.addLabel),
           ),
         ],
       ),
@@ -1814,14 +1812,14 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                           if (_currentStep > 1)
                             Expanded(
                               child: ThemeButton(
-                                text: 'Back',
+                                text: context.l10n.backButton,
                                 onPressed: _prevStep,
                                 variant: ThemeButtonVariant.outlined,
                                 fullWidth: true,
                                 borderRadius: DesignTokens.radiusFull,
                                 height: 56,
                                 semanticLabel:
-                                    'Go back to previous step',
+                                    context.l10n.goBackSemantic,
                               ),
                             ),
                           if (_currentStep > 1)
@@ -1831,10 +1829,10 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                             flex: 2,
                             child: ThemeButton(
                               text: _canProceed
-                                  ? 'Continue'
+                                  ? context.l10n.continueButton
                                   : _currentStep == 2
-                                      ? 'Select a date'
-                                      : 'Enter a name',
+                                      ? context.l10n.selectDateButton
+                                      : context.l10n.enterNameButton,
                               onPressed:
                                   _canProceed ? _nextStep : null,
                               fullWidth: true,
@@ -1844,8 +1842,8 @@ class _CreateBabyMonScreenState extends ConsumerState<CreateBabyMonScreen>
                               borderRadius: DesignTokens.radiusFull,
                               height: 56,
                               semanticLabel: _canProceed
-                                  ? 'Continue to next step'
-                                  : 'Fill in required fields',
+                                  ? context.l10n.continueNextStep
+                                  : context.l10n.fillRequiredFields,
                             ),
                           ),
                         ],

@@ -39,7 +39,7 @@ class PremiumSection extends StatelessWidget {
           Container(
             width: 3,
             height: 24,
-            margin: const EdgeInsets.only(top: 2, right: DesignTokens.spaceSm),
+            margin: const EdgeInsetsDirectional.only(top: 2, end: DesignTokens.spaceSm),
             decoration: BoxDecoration(
               color: colorScheme.primary,
               borderRadius: BorderRadius.circular(2),

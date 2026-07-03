@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -102,8 +103,8 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
                   final isInitialPage = index == widget.initialIndex;
                   final heroTag = 'photo_${photo['id'] ?? url}';
 
-                  return Semantics(
-                    label: 'Dismiss photo',
+                  return                  Semantics(
+                    label: context.l10n.photoViewerDismiss,
                     child: GestureDetector(
                       onTap: () {
                         // Only dismiss if not zoomed in
@@ -149,11 +150,12 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
                 },
               ),
               // Back button — visible arrow to return to album
-              Positioned(
+              Positioned.directional(
+                textDirection: Directionality.of(context),
                 top: 12,
-                left: 12,
+                start: 12,
                 child: Semantics(
-                  label: 'Back to album',
+                  label: context.l10n.photoViewerBackToAlbum,
                   child: Material(
                     color: Colors.white.withValues(alpha: 0.25),
                     shape: const CircleBorder(),
@@ -164,7 +166,13 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
                         width: 40,
                         height: 40,
                         alignment: Alignment.center,
-                        child: const Icon(PhosphorIconsLight.arrowLeft, color: Colors.white, size: 22),
+                        child: Icon(
+                          Directionality.of(context) == TextDirection.rtl
+                              ? PhosphorIconsLight.arrowRight
+                              : PhosphorIconsLight.arrowLeft,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                       ),
                     ),
                   ),
@@ -179,7 +187,7 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Swipe to browse  •  Tap to go back',
+                      context.l10n.photoViewerSwipeHint,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.6),
@@ -226,16 +234,16 @@ class _PhotoViewerPageState extends State<PhotoViewerPage> {
               color: Colors.white54,
             ),
           ),
-          errorWidget: (ctx, url, error) => const Column(
+          errorWidget: (ctx, url, error) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ExcludeSemantics(
+              const ExcludeSemantics(
                 child: Icon(PhosphorIconsLight.imageBroken,
                     color: Colors.white54, size: 48),
               ),
-              SizedBox(height: 12),
-              Text('Failed to load image',
-                  style: TextStyle(color: Colors.white54)),
+              const SizedBox(height: 12),
+              Text(context.l10n.failedToLoadImage,
+                  style: const TextStyle(color: Colors.white54)),
             ],
           ),
         ),

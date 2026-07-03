@@ -1,3 +1,4 @@
+import 'package:baby_mon/l10n/l10n_ext.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -30,7 +31,7 @@ class PhotoGridItem extends StatelessWidget {
     return Hero(
       tag: heroTag,
       child: Semantics(
-        label: 'View photo',
+        label: context.l10n.photoGridViewPhoto,
         button: true,
         child: GestureDetector(
           onTap: onTap,
@@ -38,7 +39,7 @@ class PhotoGridItem extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Semantics(
-              label: 'Photo from baby album',
+              label: context.l10n.photoGridPhotoFromAlbum,
               child: CachedNetworkImage(
                 imageUrl: url,
                 fit: BoxFit.cover,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:baby_mon/core/theme/design_tokens.dart';
 import 'package:baby_mon/core/widgets/widgets.dart';
+import 'package:baby_mon/l10n/l10n_ext.dart';
 
 /// A flat, readable hero card for the top of the Dashboard.
 ///
@@ -149,7 +150,7 @@ class StageHero extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Lv $level',
+                          '${context.l10n.levelShort} $level',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
@@ -201,14 +202,14 @@ class StageHero extends StatelessWidget {
                   ),
                 ),
                 // Icon buttons — 20px icon in 36x36 hit area (meets 44pt with margin).
-                ThemeButton.icon(icon: PhosphorIconsLight.shareNetwork, onPressed: onShare, tooltip: 'Share', variant: ThemeButtonVariant.text, foregroundColor: context.colorScheme.onSurfaceVariant),
-                ThemeButton.icon(icon: PhosphorIconsLight.pencilSimple, onPressed: onEdit, tooltip: 'Edit profile', variant: ThemeButtonVariant.text, foregroundColor: context.colorScheme.onSurfaceVariant),
+                ThemeButton.icon(icon: PhosphorIconsLight.shareNetwork, onPressed: onShare, tooltip: context.l10n.share, variant: ThemeButtonVariant.text, foregroundColor: context.colorScheme.onSurfaceVariant),
+                ThemeButton.icon(icon: PhosphorIconsLight.pencilSimple, onPressed: onEdit, tooltip: context.l10n.editProfile, variant: ThemeButtonVariant.text, foregroundColor: context.colorScheme.onSurfaceVariant),
               ],
             ),
           ),
           // ── Divider + details toggle ──
           Semantics(
-            label: detailsExpanded ? 'Hide details' : 'Show details',
+            label: detailsExpanded ? context.l10n.hideDetails : context.l10n.showDetails,
             button: true,
             child: InkWell(
             onTap: onToggleDetails,
@@ -223,7 +224,7 @@ class StageHero extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    detailsExpanded ? 'Hide details' : 'Show details',
+                    detailsExpanded ? context.l10n.hideDetails : context.l10n.showDetails,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
