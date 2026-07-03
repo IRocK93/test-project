@@ -1,0 +1,7 @@
+# apps/legal-pages/.gitignore
+node_modules/
+.railway/
+.env
+.env.local
+*.log
+.DS_Store

@@ -1,0 +1,12 @@
+# apps/legal-pages/.dockerignore
+# Files that would bloat the image or leak tooling into the production container.
+.git
+.gitignore
+.dockerignore
+node_modules
+npm-debug.log*
+.railway
+README.md
+sync-legal.js
+test
+*.md
