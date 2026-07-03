@@ -179,8 +179,11 @@ When you add Firebase / FCM:
    - Open <https://console.firebase.google.com/>
    - Select your project → ⚙ Project settings → Your apps → **Add app**
    - Choose **Android**.
-   - **Application ID: type `com.babymon.app`** exactly (must match the
-     `applicationId` in `apps/mobile/android/app/build.gradle.kts`).
+   - **Android package name:** type `com.babymon.app` exactly (must
+     match the `applicationId` in
+     `apps/mobile/android/app/build.gradle.kts` — NOT the old
+     `com.example.baby_mon`). The iOS-side field is called "Bundle ID";
+     the Android-side field is "Android package name".
    - Download the resulting `google-services.json` and place it at
      `apps/mobile/android/app/google-services.json`.
 2. **Then**, regenerate the Dart-side config:

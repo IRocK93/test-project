@@ -68,15 +68,18 @@ KEYTOOL="${KEYTOOL:-$KEYTOOL_DEFAULT}"
 # Sanity: files exist in the project tree
 [[ -d "$KEYSTORE_DIR" ]] || { echo "Not a directory: $KEYSTORE_DIR" >&2; exit 1; }
 
-# Pre-flight 1: keytool must be reachable
-if ! command -v "$KEYTOOL" >/dev/null 2>&1 && [[ ! -x "$KEYTOOL" ]]; then
+# Pre-flight 1 (cheapest first): keytool must be reachable. We don't try
+# `command -v $KEYTOOL` because absolute Windows paths with spaces don't
+# resolve via PATH; just probe executability directly.
+if [[ ! -x "$KEYTOOL" ]]; then
     echo "FATAL: cannot find keytool at: $KEYTOOL" >&2
     echo "Install a JDK (java.com) or re-run with --keytool=/path/to/keytool" >&2
     exit 3
 fi
 
-# Pre-flight 2: secrets must already be gitignored (cheap pre-check so we never
-# generate first then have to clean up)
+# Pre-flight 2: secrets must already be gitignored. Doing this BEFORE keytool
+# means a misconfigured .gitignore aborts cleanly, with no freshly-generated
+# keystore that we have to clean up.
 cd "$REPO_ROOT"
 if ! git check-ignore "$KEYSTORE_DIR/$KEYSTORE_FILE" "$KEYSTORE_DIR/$KEY_PROPERTIES" >/dev/null 2>&1; then
     echo "FATAL: secrets would NOT be gitignored at:" >&2
@@ -148,14 +151,22 @@ echo "Generated:"
 ls -la "$KEYSTORE_DIR/$KEYSTORE_FILE" "$KEYSTORE_DIR/$KEY_PROPERTIES"
 echo
 
-# Verify integrity (temporarily disable pipefail so head closing early doesn't trip it)
+# Verify integrity (capture keytool's exit code via PIPESTATUS so a corrupt
+# keystore or wrong password doesn't slip past silently when piped to head)
 set +o pipefail
 "$KEYTOOL" -list \
     -storetype JKS \
     -keystore "$KEYSTORE_DIR/$KEYSTORE_FILE" \
     -storepass "$PASSWORD" 2>&1 | head -8
+KT_RC=${PIPESTATUS[0]}
 set -o pipefail
 echo
+if [[ "$KT_RC" -ne 0 ]]; then
+    echo "FATAL: integrity check failed (keytool exit $KT_RC)" >&2
+    echo "Your freshly-minted keystore may be malformed — re-run the script." >&2
+    rm -f "$KEYSTORE_DIR/$KEYSTORE_FILE" "$KEYSTORE_DIR/$KEY_PROPERTIES"
+    exit 4
+fi
 
 # (gitignore pre-flight was done at top of script; no post-check needed)
 echo "OK: both files gitignored (verified by pre-flight check)."
