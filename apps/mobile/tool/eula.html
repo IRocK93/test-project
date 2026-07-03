@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="BabyMon End-User License Agreement — license, subscription terms, medical disclaimer, AI Companion disclaimer, liability.">
+<meta name="theme-color" content="#9C7CF4">
+<title>BabyMon End-User License Agreement</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-elev: #f7f6fb;
+    --text: #16151d;
+    --text-muted: #5a5772;
+    --accent: #6b46ff;
+    --accent-fg: #ffffff;
+    --border: #e5e3ef;
+    --code-bg: #f0eef8;
+    --shadow: 0 4px 16px rgba(80, 60, 180, 0.06);
+    --focus: #9C7CF4;
+    --warn: #b34a3d;
+    --warn-bg: #fff3ee;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d0c14;
+      --bg-elev: #1a1924;
+      --text: #f1eef9;
+      --text-muted: #ada8c4;
+      --accent: #b39bff;
+      --accent-fg: #0d0c14;
+      --border: #2d2b3d;
+      --code-bg: #1f1d2c;
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      --warn: #e08a7e;
+      --warn-bg: #2d1d1a;
+    }
+  }
+  html[data-theme="dark"] {
+    --bg: #0d0c14;
+    --bg-elev: #1a1924;
+    --text: #f1eef9;
+    --text-muted: #ada8c4;
+    --accent: #b39bff;
+    --accent-fg: #0d0c14;
+    --border: #2d2b3d;
+    --code-bg: #1f1d2c;
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --warn: #e08a7e;
+    --warn-bg: #2d1d1a;
+  }
+  html[data-theme="light"] {
+    --bg: #ffffff;
+    --bg-elev: #f7f6fb;
+    --text: #16151d;
+    --text-muted: #5a5772;
+    --accent: #6b46ff;
+    --accent-fg: #ffffff;
+    --border: #e5e3ef;
+    --code-bg: #f0eef8;
+    --shadow: 0 4px 16px rgba(80, 60, 180, 0.06);
+    --warn: #b34a3d;
+    --warn-bg: #fff3ee;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.7; font-size: 16px;
+    transition: background 200ms ease, color 200ms ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; }
+  }
+  .skip-link {
+    position: absolute; top: -40px; left: 8px; z-index: 1000;
+    background: var(--accent); color: var(--accent-fg);
+    padding: 8px 16px; border-radius: 6px; text-decoration: none;
+    font-weight: 600;
+  }
+  .skip-link:focus { top: 8px; }
+  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  header {
+    background: var(--bg-elev);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 20px; position: sticky; top: 0; z-index: 10;
+    backdrop-filter: blur(8px);
+  }
+  .header-inner {
+    max-width: 820px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .header-inner h1 { margin: 0; font-size: 1.5rem; color: var(--text); }
+  .header-inner .badge {
+    background: var(--accent); color: var(--accent-fg);
+    padding: 4px 10px; border-radius: 999px; font-size: 0.75rem;
+    font-weight: 700; letter-spacing: 0.04em;
+  }
+  .theme-toggle {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text); border-radius: 999px;
+    padding: 8px 14px; font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .theme-toggle:hover { background: var(--code-bg); }
+  .theme-toggle .icon { font-size: 1rem; }
+  main { max-width: 820px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1, h2, h3 { color: var(--text); font-weight: 700; line-height: 1.3; }
+  h2 {
+    font-size: 1.45rem; margin-top: 48px; margin-bottom: 14px;
+    padding-bottom: 10px; border-bottom: 2px solid var(--border);
+  }
+  h3 { font-size: 1.15rem; margin-top: 28px; margin-bottom: 8px; }
+  p { margin: 0 0 16px; }
+  .toc {
+    background: var(--bg-elev); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px 24px; margin-bottom: 32px;
+    box-shadow: var(--shadow);
+  }
+  .toc h2 { margin-top: 0; margin-bottom: 12px; padding-bottom: 0; border: none; font-size: 1.15rem; }
+  .toc ol { margin: 0; padding-left: 22px; columns: 2; column-gap: 32px; }
+  .toc li { margin-bottom: 4px; break-inside: avoid; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  ul, ol { padding-left: 22px; margin: 0 0 16px; }
+  li { margin-bottom: 6px; }
+  table {
+    width: 100%; border-collapse: collapse; margin: 16px 0 24px;
+    font-size: 0.95rem; background: var(--bg-elev);
+    border-radius: 8px; overflow: hidden; box-shadow: var(--shadow);
+  }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { background: var(--accent); color: var(--accent-fg); font-weight: 700; }
+  tr:last-child td { border-bottom: none; }
+  code {
+    background: var(--code-bg); padding: 2px 6px; border-radius: 4px;
+    font-family: ui-monospace, "SF Mono", Menlo, Monaco, monospace;
+    font-size: 0.92em;
+  }
+  .callout {
+    background: var(--code-bg); border-left: 4px solid var(--accent);
+    padding: 14px 18px; border-radius: 6px; margin: 16px 0;
+  }
+  .callout strong { color: var(--accent); }
+  .warn-callout {
+    background: var(--warn-bg); border-left: 4px solid var(--warn);
+    padding: 14px 18px; border-radius: 6px; margin: 16px 0;
+  }
+  .warn-callout strong { color: var(--warn); }
+  footer {
+    background: var(--bg-elev); border-top: 1px solid var(--border);
+    padding: 28px 20px; text-align: center;
+    color: var(--text-muted); font-size: 0.9rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .meta { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px; }
+  .placeholder {
+    background: repeating-linear-gradient(
+      45deg, var(--code-bg), var(--code-bg) 8px,
+      transparent 8px, transparent 16px
+    );
+    padding: 2px 6px; border-radius: 4px;
+    color: var(--accent); font-weight: 600;
+  }
+  @media (max-width: 720px) {
+    .toc ol { columns: 1; }
+    main { padding: 24px 16px 60px; }
+    h1 { font-size: 1.3rem; }
+    h2 { font-size: 1.25rem; }
+    table { font-size: 0.85rem; }
+    th, td { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+<header>
+  <div class="header-inner">
+    <h1>End-User License Agreement <span class="badge">BabyMon</span></h1>
+    <button id="theme-toggle" class="theme-toggle" aria-label="Switch color theme">
+      <span class="icon" aria-hidden="true">🌗</span>
+      <span id="theme-label">Theme</span>
+    </button>
+  </div>
+</header>
+<main id="main-content">
+  <p class="meta">Effective: <time datetime="2026-07-03">July 3, 2026</time> &middot; Version 1.0 &middot; <a href="privacy_policy.html">Privacy Policy</a></p>
+
+  <p>These Terms constitute a binding agreement between you and <strong>BabyMon</strong> ("we", "us", "our"), operated by <span class="placeholder">[COMPANY LEGAL NAME]</span> ("BabyMon", "<span class="placeholder">[COMPANY LEGAL NAME]</span>"). By downloading, installing, or using the BabyMon application ("App") or any related service ("Service"), you agree to these Terms. If you do not agree, do not install or use the App.</p>
+
+  <div class="warn-callout"><strong>Important.</strong> BabyMon is a wellness tool, not a medical device. The AI Companion feature is for general developmental information. Always consult a licensed healthcare provider for medical decisions. By using the App, you acknowledge that you have read and accept the medical and AI disclaimers in &sect; 6 and &sect; 7.</div>
+
+  <nav class="toc" aria-label="Contents">
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#sec-1">Acceptance of Terms</a></li>
+      <li><a href="#sec-2">Account Registration &amp; Parental Affirmation</a></li>
+      <li><a href="#sec-3">Subscription &amp; Billing Terms</a></li>
+      <li><a href="#sec-4">License Grant</a></li>
+      <li><a href="#sec-5">Prohibited Conduct</a></li>
+      <li><a href="#sec-6">Medical &amp; Developmental Disclaimer</a></li>
+      <li><a href="#sec-7">AI Companion Disclaimer</a></li>
+      <li><a href="#sec-8">User-Generated Content</a></li>
+      <li><a href="#sec-9">Co-Parent &amp; Partner Features</a></li>
+      <li><a href="#sec-10">Intellectual Property</a></li>
+      <li><a href="#sec-11">Third-Party Integrations</a></li>
+      <li><a href="#sec-12">Termination</a></li>
+      <li><a href="#sec-13">Disclaimer of Warranties</a></li>
+      <li><a href="#sec-14">Limitation of Liability</a></li>
+      <li><a href="#sec-15">Indemnification</a></li>
+      <li><a href="#sec-16">Governing Law, Dispute Resolution, Contact</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="sec-1">1. Acceptance of Terms</h2>
+  <p>1.1 These Terms form a legally binding contract between you and <span class="placeholder">[COMPANY LEGAL NAME]</span>. By downloading, installing, or using the App, you confirm that you are at least 18 years of age, are legally competent to enter into a contract, and accept these Terms on your own behalf and on behalf of any child whose data you record in the App.</p>
+  <p>1.2 We may update these Terms from time to time. Material updates will be announced in-app and via email at least <strong>30 days</strong> in advance. Your continued use of the App after the effective date of updated Terms constitutes your acceptance. If you do not agree to updated Terms, you must stop using the App and may close your account under &sect; 12.</p>
+
+  <h2 id="sec-2">2. Account Registration &amp; Parental Affirmation</h2>
+  <p>2.1 To use the App, you must create an account by providing a valid email address, choosing a password, and (optionally) signing in with Apple, Google, or another supported OAuth provider through Firebase Authentication.</p>
+  <p>2.2 <strong>Parental affirmation.</strong> You affirm that you are the parent or legal guardian of any child whose data you record in the App, or that you have explicit documented authorization from the child's parent or legal guardian (for example, as a paid caregiver, nanny, or doula). You also affirm that every person you invite as a co-parent (see &sect; 9) has the right to access the child's data you share with them.</p>
+  <p>2.3 You agree to provide accurate registration information and to keep it current. You are responsible for safeguarding your password and for all activity that occurs under your account.</p>
+  <p>2.4 We may, at our sole discretion, decline a registration, suspend an account, or remove content that violates these Terms or applicable law.</p>
+
+  <h2 id="sec-3">3. Subscription &amp; Billing Terms</h2>
+  <p>3.1 <strong>Free tier.</strong> The core BabyMon tracking features are available without charge.</p>
+  <p>3.2 <strong>14-day Premium trial.</strong> New accounts may activate a 14-day trial of BabyMon Premium, which unlocks the AI Companion, advanced analytics, and additional parental resources. The trial is free, no charge during the trial, and ends automatically after 14 days unless you subscribe. We will remind you 3 days before your trial converts.</p>
+  <p>3.3 <strong>Premium subscription.</strong> Premium is offered on a monthly or yearly basis at the price displayed at the time of purchase. Subscription fees are billed in advance and are non-refundable except where required by applicable law (including the EU's 14-day withdrawal right where it applies to digital services).</p>
+  <p>3.4 <strong>App-store billing.</strong> When you purchase Premium through the Apple App Store or Google Play Store, your payment is processed by the respective store under their terms; refunds are governed by their policies.</p>
+  <p>3.5 <strong>Web billing.</strong> When you purchase Premium through our website, payment is processed by Stripe. Stripe retains your payment-method token; we receive only the last four digits of your card and your billing email. You can manage or cancel your subscription from the "Manage subscription" link in Settings.</p>
+  <p>3.6 <strong>Promo codes.</strong> We may issue promotional codes that grant free or discounted Premium access. Codes are one-time use per user unless otherwise stated, have no cash value, and may expire on a date displayed at issuance.</p>
+  <p>3.7 <strong>Taxes.</strong> Prices are exclusive of applicable sales tax, value-added tax (VAT), goods and services tax (GST), or other transaction taxes, which are added at checkout where required.</p>
+  <p>3.8 <strong>Price changes.</strong> We will give you at least 30 days' notice by email before any price change takes effect for an existing subscription. Your continued use after the effective date constitutes acceptance of the new price; you may cancel before that date to avoid the change.</p>
+
+  <h2 id="sec-4">4. License Grant</h2>
+  <p>4.1 Subject to your compliance with these Terms and your continued subscription (where applicable), we grant you a limited, personal, non-exclusive, non-transferable, revocable license to:</p>
+  <ul>
+    <li>Download and install the App on devices you own or control;</li>
+    <li>Use the App for personal, non-commercial tracking of children in your care;</li>
+    <li>Download and use AI Companion model files licensed to us for your personal use.</li>
+  </ul>
+  <p>4.2 All rights not expressly granted in &sect; 4.1 are reserved by BabyMon and our licensors.</p>
+  <p>4.3 The license is for use of the App as supplied. You may not copy, decompile, reverse-engineer, or otherwise attempt to derive the source code of the App except to the extent expressly permitted by applicable law (for example, interoperability under EU Directive 2009/24/EC).</p>
+
+  <h2 id="sec-5">5. Prohibited Conduct</h2>
+  <p>When using the App you agree <strong>not</strong> to:</p>
+  <ul>
+    <li>Use the App to track a child whose parent or legal guardian has not authorized you;</li>
+    <li>Upload content that is unlawful, hateful, harassing, defamatory, obscene, or that infringes a third party's rights;</li>
+    <li>Upload content containing another person's personal data without their consent;</li>
+    <li>Attempt to access another user's account, data, or BabyMon record;</li>
+    <li>Reverse-engineer, decompile, disassemble, or otherwise attempt to derive the source code of the App, except as permitted by &sect; 4.3;</li>
+    <li>Use automated tools (bots, scrapers, crawlers) to interact with the App other than the AI Companion model manifest endpoint, which is rate-limited;</li>
+    <li>Interfere with or disrupt the integrity or performance of the App or its data;</li>
+    <li>Use the App to develop a competing product;</li>
+    <li>Resell, rent, lease, or sublicense the App.</li>
+  </ul>
+
+  <h2 id="sec-6">6. Medical &amp; Developmental Disclaimer</h2>
+  <div class="warn-callout"><strong>The App is not a medical device.</strong> BabyMon does not provide medical advice, diagnosis, or treatment. The milestone checklists, vaccination reminders, growth-percentile charts, sleep and feeding suggestions, and all on-device AI outputs are for general informational purposes only. Always seek the advice of a qualified healthcare provider with any questions you may have regarding a medical condition, your child's growth or development, or before starting any new sleep, feeding, or supplement routine. Never disregard professional medical advice or delay in seeking it because of something you have read or been told by the App.</div>
+  <p>6.1 The growth-percentile calculations follow World Health Organization (WHO) reference data; they are not a substitute for a clinical assessment.</p>
+  <p>6.2 Vaccinations should follow the schedule recommended by your country's public-health authority and your pediatrician. The App does not determine vaccination timing for you.</p>
+  <p>6.3 If your child is ill, injured, or in any emergency, contact your local emergency number or go to the nearest emergency department. The App does not provide emergency response.</p>
+  <p>6.4 <strong>Postpartum and parental-mental-health.</strong> If you are experiencing feelings of hopelessness, depression, or thoughts of harming yourself or your baby, contact a healthcare provider immediately. The App is <em>not</em> a substitute for mental-health support, and resources that appear in the App are guidance, not diagnosis.</p>
+
+  <h2 id="sec-7">7. AI Companion Disclaimer</h2>
+  <p>7.1 The AI Companion is a generative language model that runs <em>on your device</em>. It answers parenting questions based on the developmental stage you select and the optional context you provide.</p>
+  <p>7.2 <strong>The AI Companion is not a medical device and does not provide medical advice.</strong> Outputs are generated by a probabilistic language model and may be inaccurate, incomplete, or inappropriate. Do not rely on AI Companion outputs for clinical decisions.</p>
+  <p>7.3 A built-in safety classifier filters outputs to reduce the likelihood of harmful, hateful, or off-topic responses, but no classifier is perfect. If you receive an output that concerns you, please report it to <a href="mailto:support@babymon.app"><code>support@babymon.app</code></a>.</p>
+  <p>7.4 The default AI model (<strong>SmolLM2 360M Instruct</strong>) is licensed under Apache License 2.0 by its authors and redistributed unmodified. The optional premium model (<strong>SmolLM3 3B</strong>) is similarly Apache 2.0. License texts are bundled with the model files at download time.</p>
+  <p>7.5 AI Companion chat history is stored locally on your device. Uninstalling the App removes the chat history.</p>
+
+  <h2 id="sec-8">8. User-Generated Content</h2>
+  <p>8.1 You retain all ownership rights in the data, photos, videos, and journal entries you upload ("<strong>User Content</strong>").</p>
+  <p>8.2 To operate the Service, you grant BabyMon a worldwide, non-exclusive, royalty-free, sublicensable (only to our sub-processors listed in the <a href="privacy_policy.html#sec-6">Privacy Policy</a>) license to host, store, transmit, display, and create derivative works of your User Content <em>solely</em> as required to deliver the Service to you and any co-parent you have explicitly invited.</p>
+  <p>8.3 You confirm that you own or have the necessary rights to all User Content you upload, and that your User Content does not infringe any third party's rights or violate any law.</p>
+  <p>8.4 We may, but are not obligated to, monitor or remove User Content that violates these Terms. We will give you notice before removing content except in cases of clear illegality or imminent harm.</p>
+  <p>8.5 When you delete User Content in the App, we delete it from our active systems within 24 hours and from backups within 90 days (see the <a href="privacy_policy.html#sec-9">Privacy Policy</a>).</p>
+
+  <h2 id="sec-9">9. Co-Parent &amp; Partner Features</h2>
+  <p>9.1 The App lets you invite another person ("Co-Parent") to view and contribute to a BabyMon record through a partner-linking feature. Co-Parent access is governed by your explicit invitation; you can revoke it at any time.</p>
+  <p>9.2 <strong>You are responsible for co-parents you invite.</strong> If you invite someone who is not authorized to access the child's data, or who subsequently misuses that access, you are solely responsible. BabyMon disclaims liability for any dispute (including custody, family-law, or domestic-violence disputes) arising between account holders and their invited Co-Parents.</p>
+  <p>9.3 If you are a Co-Parent (rather than the original creator of the BabyMon record), your access is subject to these Terms; you agree not to share or republish the BabyMon's data with third parties without the creator's consent.</p>
+
+  <h2 id="sec-10">10. Intellectual Property</h2>
+  <p>10.1 The App, including its code, design, graphics, gamification system (XP, badges, evolution stages), localized advice cards, milestone frameworks, and AI Companion configuration, is owned by <span class="placeholder">[COMPANY LEGAL NAME]</span> or our licensors and is protected by copyright, trademark, and other intellectual-property laws.</p>
+  <p>10.2 The BabyMon name, logo, and brand are trademarks of <span class="placeholder">[COMPANY LEGAL NAME]</span>. You may not use them without written permission except to refer to the App in good faith.</p>
+  <p>10.3 The expert-advice content library is curated for BabyMon from publicly available pediatric and developmental-health sources, including the WHO, AAP, and NHS. It is reviewed at the time of publication but is not a substitute for current professional guidance. Source citations are listed within the App on each advice card.</p>
+  <p>10.4 Feedback. If you send us suggestions, comments, or ideas about the App, you grant us a royalty-free, perpetual, irrevocable license to use that feedback for any purpose without obligation to you.</p>
+
+  <h2 id="sec-11">11. Third-Party Integrations</h2>
+  <p>The App integrates with the following third-party services, each governed by its own terms:</p>
+  <table>
+    <thead><tr><th>Service</th><th>Function</th><th>Governed by</th></tr></thead>
+    <tbody>
+      <tr><td>Apple App Store / iCloud</td><td>Distribution, optional iCloud keychain</td><td><a href="https://www.apple.com/legal/internet-services/itunes/">Apple Media Services Terms</a></td></tr>
+      <tr><td>Google Play Store</td><td>Distribution, billing</td><td><a href="https://play.google.com/about/play-terms/">Google Play Terms of Service</a></td></tr>
+      <tr><td>Google Sign-In (Firebase Auth)</td><td>Optional OAuth identity</td><td><a href="https://policies.google.com/terms">Google Terms</a> and <a href="https://policies.google.com/privacy">Privacy Policy</a></td></tr>
+      <tr><td>Apple Sign-In</td><td>Optional OAuth identity</td><td><a href="https://www.apple.com/legal/privacy/">Apple Privacy Policy</a></td></tr>
+      <tr><td>Stripe</td><td>Web-billing payments</td><td><a href="https://stripe.com/legal">Stripe Terms</a></td></tr>
+      <tr><td>Hugging Face</td><td>Download source for the on-device AI model files</td><td><a href="https://huggingface.co/terms-of-service">Hugging Face Terms</a></td></tr>
+      <tr><td>Amazon S3</td><td>Media-file storage</td><td><a href="https://aws.amazon.com/service-terms/">AWS Service Terms</a></td></tr>
+    </tbody>
+  </table>
+  <p>Your use of these services through the App is subject to their respective terms in addition to these Terms.</p>
+
+  <h2 id="sec-12">12. Termination</h2>
+  <p>12.1 <strong>By you.</strong> You may stop using the App and close your account at any time via Settings &rarr; Account &rarr; Delete account. Account deletion triggers the data-deletion process described in our <a href="privacy_policy.html#sec-9">Privacy Policy</a>.</p>
+  <p>12.2 <strong>By us.</strong> We may suspend or terminate your access to the App if you materially breach these Terms, if continued provision would create a security risk, or if we are required to do so by law. Where reasonable, we will give you advance notice and an opportunity to cure.</p>
+  <p>12.3 <strong>Effect.</strong> Upon termination, your license under &sect; 4 ends. Sections that, by their nature, are intended to survive termination (including 6, 7, 10, 13, 14, 15, and 16) survive.</p>
+
+  <h2 id="sec-13">13. Disclaimer of Warranties</h2>
+  <p>13.1 To the maximum extent permitted by applicable law, the App and all content, advice, and AI outputs provided through it are provided <strong>"AS IS"</strong> and <strong>"AS AVAILABLE"</strong>, with all faults, and without warranty of any kind.</p>
+  <p>13.2 We expressly disclaim all warranties, express, implied, or statutory, including the implied warranties of merchantability, fitness for a particular purpose, non-infringement, and any warranties arising from course of dealing or usage of trade.</p>
+  <p>13.3 We do not warrant that the App will be uninterrupted, error-free, secure, or free of harmful components, or that defects will be corrected. We do not warrant the accuracy, reliability, or completeness of any advice or AI output.</p>
+  <p>13.4 Some jurisdictions do not allow the exclusion of certain warranties; in those jurisdictions, the exclusions above apply to the maximum extent permitted, and the remaining warranties are limited to the minimum duration permitted by law.</p>
+
+  <h2 id="sec-14">14. Limitation of Liability</h2>
+  <p>14.1 To the maximum extent permitted by applicable law, BabyMon and its officers, directors, employees, agents, licensors, and affiliates will <em>not</em> be liable for:</p>
+  <ul>
+    <li>Any indirect, incidental, special, consequential, exemplary, or punitive damages;</li>
+    <li>Any loss of profits, revenue, business, goodwill, anticipated savings, data, or use;</li>
+    <li>Any damages resulting from your access to or inability to access the App;</li>
+    <li>Any damages resulting from any conduct or content of any third party on or through the App;</li>
+    <li>Any damages resulting from any advice or output of the AI Companion or any reliance on it;</li>
+    <li>Any damages resulting from unauthorized access, use, or alteration of your transmissions or content.</li>
+  </ul>
+  <p>14.2 In any case, BabyMon's aggregate liability for any claim arising under or related to these Terms will not exceed the greater of (a) the total amount you paid BabyMon for the App in the <strong>12 months</strong> immediately before the claim, or (b) <strong>USD&nbsp;$100</strong>.</p>
+  <p>14.3 Nothing in these Terms excludes or limits liability for (a) death or personal injury caused by negligence, (b) fraud or fraudulent misrepresentation, or (c) any other liability that cannot be excluded or limited under applicable law.</p>
+  <p>14.4 If you are a consumer in the European Union, you may have additional statutory rights that are not affected by these Terms.</p>
+
+  <h2 id="sec-15">15. Indemnification</h2>
+  <p>15.1 You agree to indemnify, defend, and hold harmless BabyMon and its officers, directors, employees, agents, licensors, and affiliates from and against any claim, demand, loss, liability, damage, or expense (including reasonable attorneys' fees) arising out of or related to (a) your use of the App in violation of these Terms, (b) your User Content, (c) your violation of any law or the rights of a third party, or (d) your invitation of a Co-Parent who is not authorized to access the child's data.</p>
+  <p>15.2 We reserve the right, at your expense, to assume the exclusive defense and control of any matter for which you are required to indemnify us, and you agree to cooperate, at your expense, with our defense of those claims.</p>
+
+  <h2 id="sec-16">16. Governing Law, Dispute Resolution, Contact</h2>
+  <p>16.1 <strong>Governing law (default).</strong> These Terms are governed by the laws of the <span class="placeholder">[STATE/COUNTRY, e.g. State of Delaware, USA]</span>, without regard to its conflict-of-laws principles.</p>
+  <p>16.2 <strong>EU consumer carve-out.</strong> If you reside in the European Economic Area, the United Kingdom, or Switzerland, nothing in &sect; 16.1 deprives you of the protection afforded by the mandatory laws of your country of residence, and you may bring legal proceedings in the courts of your country of residence.</p>
+  <p>16.3 <strong>Informal resolution first.</strong> Before filing any formal dispute, you agree to contact us at <a href="mailto:legal@babymon.app"><code>legal@babymon.app</code></a> with a description of your claim and your contact information. We will attempt to resolve the dispute informally by contacting you via email. If a dispute is not resolved within 30 days of submission, you or BabyMon may initiate formal proceedings.</p>
+  <p>16.4 <strong>Forum (default).</strong> Any judicial action or proceeding arising under these Terms will be brought exclusively in the state and federal courts located in <span class="placeholder">[COUNTY, STATE]</span>, and the parties consent to personal jurisdiction and venue in those courts.</p>
+  <p>16.5 <strong>Class-action waiver (default).</strong> To the maximum extent permitted by applicable law, you and BabyMon agree that any proceedings to resolve disputes will be conducted only on an individual basis and not in a class, consolidated, or representative action. If this waiver is found unenforceable, the arbitration provision (if any) does not apply.</p>
+  <p>16.6 <strong>Severability.</strong> If any provision of these Terms is held to be unenforceable, that provision will be modified to the minimum extent necessary to make it enforceable, and the remaining provisions will remain in full force.</p>
+
+  <h3>Contact</h3>
+  <table>
+    <tbody>
+      <tr><th>Legal &amp; notices</th><td><a href="mailto:legal@babymon.app">legal@babymon.app</a></td></tr>
+      <tr><th>Privacy &amp; data requests</th><td><a href="mailto:privacy@babymon.app">privacy@babymon.app</a></td></tr>
+      <tr><th>Customer support</th><td><a href="mailto:support@babymon.app">support@babymon.app</a></td></tr>
+      <tr><th>Mailing address</th><td><span class="placeholder">[COMPANY LEGAL NAME], [FULL POSTAL ADDRESS]</span></td></tr>
+    </tbody>
+  </table>
+
+  <p class="meta" style="margin-top: 40px;">The current version of these Terms is always available at this URL. Material changes will be notified in advance as described in &sect; 1.2.</p>
+</main>
+<footer>
+  <p>&copy; <time datetime="2026">2026</time> <span class="placeholder">[COMPANY LEGAL NAME]</span>. All rights reserved. &middot; <a href="privacy_policy.html">Privacy Policy</a> &middot; <a href="mailto:legal@babymon.app">legal@babymon.app</a></p>
+</footer>
+<script>
+  (function() {
+    var STORAGE_KEY = 'babymon-theme';
+    var root = document.documentElement;
+    function getStored() {
+      try { return localStorage.getItem(STORAGE_KEY); } catch (e) { return null; }
+    }
+    function setStored(v) {
+      try { localStorage.setItem(STORAGE_KEY, v); } catch (e) { /* ignore */ }
+    }
+    function setTheme(theme) {
+      if (theme === 'dark' || theme === 'light') {
+        root.setAttribute('data-theme', theme);
+        setStored(theme);
+      } else {
+        root.removeAttribute('data-theme');
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+      }
+      updateLabel();
+    }
+    function updateLabel() {
+      var stored = getStored();
+      var lbl = document.getElementById('theme-label');
+      if (!lbl) return;
+      if (stored === 'dark')       lbl.textContent = 'Dark';
+      else if (stored === 'light') lbl.textContent = 'Light';
+      else                          lbl.textContent = 'System';
+    }
+    var stored = getStored();
+    if (stored === 'dark' || stored === 'light') {
+      root.setAttribute('data-theme', stored);
+    }
+    updateLabel();
+    var btn = document.getElementById('theme-toggle');
+    if (btn) {
+      btn.addEventListener('click', function() {
+        var current = root.getAttribute('data-theme');
+        if (!current) {
+          var sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          setTheme(sysDark ? 'light' : 'dark');
+        } else if (current === 'dark') {
+          setTheme('light');
+        } else {
+          setTheme(null);
+        }
+      });
+    }
+  })();
+</script>
+</body>
+</html>
