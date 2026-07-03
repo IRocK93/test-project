@@ -197,9 +197,9 @@ export async function seedCompanion() {
   };
 
   await prisma.routineTemplate.upsert({
-    where: { stageKey: 'born_week_0' },
+    where: { stageKey_locale: { stageKey: 'born_week_0', locale: 'en' } },
     update: routineTemplate,
-    create: routineTemplate,
+    create: { ...routineTemplate, locale: 'en' },
   });
   console.log('Seeded newborn routine template');
 
@@ -405,9 +405,9 @@ export async function seedCompanion() {
   };
 
   await prisma.routineTemplate.upsert({
-    where: { stageKey: 'born_week_4' },
+    where: { stageKey_locale: { stageKey: 'born_week_4', locale: 'en' } },
     update: earlyInfantRoutine,
-    create: earlyInfantRoutine,
+    create: { ...earlyInfantRoutine, locale: 'en' },
   });
   console.log('Seeded early infant routine template');
 
@@ -513,9 +513,9 @@ export async function seedCompanion() {
   };
 
   await prisma.routineTemplate.upsert({
-    where: { stageKey: 'born_month_3' },
+    where: { stageKey_locale: { stageKey: 'born_month_3', locale: 'en' } },
     update: midInfantRoutine,
-    create: midInfantRoutine,
+    create: { ...midInfantRoutine, locale: 'en' },
   });
   console.log('Seeded mid-infant routine template');
 
@@ -543,7 +543,7 @@ export async function seedCompanion() {
     bedtimeRitual: ['Warm bath (2-3 times per week)', 'Gentle massage with baby lotion', 'Pajamas and sleep sack (transition from swaddle if rolling)', 'Read 1-2 board books — let baby pat and mouth them', 'Sing the same lullaby every night', 'Final feed with dim light — no TV, no phone', 'White noise on, room completely darkened', 'Place in crib drowsy but awake — on back, alone, firm flat surface', 'If baby stirs during sleep cycle transition (~45 min in), wait 3-5 minutes before responding — this is when self-settling is learned'],
     flexible: true,
   };
-  await prisma.routineTemplate.upsert({ where: { stageKey: 'born_month_4' }, update: month4Routine, create: month4Routine });
+  await prisma.routineTemplate.upsert({ where: { stageKey_locale: { stageKey: 'born_month_4', locale: 'en' } }, update: month4Routine, create: { ...month4Routine, locale: 'en' } });
   console.log('Seeded month-4 routine template');
 
   // ─── Month 5 Routine (Rolling Both Ways, 3-Nap Schedule) ───
@@ -567,7 +567,7 @@ export async function seedCompanion() {
     bedtimeRitual: ['Warm bath (2-3 times per week)', 'Gentle massage with baby lotion', 'Pajamas and sleep sack (arms out now if rolling)', 'Read 1-2 board books — baby may help turn pages', 'Sing the same lullaby every night — consistency is security', 'Final feed with dim light — no screens', 'White noise on, room completely darkened', 'Place in crib drowsy but awake — say goodnight and leave', 'Brief check-ins if needed — 30-60 seconds, same reassuring phrase, no picking up'],
     flexible: true,
   };
-  await prisma.routineTemplate.upsert({ where: { stageKey: 'born_month_5' }, update: month5Routine, create: month5Routine });
+  await prisma.routineTemplate.upsert({ where: { stageKey_locale: { stageKey: 'born_month_5', locale: 'en' } }, update: month5Routine, create: { ...month5Routine, locale: 'en' } });
   console.log('Seeded month-5 routine template');
 
   const midInfantMilestones = [
@@ -616,7 +616,7 @@ export async function seedCompanion() {
     bedtimeRitual: ['Warm bath (2-3 times per week)', 'Gentle massage', 'Pajamas and sleep sack', 'Read two board books', 'Sing same lullaby', 'Final feed with dim light', 'White noise on, dark room', 'Place in crib drowsy but awake', 'Say goodnight and leave'],
     flexible: true,
   };
-  await prisma.routineTemplate.upsert({ where: { stageKey: 'born_month_6' }, update: lateInfantRoutine, create: lateInfantRoutine });
+  await prisma.routineTemplate.upsert({ where: { stageKey_locale: { stageKey: 'born_month_6', locale: 'en' } }, update: lateInfantRoutine, create: { ...lateInfantRoutine, locale: 'en' } });
   console.log('Seeded late-infant routine template');
 
   // ─── Month 7 Routine (Sitting, Scooting, Solids Established) ───
@@ -642,7 +642,7 @@ export async function seedCompanion() {
     bedtimeRitual: ['Warm bath (2-3 times per week)', 'Gentle massage — good for calming before bed', 'Pajamas and sleep sack', 'Read 2 board books — let baby turn pages and pat textures', 'Sing the same lullaby every night', 'Final feed with dim light — no screens', 'White noise on, room completely darkened', 'Place in crib drowsy but awake', 'Brief boring check-ins if needed — 30-60 seconds, same phrase, no picking up'],
     flexible: true,
   };
-  await prisma.routineTemplate.upsert({ where: { stageKey: 'born_month_7' }, update: month7Routine, create: month7Routine });
+  await prisma.routineTemplate.upsert({ where: { stageKey_locale: { stageKey: 'born_month_7', locale: 'en' } }, update: month7Routine, create: { ...month7Routine, locale: 'en' } });
   console.log('Seeded month-7 routine template');
 
   // ─── Month 8 Routine (Crawling, Pulling Up, Separation Anxiety) ───
@@ -667,7 +667,7 @@ export async function seedCompanion() {
     bedtimeRitual: ['Warm bath (2-3 times per week)', 'Brush teeth with rice-grain-size fluoride toothpaste', 'Pajamas and sleep sack', 'Read 2-3 board books — let baby turn pages and point', 'Sing the same lullaby every night — consistency is security during separation anxiety', 'Final feed with dim light — no screens', 'White noise on, room completely darkened', 'Place in crib awake — say a quick, loving goodbye', 'Brief boring check-ins if needed — 30-60 seconds, same phrase, no picking up', 'Practice standing-to-sitting during daytime so baby can self-settle if they pull up in crib'],
     flexible: true,
   };
-  await prisma.routineTemplate.upsert({ where: { stageKey: 'born_month_8' }, update: month8Routine, create: month8Routine });
+  await prisma.routineTemplate.upsert({ where: { stageKey_locale: { stageKey: 'born_month_8', locale: 'en' } }, update: month8Routine, create: { ...month8Routine, locale: 'en' } });
   console.log('Seeded month-8 routine template');
 
   const lateInfantMilestones = [
@@ -706,7 +706,7 @@ export async function seedCompanion() {
     bedtimeRitual: ['Warm bath (2-3 times per week)', 'Brush teeth with rice-grain fluoride toothpaste', 'Pajamas and sleep sack', 'Read 2-3 board books', 'Sing same lullaby', 'Offer safe lovey (12+ months)', 'White noise on, dark room', 'Cuddle briefly, say goodnight, leave'],
     flexible: true,
   };
-  await prisma.routineTemplate.upsert({ where: { stageKey: 'born_month_12' }, update: youngToddlerRoutine, create: youngToddlerRoutine });
+  await prisma.routineTemplate.upsert({ where: { stageKey_locale: { stageKey: 'born_month_12', locale: 'en' } }, update: youngToddlerRoutine, create: { ...youngToddlerRoutine, locale: 'en' } });
   console.log('Seeded young-toddler routine template');
 
   const youngToddlerMilestones = [
@@ -745,7 +745,7 @@ export async function seedCompanion() {
     bedtimeRitual: ['Potty sit (builds routine)', 'Brush teeth with rice-grain fluoride toothpaste', 'Pajamas and sleep sack', 'Read 2-3 books (last call)', 'Sing same lullaby', 'Say goodnight to items in the room', 'White noise on, lights out', 'Cuddle briefly, say goodnight, leave'],
     flexible: true,
   };
-  await prisma.routineTemplate.upsert({ where: { stageKey: 'born_month_18' }, update: olderToddlerRoutine, create: olderToddlerRoutine });
+  await prisma.routineTemplate.upsert({ where: { stageKey_locale: { stageKey: 'born_month_18', locale: 'en' } }, update: olderToddlerRoutine, create: { ...olderToddlerRoutine, locale: 'en' } });
   console.log('Seeded older-toddler routine template');
 
   const olderToddlerMilestones = [
@@ -793,13 +793,13 @@ export async function seedCompanion() {
   // ─── Pregnancy Routine Templates (3 trimesters) ───
 
   const pregRoutineWeek8 = { stageKey: 'preg_week_8', title: 'First Trimester Rhythm: Navigating Early Pregnancy', description: 'The first trimester builds the placenta and all major organ systems. Energy may be very low, nausea may be intense. This rhythm prioritizes rest, nutrition survival strategies, and gentle self-compassion.', wakeWindowMins: 120, napCount: 2, totalNapHours: 3.0, nightSleepHours: 9.0, feedFrequency: 'Small, frequent meals every 2-3 hours (empty stomach worsens nausea); focus on nutrient-dense foods you can tolerate', sampleSchedule: [{ time: '6:30 AM', activity: 'Wake slowly. Eat crackers BEFORE sitting up — keep at bedside. Reduces morning nausea.', durationMins: 15 }, { time: '7:00 AM', activity: 'Take prenatal vitamin with food. Gentle stretch or brief walk.', durationMins: 30 }, { time: '7:30 AM', activity: 'Small breakfast — cold foods may be better tolerated. Protein + complex carb.', durationMins: 30 }, { time: '8:00-10:00 AM', activity: 'Rest or light activity. First trimester fatigue is real — your metabolic rate increases significantly.', durationMins: 120 }, { time: '10:00 AM', activity: 'Mid-morning snack — apple with peanut butter, cheese and crackers. Hydrate.', durationMins: 15 }, { time: '12:00 PM', activity: 'Lunch — prioritize protein. Ginger and vitamin B6 (25mg 3-4x/day) reduce nausea.', durationMins: 30 }, { time: '12:30-2:30 PM', activity: 'Nap or deep rest. Lie down even if you cannot sleep.', durationMins: 120 }, { time: '2:30 PM', activity: 'Afternoon snack. Continue hydrating.', durationMins: 30 }, { time: '3:00-5:00 PM', activity: 'Gentle activity or rest. Fresh air and gentle movement may ease nausea.', durationMins: 120 }, { time: '5:00-5:45 PM', activity: 'Second nap if needed. Late afternoon is often the hardest time.', durationMins: 45 }, { time: '5:45-6:15 PM', activity: 'Prepare simple dinner — ask partner to help if cooking smells trigger nausea.', durationMins: 30 }, { time: '6:15-6:45 PM', activity: 'Dinner. Small portions. Cold foods may be better tolerated.', durationMins: 30 }, { time: '8:00 PM', activity: 'Gentle evening — light stretching, reading, partner connection.', durationMins: 60 }, { time: '8:30 PM', activity: 'Wind-down — warm (not hot) bath, prenatal-safe skincare.', durationMins: 30 }, { time: '9:00 PM', activity: 'Bedtime. Early bedtime is your friend. Limit fluids 1-2 hours before.', durationMins: 30 }], bedtimeRitual: ['Warm bath (below 100°F)', 'Ginger or peppermint tea', 'Prenatal-safe moisturizer', 'Gratitude journal — 2-3 lines', 'Pregnancy pillow setup', 'Dim lights 30 min before bed'], flexible: true };
-  await prisma.routineTemplate.upsert({ where: { stageKey: 'preg_week_8' }, update: pregRoutineWeek8, create: pregRoutineWeek8 });
+  await prisma.routineTemplate.upsert({ where: { stageKey_locale: { stageKey: 'preg_week_8', locale: 'en' } }, update: pregRoutineWeek8, create: { ...pregRoutineWeek8, locale: 'en' } });
 
   const pregRoutineWeek20 = { stageKey: 'preg_week_20', title: 'Second Trimester Rhythm: The Golden Period', description: 'The second trimester (weeks 13-26) brings renewed energy and the first felt kicks. This rhythm focuses on prenatal exercise, registry building, and enjoying the energy surge.', wakeWindowMins: 180, napCount: 1, totalNapHours: 1.5, nightSleepHours: 8.5, feedFrequency: '3 balanced meals + 2-3 snacks; additional ~340 calories/day', sampleSchedule: [{ time: '6:30 AM', activity: 'Wake — prenatal yoga flow. Gentle cat-cow, side-lying twist, hip circles.', durationMins: 30 }, { time: '7:00 AM', activity: 'Breakfast — protein + fiber + healthy fat. Take prenatal vitamin.', durationMins: 30 }, { time: '7:30-9:30 AM', activity: 'Prenatal exercise (swimming, yoga, walking) or focused work. Second trimester energy peaks.', durationMins: 120 }, { time: '9:30 AM', activity: 'Morning snack — apple with almond butter or smoothie. Hydrate (80-100 oz/day).', durationMins: 30 }, { time: '12:00 PM', activity: 'Lunch — lean protein, complex carb, vegetables, healthy fat.', durationMins: 30 }, { time: '12:30 PM', activity: 'Gentle walk after lunch — 15-20 minutes aids digestion and blood sugar.', durationMins: 30 }, { time: '1:00-2:30 PM', activity: 'Afternoon nap or rest. Left side-lying with pregnancy pillow.', durationMins: 90 }, { time: '2:30 PM', activity: 'Afternoon snack.', durationMins: 30 }, { time: '3:00-5:00 PM', activity: 'Baby registry work, reading about fetal development, connecting with expecting parents.', durationMins: 120 }, { time: '5:00 PM', activity: 'Quiet time — notice baby movements. Read aloud to bump.', durationMins: 30 }, { time: '5:30-6:15 PM', activity: 'Dinner prep and dinner. Involve your partner.', durationMins: 45 }, { time: '8:00 PM', activity: 'Evening connection — partner time, prenatal class, nesting activities.', durationMins: 60 }, { time: '8:30 PM', activity: 'Wind-down — warm bath, belly moisturizing, meditation or hypnobirthing practice.', durationMins: 30 }, { time: '9:00 PM', activity: 'Bedtime. Left side-lying. If heartburn, elevate torso on pillows.', durationMins: 30 }], bedtimeRitual: ['Warm bath (below 100°F)', 'Belly moisturizing', 'Partner reads aloud to bump', 'Gratitude journal', 'Pregnancy pillow — left side-lying', 'Dim lights, cool room (68-72°F)'], flexible: true };
-  await prisma.routineTemplate.upsert({ where: { stageKey: 'preg_week_20' }, update: pregRoutineWeek20, create: pregRoutineWeek20 });
+  await prisma.routineTemplate.upsert({ where: { stageKey_locale: { stageKey: 'preg_week_20', locale: 'en' } }, update: pregRoutineWeek20, create: { ...pregRoutineWeek20, locale: 'en' } });
 
   const pregRoutineWeek32 = { stageKey: 'preg_week_32', title: 'Third Trimester Rhythm: The Final Stretch', description: 'The third trimester (weeks 28-40) brings final preparation. Energy may dip again. This rhythm prioritizes birth preparation, rest, and savoring the last weeks.', wakeWindowMins: 150, napCount: 1, totalNapHours: 2.0, nightSleepHours: 8.5, feedFrequency: 'Small frequent meals every 2.5-3 hours; additional ~450 calories/day; prioritize iron-rich foods', sampleSchedule: [{ time: '6:30 AM', activity: 'Wake gently — roll to side before sitting up (diastasis recti awareness). Gentle stretches.', durationMins: 30 }, { time: '7:00 AM', activity: 'Breakfast — iron-rich: oatmeal with chia and berries, eggs with spinach.', durationMins: 30 }, { time: '7:30-9:00 AM', activity: 'Prenatal exercise — swimming is excellent. Perineal massage from 34 weeks.', durationMins: 90 }, { time: '9:00 AM', activity: 'Morning snack. Hydrate — dehydration triggers Braxton Hicks.', durationMins: 30 }, { time: '9:30-11:30 AM', activity: 'Birth prep — review preferences, practice breathing, pack hospital bag, interview pediatricians, install car seat.', durationMins: 120 }, { time: '11:30 AM', activity: 'Lunch — iron-rich: lentil soup, spinach salad with chicken.', durationMins: 30 }, { time: '12:00 PM', activity: 'Short walk after lunch. Notice contractions — Braxton Hicks are irregular.', durationMins: 15 }, { time: '12:15-2:15 PM', activity: 'Nap or deep rest. Third trimester fatigue returns.', durationMins: 120 }, { time: '2:15 PM', activity: 'Afternoon snack. Continue hydrating.', durationMins: 30 }, { time: '2:45-4:45 PM', activity: 'Nesting, freezer meals, breastfeeding class, connecting with birth support team.', durationMins: 120 }, { time: '4:45 PM', activity: 'Kick count — 10 movements in 2 hours. Call provider if reduced movement.', durationMins: 30 }, { time: '5:15-6:00 PM', activity: 'Dinner — batch cook or freezer meals. Accept help.', durationMins: 45 }, { time: '7:30 PM', activity: 'Evening connection — partner time, finalize names, review birth preferences.', durationMins: 60 }, { time: '8:00 PM', activity: 'Wind-down — warm bath, perineal massage, breathing practice (4 in, 6 out).', durationMins: 30 }, { time: '8:30 PM', activity: 'Final snack if needed — banana for leg cramps. Taper fluids.', durationMins: 30 }, { time: '9:00 PM', activity: 'Bedtime — left side-lying with full pillow support.', durationMins: 30 }], bedtimeRitual: ['Warm bath (confirm safe with provider)', 'Perineal massage (from 34 weeks)', 'Belly moisturizing', 'Breathing practice — 4 in, 6 out, repeat 10x', 'Full pregnancy pillow — left side-lying', 'Dark, cool room', 'If heartburn: torso elevated on wedge pillow'], flexible: true };
-  await prisma.routineTemplate.upsert({ where: { stageKey: 'preg_week_32' }, update: pregRoutineWeek32, create: pregRoutineWeek32 });
+  await prisma.routineTemplate.upsert({ where: { stageKey_locale: { stageKey: 'preg_week_32', locale: 'en' } }, update: pregRoutineWeek32, create: { ...pregRoutineWeek32, locale: 'en' } });
   console.log('Seeded 3 pregnancy routine templates');
 
   // ─── Pregnancy Fetal Development Milestones (15 milestones) ───
@@ -1011,7 +1011,7 @@ export async function seedCompanion() {
     },
   ];
   for (const r of newRoutines) {
-    await prisma.routineTemplate.upsert({ where: { stageKey: r.stageKey }, update: r, create: r });
+    await prisma.routineTemplate.upsert({ where: { stageKey_locale: { stageKey: r.stageKey, locale: 'en' } }, update: r, create: { ...r, locale: 'en' } });
   }
   console.log(`Seeded ${newRoutines.length} new routine templates`);
 
