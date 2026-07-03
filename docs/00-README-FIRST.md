@@ -2,6 +2,8 @@
 
 > **If you only read ONE document, read this.**
 
+> **Canonical fix-tracking source:** [`docs/review-v4/ROADMAP.md`](./review-v4/ROADMAP.md) — tracks every code-level fix from all prior review iterations (99% resolved). For pre-fix review history, see [`_archive/`](../_archive/README.md).
+
 ---
 
 ## What is BabyMon?
@@ -64,8 +66,20 @@ docs/                              # ← YOU ARE HERE
 ├── 04-FILE-INVENTORY.md          # Every source file mapped
 ├── 05-API-CLIENT-GUIDE.md        # How to call the backend correctly
 ├── 06-SCREEN-BUILDING-GUIDE.md   # Templates for new screens
-└── 07-DEPLOYMENT.md              # Railway + Google Play deployment
+├── 07-DEPLOYMENT.md              # Railway + Google Play deployment
+├── 08-BABYMON-CREATION-WORKFLOW.md
+├── 09-DIAGNOSTIC-GUIDE.md        # 10-bug debugging checklist
+├── 10-ACHIEVEMENTS.md            # XP, badges, evolution
+├── 11-REVIEW-REPORT.md           # Most recent review findings
+├── 12-XP-SYSTEM-SPEC.md          # XP & leveling formulas
+├── 13-THEME-SYSTEM-SPEC.md       # Glass + Clay dual theme
+├── 14- onboarding-redesign-DESIGN.md
+├── 15-MIGRATION-NOTES.md         # Roll-up of migrations 0001–0004 (incl. PLAN replaces IDEA rename)
+├── Production_Sprint/            # Active deployment work (10-13)
+└── review-v4/                    # Current review state + ROADMAP
 ```
+
+> Archived (gitignored): `_archive/` — superseded reviews v1–v3, old sprints 01–09, the `old doc/` early-project planning files, and April 2026 mobile architecture audits. See [`_archive/README.md`](../_archive/README.md).
 
 ---
 
@@ -80,6 +94,16 @@ docs/                              # ← YOU ARE HERE
 | `05-API-CLIENT-GUIDE.md` | API callers | Typed vs generic methods, prefix rules |
 | `06-SCREEN-BUILDING-GUIDE.md` | AI agents | Copy-paste templates for new screens |
 | `07-DEPLOYMENT.md` | DevOps | Railway, Firebase, Google Play |
+| `08-BABYMON-CREATION-WORKFLOW.md` | Feature developers | Multi-step create-BabyMon flow |
+| `09-DIAGNOSTIC-GUIDE.md` | Bug fixers | 10-bug QA checklist |
+| `10-ACHIEVEMENTS.md` | Gamification devs | XP, badges, evolution |
+| `11-REVIEW-REPORT.md` | Tech leads | Most recent review findings |
+| `12-XP-SYSTEM-SPEC.md` | Gamification devs | XP & leveling formulas |
+| `13-THEME-SYSTEM-SPEC.md` | UI devs | Glass + Clay dual theme system |
+| `14- onboarding-redesign-DESIGN.md` | UX/designers | Onboarding redesign rationale |
+| `15-MIGRATION-NOTES.md` | Backend devs, DB admins | Roll-up of migrations 0001–0004; explains the `'PLAN'` replaces `'IDEA'` rename |
+| **`review-v4/ROADMAP.md`** | **Everyone** | **Canonical fix-tracking source — 99% of code-level issues resolved** |
+| `Production_Sprint/10..13` | DevOps | Migration strategy, promo codes, i18n, **deployment plan** |
 
 ---
 
@@ -115,4 +139,8 @@ Every screen that loads data MUST call `setState(() => _isLoading = false)` befo
 
 ---
 
-*Last Updated: June 4, 2026 (v4.0)*
+*Last Updated: July 3, 2026 (v4.4) — added arcs to 08–14, Production_Sprint 10–13, and review-v4.*
+
+*Doc 15 (MIGRATION-NOTES) added 2026-07-03 to document migrations 0001–0004 and the `PLAN` ↔ `IDEA` rename.*
+
+*Previous archived reviews: [`_archive/`](../_archive/README.md).*
