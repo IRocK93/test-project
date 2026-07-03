@@ -4,24 +4,22 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
   @ApiProperty({ example: 'user@example.com' })
-  @IsEmail({}, { message: 'Please enter a valid email address' })
-  @MaxLength(255, { message: 'Email must not exceed 255 characters' })
+  @IsEmail()
+  @MaxLength(255)
   @Transform(({ value }) => typeof value === 'string' ? value.toLowerCase().trim() : value)
   email: string;
 
   @ApiProperty({ example: 'Password123' })
   @IsString()
-  @MinLength(8, { message: 'Password must be at least 8 characters' })
-  @MaxLength(72, { message: 'Password must not exceed 72 characters' })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
-    message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
-  })
+  @MinLength(8)
+  @MaxLength(72)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
   password: string;
 
   @ApiProperty({ example: 'John Doe', required: false })
   @IsOptional()
   @IsString()
-  @MaxLength(100, { message: 'Name must not exceed 100 characters' })
+  @MaxLength(100)
   name?: string;
 
   @ApiProperty({ example: '1995-01-01', required: false })
@@ -43,17 +41,23 @@ export class RegisterDto {
   @IsOptional()
   @IsBoolean()
   consentToDataProcessing?: boolean;
+
+  @ApiProperty({ example: 'en', required: false, description: 'Preferred locale (en, es, fr, de, ar, he, it, pt, zh)' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z]{2}$/)
+  locale?: string;
 }
 
 export class LoginDto {
   @ApiProperty({ example: 'user@example.com' })
-  @IsEmail({}, { message: 'Please enter a valid email address' })
+  @IsEmail()
   @Transform(({ value }) => typeof value === 'string' ? value.toLowerCase().trim() : value)
   email: string;
 
   @ApiProperty({ example: 'Password123' })
   @IsString()
-  @MinLength(1, { message: 'Password is required' })
+  @MinLength(1)
   password: string;
 }
 
@@ -72,7 +76,7 @@ export class LogoutDto {
 
 export class ForgotPasswordDto {
   @ApiProperty({ example: 'user@example.com' })
-  @IsEmail({}, { message: 'Please enter a valid email address' })
+  @IsEmail()
   email: string;
 }
 
@@ -83,11 +87,9 @@ export class ResetPasswordDto {
 
   @ApiProperty({ example: 'NewPassword123' })
   @IsString()
-  @MinLength(8, { message: 'Password must be at least 8 characters' })
-  @MaxLength(72, { message: 'Password must not exceed 72 characters' })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
-    message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number',
-  })
+  @MinLength(8)
+  @MaxLength(72)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
   password: string;
 }
 

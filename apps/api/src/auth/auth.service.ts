@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, InternalServerErrorException, Logger, HttpStatus } from '@nestjs/common';
+import { Injectable, UnauthorizedException, InternalServerErrorException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
@@ -10,6 +10,7 @@ import { randomBytes } from 'crypto';
 import { getJwtSecret } from './jwt-config';
 import { DuplicateException, InvalidOperationException } from '../common/exceptions/business.exception';
 import { ErrorCode } from '../common/enums/error-code.enum';
+import * as admin from 'firebase-admin';
 
 @Injectable()
 export class AuthService {
@@ -48,6 +49,7 @@ export class AuthService {
             email: dto.email,
             passwordHash,
             name: dto.name,
+            locale: dto.locale ?? 'en',
             verificationToken,
             verificationExpires,
             ...(dto.tosAccepted ? { tosAcceptedAt: new Date(), tosVersion: '1.0' } : {}),
@@ -56,7 +58,7 @@ export class AuthService {
           },
         });
 
-        const trialDays = parseInt(this.configService.get<string>('TRIAL_DAYS') || '14', 10);
+        const trialDays = this.configService.get<number>('trialDays') ?? 14;
         const trialEndDate = new Date();
         trialEndDate.setDate(trialEndDate.getDate() + trialDays);
 
@@ -75,11 +77,11 @@ export class AuthService {
 
       // Send verification email (non-blocking — won't fail registration)
       try {
-        await this.mailService.sendVerificationEmail(user.email, verificationToken);
+        await this.mailService.sendVerificationEmail(user.email, verificationToken, user.locale);
       } catch (mailError) {
         this.logger.warn({ err: mailError }, 'Failed to send verification email, but registration succeeded');
       }
-      const tokens = await this.generateTokens(user.id, user.email);
+      const tokens = await this.generateTokens(user.id, user.email, user.locale);
 
       return {
         user: {
@@ -89,7 +91,6 @@ export class AuthService {
           verified: false,
         },
         ...tokens,
-        message: 'Registration successful. Please check your email to verify your account.',
       };
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
@@ -134,18 +135,16 @@ export class AuthService {
         message: 'Invalid email or password',
         code: ErrorCode.UNAUTHORIZED,
       });
-    }
+    }      const tokens = await this.generateTokens(user.id, user.email, user.locale);
 
-    const tokens = await this.generateTokens(user.id, user.email);
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-      ...tokens,
-    };
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        },
+        ...tokens,
+      };
   }
 
   async refreshTokens(dto: RefreshTokenDto) {
@@ -192,7 +191,7 @@ export class AuthService {
         data: { revokedAt: new Date() },
       });
 
-      const tokens = await this.generateTokens(user.id, user.email);
+      const tokens = await this.generateTokens(user.id, user.email, user.locale);
       return tokens;
     } catch (error) {
       if (error instanceof UnauthorizedException) {
@@ -203,6 +202,56 @@ export class AuthService {
         code: ErrorCode.INVALID_TOKEN,
       });
     }
+  }
+
+  async sendVerificationEmail(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException({
+        message: 'User not found',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
+
+    if (user.verifiedAt) {
+      return { success: true, message: 'Email already verified' };
+    }
+
+    const verificationToken = randomBytes(32).toString('hex');
+    const verificationExpires = new Date();
+    verificationExpires.setHours(verificationExpires.getHours() + 24);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { verificationToken, verificationExpires },
+    });
+
+    try {
+      await this.mailService.sendVerificationEmail(user.email, verificationToken, user.locale);
+    } catch (mailError) {
+      this.logger.warn({ err: mailError }, 'Failed to send verification email');
+    }
+
+    return { success: true };
+  }
+
+  async checkVerification(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { verifiedAt: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException({
+        message: 'User not found',
+        code: ErrorCode.USER_NOT_FOUND,
+      });
+    }
+
+    return { verified: user.verifiedAt != null };
   }
 
   async verifyEmail(token: string) {
@@ -226,7 +275,43 @@ export class AuthService {
       },
     });
 
-    return { message: 'Email verified successfully' };
+    return { success: true };
+  }
+
+  /**
+   * Development-only: verifies a user by email without requiring the token.
+   * Used when email delivery is not configured (local development).
+   * Throws in production environments.
+   */
+  async verifyEmailDev(email: string) {
+    const env = this.configService.get<string>('nodeEnv');
+    if (env === 'production') {
+      throw new InvalidOperationException('This endpoint is not available in production.');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new InvalidOperationException('User not found');
+    }
+
+    if (user.verifiedAt) {
+      return { success: true, alreadyVerified: true };
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        verifiedAt: new Date(),
+        verificationToken: null,
+        verificationExpires: null,
+      },
+    });
+
+    this.logger.log({ email }, 'Dev email verification bypass used');
+    return { success: true };
   }
 
   async forgotPassword(email: string) {
@@ -235,7 +320,7 @@ export class AuthService {
     });
 
     if (!user) {
-      return { message: 'If the email exists, a reset link has been sent' };
+      return { success: true };
     }
 
     // Invalidate any previous reset tokens for this user
@@ -255,9 +340,9 @@ export class AuthService {
       },
     });
 
-    await this.mailService.sendPasswordResetEmail(user.email, resetToken);
+    await this.mailService.sendPasswordResetEmail(user.email, resetToken, user.locale);
 
-    return { message: 'If the email exists, a reset link has been sent' };
+    return { success: true };
   }
 
   async resetPassword(token: string, newPassword: string) {
@@ -286,7 +371,7 @@ export class AuthService {
       }),
     ]);
 
-    return { message: 'Password reset successfully' };
+    return { success: true };
   }
 
   async validateUser(userId: string) {
@@ -301,15 +386,16 @@ export class AuthService {
     return user;
   }
 
-  async generateTokens(userId: string, email: string) {
+  async generateTokens(userId: string, email: string, locale?: string) {
+    const effectiveLocale = locale || 'en';
     const accessToken = this.jwtService.sign(
-      { sub: userId, email, type: 'access' },
+      { sub: userId, email, locale: effectiveLocale, type: 'access' },
       { expiresIn: '15m' as const },
     );
 
-    const refreshTtlDays = parseInt(this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d', 10) || 7;
+    const refreshTtlDays = this.configService.get<number>('jwt.refreshExpiresInDays') ?? 7;
     const refreshToken = this.jwtService.sign(
-      { sub: userId, email, type: 'refresh' },
+      { sub: userId, email, locale: effectiveLocale, type: 'refresh' },
       { expiresIn: `${refreshTtlDays}d` as const },
     );
 
@@ -345,7 +431,7 @@ export class AuthService {
         data: { revokedAt: new Date() },
       });
     }
-    return { message: 'Logged out successfully' };
+    return { success: true };
   }
 
   async getProfile(userId: string) {
@@ -355,6 +441,7 @@ export class AuthService {
         id: true,
         email: true,
         name: true,
+        locale: true,
         createdAt: true,
         verifiedAt: true,
       },
@@ -377,7 +464,7 @@ export class AuthService {
   async biometricLogin(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, name: true, verifiedAt: true },
+      select: { id: true, email: true, name: true, locale: true, verifiedAt: true },
     });
     if (!user) {
       throw new UnauthorizedException({
@@ -385,7 +472,7 @@ export class AuthService {
         code: ErrorCode.USER_NOT_FOUND,
       });
     }
-    const tokens = await this.generateTokens(user.id, user.email);
+    const tokens = await this.generateTokens(user.id, user.email, user.locale);
     return { user, ...tokens };
   }
 
@@ -405,7 +492,6 @@ export class AuthService {
     try {
       if (provider === 'google') {
         // Firebase Admin SDK verification (firebase-admin is in package.json)
-        const admin = require('firebase-admin');
         if (admin.apps.length === 0) {
           // Firebase not configured — use structural validation as fallback
           this.logger.warn('Firebase Admin not initialized, using structural token validation');
@@ -445,7 +531,7 @@ export class AuthService {
           data: { email, name, passwordHash: null },
         });
         // Create trial subscription
-        const trialDays = parseInt(this.configService.get<string>('TRIAL_DAYS') || '14', 10);
+        const trialDays = this.configService.get<number>('trialDays') ?? 14;
         await this.prisma.subscription.create({
           data: {
             userId: user.id,
@@ -458,7 +544,7 @@ export class AuthService {
       }
 
       // Issue BabyMon JWT tokens
-      const tokens = await this.generateTokens(user.id, user.email);
+      const tokens = await this.generateTokens(user.id, user.email, user.locale);
       this.logger.log(`OAuth ${provider} login successful for ${email}`);
       return { user: { id: user.id, email: user.email, name: user.name }, ...tokens };
     } catch (err: any) {
