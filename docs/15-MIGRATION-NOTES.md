@@ -102,8 +102,11 @@ stageStartType StageStartType   // enum: PLAN | INCUBATING | BORN
 The old `String` column was implicitly constrained by app code to one of
 **`PLAN`, `INCUBATING`, `BORN`**, but the seed script introduced a fourth
 value — **`IDEA`** — for the *system* BabyMon row (the placeholder used
-for content lookup before any user-owned BabyMon exists). Over time this
-became confusing: every code path treated "IDEA" identically to "PLAN"
+for content lookup before any user-owned BabyMon exists). **No
+user-created BabyMon has ever had `'IDEA'`** — the only row that ever held
+that value was the singular system BabyMon in `apps/api/prisma/seed.ts`
+(line 34, since updated to `'PLAN'`). Over time this became confusing:
+every code path treated "IDEA" identically to "PLAN"
 ("pre-conception, no pregnancy dates yet"), so the two values were
 duplicates in practice.
 
@@ -213,4 +216,4 @@ dev` locally.
 - [`docs/04-FILE-INVENTORY.md`](./04-FILE-INVENTORY.md) — model-to-file mapping
 - [`docs/Production_Sprint/10_Database_Migration_Strategy.md`](./Production_Sprint/10_Database_Migration_Strategy.md) — strategy notes (do not use `prisma db push` in production)
 - [`apps/api/prisma/schema.prisma`](../apps/api/prisma/schema.prisma) — canonical schema
-- [`apps/api/prisma/migrations/`](../../apps/api/prisma/migrations/) — every SQL file Prisma has run
+- [`apps/api/prisma/migrations/`](../apps/api/prisma/migrations/) — every SQL file Prisma has run
