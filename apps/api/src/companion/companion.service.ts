@@ -1,6 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StageCalculatorService } from '../common/stage-calculator.service';
+import { ErrorCode } from '../common/enums/error-code.enum';
+import {
+  findAdviceCardsByLocale,
+  countAdviceCardsByLocale,
+  findRoutineTemplateByLocale,
+  findMilestoneExpectationsByLocale,
+} from '../common/locale-content.helper';
 
 // Trimester boundaries (weeks)
 const FIRST_TRIMESTER_END = 13;
@@ -18,33 +25,28 @@ export class CompanionService {
     private stageCalculator: StageCalculatorService,
   ) {}
 
-  async getDailyBrief(babyMonId: string) {
+  async getDailyBrief(babyMonId: string, locale?: string) {
+    const effectiveLocale = locale || 'en';
     const babyMon = await this.prisma.babyMon.findUnique({
       where: { id: babyMonId },
       select: { id: true, name: true, stageStartType: true, birthDate: true, conceptionDate: true, currentStage: true, gender: true },
     });
-    if (!babyMon) throw new NotFoundException('BabyMon not found');
+    if (!babyMon) throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
 
     const stageKey = StageCalculatorService.computeStageKey(babyMon);
     const stageName = this.getStageName(stageKey, babyMon);
 
-    // Get today's advice card (rotates by priority)
-    const tipOfDay = await this.prisma.expertAdviceCard.findFirst({
-      where: { stageKey },
-      orderBy: { priority: 'desc' },
-    });
+    // Get today's advice card (rotates by priority) — locale-aware
+    const tips = await findAdviceCardsByLocale(this.prisma, stageKey, effectiveLocale, { take: 1 });
+    const tipOfDay = tips[0] || null;
 
-    // Get routine preview
-    const routineTemplate = await this.prisma.routineTemplate.findUnique({
-      where: { stageKey },
-    });
+    // Get routine preview — locale-aware
+    const routineTemplate = await findRoutineTemplateByLocale(this.prisma, stageKey, effectiveLocale);
 
-    // Get milestone summary
-    const upcomingMilestones = await this.prisma.milestoneExpectation.findMany({
-      where: { stageKey, status: 'EXPECTED' },
-      take: 3,
-      orderBy: { domain: 'asc' },
-    });
+    // Get milestone summary — locale-aware
+    const upcomingMilestones = await findMilestoneExpectationsByLocale(
+      this.prisma, stageKey, effectiveLocale, { status: 'EXPECTED', take: 3 },
+    );
 
     // Get today's user routine if exists
     const today = new Date();
@@ -89,21 +91,20 @@ export class CompanionService {
     };
   }
 
-  async getRoutine(babyMonId: string, userId: string) {
+  async getRoutine(babyMonId: string, userId: string, locale?: string) {
+    const effectiveLocale = locale || 'en';
     const babyMon = await this.prisma.babyMon.findUnique({
       where: { id: babyMonId },
       select: { id: true, stageStartType: true, birthDate: true, conceptionDate: true },
     });
-    if (!babyMon) throw new NotFoundException('BabyMon not found');
+    if (!babyMon) throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
 
     const stageKey = StageCalculatorService.computeStageKey(babyMon);
-    const template = await this.prisma.routineTemplate.findUnique({
-      where: { stageKey },
-    });
+    const template = await findRoutineTemplateByLocale(this.prisma, stageKey, effectiveLocale);
     if (!template) {
       return {
         stageKey,
-        message: 'No routine template available yet for this stage. Check back soon!',
+        hasTemplate: false,
         template: null,
         userRoutine: null,
       };
@@ -155,7 +156,7 @@ export class CompanionService {
     const userRoutine = await this.prisma.userRoutine.findUnique({
       where: { babyMonId_routineDate: { babyMonId, routineDate: today } },
     });
-    if (!userRoutine) throw new NotFoundException('No routine found for today');
+    if (!userRoutine) throw new NotFoundException({ message: 'No routine found for today', code: ErrorCode.ROUTINE_NOT_FOUND });
 
     const steps = this.normalizeJsonArray(userRoutine.completedSteps);
     const completedSteps = steps.includes(stepLabel)
@@ -187,23 +188,18 @@ export class CompanionService {
     return { completedSteps: userRoutine.completedSteps };
   }
 
-  async getMilestones(babyMonId: string, status?: string) {
+  async getMilestones(babyMonId: string, status?: string, locale?: string) {
+    const effectiveLocale = locale || 'en';
     const babyMon = await this.prisma.babyMon.findUnique({
       where: { id: babyMonId },
       select: { id: true, stageStartType: true, birthDate: true, conceptionDate: true },
     });
-    if (!babyMon) throw new NotFoundException('BabyMon not found');
+    if (!babyMon) throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
 
     const stageKey = StageCalculatorService.computeStageKey(babyMon);
-    const where: Record<string, unknown> = { stageKey };
-    if (status && status !== 'ACHIEVED') {
-      where.status = status;
-    }
-
-    const expectations = await this.prisma.milestoneExpectation.findMany({
-      where,
-      orderBy: [{ domain: 'asc' }, { title: 'asc' }],
-    });
+    const expectations = await findMilestoneExpectationsByLocale(
+      this.prisma, stageKey, effectiveLocale, { status },
+    );
 
     // Get achieved milestones
     const achieved = await this.prisma.babyMilestone.findMany({
@@ -232,13 +228,13 @@ export class CompanionService {
     return { domains: grouped };
   }
 
-  async achieveMilestone(babyMonId: string, expectationId: string, userId: string) {
+  async achieveMilestone(babyMonId: string, expectationId: string, _userId: string) {
     const existing = await this.prisma.babyMilestone.findUnique({
       where: { babyMonId_expectationId: { babyMonId, expectationId } },
     });
     if (existing) return { alreadyAchieved: true };
 
-    const milestone = await this.prisma.babyMilestone.create({
+    await this.prisma.babyMilestone.create({
       data: { babyMonId, expectationId },
     });
 
@@ -279,25 +275,19 @@ export class CompanionService {
     return { unachieved: true };
   }
 
-  async getAdvice(babyMonId: string, category?: string, skip = 0, take = 10) {
+  async getAdvice(babyMonId: string, category?: string, skip = 0, take = 10, locale?: string) {
+    const effectiveLocale = locale || 'en';
     const babyMon = await this.prisma.babyMon.findUnique({
       where: { id: babyMonId },
       select: { id: true, stageStartType: true, birthDate: true, conceptionDate: true },
     });
-    if (!babyMon) throw new NotFoundException('BabyMon not found');
+    if (!babyMon) throw new NotFoundException({ message: 'BabyMon not found', code: ErrorCode.BABYMON_NOT_FOUND });
 
     const stageKey = StageCalculatorService.computeStageKey(babyMon);
-    const where: Record<string, unknown> = { stageKey };
-    if (category) where.category = category;
 
     const [items, total] = await Promise.all([
-      this.prisma.expertAdviceCard.findMany({
-        where,
-        orderBy: { priority: 'desc' },
-        skip,
-        take,
-      }),
-      this.prisma.expertAdviceCard.count({ where }),
+      findAdviceCardsByLocale(this.prisma, stageKey, effectiveLocale, { category, skip, take }),
+      countAdviceCardsByLocale(this.prisma, stageKey, effectiveLocale, { category }),
     ]);
 
     return { items, total, skip, take };
