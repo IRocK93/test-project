@@ -13,6 +13,15 @@ class ApiClient {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final ResponseCache _cache = ResponseCache();
 
+  /// Guard against the RetryInterceptor infinite-loop. When a refresh
+  /// call is in-flight, any 401 from ANY request (including the refresh
+  /// call itself) would trigger another _refreshToken() call, which would
+  /// trigger another refresh, etc. — pinning the CPU until the app is
+  /// force-killed. This flag is the single source of truth that breaks
+  /// the cycle. It is intentionally NOT a Future: the refresh is short,
+  /// and using a simple boolean keeps the hot path allocation-free.
+  bool _isRefreshing = false;
+
   /// Optional [HttpClientAdapter] for testing — allows injecting a mock adapter.
   /// When null, Dio uses the platform default (IOHttpClientAdapter).
   ApiClient({HttpClientAdapter? adapter}) {
@@ -95,14 +104,27 @@ class ApiClient {
   }
 
   Future<bool> _refreshToken() async {
+    // Single-flight guard: if a refresh is already in progress, bail out
+    // instead of issuing another concurrent refresh. This is the primary
+    // defense against the RetryInterceptor infinite-loop described on
+    // the `_isRefreshing` field above.
+    if (_isRefreshing) return false;
+    _isRefreshing = true;
     try {
       final refreshToken = await _storage.read(key: StorageKeys.refreshToken);
       if (refreshToken == null) return false;
 
-	      final refreshDio = Dio();
-	      refreshDio.httpClientAdapter = _dio.httpClientAdapter;
-	      final response = await refreshDio.post<dynamic>(
-	        '${ApiConstants.baseUrl}/api/v1${ApiConstants.refresh}',
+      // Clear the (possibly expired) access token BEFORE the refresh call
+      // so the auth interceptor reads null and omits the Authorization
+      // header. The backend's /auth/refresh endpoint validates the
+      // refreshToken in the body, not the header.
+      await _storage.delete(key: StorageKeys.accessToken);
+
+      // Use the main _dio instance so the versioning interceptor
+      // transparently rewrites /api/auth/refresh → /api/v1/auth/refresh.
+      // Consistent with every other call in this file.
+      final response = await _dio.post<dynamic>(
+        '/api${ApiConstants.refresh}',
         data: {'refreshToken': refreshToken},
       );
 
@@ -114,6 +136,8 @@ class ApiClient {
       return false;
     } catch (e) {
       return false;
+    } finally {
+      _isRefreshing = false;
     }
   }
 
