@@ -75,6 +75,7 @@ docs/                              # ← YOU ARE HERE
 ├── 13-THEME-SYSTEM-SPEC.md       # Glass + Clay dual theme
 ├── 14- onboarding-redesign-DESIGN.md
 ├── 15-MIGRATION-NOTES.md         # Roll-up of migrations 0001–0004 (incl. PLAN replaces IDEA rename)
+├── 16-PRISMA-BASELINING-INCIDENT.md # 2026-07-04 prod incident: db push vs migrate deploy, fix, CI guard
 ├── Production_Sprint/            # Active deployment work (10-13)
 └── review-v4/                    # Current review state + ROADMAP
 ```
@@ -102,6 +103,7 @@ docs/                              # ← YOU ARE HERE
 | `13-THEME-SYSTEM-SPEC.md` | UI devs | Glass + Clay dual theme system |
 | `14- onboarding-redesign-DESIGN.md` | UX/designers | Onboarding redesign rationale |
 | `15-MIGRATION-NOTES.md` | Backend devs, DB admins | Roll-up of migrations 0001–0004; explains the `'PLAN'` replaces `'IDEA'` rename |
+| `16-PRISMA-BASELINING-INCIDENT.md` | Backend devs, DevOps, on-call | 2026-07-04 prod incident: root cause (db push vs migrate deploy), 3-step fix, CI guard, runbook |
 | **`review-v4/ROADMAP.md`** | **Everyone** | **Canonical fix-tracking source — 99% of code-level issues resolved** |
 | `Production_Sprint/10..13` | DevOps | Migration strategy, promo codes, i18n, **deployment plan** |
 
@@ -139,8 +141,9 @@ Every screen that loads data MUST call `setState(() => _isLoading = false)` befo
 
 ---
 
-*Last Updated: July 3, 2026 (v4.4) — added arcs to 08–14, Production_Sprint 10–13, and review-v4.*
+*Last Updated: July 4, 2026 (v4.5) — added doc 16 (PRISMA-BASELINING-INCIDENT), CI guard against `prisma db push`, mobile re-point to production API, and stray-file cleanup.*
 
 *Doc 15 (MIGRATION-NOTES) added 2026-07-03 to document migrations 0001–0004 and the `PLAN` ↔ `IDEA` rename.*
+*Doc 16 (PRISMA-BASELINING-INCIDENT) added 2026-07-04 to document the prod db-push incident, the 3-step baselining fix, and the CI guard that prevents recurrence.*
 
 *Previous archived reviews: [`_archive/`](../_archive/README.md).*

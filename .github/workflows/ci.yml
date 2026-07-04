@@ -68,6 +68,23 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/babymon_test?schema=public
 
+      - name: Fail if prisma db push is referenced in any executable script
+        # prisma db push is unsafe against any non-local database — it can
+        # drop constraints, alter columns, and lose data without writing
+        # any migration history. We allow it to be MENTIONED in docs (this
+        # file, the migration notes, the strategy doc) but never to be
+        # EXECUTED. See docs/16-PRISMA-BASELINING-INCIDENT.md for context.
+        run: |
+          if grep -rEn 'prisma db push' \
+              --include='*.sh' --include='*.bash' \
+              --include='*.ps1' --include='*.bat' --include='*.cmd' \
+              --include='Dockerfile' --include='Dockerfile.*' \
+              --include='package.json' --include='docker-entrypoint*' \
+              apps/api .github 2>/dev/null; then
+            echo '::error::prisma db push is forbidden in any executable script or config under apps/api or .github/. Use prisma migrate dev for local development and prisma migrate deploy for production. See docs/16-PRISMA-BASELINING-INCIDENT.md.'
+            exit 1
+          fi
+
       - name: Run tests
         working-directory: ./apps/api
         run: npm run test:ci
