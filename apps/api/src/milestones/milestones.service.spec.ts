@@ -120,7 +120,7 @@ describe('MilestonesService', () => {
   describe('delete', () => {
     it('should soft-delete a milestone', async () => {
       const result = await service.delete('m-1', 'user-1');
-      expect(result.success).toBe(true);
+      expect(result.message).toMatch(/deleted/i);
     });
   });
 });

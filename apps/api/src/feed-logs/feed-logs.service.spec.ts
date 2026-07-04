@@ -359,7 +359,7 @@ describe('FeedLogsService', () => {
 
       const result = await service.delete(feedLogId, userId);
 
-      expect(result.success).toBe(true);
+      expect(result.message).toMatch(/deleted/i);
 
       // Soft delete
       expect(mockPrisma.feedLog.update).toHaveBeenCalledWith(

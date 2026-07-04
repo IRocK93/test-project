@@ -155,7 +155,7 @@ export class FeedLogsService {
 
     // Idempotent: if already soft-deleted, return success
     if (feedLog.deletedAt) {
-      return { success: true };
+      return { message: 'Feed log already deleted' };
     }
 
     await this.verifyAccess(feedLog.babymonId, userId);
@@ -190,7 +190,7 @@ export class FeedLogsService {
       }).catch((err) => this.logger.warn?.({ err }, 'Proposal creation failed (non-critical)'));
     }
 
-    return { success: true };
+    return { message: 'Feed log deleted' };
   }
 
   private async verifyAccess(babymonId: string, userId: string) {

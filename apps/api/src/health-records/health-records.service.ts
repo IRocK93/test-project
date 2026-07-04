@@ -134,7 +134,7 @@ export class HealthRecordsService {
 
     // Idempotent: if already soft-deleted, return success
     if (record.deletedAt) {
-      return { success: true };
+      return { message: 'Health record already deleted' };
     }
 
     await this.verifyAccess(record.babymonId, userId);
@@ -152,7 +152,7 @@ export class HealthRecordsService {
       }).catch((err) => this.logger.warn?.({ err }, 'Proposal creation failed (non-critical)'));
     }
 
-    return { success: true };
+    return { message: 'Health record deleted' };
   }
 
   private async verifyAccess(babymonId: string, userId: string) {
