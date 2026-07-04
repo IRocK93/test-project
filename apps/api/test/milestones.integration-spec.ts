@@ -53,10 +53,14 @@ describe('Milestones Integration', () => {
 
   describe('Full milestone lifecycle', () => {
     it('should create a milestone and return 201', async () => {
+      // Use a recent happenedAt so the FREE-tier 7-day date filter
+      // (buildHistoryDateFilter in apps/api/src/common/history-filter.helper.ts)
+      // doesn't exclude the milestone from the list endpoint tests below.
+      const recentHappenedAt = new Date().toISOString();
       const res = await request(app.getHttpServer())
         .post(`/api/v1/baby-mons/${babyMonId}/milestones`)
         .set('Authorization', `Bearer ${token}`)
-        .send({ title: 'First smile', notes: 'Happened at playtime', happenedAt: '2026-06-20T10:00:00Z' });
+        .send({ title: 'First smile', notes: 'Happened at playtime', happenedAt: recentHappenedAt });
 
       expect(res.status).toBe(201);
       expect(res.body).toHaveProperty('id');
