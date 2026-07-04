@@ -7,7 +7,7 @@ describe('BadgesService', () => {
 
   const mockTx = {
     babyMon: { findUnique: jest.fn() },
-    badge: { create: jest.fn(), findMany: jest.fn().mockResolvedValue([]) },
+    badge: { create: jest.fn(), upsert: jest.fn(), findMany: jest.fn().mockResolvedValue([]) },
     auditLog: { create: jest.fn(), count: jest.fn().mockResolvedValue(0) },
     journalProposal: { count: jest.fn().mockResolvedValue(0) },
     milestone: { findMany: jest.fn().mockResolvedValue([]), count: jest.fn().mockResolvedValue(0) },
@@ -65,7 +65,7 @@ describe('BadgesService', () => {
 
       expect(result.length).toBeGreaterThan(0);
       expect(result[0].badgeType).toBe('M01');
-      expect(mockTx.badge.create).toHaveBeenCalled();
+      expect(mockTx.badge.upsert).toHaveBeenCalled();
     });
 
     it('should not duplicate badges already awarded', async () => {
