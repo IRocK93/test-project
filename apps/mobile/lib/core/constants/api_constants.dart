@@ -1,7 +1,13 @@
 class ApiConstants {
-  // Updated for Android emulator to reach host machine's localhost
+  // Production API host (Railway). Path prefixes (/api/v1, /api) are
+  // appended by the individual service files (api_client.dart, api_service.dart,
+  // companion_tab.dart) so this stays the bare origin.
+  //
+  // Override at build time for staging/local dev:
+  //   flutter build apk --dart-define=API_BASE_URL=http://10.0.2.2:3000
+  //   flutter run --dart-define=API_BASE_URL=https://babymon-api-staging.up.railway.app
   static const String baseUrl = String.fromEnvironment('API_BASE_URL',
-      defaultValue: 'http://10.0.2.2:3000');
+      defaultValue: 'https://babymon-api-production.up.railway.app');
 
   // Auth endpoints
   static const String register = '/auth/register';
