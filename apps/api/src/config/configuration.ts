@@ -20,7 +20,6 @@ export interface AppConfig {
 
   jwt: {
     secret: string;
-    fallbackDevSecret: string;
     refreshExpiresInDays: number;
   };
 
@@ -83,7 +82,6 @@ export default function configuration(): AppConfig {
 
     jwt: {
       secret: process.env.JWT_SECRET || '',
-      fallbackDevSecret: process.env.JWT_DEV_SECRET || 'dev-secret-change-me',
       refreshExpiresInDays: parseInt(process.env.JWT_REFRESH_EXPIRES_IN_DAYS || '7', 10),
     },
 
