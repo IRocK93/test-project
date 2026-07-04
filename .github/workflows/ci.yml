@@ -57,6 +57,17 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/babymon_test?schema=public
 
+      - name: Verify migrations table is in sync with migration files (migrate status)
+        # Fails the build if any migration in _prisma_migrations is missing,
+        # modified, or has a checksum mismatch. Belt-and-suspenders alongside
+        # the `migrate diff` check below. On a fresh test DB this is mostly
+        # a smoke test, but it would catch a corrupted migrations table on
+        # any persistent environment. See docs/16-PRISMA-BASELINING-INCIDENT.md.
+        working-directory: ./apps/api
+        run: npx prisma migrate status
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/babymon_test?schema=public
+
       - name: Verify Prisma schema is fully migrated (no db push drift)
         working-directory: ./apps/api
         run: |
