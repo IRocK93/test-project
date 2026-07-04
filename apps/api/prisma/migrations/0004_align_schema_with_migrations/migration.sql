@@ -17,6 +17,82 @@
 -- It brings the actual schema into sync with what `schema.prisma` expects.
 
 -- ===========================================================================
+-- Missing tables (added by schema evolution AFTER the original db-push
+-- that bootstrapped this prod DB). These three tables don't exist in prod yet,
+-- so any CREATE INDEX on them below would fail. CREATE TABLE IF NOT EXISTS
+-- is idempotent; safe to re-run.
+--
+-- MUST come BEFORE the existing CREATE INDEX statements that reference these
+-- tables (PromoRedemption_promoCodeId_idx in the original 0004 file).
+-- ===========================================================================
+
+-- PromoCodeType enum (referenced by PromoCode.type)
+DO $$ BEGIN
+  CREATE TYPE "PromoCodeType" AS ENUM ('TRIAL_EXTEND', 'FULL_PREMIUM');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE TABLE IF NOT EXISTS "PromoCode" (
+    "id"                 TEXT NOT NULL,
+    "code"               TEXT NOT NULL,
+    "type"               "PromoCodeType" NOT NULL,
+    "valueDays"          INTEGER NOT NULL,
+    "maxRedemptions"     INTEGER,
+    "currentRedemptions" INTEGER NOT NULL DEFAULT 0,
+    "isActive"           BOOLEAN NOT NULL DEFAULT true,
+    "expiresAt"          TIMESTAMP(3),
+    "createdBy"          TEXT,
+    "createdAt"          TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt"          TIMESTAMP(3) NOT NULL,
+    CONSTRAINT "PromoCode_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "PromoRedemption" (
+    "id"           TEXT NOT NULL,
+    "promoCodeId"  TEXT NOT NULL,
+    "userId"       TEXT NOT NULL,
+    "redeemedAt"   TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "PromoRedemption_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "DailyActivity" (
+    "id"                TEXT NOT NULL,
+    "babymonId"         TEXT NOT NULL,
+    "date"              TIMESTAMP(3) NOT NULL,
+    "hasMilestone"      BOOLEAN NOT NULL DEFAULT false,
+    "hasFeedLog"        BOOLEAN NOT NULL DEFAULT false,
+    "hasSleepLog"       BOOLEAN NOT NULL DEFAULT false,
+    "hasHealthRecord"   BOOLEAN NOT NULL DEFAULT false,
+    "hasGrowthRecord"   BOOLEAN NOT NULL DEFAULT false,
+    "createdAt"         TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "DailyActivity_pkey" PRIMARY KEY ("id")
+);
+
+-- Indexes for the new tables. Wrapping each in a DO block with a
+-- to_regclass check makes the whole section idempotent (no-op if the
+-- table/index is already there).
+DO $$ BEGIN
+  IF to_regclass('"PromoCode"') IS NOT NULL THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS "PromoCode_code_key" ON "PromoCode"("code");
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF to_regclass('"PromoRedemption"') IS NOT NULL THEN
+    CREATE INDEX IF NOT EXISTS "PromoRedemption_userId_idx"            ON "PromoRedemption"("userId");
+    CREATE UNIQUE INDEX IF NOT EXISTS "PromoRedemption_promoCodeId_userId_key" ON "PromoRedemption"("promoCodeId", "userId");
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF to_regclass('"DailyActivity"') IS NOT NULL THEN
+    CREATE INDEX        IF NOT EXISTS "DailyActivity_babymonId_idx"     ON "DailyActivity"("babymonId");
+    CREATE UNIQUE INDEX IF NOT EXISTS "DailyActivity_babymonId_date_key" ON "DailyActivity"("babymonId", "date");
+  END IF;
+END $$;
+
+-- ===========================================================================
 -- User model: add consent + locale + push-notification fields
 -- ===========================================================================
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "tosAcceptedAt"        TIMESTAMP(3);
@@ -40,8 +116,18 @@ ALTER TABLE "ExpertAdviceCard"    ADD COLUMN IF NOT EXISTS "locale" TEXT NOT NUL
 ALTER TABLE "RoutineTemplate"     ADD COLUMN IF NOT EXISTS "locale" TEXT NOT NULL DEFAULT 'en';
 ALTER TABLE "MilestoneExpectation" ADD COLUMN IF NOT EXISTS "locale" TEXT NOT NULL DEFAULT 'en';
 ALTER TABLE "StageContent"        ADD COLUMN IF NOT EXISTS "locale" TEXT NOT NULL DEFAULT 'en';
-ALTER TABLE "ScreeningReminder"   ADD COLUMN IF NOT EXISTS "locale" TEXT NOT NULL DEFAULT 'en';
-ALTER TABLE "VaccinationSchedule" ADD COLUMN IF NOT EXISTS "locale" TEXT NOT NULL DEFAULT 'en';
+-- The prod db has `stageKey` on these tables (from the original db-push) but
+-- the current schema uses `dueAgeMonths` instead. Adding the missing columns
+-- lets the CREATE INDEX statements below succeed. A future migration can
+-- backfill `dueAgeMonths` from the old `stageKey` values and then DROP
+-- `stageKey`. The DEFAULT 0 placeholder is safe for a fresh prod; backfill
+-- is a separate, non-urgent task.
+ALTER TABLE "ScreeningReminder"   ADD COLUMN IF NOT EXISTS "locale"       TEXT NOT NULL DEFAULT 'en';
+ALTER TABLE "ScreeningReminder"   ADD COLUMN IF NOT EXISTS "dueAgeMonths" DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE "ScreeningReminder"   ADD COLUMN IF NOT EXISTS "updatedAt"    TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "VaccinationSchedule" ADD COLUMN IF NOT EXISTS "locale"       TEXT NOT NULL DEFAULT 'en';
+ALTER TABLE "VaccinationSchedule" ADD COLUMN IF NOT EXISTS "dueAgeMonths" DOUBLE PRECISION NOT NULL DEFAULT 0;
+ALTER TABLE "VaccinationSchedule" ADD COLUMN IF NOT EXISTS "updatedAt"    TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 -- ===========================================================================
 -- Enums (CREATE TYPE doesn't support IF NOT EXISTS; wrap in DO block)
@@ -167,4 +253,13 @@ CREATE INDEX IF NOT EXISTS "FeedLog_babymonId_happenedAt_idx"     ON "FeedLog"("
 CREATE INDEX IF NOT EXISTS "HealthRecord_babymonId_happenedAt_idx" ON "HealthRecord"("babymonId", "happenedAt");
 CREATE INDEX IF NOT EXISTS "SleepLog_babymonId_startTime_idx"    ON "SleepLog"("babymonId", "startTime");
 
-CREATE INDEX IF NOT EXISTS "ExpertAdviceC
+-- ===========================================================================
+-- Content-table composite indexes (per schema.prisma @@index([..., locale]))
+-- ===========================================================================
+CREATE INDEX IF NOT EXISTS "ExpertAdviceCard_stageKey_locale_idx"            ON "ExpertAdviceCard"("stageKey", "locale");
+CREATE INDEX IF NOT EXISTS "StageContent_stageKey_locale_idx"                ON "StageContent"("stageKey", "locale");
+CREATE INDEX IF NOT EXISTS "MilestoneExpectation_stageKey_domain_locale_idx"  ON "MilestoneExpectation"("stageKey", "domain", "locale");
+CREATE INDEX IF NOT EXISTS "VaccinationSchedule_dueAgeMonths_locale_idx"      ON "VaccinationSchedule"("dueAgeMonths", "locale");
+CREATE INDEX IF NOT EXISTS "ScreeningReminder_dueAgeMonths_locale_idx"        ON "ScreeningReminder"("dueAgeMonths", "locale");
+
+
