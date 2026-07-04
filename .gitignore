@@ -4,6 +4,9 @@
 .env.*.local
 !.env.example
 
+# Railway CLI output (may contain raw production secrets)
+*railway_vars*.json
+
 # Dependencies
 node_modules/
 .pnpm-store/
