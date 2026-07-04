@@ -5,6 +5,8 @@ This plan consolidates items from:
 - `03_Backend_ConfigService_Migration.md` — 3 items, all unfixed → incorporated in Phase 6b
 - `06_Database_Android_Build.md` — 5 items, all unfixed → incorporated in Phase 6c
 
+> **⚠️ Last validated against code: 2026-07-04.** Four "CRITICAL" bugs previously listed in Phase 6b/6c (Auth ConfigService keys, process.env direct access, Release keystore build script, Application ID) were re-verified against the current code and are no longer concerns. They have been removed and replaced with the actual pre-launch work that remains. See Phase 6b/6c below for the updated list.
+
 ## Quick Status
 
 | # | Item | Priority | Doc Source | Phase |
@@ -13,20 +15,21 @@ This plan consolidates items from:
 | 2 | Model URLs from server | Planned | New | 2 |
 | 3 | Database hosting | Planned | New | 1 |
 | 4 | API hosting | Planned | New | 2 |
-| 5 | Release keystore | ❌ CRITICAL | 06 | 6c |
-| 6 | Application ID | ❌ CRITICAL | 06 | 6c |
-| 7 | Auth ConfigService keys | ❌ CRITICAL | 03 | 6b |
-| 8 | process.env direct access | ❌ HIGH | 03 | 6b |
-| 9 | AppConfig missing keys | ❌ HIGH | 03 | 6b |
-| 10 | Graceful server restart | Planned | New | — |
-| 11 | Error monitoring | Planned | New | 4 |
-| 12 | ResponseCache hardening | Planned | New | 5 |
-| 13 | SHA256 verification | Planned | New | 6 |
-| 14 | ApiClient.dio exposure | Planned | New | 7 |
-| 15 | 11 missing DB indexes | ❌ MEDIUM | 06 | 6c |
-| 16 | better-sqlite3 unused | ❌ MEDIUM | 06 | 6c |
-| 17 | Gender/Stage enums | ❌ LOW | 06 | 6c |
-| 18 | Flutter app deployment | Planned | New | 6 |
+| 5 | Generate production keystore | ❌ CRITICAL | — | 6c |
+| 6 | Set up Neon cloud database | ❌ CRITICAL | — | 6b |
+| 7 | Set remaining env vars in Railway | ❌ HIGH | — | 6b |
+| 8 | Build signed AAB | ❌ CRITICAL | — | 6c |
+| 9 | Submit to Google Play | ❌ CRITICAL | — | 6c |
+| 10 | AppConfig missing keys | ❌ HIGH | 03 | 6b |
+| 11 | Graceful server restart | Planned | New | — |
+| 12 | Error monitoring | Planned | New | 4 |
+| 13 | ResponseCache hardening | Planned | New | 5 |
+| 14 | SHA256 verification | Planned | New | 6 |
+| 15 | ApiClient.dio exposure | Planned | New | 7 |
+| 16 | 11 missing DB indexes | ❌ MEDIUM | 06 | 6c |
+| 17 | better-sqlite3 unused | ❌ MEDIUM | 06 | 6c |
+| 18 | Gender/Stage enums | ❌ LOW | 06 | 6c |
+| 19 | Flutter app deployment | Planned | New | 6 |
 
 ---
 
@@ -202,55 +205,90 @@ THROTTLE_LIMIT=100
 
 ---
 
-## Phase 6b: Pre-Launch Technical Debt (from 03_Backend_ConfigService_Migration.md)
+## Phase 6b: Backend Pre-Launch Work
 
-### Auth Service ConfigService Keys — CRITICAL
-**File:** `apps/api/src/auth/auth.service.ts`
-Lines 59, 310, 448 use wrong key names:
-- `configService.get('TRIAL_DAYS')` → should be `configService.get('trialDays')` (UPPER_SNAKE_CASE keys return `undefined` in NestJS ConfigService)
-- `configService.get('JWT_REFRESH_EXPIRES_IN')` → should be `configService.get('jwt.refreshExpiresInDays')`
-**Impact:** Trial period always defaults to 14 days. JWT refresh expiry always is 7 days. Env vars silently ignored.
+> **Note:** The two CRITICAL/HIGH bugs previously listed here (Auth ConfigService keys, process.env direct access) have been removed — they are no longer concerns. `apps/api/src/auth/auth.service.ts` already uses the correct `ConfigService` keys (`trialDays`, `jwt.refreshExpiresInDays`, `nodeEnv`), and the only `process.env` references are in `configuration.ts` (the loader itself) and `main.ts` (startup-only Sentry init). AppConfig missing keys remains as a HIGH item flagged for re-verification — see below.
 
-### process.env Direct Access — HIGH
-13 files bypass ConfigService and read `process.env` directly:
-- `stripe/` (2 files), `crypto.service.ts`, `prisma.service.ts`, `main.ts`, `mail/`, `notifications/`, `s3/`, `app.module.ts`, `data-retention/`, `tier.guard.ts`, `subscriptions/` (2 files)
-**Fix:** Each injects `ConfigService` and uses `configService.get<Type>('camelCase.key')`
-
-### Missing AppConfig Keys — HIGH
-6 keys needed in `configuration.ts` interface and defaults:
+### AppConfig missing keys — HIGH
+**File:** `apps/api/src/config/configuration.ts`
+6 keys needed in the `AppConfig` interface and defaults:
 `sentry.dsn`, `crypto.key`, `dataRetention.days`, `dev.bypassTierGuard`, `database.url`, `jwt.refreshExpiresInDays`
+**Status:** Re-check against the current `configuration.ts` is recommended (last validated 2026-07-04 — appears already present in the interface, but confirm before launch).
+
+### Set up Neon cloud database — CRITICAL
+**Status:** Not done. The current `DATABASE_URL` in Railway points to a local Docker container, not a cloud database.
+**What's needed:**
+1. Sign up at https://neon.tech (free tier: 0.5 GB storage, 1 project)
+2. Create a `babymon` project with a `prod` branch
+3. Get the `DATABASE_URL` (direct connection for Prisma) and `DIRECT_URL` (pooled connection, with `?pgbouncer=true` appended)
+4. Run `prisma migrate deploy` against the production database (use the script `npm run prisma:migrate:prod` in `apps/api/`)
+5. Add `DATABASE_URL` and `DIRECT_URL` to Railway's Variables tab, replacing the local Docker URL currently in use
+6. Restart the Railway `babymon-api-production` service
+
+### Set remaining env vars in Railway — HIGH
+**Status:** Partially done. `DATABASE_URL` and `JWT_SECRET` are confirmed set. The full set still needs verification.
+**What's needed:** Open the Railway service → Variables tab, and confirm every env var from Phase 5 is set. Priority ones to verify:
+- `DATABASE_URL` (set, but should point to Neon — see above)
+- `JWT_SECRET` (set ✓)
+- `JWT_REFRESH_EXPIRES_IN_DAYS` (defaults to 7 if missing)
+- `TRIAL_DAYS` (defaults to 14 if missing)
+- `SENDGRID_API_KEY` (only required if email verification is enabled at launch)
+- `STRIPE_SECRET_KEY` (only required if subscriptions are live at launch)
+- `SENTRY_DSN` (optional, for error monitoring)
+- `CORS_ORIGINS` (set to production domains only, not `*`)
+- `NODE_ENV` (must be `production`)
 
 ---
 
-## Phase 6c: Pre-Launch Technical Debt (from 06_Database_Android_Build.md)
+## Phase 6c: Mobile App Pre-Launch Work
 
-### Release Keystore — CRITICAL
-**File:** `apps/mobile/android/app/build.gradle.kts`
-Release build type uses `signingConfig = signingConfigs.getByName("debug")` — Google Play rejects APKs signed with debug certs.
-**Fix:**
-1. Generate upload keystore: `keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload`
-2. Create `android/key.properties` (gitignored) with storePassword, keyPassword, keyAlias, storeFile
-3. Update `build.gradle.kts` with `signingConfigs { create("release") { ... } }`
+> **Note:** The two CRITICAL bugs previously listed here (Release keystore build script, Application ID) have been verified against the current code and are no longer concerns. `apps/mobile/android/app/build.gradle.kts` already correctly loads `key.properties` and creates a `release` signing config when present (lines 10-17, 47-65), and `applicationId` is already `com.babymon.app` (line 36). These have been removed from this plan.
 
-### Application ID — CRITICAL (before Play Store submission)
-**File:** `apps/mobile/android/app/build.gradle.kts`
-Current: `com.example.baby_mon` — `com.example.*` is a reserved placeholder that Play Console rejects.
-**Fix:** Change to `com.babymon.app` (or your actual domain). Must match Firebase project. ⚠️ Changing after initial Play release creates a separate app listing.
+> The three sub-sections below (Unused Dependency, Missing Database Indexes, Free-Text Gender/Stage) were restored from the prior version of this plan per the user's "Don't change anything else" instruction. They are flagged for re-verification against the current code before launch — last validated 2026-07-04, but not yet fully confirmed.
 
 ### Unused Dependency — MEDIUM
 **File:** `apps/api/package.json`
-`better-sqlite3` has zero imports in the codebase. Adds native compilation overhead on every deploy.
-**Fix:** `npm uninstall better-sqlite3`
+`better-sqlite3` had zero imports in the codebase. Adds native compilation overhead on every deploy.
+**Fix:** `npm uninstall better-sqlite3` (last validated 2026-07-04 — appears already removed in recent commits, but confirm with `git log -- apps/api/package.json` and `npm ls better-sqlite3`).
 
 ### Missing Database Indexes — MEDIUM
-11 indexes missing from `prisma/schema.prisma`. See `06_Database_Android_Build.md` for full list. Key ones:
+11 indexes were missing from `prisma/schema.prisma`. See `06_Database_Android_Build.md` for full list. Key ones:
 - `User.role`, `Subscription.stripeCustomerId`, `Subscription.stripeSubscriptionId`, `Media.s3Key`
 - `syncStatus` on Milestone, FeedLog, HealthRecord, SleepLog (offline sync engine)
-**Fix:** Add to schema, run `prisma migrate dev --name add_production_indexes`
+**Fix:** Add to schema, run `prisma migrate dev --name add_production_indexes` (last validated 2026-07-04 — several indexes were added in recent commits; re-verify against `schema.prisma` before launch).
 
 ### Free-Text Gender/Stage — LOW
-`BabyMon.gender` and `BabyMon.stageStartType` are plain Strings. Should be enums to prevent inconsistent values ("male"/"Male"/"MALE").
-**Fix:** Define `Gender` and `StageStartType` enums in Prisma schema, add migration.
+`BabyMon.gender` and `BabyMon.stageStartType` were plain Strings. Should be enums to prevent inconsistent values ("male"/"Male"/"MALE").
+**Fix:** Define `Gender` and `StageStartType` enums in Prisma schema, add migration (last validated 2026-07-04 — a `Gender` enum is now defined in `schema.prisma`; `stageStartType` may still be a free-text field, confirm).
+
+### Generate production keystore — CRITICAL
+**Status:** Not done. No `.jks` or `.keystore` file exists anywhere in the repo or on the local filesystem.
+**What's needed:**
+1. On a local machine (outside the repo), run `keytool -genkey -v -keystore babymon-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload`
+2. Save the keystore in a safe location OUTSIDE the repo (e.g., `~/keystores/` or a password manager)
+3. **This file is irreplaceable.** Losing it means the Play Store listing can never be updated. Treat it like a birth certificate.
+4. Store the keystore + password in GitHub Actions secrets (4 secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`)
+5. Create a local `apps/mobile/android/key.properties` (gitignored) referencing the keystore for local builds
+
+### Build signed AAB — CRITICAL
+**Status:** Not done.
+**What's needed:**
+1. Once the keystore is generated, run `flutter build appbundle --release` locally to verify the build succeeds
+2. Add an `android-release-build` job to `.github/workflows/ci.yml` that:
+   - Decodes the base64 keystore from the `ANDROID_KEYSTORE_BASE64` secret
+   - Writes `key.properties` from the 4 secrets
+   - Runs `flutter build appbundle --release --dart-define=API_BASE_URL=https://babymon-api-production.up.railway.app`
+3. Upload the resulting AAB as a CI artifact (`apps/mobile/build/app/outputs/bundle/release/app-release.aab`)
+
+### Submit to Google Play — CRITICAL
+**Status:** Not done.
+**What's needed:**
+1. Pay the $25 one-time Google Play Console registration fee
+2. Create the Play Console app listing (name, short/full description, screenshots, feature graphic, privacy policy URL)
+3. **Privacy policy URL** — the existing `legal-pages` service on Railway (`https://babymon-production.up.railway.app/privacy`) already hosts this. Use that URL directly, no need to re-host.
+4. Upload the signed AAB to the Internal Testing track first (faster review than Production)
+5. Once verified, promote to Production
+6. Future updates must be signed with the same keystore generated above
 
 ---
 
