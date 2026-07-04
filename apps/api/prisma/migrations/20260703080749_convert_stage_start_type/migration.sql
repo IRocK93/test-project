@@ -1,0 +1,17 @@
+-- Stub: empty by design.
+--
+-- This migration was originally applied directly to the Neon database
+-- (not via a tracked Prisma migration), so the SQL was never committed
+-- to git. Its effect (converting BabyMon.stageStartType from a free-text
+-- String to the StageStartType enum) is already present in the database
+-- and is also captured by the 5 baseline migrations (0001-0005), which
+-- were generated from schema.prisma where stageStartType is already an enum.
+--
+-- This empty file exists ONLY so that Prisma's migrate status checks
+-- stop complaining about a "migration on the server not found locally".
+-- It is a no-op on a fresh database: the enum is created by the baseline
+-- migrations, so the conversion that the original migration performed
+-- is unnecessary.
+--
+-- Do not delete this file. If you do, `prisma migrate status` will
+-- fail on any future dev who runs migrations against the Neon DB.
