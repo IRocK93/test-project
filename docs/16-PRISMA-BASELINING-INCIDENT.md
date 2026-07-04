@@ -199,4 +199,114 @@ If you see `PrismaClientKnownRequestError: The column 'X' does not exist in the 
 
 ---
 
-*Document Version: 2.0 · Authored: 2026-07-04 (post-incident) · Last corrected: 2026-07-04 (evening, after `pg_attribute` investigation) · Owner: Backend team*
+## 7. Second incident: 0004 was incomplete (BabyMon fields) — 2026-07-04 evening
+
+A second, related incident was discovered the same evening after the User.consentDataAt issue was resolved. Different cause, same shape.
+
+### 7.1 What happened
+
+After the 4th deploy of 0004 fixed `User.consentDataAt`, smoke-testing the rest of the API found that `GET /api/v1/baby-mons` was returning `HTTP 500 "A database error occurred"`. The Prisma error was:
+
+```
+PrismaClientKnownRequestError: P2022
+Invalid prisma.babyMon.findMany() invocation:
+The column BabyMon.gestationalAgeAtBirth does not exist in the current database.
+```
+
+The auth endpoints (`/auth/register`, `/auth/login`, `/users/me`) all returned 200, and `/health/deep` reported `userConsentDataAt: present`. So the 4th deploy of 0004 had indeed succeeded — the issue was that 0004 itself was incomplete.
+
+### 7.2 Root cause
+
+`0004_align_schema_with_migrations` was a hand-written schema-sync migration (not a Prisma-generated one). When it was written, the author focused on:
+
+- Adding `User.consentDataAt` and other consent/locale/push fields
+- Converting `BabyMon.gender` and `BabyMon.stageStartType` from text to enums
+- Creating the new `PromoCode`, `PromoRedemption`, and `DailyActivity` tables
+- Adding the new indexes called out in the schema
+
+**But it missed the 6 new BabyMon columns** that a recent commit to `schema.prisma` had added to the BabyMon model:
+
+| Column | Type | Default |
+|---|---|---|
+| `gestationalAgeAtBirth` | `Int?` | NULL |
+| `dueDate` | `DateTime?` | NULL |
+| `traitsUpdatedAt` | `DateTime?` | NULL |
+| `siblingGroupId` | `String?` | NULL |
+| `isGraduated` | `Boolean` | `false` |
+| `graduatedAt` | `DateTime?` | NULL |
+
+Plus the missing index `BabyMon_siblingGroupId_idx` (from `@@index([siblingGroupId])` in the schema).
+
+**Comparison of BabyMon column counts at the time of this incident:**
+
+| Source | BabyMon columns |
+|---|---|
+| `schema.prisma` | 28 |
+| `information_schema.columns` in prod | 22 |
+| **Missing in prod** | **6 columns + 1 index** |
+
+### 7.3 The fix
+
+A new migration `0005_align_babymon_fields/migration.sql` was authored to backfill the 6 missing columns and the missing index. All statements are idempotent:
+
+```sql
+ALTER TABLE "BabyMon" ADD COLUMN IF NOT EXISTS "gestationalAgeAtBirth" INTEGER;
+ALTER TABLE "BabyMon" ADD COLUMN IF NOT EXISTS "dueDate"               TIMESTAMP(3);
+ALTER TABLE "BabyMon" ADD COLUMN IF NOT EXISTS "traitsUpdatedAt"       TIMESTAMP(3);
+ALTER TABLE "BabyMon" ADD COLUMN IF NOT EXISTS "siblingGroupId"        TEXT;
+ALTER TABLE "BabyMon" ADD COLUMN IF NOT EXISTS "isGraduated"           BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "BabyMon" ADD COLUMN IF NOT EXISTS "graduatedAt"           TIMESTAMP(3);
+
+CREATE INDEX IF NOT EXISTS "BabyMon_siblingGroupId_idx" ON "BabyMon"("siblingGroupId");
+```
+
+Applied via:
+
+```bash
+railway run --service babymon-api -- npx prisma migrate deploy
+# Result: "All migrations have been successfully applied."
+```
+
+Committed as `f1d785f` and pushed to `origin/master`.
+
+### 7.4 Verify
+
+After applying 0005:
+
+1. `GET /api/v1/health/deep` → `200` with `{ "userConsentDataAt": "present" }` (unchanged)
+2. `GET /api/v1/baby-mons` → `200` with `{ "items": [], "total": 0, "skip": 0, "take": 20 }` (was 500, now 200)
+3. Prisma's `babyMon.findMany({ take: 1 })` succeeds against prod (the query that was throwing P2022)
+
+### 7.5 Lesson
+
+The first incident (§ 2) was caused by a migration failing to apply 3 times. The second incident (§ 7) was caused by a migration succeeding but being **incomplete** — the hand-written 0004 didn't enumerate every model field against the schema before shipping. The two failure modes look identical at runtime (P2022 column does not exist), but the audit trail (`_prisma_migrations` history for § 2 vs schema/DB column comparison for § 7) is what distinguishes them.
+
+**Going forward**, every migration that touches a model should compare the entire model definition in `schema.prisma` against the actual columns in `information_schema.columns` — not just the columns the change is "about". A simple check:
+
+```sql
+-- For a given model, list columns the schema expects but the DB doesn't have
+SELECT s.column_name
+FROM (
+  -- schema columns (manually list, or use prisma migrate diff)
+  SELECT 'gestationalAgeAtBirth' AS column_name UNION ALL
+  SELECT 'dueDate' UNION ALL
+  ...
+) s
+LEFT JOIN information_schema.columns c
+  ON c.table_schema = current_schema()
+  AND c.table_name = 'BabyMon'
+  AND c.column_name = s.column_name
+WHERE c.column_name IS NULL;
+```
+
+A future improvement is to run this check in CI for every model (e.g. via `prisma migrate diff` comparing `--from-schema-datasource` to `--to-schema-datamodel` and failing the build if the diff is non-empty).
+
+### 7.6 See also
+
+- `apps/api/prisma/migrations/0005_align_babymon_fields/migration.sql` — the 5-line backfill migration
+- `apps/api/src/baby-mon/baby-mon.service.ts` — the `findAll` method that was hitting P2022
+- `docs/15-MIGRATION-NOTES.md` — to be updated with a `0005` section
+
+---
+
+*Document Version: 2.1 · Authored: 2026-07-04 (post-incident) · Last corrected: 2026-07-04 (evening, after `pg_attribute` investigation; second-incident addendum added same evening) · Owner: Backend team*
