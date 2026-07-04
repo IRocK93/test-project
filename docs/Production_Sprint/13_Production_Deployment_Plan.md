@@ -20,15 +20,15 @@ This plan consolidates items from:
 | 7 | Set remaining env vars in Railway | ❌ HIGH | — | 6b |
 | 8 | Build signed AAB | ❌ CRITICAL | — | 6c |
 | 9 | Submit to Google Play | ❌ CRITICAL | — | 6c |
-| 10 | AppConfig missing keys | ❌ HIGH | 03 | 6b |
+| 10 | AppConfig missing keys | ✅ DONE (2026-07-04) | 03 | 6b |
 | 11 | Graceful server restart | Planned | New | — |
 | 12 | Error monitoring | Planned | New | 4 |
 | 13 | ResponseCache hardening | Planned | New | 5 |
 | 14 | SHA256 verification | Planned | New | 6 |
 | 15 | ApiClient.dio exposure | Planned | New | 7 |
 | 16 | 11 missing DB indexes | ❌ MEDIUM | 06 | 6c |
-| 17 | better-sqlite3 unused | ❌ MEDIUM | 06 | 6c |
-| 18 | Gender/Stage enums | ❌ LOW | 06 | 6c |
+| 17 | better-sqlite3 unused | ✅ DONE (2026-07-04) | 06 | 6c |
+| 18 | Gender/Stage enums | ✅ DONE (2026-07-04) | 06 | 6c |
 | 19 | Flutter app deployment | Planned | New | 6 |
 
 ---
@@ -207,13 +207,12 @@ THROTTLE_LIMIT=100
 
 ## Phase 6b: Backend Pre-Launch Work
 
-> **Note:** The two CRITICAL/HIGH bugs previously listed here (Auth ConfigService keys, process.env direct access) have been removed — they are no longer concerns. `apps/api/src/auth/auth.service.ts` already uses the correct `ConfigService` keys (`trialDays`, `jwt.refreshExpiresInDays`, `nodeEnv`), and the only `process.env` references are in `configuration.ts` (the loader itself) and `main.ts` (startup-only Sentry init). AppConfig missing keys remains as a HIGH item flagged for re-verification — see below.
+> **Note:** The two CRITICAL/HIGH bugs previously listed here (Auth ConfigService keys, process.env direct access) have been removed — they are no longer concerns. `apps/api/src/auth/auth.service.ts` already uses the correct `ConfigService` keys (`trialDays`, `jwt.refreshExpiresInDays`, `nodeEnv`), and the only `process.env` references are in `configuration.ts` (the loader itself) and `main.ts` (startup-only Sentry init). AppConfig missing keys is also DONE — see below.
 
-### AppConfig missing keys — HIGH
+### AppConfig missing keys — ✅ DONE (2026-07-04)
 **File:** `apps/api/src/config/configuration.ts`
-6 keys needed in the `AppConfig` interface and defaults:
-`sentry.dsn`, `crypto.key`, `dataRetention.days`, `dev.bypassTierGuard`, `database.url`, `jwt.refreshExpiresInDays`
-**Status:** Re-check against the current `configuration.ts` is recommended (last validated 2026-07-04 — appears already present in the interface, but confirm before launch).
+All 6 keys are already present in the `AppConfig` interface and the default values function in `configuration.ts`: `sentry.dsn`, `crypto.key`, `dataRetention.days`, `dev.bypassTierGuard`, `database.url`, `jwt.refreshExpiresInDays`.
+**How it was done:** All 6 keys are declared in the `AppConfig` interface and populated from `process.env` in the default-export function. The `database.url` and `jwt.refreshExpiresInDays` keys are nested (`database: { url }` and `jwt: { refreshExpiresInDays }`) rather than flat — a flat-key grep was the false-negative in the original audit.
 
 ### Set up Neon cloud database — CRITICAL
 **Status:** Not done. The current `DATABASE_URL` in Railway points to a local Docker container, not a cloud database.
@@ -244,12 +243,12 @@ THROTTLE_LIMIT=100
 
 > **Note:** The two CRITICAL bugs previously listed here (Release keystore build script, Application ID) have been verified against the current code and are no longer concerns. `apps/mobile/android/app/build.gradle.kts` already correctly loads `key.properties` and creates a `release` signing config when present (lines 10-17, 47-65), and `applicationId` is already `com.babymon.app` (line 36). These have been removed from this plan.
 
-> The three sub-sections below (Unused Dependency, Missing Database Indexes, Free-Text Gender/Stage) were restored from the prior version of this plan per the user's "Don't change anything else" instruction. They are flagged for re-verification against the current code before launch — last validated 2026-07-04, but not yet fully confirmed.
+> Of the three sub-sections below, **Unused Dependency** and **Free-Text Gender/Stage** are now ✅ DONE (re-validated 2026-07-04). Only **Missing Database Indexes** remains as a real follow-up.
 
-### Unused Dependency — MEDIUM
+### Unused Dependency — ✅ DONE (2026-07-04)
 **File:** `apps/api/package.json`
-`better-sqlite3` had zero imports in the codebase. Adds native compilation overhead on every deploy.
-**Fix:** `npm uninstall better-sqlite3` (last validated 2026-07-04 — appears already removed in recent commits, but confirm with `git log -- apps/api/package.json` and `npm ls better-sqlite3`).
+`better-sqlite3` was removed; it had zero imports in the codebase and was adding native compilation overhead on every deploy.
+**How it was done:** The `better-sqlite3` dependency was removed from `apps/api/package.json` (no longer in the dependencies block). Source code has zero imports. Only stale local artifacts remain: a single reference in `package-lock.json` (regenerate the lockfile to clean) and a folder in `node_modules/` (local-only, doesn't affect production builds).
 
 ### Missing Database Indexes — MEDIUM
 11 indexes were missing from `prisma/schema.prisma`. See `06_Database_Android_Build.md` for full list. Key ones:
@@ -257,9 +256,9 @@ THROTTLE_LIMIT=100
 - `syncStatus` on Milestone, FeedLog, HealthRecord, SleepLog (offline sync engine)
 **Fix:** Add to schema, run `prisma migrate dev --name add_production_indexes` (last validated 2026-07-04 — several indexes were added in recent commits; re-verify against `schema.prisma` before launch).
 
-### Free-Text Gender/Stage — LOW
-`BabyMon.gender` and `BabyMon.stageStartType` were plain Strings. Should be enums to prevent inconsistent values ("male"/"Male"/"MALE").
-**Fix:** Define `Gender` and `StageStartType` enums in Prisma schema, add migration (last validated 2026-07-04 — a `Gender` enum is now defined in `schema.prisma`; `stageStartType` may still be a free-text field, confirm).
+### Free-Text Gender/Stage — ✅ DONE (2026-07-04)
+`BabyMon.gender` and `BabyMon.stageStartType` are now typed as the `Gender` and `StageStartType` Prisma enums, preventing inconsistent string values like "male" / "Male" / "MALE".
+**How it was done:** Both `enum Gender { ... }` and `enum StageStartType { ... }` are defined in `apps/api/prisma/schema.prisma` (lines 145 and 153). The `BabyMon` model uses these enums for the `gender` and `stageStartType` fields (line 365 for `stageStartType`).
 
 ### Generate production keystore — CRITICAL
 **Status:** Not done. No `.jks` or `.keystore` file exists anywhere in the repo or on the local filesystem.
