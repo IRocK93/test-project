@@ -104,6 +104,22 @@ jobs:
           JWT_SECRET: test-jwt-secret-for-ci
           NODE_ENV: test
 
+      # Integration / e2e tests against the same Postgres service.
+      # test:integration uses the jest-e2e config (which matches
+      # *.integration-spec.ts and *.e2e-spec.ts files) and runs serially
+      # (--runInBand) since the test DB is shared. This is where the
+      # regression test for the 2026-07-04 schema-drift incident lives
+      # (apps/api/test/baby-mon-schema-drift.integration-spec.ts). See
+      # docs/16-PRISMA-BASELINING-INCIDENT.md § 7.
+      - name: Run integration tests
+        working-directory: ./apps/api
+        run: npm run test:integration
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/babymon_test?schema=public
+          JWT_SECRET: test-jwt-secret-for-ci
+          NODE_ENV: test
+          SKIP_TIER_GUARD: 'true'
+
       - name: Build application
         working-directory: ./apps/api
         run: npm run build
