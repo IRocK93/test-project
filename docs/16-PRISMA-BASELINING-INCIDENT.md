@@ -19,22 +19,31 @@ PrismaClientKnownRequestError:
 The column 'User.consentDataAt' does not exist in the current database.
 ```
 
-The investigation revealed a sequence of **4 deploys** of `apps/api/prisma/migrations/0004_align_schema_with_migrations/migration.sql` running between 00:07 and 00:25 UTC on 2026-07-04. The first three failed and were rolled back; the fourth succeeded at 00:25:18 UTC. During the 18-minute failure window, the new app code (which referenced `User.consentDataAt`) was running against a schema that didn't have the column yet — because `0004`, the migration that **adds** the column, hadn't successfully applied.
+The investigation revealed a sequence of **4 deploys** of `apps/api/prisma/migrations/0004_align_schema_with_migrations/migration.sql` running between 00:07 and 00:25 UTC on 2026-07-04. The first three failed and were rolled back; the fourth succeeded at 00:25:18 UTC, finally adding the missing column to the production schema. The 18-minute failure window explains the `auth/register` 500s — `0004` is the migration that **adds** `User.consentDataAt`, and until one of those deploys finally committed, the column was simply not present in prod.
+
+> **Honest note on the "what was running" question:** `apps/api/docker-entrypoint.sh` runs `npx prisma migrate deploy` then `exec node dist/src/main` with `set -e`, so a failed `migrate deploy` should crash the container before the app starts. The exact picture of which app build was serving traffic during 00:07–00:25 UTC is not preserved in the audit trail — the Railway deploy logs are not in this investigation. What we know for certain is: (1) the column was missing for the 18 minutes that 0004 was failing, and (2) the column was added at 00:25:18 UTC. The 500s stopped after that.
 
 ---
 
 ## 2. Root cause
 
-**`0004_align_schema_with_migrations` failed three times in a row before succeeding once.** The failure sequence:
+**`0004_align_schema_with_migrations` failed three times in a row before succeeding once.** The timeline from `_prisma_migrations`:
 
-| # | started (UTC) | rolled back (UTC) | root cause of failure |
-|---|---|---|---|
-| 1 | 00:07:04 | 00:14:40 | NUL artifacts in the working tree blocked the Docker `COPY prisma ./prisma/` step |
-| 2 | 00:14:51 | 00:22:51 | After NUL cleanup, `prisma migrate deploy` failed on the unique-constraint swap (composite unique on `(stageKey, locale)` for `RoutineTemplate` and `StageContent`) because pre-existing rows had non-unique `locale` values |
-| 3 | 00:23:02 | 00:25:06 | Same as #2 — the defensive dedup in `migration.sql` had not yet been added |
-| 4 | 00:25:17 | ✅ finished 00:25:18 | Succeeded after commit `0f6ec71` (09:48 AEST) added the defensive dedup before the `DROP INDEX` / `CREATE UNIQUE INDEX` swap |
+| # | started (UTC) | finished (UTC) | rolled back (UTC) | status |
+|---|---|---|---|---|
+| 1 | 00:07:04 | — | 00:14:40 | failed and rolled back |
+| 2 | 00:14:51 | — | 00:22:51 | failed and rolled back |
+| 3 | 00:23:02 | — | 00:25:06 | failed and rolled back |
+| 4 | 00:25:17 | 00:25:18 | — | ✅ succeeded |
 
-During the 3 failed deploys, the **new app code was already in the build** (the `fix(auth): RegisterDto now includes locale + consent booleans` commit from 09:15 AEST on 2026-07-03 had been merged earlier). The new code referenced `User.consentDataAt`; the schema didn't have the column (because `0004` hadn't applied); every `auth/register` call hit `P2022 "column does not exist"`.
+> **Note on failure causes:** `_prisma_migrations` only records timestamps, not the underlying error. The Railway deploy logs are not preserved in this investigation, so the **specific** error message for each failed attempt is unknown. What the morning's commit log *does* tell us is the cumulative fix sequence that was needed before attempt 4 could succeed:
+>
+> - `c7d36b6` (23:29 UTC) and `c5a9def` (23:30 UTC): "remove stray nul files blocking Docker build, deploy migration" — NUL artifacts were causing earlier Docker build failures (these would not appear in `_prisma_migrations` because the build failed before `migrate deploy` ran). After this fix, builds succeeded and the 4 attempts above were possible.
+> - `0f6ec71` (23:48 UTC): "add defensive dedup in 0004 before composite unique constraint swap" — added the dedup before the `DROP INDEX` / `CREATE UNIQUE INDEX` swap on `RoutineTemplate` and `StageContent`. This is the fix that most plausibly unblocked attempt 4: without the dedup, the unique-constraint swap would fail on pre-existing rows that share `(stageKey, locale)`.
+>
+> The most likely interpretation is that attempts 1–3 failed on the unique-constraint conflict, and the build with the dedup fix finally succeeded on attempt 4 — but this is an inference from the commit log, not a direct reading of the deploy logs.
+
+During the 3 failed deploys, the column was simply not in the prod schema. The new app code that referenced `User.consentDataAt` (added in commit `742186a` "fix(auth): RegisterDto now includes locale + consent booleans" at 23:15 UTC on 2026-07-03) was already in the build pipeline; once `0004` finally applied on attempt 4, the column became present and `auth/register` returned 201 again. The 500s during the 18-minute window were a direct consequence of the migration failing to apply, leaving the schema and the app code out of sync.
 
 ### The column was never dropped from prod
 
@@ -183,6 +192,7 @@ If you see `PrismaClientKnownRequestError: The column 'X' does not exist in the 
 - [`docs/Production_Sprint/10_Database_Migration_Strategy.md`](./Production_Sprint/10_Database_Migration_Strategy.md) — the general strategy this incident touched; covers the `prisma db push` danger
 - [`docs/Production_Sprint/13_Production_Deployment_Plan.md`](./Production_Sprint/13_Production_Deployment_Plan.md) — Phase 4 (Database Migration Strategy for Production) reinforces "never use `prisma db push` in production"
 - `apps/api/prisma/migrations/0004_align_schema_with_migrations/migration.sql` — the idempotent schema-sync migration shipped during this incident
+- `apps/api/docker-entrypoint.sh` — runs `npx prisma migrate deploy` then `exec node dist/src/main` (with `set -e`); this is the exact mechanism that was failing during the 00:07–00:25 UTC window
 - `.github/workflows/ci.yml` — the `Fail if prisma db push is referenced` step that now prevents recurrence
 - `apps/api/scripts/guard-db-url.js` — the local dev guard that blocks `prisma db push` against non-local `DATABASE_URL`s
 - `apps/api/src/health/health.controller.ts` — the `/health/deep` runtime schema-drift probe
