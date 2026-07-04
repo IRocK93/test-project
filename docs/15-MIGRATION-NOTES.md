@@ -1,8 +1,8 @@
 # BabyMon — Migration Notes
 
 **Audience:** Backend devs, DB admins, future readers debugging data after deploys.
-**Last Updated:** 2026-07-03 (post-migration 0004)
-**Applies to:** `apps/api/prisma/migrations/0001` → `0004_convert_stage_start_type_to_enum/`
+**Last Updated:** 2026-07-04 (post-migration 0005)
+**Applies to:** `apps/api/prisma/migrations/0001` → `0005_align_babymon_fields/`
 
 This page is the human-readable roll-up of every Prisma migration that has been
 applied to the BabyMon database. It exists so that future readers don't have to
@@ -18,6 +18,7 @@ reverse-engineer the *intent* of each migration from raw SQL.
 | 0002 | `add_locale_to_content` | 2026-06-22 | Adds non-nullable `locale String @default("en")` to `ExpertAdviceCard`, `RoutineTemplate`, `MilestoneExpectation`, `VaccinationSchedule`, `ScreeningReminder`, `StageContent`. Converts unique constraints to composite `(stageKey, locale)` / `(babymonId, stageKey, locale)`. | **Medium** (rewrites seed upsert keys — existing rows get `locale='en'`) |
 | 0003 | `add_gender_enum_and_indexes` | 2026-07-01 | Adds `enum Gender { MONIESE MONIOUS MO }`. Converts `BabyMon.gender` from `text` to enum, mapping legacy `'UNKNOWN'` → `'MO'`. Adds 11 missing query indexes (`SleepLog[babymonId,startTime]`, `GrowthRecord[babymonId,measuredAt]`, `Allergy[babymonId,status]`, `Subscription[isActive/tier/stripeCustomerId]`, `Media[babymonId,fileType]`, etc.). | **Medium** (enum coercion is lossy if non-listed values existed) |
 | 0004 | `convert_stage_start_type_to_enum` | 2026-07-03 | Adds `enum StageStartType { PLAN INCUBATING BORN }`. Converts `BabyMon.stageStartType` from free-text to enum. See [`PLAN replaces IDEA`](#plan-replaces-idea) below. | **Medium** (info-loss rename; old `'IDEA'` records collapse to `'PLAN'`) |
+| 0005 | `align_babymon_fields` | 2026-07-04 | Backfills 6 BabyMon columns (`gestationalAgeAtBirth`, `dueDate`, `traitsUpdatedAt`, `siblingGroupId`, `isGraduated`, `graduatedAt`) and the `BabyMon_siblingGroupId_idx` index. These were added to `schema.prisma` in a recent commit but were not included in migration 0004. See [`Migration 0005`](#migration-0005--align-babymon-fields) below and the second-incident addendum in [`docs/16` § 7](./16-PRISMA-BASELINING-INCIDENT.md#7-second-incident-0004-was-incomplete-babymon-fields--2026-07-04-evening). | **Low** (purely additive; idempotent via `ADD COLUMN IF NOT EXISTS`) |
 
 ---
 
@@ -162,9 +163,130 @@ new migration to "fix" the rename — it would be re-doing work.
 
 ---
 
+## Migration 0005 — Align BabyMon Fields
+
+**This is the second-incident fix.** 0004 succeeded in prod (after 3 failed
+attempts) but was *incomplete*: it added the `Gender` and `StageStartType`
+enums and the new tables/indexes, but missed 6 new `BabyMon` columns that a
+recent commit to `schema.prisma` had added. The first symptom was a
+`P2022: The column BabyMon.gestationalAgeAtBirth does not exist` error on
+`GET /api/v1/baby-mons`. Full postmortem: [`docs/16` § 7](./16-PRISMA-BASELINING-INCIDENT.md#7-second-incident-0004-was-incomplete-babymon-fields--2026-07-04-evening).
+
+### What it adds
+
+```sql
+ALTER TABLE "BabyMon" ADD COLUMN IF NOT EXISTS "gestationalAgeAtBirth" INTEGER;
+ALTER TABLE "BabyMon" ADD COLUMN IF NOT EXISTS "dueDate"               TIMESTAMP(3);
+ALTER TABLE "BabyMon" ADD COLUMN IF NOT EXISTS "traitsUpdatedAt"       TIMESTAMP(3);
+ALTER TABLE "BabyMon" ADD COLUMN IF NOT EXISTS "siblingGroupId"        TEXT;
+ALTER TABLE "BabyMon" ADD COLUMN IF NOT EXISTS "isGraduated"           BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "BabyMon" ADD COLUMN IF NOT EXISTS "graduatedAt"           TIMESTAMP(3);
+
+CREATE INDEX IF NOT EXISTS "BabyMon_siblingGroupId_idx" ON "BabyMon"("siblingGroupId");
+```
+
+| Column | Type | Null | Default | Source in `schema.prisma` |
+|---|---|---|---|---|
+| `gestationalAgeAtBirth` | `INTEGER` | yes | NULL | `BabyMon.gestationalAgeAtBirth Int?` (weeks at birth; <37 = premature) |
+| `dueDate` | `TIMESTAMP(3)` | yes | NULL | `BabyMon.dueDate DateTime?` |
+| `traitsUpdatedAt` | `TIMESTAMP(3)` | yes | NULL | `BabyMon.traitsUpdatedAt DateTime?` (tracks when traits were last changed, for badge criteria) |
+| `siblingGroupId` | `TEXT` | yes | NULL | `BabyMon.siblingGroupId String?` (shared ID for twins / multiples) |
+| `isGraduated` | `BOOLEAN` | **no** | `false` | `BabyMon.isGraduated Boolean @default(false)` (archived after 24 months) |
+| `graduatedAt` | `TIMESTAMP(3)` | yes | NULL | `BabyMon.graduatedAt DateTime?` |
+| `BabyMon_siblingGroupId_idx` | — | — | — | `@@index([siblingGroupId])` |
+
+### Why idempotent
+
+Every statement uses `IF NOT EXISTS`:
+
+- `ADD COLUMN IF NOT EXISTS` — a no-op on re-run if the column is already present
+- `CREATE INDEX IF NOT EXISTS` — a no-op on re-run if the index already exists
+
+This is safe because the migration is purely additive (no data coercion, no
+type changes, no constraint swaps). The only NOT NULL column (`isGraduated`)
+has an explicit `DEFAULT false`, so existing rows are backfilled safely.
+
+### Data impact
+
+- **No rows were modified.** 0005 only *adds* columns/indexes.
+- **7 existing `BabyMon` rows in prod** now have `NULL` for the 5 nullable
+  new columns and `false` for `isGraduated`. App code that reads these
+  columns must handle NULL (the schema says `Int?`, `DateTime?`, `String?`,
+  `DateTime?`, so this is enforced at the TypeScript level too).
+- **No data was lost.** This is the key difference from 0003 (which lost
+  the `'MALE'`/`'FEMALE'` → `'MONIESE'`/`'MONIOUS'` info for any rows that
+  had legacy values) and 0004 (which collapsed `'IDEA'` → `'PLAN'`).
+  0005 is strictly additive.
+
+### How it was applied
+
+```bash
+railway run --service babymon-api -- npx prisma migrate deploy
+# Result: "All migrations have been successfully applied."
+```
+
+This was applied manually (rather than waiting for the next `git push` →
+`docker-entrypoint.sh` cycle) because the API was 500ing on a user-visible
+endpoint (`GET /api/v1/baby-mons`). The next time `docker-entrypoint.sh`
+runs on the service, `prisma migrate deploy` will see 0005 already
+recorded in `_prisma_migrations` and skip it as a no-op.
+
+### App-side consumers (verified after apply)
+
+After 0005, these call sites work without P2022:
+
+- `apps/api/src/baby-mon/baby-mon.service.ts:findAll` (was the 500)
+- `apps/api/src/baby-mon/baby-mon.service.ts:findOne`
+- `apps/api/src/baby-mon/baby-mon.service.ts:create` (inserts with new fields)
+- `apps/api/src/baby-mon/dto/baby-mon.dto.ts` (DTOs for the new fields)
+- `apps/api/src/baby-mon/baby-mon.controller.ts:listBabyMons`
+
+### Roll-back notes (you should never need this)
+
+0005 is purely additive; rolling back means dropping the 6 columns and
+the index. If you must:
+
+```sql
+DROP INDEX IF EXISTS "BabyMon_siblingGroupId_idx";
+ALTER TABLE "BabyMon" DROP COLUMN IF EXISTS "graduatedAt";
+ALTER TABLE "BabyMon" DROP COLUMN IF EXISTS "isGraduated";
+ALTER TABLE "BabyMon" DROP COLUMN IF EXISTS "siblingGroupId";
+ALTER TABLE "BabyMon" DROP COLUMN IF EXISTS "traitsUpdatedAt";
+ALTER TABLE "BabyMon" DROP COLUMN IF EXISTS "dueDate";
+ALTER TABLE "BabyMon" DROP COLUMN IF EXISTS "gestationalAgeAtBirth";
+```
+
+And:
+
+```sql
+DELETE FROM _prisma_migrations WHERE migration_name = '0005_align_babymon_fields';
+```
+
+Then revert the app code so it doesn't reference the dropped columns.
+
+### Lesson (cross-references docs/16 § 7.5)
+
+0004 succeeded but was incomplete. The runtime symptom (`P2022 column does
+not exist`) was identical to the 0004-failed-to-apply incident in § 2, but
+the audit trail differed. Going forward, every migration that touches a
+model should compare the full model definition in `schema.prisma` against
+`information_schema.columns` in prod, not just the fields the change is
+"about". A future CI check is recommended:
+
+```bash
+npx prisma migrate diff \
+  --from-schema-datasource prisma/schema.prisma \
+  --to-schema-datamodel prisma/schema.prisma \
+  --script
+```
+
+If the diff is non-empty on a feature branch, the migration is incomplete.
+
+---
+
 ## How To Read A Migration Diff During Code Review
 
-When reviewing a future PR that adds migration 0005+:
+When reviewing a future PR that adds migration 0006+:
 
 1. **Diff `schema.prisma`** first. The diff tells you what the migration is
    *supposed* to do.
