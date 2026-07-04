@@ -26,7 +26,7 @@ This plan consolidates items from:
 | 13 | ResponseCache hardening | Planned | New | 5 |
 | 14 | SHA256 verification | Planned | New | 6 |
 | 15 | ApiClient.dio exposure | Planned | New | 7 |
-| 16 | 11 missing DB indexes | ❌ MEDIUM | 06 | 6c |
+| 16 | 11 missing DB indexes | ✅ DONE (2026-07-04) | 06 | 6c |
 | 17 | better-sqlite3 unused | ✅ DONE (2026-07-04) | 06 | 6c |
 | 18 | Gender/Stage enums | ✅ DONE (2026-07-04) | 06 | 6c |
 | 19 | Flutter app deployment | Planned | New | 6 |
@@ -243,18 +243,21 @@ All 6 keys are already present in the `AppConfig` interface and the default valu
 
 > **Note:** The two CRITICAL bugs previously listed here (Release keystore build script, Application ID) have been verified against the current code and are no longer concerns. `apps/mobile/android/app/build.gradle.kts` already correctly loads `key.properties` and creates a `release` signing config when present (lines 10-17, 47-65), and `applicationId` is already `com.babymon.app` (line 36). These have been removed from this plan.
 
-> Of the three sub-sections below, **Unused Dependency** and **Free-Text Gender/Stage** are now ✅ DONE (re-validated 2026-07-04). Only **Missing Database Indexes** remains as a real follow-up.
+> All three sub-sections below are now ✅ DONE (re-validated 2026-07-04).
 
 ### Unused Dependency — ✅ DONE (2026-07-04)
 **File:** `apps/api/package.json`
 `better-sqlite3` was removed; it had zero imports in the codebase and was adding native compilation overhead on every deploy.
 **How it was done:** The `better-sqlite3` dependency was removed from `apps/api/package.json` (no longer in the dependencies block). Source code has zero imports. Only stale local artifacts remain: a single reference in `package-lock.json` (regenerate the lockfile to clean) and a folder in `node_modules/` (local-only, doesn't affect production builds).
 
-### Missing Database Indexes — MEDIUM
-11 indexes were missing from `prisma/schema.prisma`. See `06_Database_Android_Build.md` for full list. Key ones:
-- `User.role`, `Subscription.stripeCustomerId`, `Subscription.stripeSubscriptionId`, `Media.s3Key`
-- `syncStatus` on Milestone, FeedLog, HealthRecord, SleepLog (offline sync engine)
-**Fix:** Add to schema, run `prisma migrate dev --name add_production_indexes` (last validated 2026-07-04 — several indexes were added in recent commits; re-verify against `schema.prisma` before launch).
+### Missing Database Indexes — ✅ DONE (2026-07-04)
+11 indexes were originally missing from `prisma/schema.prisma`. The 7 still-missing single-field indexes have now been added.
+**How it was done:** Added `@@index([role])` to `User`, `@@index([stripeSubscriptionId])` to `Subscription`, `@@index([s3Key])` to `Media`, and `@@index([syncStatus])` to `Milestone`, `FeedLog`, `HealthRecord`, and `SleepLog` in `apps/api/prisma/schema.prisma`. (`Subscription.stripeCustomerId` was already indexed in a prior commit, so the net new is 7, not 8 — and the other 3 of the 11 listed in the original audit had also been resolved in prior commits.) Generated the migration non-interactively via `prisma migrate diff` and saved to `prisma/migrations/20260704120000_add_production_indexes_2026_07_04/migration.sql`, then applied with `prisma migrate deploy`. The 7 `CREATE INDEX` statements in the migration SQL:
+- `User_role_idx`
+- `Subscription_stripeSubscriptionId_idx`
+- `Media_s3Key_idx`
+- `Milestone_syncStatus_idx`, `FeedLog_syncStatus_idx`, `HealthRecord_syncStatus_idx`, `SleepLog_syncStatus_idx`
+**To apply to production (Neon):** `npx prisma migrate deploy` from the Railway deploy step or via the Neon SQL editor.
 
 ### Free-Text Gender/Stage — ✅ DONE (2026-07-04)
 `BabyMon.gender` and `BabyMon.stageStartType` are now typed as the `Gender` and `StageStartType` Prisma enums, preventing inconsistent string values like "male" / "Male" / "MALE".

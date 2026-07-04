@@ -287,6 +287,8 @@ model User {
   AdviceRating        AdviceRating[]
   journalProposed     JournalProposal[]     @relation("JournalProposer")
   promoRedemptions    PromoRedemption[]
+
+  @@index([role])
 }
 
 model PasswordResetToken {
@@ -360,9 +362,9 @@ model BabyMon {
   ownerUserId           String
   name                  String
   middleName            String?
-  lastName              String?  /// Lifecycle stage the BabyMon entered with: PLAN (pre-conception),
+  lastName              String? /// Lifecycle stage the BabyMon entered with: PLAN (pre-conception),
   /// INCUBATING (pregnancy), or BORN (post-birth).
-  stageStartType   StageStartType
+  stageStartType        StageStartType
   conceptionDate        DateTime?
   lmpDate               DateTime?
   birthDate             DateTime?
@@ -435,6 +437,7 @@ model Milestone {
   @@index([happenedAt])
   @@index([deletedAt])
   @@index([babymonId, happenedAt])
+  @@index([syncStatus])
 }
 
 model FeedLog {
@@ -461,6 +464,7 @@ model FeedLog {
   @@index([happenedAt])
   @@index([deletedAt])
   @@index([babymonId, happenedAt])
+  @@index([syncStatus])
 }
 
 model HealthRecord {
@@ -488,6 +492,7 @@ model HealthRecord {
   @@index([happenedAt])
   @@index([deletedAt])
   @@index([babymonId, happenedAt])
+  @@index([syncStatus])
 }
 
 model SleepLog {
@@ -515,6 +520,7 @@ model SleepLog {
   @@index([startTime])
   @@index([deletedAt])
   @@index([babymonId, startTime])
+  @@index([syncStatus])
 }
 
 model Badge {
@@ -592,6 +598,7 @@ model Subscription {
   @@index([isActive])
   @@index([tier])
   @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
 }
 
 enum PromoCodeType {
@@ -700,6 +707,7 @@ model Media {
   @@index([userId])
   @@index([createdAt])
   @@index([babyMonId, fileType])
+  @@index([s3Key])
 }
 
 enum ProposalStatus {
