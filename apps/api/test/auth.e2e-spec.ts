@@ -36,7 +36,7 @@ describe('Auth E2E Tests', () => {
           privacyAccepted: true,
           consentToDataProcessing: true,
         })
-        .expect(200);
+        .expect(201);
 
       expect(res.body).toHaveProperty('accessToken');
       expect(res.body).toHaveProperty('refreshToken');

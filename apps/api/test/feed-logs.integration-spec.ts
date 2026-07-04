@@ -26,7 +26,8 @@ describe('Feed Logs Integration', () => {
     const email = `feed-test-${Date.now()}@test.com`;
     await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password: 'Test123456' });
+      .send({ email, password: 'Test123456' })
+      .expect(201);
 
     const loginRes = await request(app.getHttpServer())
       .post('/api/v1/auth/login')

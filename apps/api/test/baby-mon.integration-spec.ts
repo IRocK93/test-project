@@ -26,7 +26,8 @@ describe('BabyMon Edit Integration', () => {
     const ownerEmail = `owner-${Date.now()}@test.com`;
     await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: ownerEmail, password: 'Test123456' });
+      .send({ email: ownerEmail, password: 'Test123456' })
+      .expect(201);
 
     const ownerLogin = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
@@ -37,7 +38,8 @@ describe('BabyMon Edit Integration', () => {
     const strangerEmail = `stranger-${Date.now()}@test.com`;
     await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: strangerEmail, password: 'Test123456' });
+      .send({ email: strangerEmail, password: 'Test123456' })
+      .expect(201);
 
     const strangerLogin = await request(app.getHttpServer())
       .post('/api/v1/auth/login')
